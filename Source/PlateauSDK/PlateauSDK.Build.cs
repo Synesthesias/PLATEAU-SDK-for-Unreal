@@ -66,7 +66,7 @@ public class PlateauSDK : ModuleRules
         string libPath = Path.Combine(ModuleDirectory, "Private");
         PublicLibraryPaths.Add(libPath);
         PublicAdditionalLibraries.Add("plateau.lib");
-        PublicAdditionalLibraries.Add("citygmld.lib");
+        PublicAdditionalLibraries.Add("citygml.lib");
 
         //.dllファイルはファイルのパスを渡す
         string dllPath = Path.Combine(libPath, "plateau.dll");
@@ -75,8 +75,8 @@ public class PlateauSDK : ModuleRules
         PublicDelayLoadDLLs.Add(dllName);
         RuntimeDependencies.Add(dllPath);
 
-        dllPath = Path.Combine(libPath, "citygmld.dll");
-        dllName = "citygmld.dll";
+        dllPath = Path.Combine(libPath, "citygml.dll");
+        dllName = "citygml.dll";
         CopyDll(dllName, dllPath);
         PublicDelayLoadDLLs.Add(dllName);
         RuntimeDependencies.Add(dllPath);

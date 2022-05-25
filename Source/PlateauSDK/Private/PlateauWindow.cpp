@@ -50,7 +50,6 @@ void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menu_builder) {
 }
 
 void PlateauWindow::showPlateauWindow() {
-
     if (!myWindow_.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
             .Title(LOCTEXT("Model File Converter Window", "Model File Converter"))
@@ -191,7 +190,6 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(0, 0, 0, 3)
-
         [
             SNew(SHorizontalBox)
             + SHorizontalBox::Slot()
@@ -346,42 +344,40 @@ FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        std::shared_ptr<ObjWriter> obj_writer = std::make_shared<ObjWriter>();
-        AxesConversion axes_enum;
+        ObjWriter objWriter;
+        AxesConversion axes;
 
         if (!axes_conversions_[axes_conversion_index_]->Compare(FString("WNU"), ESearchCase::CaseSensitive)) {
-            axes_enum = AxesConversion::WNU;
+            axes = AxesConversion::WNU;
+        } else {
+            axes = AxesConversion::RUF;
         }
-        else {
-            axes_enum = AxesConversion::RUF;
+        const citygml::ParserParams params;
+        const auto CityModel = citygml::load(TCHAR_TO_UTF8(*gml_file_path_), params, nullptr);
+        if (CityModel == nullptr)
+        {
+            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*gml_file_path_));
         }
 
-        //citygml::ParserParams params; //ここいれるとエラー
-        //std::shared_ptr<citygml::ParserParams> params = std::make_shared<citygml::ParserParams>();
-
-        //auto cityModel = obj_writer->loadForUE(TCHAR_TO_UTF8(*gml_file_path_), *params, nullptr);
-        //obj_writer->setValidReferencePoint(*cityModel);
-        obj_writer->setMergeMeshFlg(cb_merge_mesh_);
-        obj_writer->setDestAxes(axes_enum);
-        //obj_writer->writeForUE(TCHAR_TO_UTF8(*obj_file_path_), *cityModel, TCHAR_TO_UTF8(*gml_file_path_));
-
-        obj_writer->loadAndWriteForUE(TCHAR_TO_UTF8(*obj_file_path_), TCHAR_TO_UTF8(*gml_file_path_));
-
+        objWriter.setValidReferencePoint(*CityModel);
+        objWriter.setMergeMeshFlg(cb_merge_mesh_);
+        objWriter.setDestAxes(axes);
+        objWriter.write(TCHAR_TO_UTF8(*obj_file_path_), *CityModel, TCHAR_TO_UTF8(*gml_file_path_));
+        
         return FReply::Handled();
     }
-    catch (...) {
-        UE_LOG(LogTemp, Warning, TEXT("error occured"));
+    catch (std::exception& e) {
+        const auto errorLog = ANSI_TO_TCHAR(e.what());
+        UE_LOG(LogTemp, Warning, TEXT("%s"), errorLog);
         return FReply::Handled();
     }
 }
 
-void PlateauWindow::onToggleCbOptimize(ECheckBoxState check_state)
-{
+void PlateauWindow::onToggleCbOptimize(ECheckBoxState check_state) {
     cb_optimize_ = (check_state == ECheckBoxState::Checked);
 }
 
-void PlateauWindow::onToggleCbMergeMesh(ECheckBoxState check_state)
-{
+void PlateauWindow::onToggleCbMergeMesh(ECheckBoxState check_state) {
     cb_merge_mesh_ = (check_state == ECheckBoxState::Checked);
 }
 
@@ -403,7 +399,6 @@ void PlateauWindow::startup() {
 
     IMainFrameModule& mainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
     mainFrameModule.OnMainFrameCreationFinished().AddRaw(this, &PlateauWindow::onMainFrameLoad);
-
 }
 
 void PlateauWindow::shutdown() {
