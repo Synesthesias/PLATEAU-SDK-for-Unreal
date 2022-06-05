@@ -6,12 +6,12 @@
 
 void FPlateauSDKModule::StartupModule()
 {
-    instance_.startup();
+    m_instance.startup();
 }
 
 void FPlateauSDKModule::ShutdownModule()
 {
-    instance_.shutdown();
+    m_instance.shutdown();
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -22,27 +22,27 @@
 
 
 PlateauWindow::PlateauWindow() {
-    axes_conversions_.Empty();
-    axes_conversions_.Add(MakeShareable(new FString(TEXT("WNU"))));
-    axes_conversions_.Add(MakeShareable(new FString(TEXT("RUF"))));
+    m_axesConversions.Empty();
+    m_axesConversions.Add(MakeShareable(new FString(TEXT("WNU"))));
+    m_axesConversions.Add(MakeShareable(new FString(TEXT("RUF"))));
 }
 
-void PlateauWindow::onMainFrameLoad(TSharedPtr<SWindow> in_root_window, bool is_new_project_window) {
-    if ((!is_new_project_window) && (in_root_window.IsValid())) {
-        rootWindow_ = in_root_window;
+void PlateauWindow::onMainFrameLoad(TSharedPtr<SWindow> inRootWindow, bool isNewProjectWindow) {
+    if ((!isNewProjectWindow) && (inRootWindow.IsValid())) {
+        m_rootWindow = inRootWindow;
     }
 }
 
-void PlateauWindow::onWindowMenuBarExtension(FMenuBarBuilder& menu_bar_builder) {
-    menu_bar_builder.AddPullDownMenu(
+void PlateauWindow::onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder) {
+    menuBarBuilder.AddPullDownMenu(
         LOCTEXT("MenuBarTitle", "Plateau"),
         LOCTEXT("MenuBarToolkit", "Open Plateau menu."),
         FNewMenuDelegate::CreateRaw(this, &PlateauWindow::onPulldownMenuExtension)
     );
 }
 
-void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menu_builder) {
-    menu_builder.AddMenuEntry(
+void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menuBuilder) {
+    menuBuilder.AddMenuEntry(
         LOCTEXT("MenuTitle", "Model File Converter Window"),
         LOCTEXT("PulldownMenuToolTip", "Show Model File Converter Window."),
         FSlateIcon(),
@@ -50,19 +50,19 @@ void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menu_builder) {
 }
 
 void PlateauWindow::showPlateauWindow() {
-    if (!myWindow_.IsValid()) {
+    if (!m_myWindow.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
             .Title(LOCTEXT("Model File Converter Window", "Model File Converter"))
             .ClientSize(FVector2D(300.f, 300.f));
-        myWindow_ = TWeakPtr<SWindow>(window);
+        m_myWindow = TWeakPtr<SWindow>(window);
 
-        if (rootWindow_.IsValid()) {
+        if (m_rootWindow.IsValid()) {
             FSlateApplication::Get().AddWindowAsNativeChild(
-                window.ToSharedRef(), rootWindow_.Pin().ToSharedRef());
+                window.ToSharedRef(), m_rootWindow.Pin().ToSharedRef());
         }
-        showGML2OBJWindow(myWindow_);
+        showGML2OBJWindow(m_myWindow);
     }
-    myWindow_.Pin()->BringToFront();
+    m_myWindow.Pin()->BringToFront();
 }
 
 void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
@@ -75,14 +75,7 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
             + SScrollBox::Slot()
         [
             SNew(SVerticalBox)
-            //    + SVerticalBox::Slot()
-            //.AutoHeight()
-            //[
-            //    SNew(STextBlock)
-            //    .Text(LOCTEXT("Annotation1", "Assetsフォルダ以外のファイルも指定できます。"))
-            //]
-
-        +SVerticalBox::Slot()
+            + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(0, 0, 0, 15))
         [
@@ -121,7 +114,7 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
         .Padding(FMargin(0, 0, 0, 30))
         [
             SNew(SEditableTextBox)
-            .Text(FText::FromString(gml_file_path_))
+            .Text(FText::FromString(m_gmlFilePath))
         ]
         ]
 #pragma  endregion 
@@ -168,7 +161,7 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
         .Padding(FMargin(0, 0, 0, 30))
         [
             SNew(SEditableTextBox)
-            .Text(FText::FromString(obj_file_path_))
+            .Text(FText::FromString(m_objFilePath))
         ]
         ]
 #pragma endregion
@@ -233,7 +226,7 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
     + SHorizontalBox::Slot()
         [
             SNew(SComboBox<TSharedPtr<FString>>)
-            .OptionsSource(&this->axes_conversions_)
+            .OptionsSource(&this->m_axesConversions)
         .OnSelectionChanged_Raw(this, &PlateauWindow::onSelectAxesConversion)
         .OnGenerateWidget_Lambda([](TSharedPtr<FString> value)->TSharedRef<SWidget>
             {
@@ -288,56 +281,56 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
 }
 
 FReply PlateauWindow::onBtnSelectGmlFileClicked() {
-    void* window_handle = myWindow_.Pin()->GetNativeWindow()->GetOSWindowHandle();
-    TArray<FString> out_file_names;
-    FString dialog_title = FString("Select gml File");
-    FString default_path = FString(FPaths::ProjectContentDir());
-    FString default_file;
-    FString file_types = FString("gml | *.gml");
+    void* windowHandle = m_myWindow.Pin()->GetNativeWindow()->GetOSWindowHandle();
+    TArray<FString> outFileNames;
+    FString dialogTitle = FString("Select gml File");
+    FString defaultPath = FString(FPaths::ProjectContentDir());
+    FString defaultFile;
+    FString fileTypes = FString("gml | *.gml");
     uint32 flags = 0;
 
-    IDesktopPlatform* desktop_platform = FDesktopPlatformModule::Get();
+    IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
 
-    bool flg = desktop_platform->OpenFileDialog(
-        window_handle,
-        dialog_title,
-        default_path,
-        default_file,
-        file_types,
+    bool flg = desktopPlatform->OpenFileDialog(
+        windowHandle,
+        dialogTitle,
+        defaultPath,
+        defaultFile,
+        fileTypes,
         flags,
-        out_file_names);
+        outFileNames);
 
-    if (out_file_names.Num() != 0) {
-        gml_file_path_ = out_file_names.Pop();
-        showGML2OBJWindow(myWindow_.Pin());
+    if (outFileNames.Num() != 0) {
+        m_gmlFilePath = outFileNames.Pop();
+        showGML2OBJWindow(m_myWindow.Pin());
     }
 
     return FReply::Handled();
 }
 
 FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
-    void* window_handle = myWindow_.Pin()->GetNativeWindow()->GetOSWindowHandle();
-    TArray<FString> out_file_names;
-    FString dialog_title = FString("Select destination");
-    FString default_path = FString(FPaths::ProjectContentDir());
-    FString default_file = TEXT("exported.obj");
-    FString file_types = FString("obj | *.obj");
+    void* window_handle = m_myWindow.Pin()->GetNativeWindow()->GetOSWindowHandle();
+    TArray<FString> outFileNames;
+    FString dialogTitle = FString("Select destination");
+    FString defaultPath = FString(FPaths::ProjectContentDir());
+    FString defaultFile = TEXT("exported.obj");
+    FString fileTypes = FString("obj | *.obj");
     uint32 flags = 0;
 
-    IDesktopPlatform* desktop_platform = FDesktopPlatformModule::Get();
+    IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
 
-    bool flg = desktop_platform->SaveFileDialog(
+    bool flg = desktopPlatform->SaveFileDialog(
         window_handle,
-        dialog_title,
-        default_path,
-        default_file,
-        file_types,
+        dialogTitle,
+        defaultPath,
+        defaultFile,
+        fileTypes,
         flags,
-        out_file_names);
+        outFileNames);
 
-    if (out_file_names.Num() != 0) {
-        obj_file_path_ = out_file_names.Pop();
-        showGML2OBJWindow(myWindow_.Pin());
+    if (outFileNames.Num() != 0) {
+        m_objFilePath = outFileNames.Pop();
+        showGML2OBJWindow(m_myWindow.Pin());
     }
     return FReply::Handled();
 }
@@ -347,23 +340,24 @@ FReply PlateauWindow::onBtnConvertClicked() {
         ObjWriter objWriter;
         AxesConversion axes;
 
-        if (!axes_conversions_[axes_conversion_index_]->Compare(FString("WNU"), ESearchCase::CaseSensitive)) {
+        if (!m_axesConversions[m_axesConversionIndex]->Compare(FString("WNU"), ESearchCase::CaseSensitive)) {
             axes = AxesConversion::WNU;
-        } else {
+        }
+        else {
             axes = AxesConversion::RUF;
         }
         const citygml::ParserParams params;
-        const auto CityModel = citygml::load(TCHAR_TO_UTF8(*gml_file_path_), params, nullptr);
+        const auto CityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
         if (CityModel == nullptr)
         {
-            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*gml_file_path_));
+            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
         }
 
         objWriter.setValidReferencePoint(*CityModel);
-        objWriter.setMergeMeshFlg(cb_merge_mesh_);
+        objWriter.setMergeMeshFlg(m_cbMergeMesh);
         objWriter.setDestAxes(axes);
-        objWriter.write(TCHAR_TO_UTF8(*obj_file_path_), *CityModel, TCHAR_TO_UTF8(*gml_file_path_));
-        
+        objWriter.write(TCHAR_TO_UTF8(*m_objFilePath), *CityModel, TCHAR_TO_UTF8(*m_gmlFilePath));
+
         return FReply::Handled();
     }
     catch (std::exception& e) {
@@ -373,19 +367,19 @@ FReply PlateauWindow::onBtnConvertClicked() {
     }
 }
 
-void PlateauWindow::onToggleCbOptimize(ECheckBoxState check_state) {
-    cb_optimize_ = (check_state == ECheckBoxState::Checked);
+void PlateauWindow::onToggleCbOptimize(ECheckBoxState checkState) {
+    m_cbOptimize = (checkState == ECheckBoxState::Checked);
 }
 
-void PlateauWindow::onToggleCbMergeMesh(ECheckBoxState check_state) {
-    cb_merge_mesh_ = (check_state == ECheckBoxState::Checked);
+void PlateauWindow::onToggleCbMergeMesh(ECheckBoxState checkState) {
+    m_cbMergeMesh = (checkState == ECheckBoxState::Checked);
 }
 
 void PlateauWindow::startup() {
     FLevelEditorModule& levelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(LEVEL_EDITOR_NAME);
-    extender_ = MakeShared<FExtender>();
-    if (extender_.IsValid()) {
-        extender_->AddMenuBarExtension(
+    m_extender = MakeShared<FExtender>();
+    if (m_extender.IsValid()) {
+        m_extender->AddMenuBarExtension(
             "Help",
             EExtensionHook::After,
             nullptr,
@@ -394,7 +388,7 @@ void PlateauWindow::startup() {
     }
     const auto menuExtensibilityManager = levelEditorModule.GetMenuExtensibilityManager();
     if (menuExtensibilityManager.IsValid()) {
-        menuExtensibilityManager->AddExtender(extender_);
+        menuExtensibilityManager->AddExtender(m_extender);
     }
 
     IMainFrameModule& mainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
@@ -402,11 +396,11 @@ void PlateauWindow::startup() {
 }
 
 void PlateauWindow::shutdown() {
-    if (extender_.IsValid() && FModuleManager::Get().IsModuleLoaded(LEVEL_EDITOR_NAME)) {
+    if (m_extender.IsValid() && FModuleManager::Get().IsModuleLoaded(LEVEL_EDITOR_NAME)) {
         FLevelEditorModule& levelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(LEVEL_EDITOR_NAME);
         const auto menuExtensibilityManager = levelEditorModule.GetMenuExtensibilityManager();
         if (menuExtensibilityManager.IsValid()) {
-            menuExtensibilityManager->RemoveExtender(extender_);
+            menuExtensibilityManager->RemoveExtender(m_extender);
         }
     }
 
@@ -418,9 +412,9 @@ void PlateauWindow::shutdown() {
 }
 
 FText PlateauWindow::onGetAxesConversion() const {
-    return FText::FromString(*axes_conversions_[axes_conversion_index_]);
+    return FText::FromString(*m_axesConversions[m_axesConversionIndex]);
 }
 
-void PlateauWindow::onSelectAxesConversion(TSharedPtr<FString> new_selection, ESelectInfo::Type select_info) {
-    axes_conversion_index_ = axes_conversions_.Find(new_selection);
+void PlateauWindow::onSelectAxesConversion(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo) {
+    m_axesConversionIndex = m_axesConversions.Find(newSelection);
 }

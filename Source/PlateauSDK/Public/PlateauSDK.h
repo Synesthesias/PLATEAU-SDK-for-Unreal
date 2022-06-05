@@ -14,5 +14,5 @@ public:
     virtual void ShutdownModule() override;
 
 private:
-    PlateauWindow instance_;
+    PlateauWindow m_instance;
 };
