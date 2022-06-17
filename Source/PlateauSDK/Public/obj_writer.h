@@ -16,9 +16,6 @@ public:
     }
 
     void write(const std::string& obj_file_path, const citygml::CityModel& city_model, const std::string& gml_file_path);
-    void writeForUE(const char* obj_file_path, const citygml::CityModel& city_model, const char* gml_file_path);
-    std::shared_ptr<const citygml::CityModel> loadForUE(const std::string& fileName, const citygml::ParserParams& params, std::shared_ptr<citygml::CityGMLLogger> logger = nullptr);
-    void loadAndWriteForUE(const char* obj_file_path, const char* gml_file_path);
     void setMergeMeshFlg(bool value);
     bool getMergeMeshFlg() const;
     void setDestAxes(AxesConversion value);
