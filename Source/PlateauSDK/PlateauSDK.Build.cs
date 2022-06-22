@@ -44,7 +44,10 @@ public class PlateauSDK : ModuleRules
                 "LevelEditor",
                 "Projects",
                 "DesktopPlatform",
-                "InputCore"
+                "InputCore",
+                "FBX",
+                "UnrealEd",
+                "AssetTools",
                 // ... add private dependencies that you statically link with here ...	
             }
             );
@@ -58,17 +61,14 @@ public class PlateauSDK : ModuleRules
             );
 
 
-        //.hファイルは入っているフォルダのパスを渡す
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
 
-        //.libファイルは入っているフォルダのパスを渡す
         string libPath = Path.Combine(ModuleDirectory, "Private");
         PublicLibraryPaths.Add(libPath);
         PublicAdditionalLibraries.Add("plateau.lib");
         PublicAdditionalLibraries.Add("citygml.lib");
 
-        //.dllファイルはファイルのパスを渡す
         string dllPath = Path.Combine(libPath, "plateau.dll");
         string dllName = "plateau.dll";
         CopyDll(dllName, dllPath);
@@ -82,7 +82,7 @@ public class PlateauSDK : ModuleRules
         RuntimeDependencies.Add(dllPath);
     }
 
-    // Binaries以下にdll をコピーする
+    // copy dll file to Binaries
     private void CopyDll(string dllName, string dllFullPath)
     {
         if (!File.Exists(dllFullPath))

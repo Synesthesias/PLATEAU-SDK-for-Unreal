@@ -13,6 +13,9 @@
 #include "IDesktopPlatform.h"
 #include "citygml/citymodel.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
+#include "Factories/FbxSceneImportFactory.h"
+#include "AssetTools/Private/AssetTools.h"
+#include "AssetToolsModule.h"
 
 #include "obj_writer.h"
 #include "citygml/citygml.h"
@@ -346,17 +349,24 @@ FReply PlateauWindow::onBtnConvertClicked() {
         else {
             axes = AxesConversion::RUF;
         }
-        const citygml::ParserParams params;
-        const auto CityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
-        if (CityModel == nullptr)
-        {
-            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
-        }
+        //const citygml::ParserParams params;
+        //const auto CityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
+        //if (CityModel == nullptr)
+        //{
+        //    throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
+        //}
 
-        objWriter.setValidReferencePoint(*CityModel);
-        objWriter.setMergeMeshFlg(m_cbMergeMesh);
-        objWriter.setDestAxes(axes);
-        objWriter.write(TCHAR_TO_UTF8(*m_objFilePath), *CityModel, TCHAR_TO_UTF8(*m_gmlFilePath));
+        //objWriter.setValidReferencePoint(*CityModel);
+        //objWriter.setMergeMeshFlg(m_cbMergeMesh);
+        //objWriter.setDestAxes(axes);
+        //objWriter.write(TCHAR_TO_UTF8(*m_objFilePath), *CityModel, TCHAR_TO_UTF8(*m_gmlFilePath));
+
+        UFactory* ChosenFactory = NewObject<UFbxSceneImportFactory>();
+        TArray<FString> Files;
+        Files.Add(m_objFilePath);
+        FString DestinationPath = TEXT("/Game/sample");
+        FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+        auto objs = AssetToolsModule.Get().ImportAssets(Files, DestinationPath, ChosenFactory);
 
         return FReply::Handled();
     }
