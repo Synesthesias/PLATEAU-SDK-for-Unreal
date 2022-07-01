@@ -16,6 +16,11 @@
 	"Installed": false,
 	"Modules": [
 		{
+			"Name": "PLATEAURuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "PlateauSDK",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
