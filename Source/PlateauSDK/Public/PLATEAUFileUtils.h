@@ -2,7 +2,17 @@
 
 #include "CoreMinimal.h"
 
+/*
+ * ファイル操作のためのユーティリティを提供します。
+ */
 class PLATEAUFileUtils {
 public:
-    static void ImportFbx(const TArray<FString>& files, FString destinationPath);
+    /*
+     * メッシュファイルを全て出力先のパスにインポートします。
+     *
+     * @param files インポートするメッシュファイル
+     * @param destinationPath 出力先のコンテンツパス(/Game/...)
+     * @return 
+     */
+    static void ImportFbx(const TArray<FString>& files, const FString& destinationPath);
 };
