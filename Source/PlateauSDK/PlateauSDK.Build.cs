@@ -28,6 +28,7 @@ public class PlateauSDK : ModuleRules
             new string[]
             {
                 "Core",
+                "PLATEAURuntime"
                 // ... add other public dependencies that you statically link with here ...
             }
             );
