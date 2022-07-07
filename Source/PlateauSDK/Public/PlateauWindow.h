@@ -17,8 +17,9 @@ private:
     TSharedPtr<FExtender> m_extender;
     TWeakPtr<SWindow> m_rootWindow;
     TWeakPtr<SWindow> m_myWindow;
-    FString m_gmlFilePath = FPaths::ProjectContentDir();
-    FString m_objFilePath = FPaths::ProjectContentDir();
+    FString m_gmlFilePath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
+    FString m_gmlCopyPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + "PLATEAU/");
+    FString m_objFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     int32 m_axesConversionIndex = 1;
     TArray<TSharedPtr<FString>> m_axesConversions;
     bool m_cbOptimize;

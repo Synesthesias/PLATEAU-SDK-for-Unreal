@@ -11,14 +11,12 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Templates/SharedPointer.h"
 #include "IDesktopPlatform.h"
-#include "citygml/citymodel.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
-#include "Factories/FbxSceneImportFactory.h"
 #include "AssetTools/Private/AssetTools.h"
-#include "AssetToolsModule.h"
+#include <direct.h>
 
-#include "obj_writer.h"
 #include "citygml/citygml.h"
+#include "plateau/io/mesh_converter.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPlateauSDKModule"
@@ -56,7 +54,7 @@ void PlateauWindow::showPlateauWindow() {
     if (!m_myWindow.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
             .Title(LOCTEXT("Model File Converter Window", "Model File Converter"))
-            .ClientSize(FVector2D(300.f, 300.f));
+            .ClientSize(FVector2D(500.f, 500.f));
         m_myWindow = TWeakPtr<SWindow>(window);
 
         if (m_rootWindow.IsValid()) {
@@ -117,6 +115,7 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
         .Padding(FMargin(0, 0, 0, 30))
         [
             SNew(SEditableTextBox)
+            .IsReadOnly(true)
             .Text(FText::FromString(m_gmlFilePath))
         ]
         ]
@@ -164,7 +163,8 @@ void PlateauWindow::showGML2OBJWindow(TWeakPtr<SWindow> window) {
         .Padding(FMargin(0, 0, 0, 30))
         [
             SNew(SEditableTextBox)
-            .Text(FText::FromString(m_objFilePath))
+            .IsReadOnly(true)
+            .Text(FText::FromString(m_objFolderPath))
         ]
         ]
 #pragma endregion
@@ -304,7 +304,7 @@ FReply PlateauWindow::onBtnSelectGmlFileClicked() {
         outFileNames);
 
     if (outFileNames.Num() != 0) {
-        m_gmlFilePath = outFileNames.Pop();
+        m_gmlFilePath = FPaths::ConvertRelativePathToFull(outFileNames.Pop());
         showGML2OBJWindow(m_myWindow.Pin());
     }
 
@@ -313,60 +313,46 @@ FReply PlateauWindow::onBtnSelectGmlFileClicked() {
 
 FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
     void* window_handle = m_myWindow.Pin()->GetNativeWindow()->GetOSWindowHandle();
-    TArray<FString> outFileNames;
     FString dialogTitle = FString("Select destination");
     FString defaultPath = FString(FPaths::ProjectContentDir());
-    FString defaultFile = TEXT("exported.obj");
-    FString fileTypes = FString("obj | *.obj");
-    uint32 flags = 0;
+    FString outFolderName;
 
     IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
 
-    bool flg = desktopPlatform->SaveFileDialog(
+    bool flgs = desktopPlatform->OpenDirectoryDialog(
         window_handle,
         dialogTitle,
         defaultPath,
-        defaultFile,
-        fileTypes,
-        flags,
-        outFileNames);
+        outFolderName);
 
-    if (outFileNames.Num() != 0) {
-        m_objFilePath = outFileNames.Pop();
+    if (!outFolderName.IsEmpty()) {
+        m_objFolderPath = outFolderName;
         showGML2OBJWindow(m_myWindow.Pin());
     }
+
     return FReply::Handled();
 }
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        ObjWriter objWriter;
-        AxesConversion axes;
-
-        if (!m_axesConversions[m_axesConversionIndex]->Compare(FString("WNU"), ESearchCase::CaseSensitive)) {
-            axes = AxesConversion::WNU;
+        struct stat statBuf;
+        if (stat(TCHAR_TO_ANSI(*m_gmlCopyPath), &statBuf)) {
+            if (_mkdir(TCHAR_TO_ANSI(*m_gmlCopyPath)) != 0) {
+                UE_LOG(LogTemp, Warning, TEXT("make directory failed"));
+            }
         }
-        else {
-            axes = AxesConversion::RUF;
+
+        const citygml::ParserParams params;
+        const auto cityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
+        if (cityModel == nullptr)
+        {
+            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
         }
-        //const citygml::ParserParams params;
-        //const auto CityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
-        //if (CityModel == nullptr)
-        //{
-        //    throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
-        //}
 
-        //objWriter.setValidReferencePoint(*CityModel);
-        //objWriter.setMergeMeshFlg(m_cbMergeMesh);
-        //objWriter.setDestAxes(axes);
-        //objWriter.write(TCHAR_TO_UTF8(*m_objFilePath), *CityModel, TCHAR_TO_UTF8(*m_gmlFilePath));
-
-        UFactory* ChosenFactory = NewObject<UFbxSceneImportFactory>();
-        TArray<FString> Files;
-        Files.Add(m_objFilePath);
-        FString DestinationPath = TEXT("/Game/sample");
-        FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-        auto objs = AssetToolsModule.Get().ImportAssets(Files, DestinationPath, ChosenFactory);
+        std::vector<std::string> convertedFiles;
+        MeshConverter meshConverter;
+        meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), TCHAR_TO_UTF8(*m_gmlFilePath),
+            cityModel, nullptr);
 
         return FReply::Handled();
     }
