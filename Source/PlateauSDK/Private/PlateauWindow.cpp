@@ -13,7 +13,7 @@
 #include "IDesktopPlatform.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
 #include "AssetTools/Private/AssetTools.h"
-#include <direct.h>
+#include <filesystem>
 
 #include "citygml/citygml.h"
 #include "plateau/io/mesh_converter.h"
@@ -335,12 +335,15 @@ FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        struct stat statBuf;
-        if (stat(TCHAR_TO_ANSI(*m_gmlCopyPath), &statBuf)) {
-            if (_mkdir(TCHAR_TO_ANSI(*m_gmlCopyPath)) != 0) {
-                UE_LOG(LogTemp, Warning, TEXT("make directory failed"));
-            }
+        //gml folder copy to PLATEAU folder
+        if(!std::filesystem::exists(TCHAR_TO_ANSI(*m_gmlCopyPath))){
+            std::filesystem::create_directory(TCHAR_TO_ANSI(*m_gmlCopyPath));
         }
+        FString tempS, leftS, rightS;
+        tempS = m_gmlFilePath;
+        tempS = tempS.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase);
+        tempS.Split(TEXT("/"), &leftS, &rightS);
+        copyGmlFiles(FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) + leftS);
 
         const citygml::ParserParams params;
         const auto cityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
@@ -413,4 +416,34 @@ FText PlateauWindow::onGetAxesConversion() const {
 
 void PlateauWindow::onSelectAxesConversion(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo) {
     m_axesConversionIndex = m_axesConversions.Find(newSelection);
+}
+
+void PlateauWindow::copyGmlFiles(FString path){
+    FString copyPath, tempS, leftS, rightS;
+    tempS = path;
+
+    //tempS = tempS.Replace(*FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()), TEXT(""), ESearchCase::IgnoreCase);
+    tempS.Split(TEXT("/"), &leftS, &rightS, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+    copyPath = m_gmlCopyPath + rightS;
+
+    if (!std::filesystem::exists(TCHAR_TO_ANSI(*copyPath))) {
+        std::filesystem::copy(TCHAR_TO_ANSI(*path), TCHAR_TO_ANSI(*copyPath));
+    }
+
+
+    if(!std::filesystem::is_directory(TCHAR_TO_ANSI(*path)))
+    {
+        return;
+    }
+    else if(std::filesystem::is_empty(TCHAR_TO_ANSI(*path)))
+    {
+        return;
+    }
+
+
+    auto folders = std::filesystem::directory_iterator(TCHAR_TO_ANSI(*path));
+    for (auto folder : folders)
+    {
+        copyGmlFiles(FString(folder.path().string().c_str()));
+    }
 }

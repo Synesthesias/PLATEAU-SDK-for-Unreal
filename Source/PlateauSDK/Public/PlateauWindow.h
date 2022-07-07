@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 
+
 class PLATEAUSDK_API PlateauWindow : public TSharedFromThis<PlateauWindow>
 {
 public:
@@ -38,4 +39,5 @@ private:
     void onToggleCbMergeMesh(ECheckBoxState checkState);
     void onSelectAxesConversion(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo);
     FText onGetAxesConversion() const;
+    void copyGmlFiles(FString path);
 };

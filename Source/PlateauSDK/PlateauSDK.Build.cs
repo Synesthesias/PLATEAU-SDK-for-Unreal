@@ -81,7 +81,12 @@ public class PlateauSDK : ModuleRules
         CopyDll(dllName, dllPath);
         PublicDelayLoadDLLs.Add(dllName);
         RuntimeDependencies.Add(dllPath);
+
+        //using c++17
+        CppStandard = CppStandardVersion.Cpp17;
     }
+
+    
 
     // copy dll file to Binaries
     private void CopyDll(string dllName, string dllFullPath)
