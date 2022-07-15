@@ -3,6 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <vector>
+
+#include "plateau/udx/mesh_code.h"
+#include "plateau/udx/udx_file_collection.h"
 
 
 class PLATEAUSDK_API PlateauWindow : public TSharedFromThis<PlateauWindow>
@@ -20,24 +24,52 @@ private:
     TWeakPtr<SWindow> m_myWindow;
     FString m_gmlFilePath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     FString m_gmlCopyPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + "PLATEAU/");
+    FString m_gmlFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     FString m_objFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     int32 m_axesConversionIndex = 1;
-    TArray<TSharedPtr<FString>> m_axesConversions;
     bool m_cbOptimize;
     bool m_cbMergeMesh;
+    TArray<bool> m_selectRegion; //選択された地域メッシュ
+    std::vector<MeshCode> m_meshCodes;
+    std::vector<UdxSubFolder> m_subFolders;
+    TArray<bool> m_selectFeature; //選択された地域に含まれる地物
+    TArray<TSharedPtr<FString>> m_outputModeArray;
+    int m_buildOutputIndex = 0;
+    int m_buildMaxLOD = 3;
+    int m_buildMinLOD = 1;
+    TArray<FString> m_Features = {
+        TEXT("建築物"),
+        TEXT("道路"),
+        TEXT("植生"),
+        TEXT("都市設備"),
+        TEXT("起伏"),
+        TEXT("その他")
+    };
+    TArray<bool> m_existFeatures; //その他用
+
+    UdxFileCollection m_collection;
+    UdxFileCollection m_filteredCollection;
 
     void onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder);
     void onPulldownMenuExtension(FMenuBuilder& menuBuilder);
     void showPlateauWindow();
     void onMainFrameLoad(TSharedPtr<SWindow> inRootWindow, bool isNewProjectWindow);
-    void showGML2OBJWindow(TWeakPtr<SWindow> window);
+    void updatePlateauWindow(TWeakPtr<SWindow> window);
 
     FReply onBtnSelectGmlFileClicked();
     FReply onBtnSelectObjDestinationClicked();
     FReply onBtnConvertClicked();
-    void onToggleCbOptimize(ECheckBoxState checkState);
-    void onToggleCbMergeMesh(ECheckBoxState checkState);
-    void onSelectAxesConversion(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo);
-    FText onGetAxesConversion() const;
-    void copyGmlFiles(FString path);
+    FReply onBtnAllRegionSelectClicked();
+    FReply onBtnAllRegionRelieveClicked();
+    void onToggleCbSelectRegion(ECheckBoxState checkState, int num);
+    FReply onBtnAllFeatureSelectClicked();
+    FReply onBtnAllFeatureRelieveClicked();
+    void onToggleCbSelectFeature(ECheckBoxState checkState, int num);
+    void onSelectOutputMode(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo);
+    FText onGetBuildOutputMode() const;
+    void onBuildMaxLODChanged(int value);
+    void onBuildMinLODChanged(int value);
+    void checkRegionMesh();
+
+    //void copyGmlFiles(FString path);
 };
