@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 
 #include <libplateau_api.h>
 #include <plateau/udx/gml_file_info.h>
@@ -110,9 +111,9 @@ public:
     void copyCodelistFiles(const std::string& destination_root_path);
 
     std::vector<GmlFileInfo>& getGmlFiles(const UdxSubFolder& sub_folder);
-    std::vector<GmlFileInfo> getAllGmlFiles();
-    std::vector<UdxSubFolder> getSubFolders();
-    std::vector<MeshCode> getMeshCodes();
+    std::shared_ptr<std::vector<GmlFileInfo>> getAllGmlFiles();
+    std::shared_ptr<std::vector<UdxSubFolder>> getSubFolders();
+    std::shared_ptr<std::vector<MeshCode>> getMeshCodes();
 
     std::string getRelativePath(const std::string& path) const;
 

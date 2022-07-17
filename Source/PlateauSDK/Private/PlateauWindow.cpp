@@ -21,9 +21,6 @@
 #include "plateau/mesh/mesh_converter.h"
 #include "PLATEAUFileUtils.h"
 
-//for debug
-#include "FileHelpers.h"
-
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPlateauSDKModule"
 
@@ -126,130 +123,123 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 #pragma  endregion
 
 #pragma region select_region_mesh
-    auto vbMeshCodes = SNew(SVerticalBox);
+    if (m_gmlFileSelected) {
+        auto vbMeshCodes = SNew(SVerticalBox);
 
-    int indexRegion = 0;
-    bool check;
-    for (auto meshCode : m_meshCodes)
-    {
-        check = m_selectRegion[indexRegion];
-        vbMeshCodes->AddSlot()
-            .AutoHeight()
-            .Padding(FMargin(0, 0, 0, 3))[
-                SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString(FString(meshCode.get().c_str())))
-                    ]
-                + SHorizontalBox::Slot()
-                    [
-                        SNew(SCheckBox)
-                        .IsChecked(check)
-                    .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
-                    ]
-            ];
-        indexRegion++;
-    }
-    vbMeshCodes->AddSlot()
-        .Padding(FMargin(0, 0, 0, 3))[
-            SNew(SHorizontalBox)
-                + SHorizontalBox::Slot()
-                .AutoWidth()
-                .Padding(FMargin(0, 0, 15, 0))
-                [
-                    SNew(SButton)
-                    .Text(FText::FromString(FString(TEXT("全選択"))))
-                .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionSelectClicked)
-                ]
-            + SHorizontalBox::Slot()
-                .AutoWidth()
-                [
-                    SNew(SButton)
-                    .Text(FText::FromString(FString(TEXT("全除外"))))
-                .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionRelieveClicked)
-                ]
-        ];
+        int indexRegion = 0;
+        bool check;
+        TArray<FString> secondMesh;
+        //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
+        //auto collection = UdxFileCollection::find(rootPath);
+        //m_meshCodes = collection.getMeshCodes();
 
-    if (m_meshCodes.size() != 0) {
-        scrollBox->AddSlot()[
-            vbMeshCodes
-        ];
-    }
-#pragma endregion
+        for (auto meshCode : *m_meshCodes)
+        {
+            check = m_selectRegion[indexRegion];
+            FString regionName = FString(meshCode.get().c_str());
+            auto len = regionName.Len();
+            UE_LOG(LogTemp, Warning, TEXT("%d"), len);
 
-#pragma region select_feature_mesh
-    auto vbRegionMesh = SNew(SVerticalBox);
-    int indexFeature = 0;
-    for (auto subfolder : m_subFolders) {
-        check = m_selectFeature[indexFeature];
-        if (subfolder.name() == "bldg") {
-            m_existFeatures[0] = true;
-        }
-        else if (subfolder.name() == "tran") {
-            m_existFeatures[1] = true;
-        }
-        else if (subfolder.name() == "veg") {
-            m_existFeatures[2] = true;
-        }
-        else if (subfolder.name() == "frn") {
-            m_existFeatures[3] = true;
-        }
-        else if (subfolder.name() == "dem") {
-            m_existFeatures[4] = true;
-        }
-        else {
-            m_existFeatures[5] = true;
-        }
-        indexFeature++;
-    }
-
-    for (int i = 0; i < m_existFeatures.Num(); i++) {
-        if (m_existFeatures[i]) {
-            vbRegionMesh->AddSlot()
+            if (int(regionName.Len()) == 8) {
+                secondMesh.Add(regionName);
+            }
+            vbMeshCodes->AddSlot()
+                .AutoHeight()
                 .Padding(FMargin(0, 0, 0, 3))[
                     SNew(SHorizontalBox)
                         + SHorizontalBox::Slot()
                         [
                             SNew(STextBlock)
-                            .Text(FText::FromString(m_Features[i]))
+                            .Text(FText::FromString(regionName))
                         ]
                     + SHorizontalBox::Slot()
                         [
                             SNew(SCheckBox)
                             .IsChecked(check)
-                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, i)
+                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
                         ]
                 ];
+            indexRegion++;
+        }
+        vbMeshCodes->AddSlot()
+            .Padding(FMargin(0, 0, 0, 3))[
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .Padding(FMargin(0, 0, 15, 0))
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString(FString(TEXT("全選択"))))
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionSelectClicked)
+                    ]
+                + SHorizontalBox::Slot()
+                    .AutoWidth()
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString(FString(TEXT("全除外"))))
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionRelieveClicked)
+                    ]
+            ];
+
+        if ((*m_meshCodes).size() != 0) {
+            scrollBox->AddSlot()[
+                vbMeshCodes
+            ];
+        }
+
+#pragma endregion
+
+#pragma region select_feature_mesh
+        if (m_selectFeatureSize != 0) {
+
+            auto vbRegionMesh = SNew(SVerticalBox);
+
+            for (int j = 0; j < m_existFeatures.Num(); j++) {
+                //check = m_selectFeature[j];
+                if (m_existFeatures[j]) {
+                    vbRegionMesh->AddSlot()
+                        .Padding(FMargin(0, 0, 0, 3))[
+                            SNew(SHorizontalBox)
+                                + SHorizontalBox::Slot()
+                                [
+                                    SNew(STextBlock)
+                                    .Text(FText::FromString(m_Features[j]))
+                                ]
+                            + SHorizontalBox::Slot()
+                                [
+                                    SNew(SCheckBox)
+                                    .IsChecked(false)
+                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, j)
+                                ]
+                        ];
+                }
+            }
+
+            vbRegionMesh->AddSlot()
+                .Padding(FMargin(0, 0, 0, 8))[
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        .Padding(FMargin(0, 0, 15, 0))
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(FString(TEXT("全選択"))))
+                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureSelectClicked)
+                        ]
+                    + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(FString(TEXT("全除外"))))
+                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureRelieveClicked)
+                        ]
+                ];
+            scrollBox->AddSlot()[
+                vbRegionMesh
+            ];
         }
     }
 
-    vbRegionMesh->AddSlot()
-        .Padding(FMargin(0, 0, 0, 8))[
-            SNew(SHorizontalBox)
-                + SHorizontalBox::Slot()
-                .AutoWidth()
-                .Padding(FMargin(0, 0, 15, 0))
-                [
-                    SNew(SButton)
-                    .Text(FText::FromString(FString(TEXT("全選択"))))
-                .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureSelectClicked)
-                ]
-            + SHorizontalBox::Slot()
-                .AutoWidth()
-                [
-                    SNew(SButton)
-                    .Text(FText::FromString(FString(TEXT("全除外"))))
-                .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureRelieveClicked)
-                ]
-        ];
-
-    if (m_subFolders.size() != 0)
-    {
-        scrollBox->AddSlot()[
-            vbRegionMesh
-        ];
-    }
 #pragma endregion
 
 #pragma region Select_obj_File_Destination
@@ -439,20 +429,20 @@ FReply PlateauWindow::onBtnSelectGmlFileClicked() {
 
     IDesktopPlatform* desktopPlatform = FDesktopPlatformModule::Get();
 
-    bool flg = desktopPlatform->OpenDirectoryDialog(
+    m_gmlFileSelected = desktopPlatform->OpenDirectoryDialog(
         windowHandle,
         dialogTitle,
         defaultPath,
         outFolderName);
 
-
-    if (flg) {
+    if (m_gmlFileSelected) {
         m_gmlFolderPath = outFolderName;
         std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
         m_collection = UdxFileCollection::find(rootPath);
         m_meshCodes = m_collection.getMeshCodes();
 
-        m_selectRegion.Init(false, m_meshCodes.size());
+        m_selectRegion.Reset();
+        m_selectRegion.Init(false, (*m_meshCodes).size());
 
         updatePlateauWindow(m_myWindow.Pin());
     }
@@ -480,12 +470,29 @@ FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        for (int i = 0; i < m_subFolders.size(); i++) {
-            if (m_selectFeature[i]) {
-                m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), m_subFolders[i]);
+        std::vector<MeshCode> targetMeshCodes;
+        int i = 0;
+        //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
+        //auto collection = UdxFileCollection::find(rootPath);
+        //m_meshCodes = collection.getMeshCodes();
+        for (auto meshCode : *m_meshCodes) {
+            if (m_selectRegion[i]) {
+                targetMeshCodes.push_back(meshCode);
             }
+            i++;
         }
-        m_filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
+        if (targetMeshCodes.size() != 0) return FReply::Handled();
+
+        auto filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
+        m_subFolders = filteredCollection.getSubFolders();
+        i = 0;
+        for (auto subfolder : *m_subFolders) {
+            if (m_selectFeature[i]) {
+                filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+            }
+            i++;
+        }
+        filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
 
 
         //setting convert option
@@ -513,7 +520,7 @@ FReply PlateauWindow::onBtnConvertClicked() {
         //if (cityModel == nullptr) {
         //    throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
         //}
-        //for (auto subfoloder : m_subFolders) {
+        //for (auto subfoloder : m_subFolders_old) {
         //    meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), TCHAR_TO_UTF8(*m_gmlFilePath),
         //        cityModel, nullptr);
         //}
@@ -529,7 +536,7 @@ FReply PlateauWindow::onBtnConvertClicked() {
 }
 
 FReply PlateauWindow::onBtnAllRegionSelectClicked() {
-    for (int i = 0; i<m_selectRegion.Num();i++) {
+    for (int i = 0; i < m_selectRegion.Num(); i++) {
         m_selectRegion[i] = true;
     }
     checkRegionMesh();
@@ -553,8 +560,8 @@ void PlateauWindow::onToggleCbSelectRegion(ECheckBoxState checkState, int num) {
 }
 
 FReply PlateauWindow::onBtnAllFeatureSelectClicked() {
-    for (int i=0;i< m_existFeatures.Num();i++) {
-        m_existFeatures[i] = true;
+    for (int i = 0; i < m_existFeatures.Num(); i++) {
+        m_selectFeature[i] = true;
     }
     updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
@@ -562,14 +569,14 @@ FReply PlateauWindow::onBtnAllFeatureSelectClicked() {
 
 FReply PlateauWindow::onBtnAllFeatureRelieveClicked() {
     for (int i = 0; i < m_existFeatures.Num(); i++) {
-        m_existFeatures[i] = false;
+        m_selectFeature[i] = false;
     }
     updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
-void PlateauWindow::onToggleCbSelectFeature(ECheckBoxState checkState, int num) {
-    m_existFeatures[num] = (checkState == ECheckBoxState::Checked);
+void PlateauWindow::onToggleCbSelectFeature(ECheckBoxState checkState, int index) {
+    m_selectFeature[index] = (checkState == ECheckBoxState::Checked);
     updatePlateauWindow(m_myWindow.Pin());
 }
 
@@ -628,16 +635,45 @@ void PlateauWindow::onBuildMinLODChanged(int value) {
 void PlateauWindow::checkRegionMesh() {
     std::vector<MeshCode> targetMeshCodes;
 
-    for (int i = 0; i < m_selectRegion.Num(); i++) {
+    int i = 0;
+    //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
+    //auto collection = UdxFileCollection::find(rootPath);
+    //m_meshCodes = collection.getMeshCodes();
+    for (auto meshCode : *m_meshCodes) {
         if (m_selectRegion[i]) {
-            targetMeshCodes.push_back(m_meshCodes[i]);
+            targetMeshCodes.push_back(meshCode);
         }
+        i++;
     }
-    m_subFolders = std::vector<UdxSubFolder>();
-    m_selectFeature.Reset();
+    m_existFeatures.Init(false, m_Features.Num());
+    m_selectFeatureSize = 0;
     if (targetMeshCodes.size() != 0) {
-        m_filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
-        m_subFolders = m_filteredCollection.getSubFolders();
-        m_selectFeature.Init(false, m_subFolders.size());
+        auto filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
+        m_subFolders = filteredCollection.getSubFolders();
+
+        for (auto subfolder : *m_subFolders) {
+            if (subfolder.name() == "bldg") {
+                m_existFeatures[0] = true;
+            }
+            else if (subfolder.name() == "tran") {
+                m_existFeatures[1] = true;
+            }
+            else if (subfolder.name() == "veg") {
+                m_existFeatures[2] = true;
+            }
+            else if (subfolder.name() == "frn") {
+                m_existFeatures[3] = true;
+            }
+            else if (subfolder.name() == "dem") {
+                m_existFeatures[4] = true;
+            }
+            else {
+                m_existFeatures[5] = true;
+            }
+        }
+        for (bool flg : m_existFeatures){
+            if (flg) m_selectFeatureSize++;
+        }
+        m_selectFeature.Init(false, m_selectFeatureSize);
     }
 }

@@ -29,10 +29,8 @@ private:
     int32 m_axesConversionIndex = 1;
     bool m_cbOptimize;
     bool m_cbMergeMesh;
-    TArray<bool> m_selectRegion; //選択された地域メッシュ
-    std::vector<MeshCode> m_meshCodes;
-    std::vector<UdxSubFolder> m_subFolders;
-    TArray<bool> m_selectFeature; //選択された地域に含まれる地物
+    std::shared_ptr<std::vector<MeshCode>> m_meshCodes;
+    std::shared_ptr<std::vector<UdxSubFolder>> m_subFolders;
     TArray<TSharedPtr<FString>> m_outputModeArray;
     int m_buildOutputIndex = 0;
     int m_buildMaxLOD = 3;
@@ -45,9 +43,14 @@ private:
         TEXT("起伏"),
         TEXT("その他")
     };
-    TArray<bool> m_existFeatures; //その他用
-
+    TArray<bool> m_selectRegion; //選択された地域メッシュ
+    TArray<bool> m_existFeatures; //選択された地域に含まれる地物（その他あり）
+    TArray<bool> m_selectFeature; //選択された地物（その他あり）
+    bool m_gmlFileSelected = false;
+    int m_selectFeatureSize;
     UdxFileCollection m_collection;
+
+    //UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
 
     void onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder);
@@ -64,7 +67,7 @@ private:
     void onToggleCbSelectRegion(ECheckBoxState checkState, int num);
     FReply onBtnAllFeatureSelectClicked();
     FReply onBtnAllFeatureRelieveClicked();
-    void onToggleCbSelectFeature(ECheckBoxState checkState, int num);
+    void onToggleCbSelectFeature(ECheckBoxState checkState, int index);
     void onSelectOutputMode(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo);
     FText onGetBuildOutputMode() const;
     void onBuildMaxLODChanged(int value);
