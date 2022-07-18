@@ -17,6 +17,7 @@
 #include "Dialogs/DlgPickPath.h"
 #include <filesystem>
 #include <vector>
+#include <algorithm>
 
 #include "citygml/citygml.h"
 #include "plateau/mesh/mesh_converter.h"
@@ -128,23 +129,80 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         auto vbMeshCodes = SNew(SVerticalBox);
 
         int indexRegion = 0;
-        bool check;
-        TArray<FString> secondMesh;
-        TArray<FString> thirdMesh;
+        bool selectSecondMesh;
+        bool selectThirdMesh;
+        TArray<MeshCode> secondMesh;
+        TArray<MeshCode> thirdMesh;
+        TArray<MeshCode> delThirdMesh;
+        std::vector<MeshCode> tempMeshCodes;
 
-        for (auto meshCode : *m_meshCodes)
-        {
-            FString regionName = FString(meshCode.get().c_str());
-            if (regionName.Len() == 6) {
-                secondMesh.Add(regionName);
+        for (auto meshCode : *m_meshCodes) {
+            if (FString(meshCode.get().c_str()).Len() == 6) {
+                secondMesh.Add(meshCode);
             }
             else {
-                thirdMesh.Add(regionName);
+                thirdMesh.Add(meshCode);
             }
         }
 
         for (auto sMesh : secondMesh) {
-            check = m_selectRegion[indexRegion];
+            selectSecondMesh = m_selectRegion[indexRegion];
+            tempMeshCodes.push_back(sMesh);
+            vbMeshCodes->AddSlot()
+                .AutoHeight()
+                .Padding(FMargin(0, 0, 0, 3))[
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        [
+                            SNew(STextBlock)
+                            .Text(FText::FromString(FString(sMesh.get().c_str())))
+                        ]
+                    + SHorizontalBox::Slot()
+                        [
+                            SNew(SCheckBox)
+                            .IsChecked(selectSecondMesh)
+                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                        ]
+                ];
+            indexRegion++;
+
+            thirdMesh = sortMeshCodes(thirdMesh);
+            for (auto tMesh : thirdMesh) {
+                if (FString(tMesh.get().c_str()).Contains(FString(sMesh.get().c_str()))) {
+                    delThirdMesh.Add(tMesh);
+                    tempMeshCodes.push_back(tMesh);
+                    if (selectSecondMesh) {
+                        selectThirdMesh = m_selectRegion[indexRegion];
+
+                        vbMeshCodes->AddSlot()
+                            .AutoHeight()
+                            .Padding(FMargin(30, 0, 0, 3))[
+                                SNew(SHorizontalBox)
+                                    + SHorizontalBox::Slot()
+                                    [
+                                        SNew(STextBlock)
+                                        .Text(FText::FromString(FString(tMesh.get().c_str())))
+                                    ]
+                                + SHorizontalBox::Slot()
+                                    [
+                                        SNew(SCheckBox)
+                                        .IsChecked(selectThirdMesh)
+                                    .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                                    ]
+                            ];
+                    }
+                    indexRegion++;
+                }
+            }
+            for (auto delTMesh : delThirdMesh) {
+                thirdMesh.Remove(delTMesh);
+            }
+        }
+        //2次メッシュのない３次メッシュ
+        for (auto tMesh : thirdMesh) {
+            delThirdMesh.Add(tMesh);
+            tempMeshCodes.push_back(tMesh);
+            selectThirdMesh = m_selectRegion[indexRegion];
 
             vbMeshCodes->AddSlot()
                 .AutoHeight()
@@ -153,59 +211,19 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                         + SHorizontalBox::Slot()
                         [
                             SNew(STextBlock)
-                            .Text(FText::FromString(sMesh))
+                            .Text(FText::FromString(FString(tMesh.get().c_str())))
                         ]
                     + SHorizontalBox::Slot()
                         [
                             SNew(SCheckBox)
-                            .IsChecked(check)
+                            .IsChecked(selectThirdMesh)
                         .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
                         ]
                 ];
             indexRegion++;
-
-            for (auto tMesh : thirdMesh) {
-                check = m_selectRegion[indexRegion];
-                if (tMesh.Contains(sMesh)) {
-                    vbMeshCodes->AddSlot()
-                        .AutoHeight()
-                        .Padding(FMargin(30, 0, 0, 3))[
-                            SNew(SHorizontalBox)
-                                + SHorizontalBox::Slot()
-                                [
-                                    SNew(STextBlock)
-                                    .Text(FText::FromString(tMesh))
-                                ]
-                            + SHorizontalBox::Slot()
-                                [
-                                    SNew(SCheckBox)
-                                    .IsChecked(check)
-                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
-                                ]
-                        ];
-                }
-                else {
-                    vbMeshCodes->AddSlot()
-                        .AutoHeight()
-                        .Padding(FMargin(0, 0, 0, 3))[
-                            SNew(SHorizontalBox)
-                                + SHorizontalBox::Slot()
-                                [
-                                    SNew(STextBlock)
-                                    .Text(FText::FromString(tMesh))
-                                ]
-                            + SHorizontalBox::Slot()
-                                [
-                                    SNew(SCheckBox)
-                                    .IsChecked(check)
-                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
-                                ]
-                        ];
-                }
-                indexRegion++;
-
-            }
         }
+
+        m_meshCodes = std::make_shared<std::vector<MeshCode>>(tempMeshCodes);
 
         vbMeshCodes->AddSlot()
             .Padding(FMargin(0, 0, 0, 3))[
@@ -236,7 +254,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 #pragma endregion
 
 #pragma region select_feature_mesh
-        if (m_selectFeatureSize != 0) {
+        if (m_selectFeature.Num() != 0) {
 
             auto vbRegionMesh = SNew(SVerticalBox);
             int selectIndex = 0;
@@ -692,7 +710,7 @@ void PlateauWindow::checkRegionMesh() {
         i++;
     }
     m_existFeatures.Init(false, m_Features.Num());
-    m_selectFeatureSize = 0;
+    int selectFeatureSize = 0;
     if (targetMeshCodes.size() != 0) {
 
         m_filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
@@ -719,8 +737,27 @@ void PlateauWindow::checkRegionMesh() {
             }
         }
         for (bool flg : m_existFeatures) {
-            if (flg) m_selectFeatureSize++;
+            if (flg) selectFeatureSize++;
         }
-        m_selectFeature.Init(false, m_selectFeatureSize);
+        m_selectFeature.Init(false, selectFeatureSize);
     }
+}
+
+TArray<MeshCode> PlateauWindow::sortMeshCodes(TArray<MeshCode> meshArray) {
+    std::vector<int> intVecArray;
+    TArray<MeshCode> returnArray;
+    for (auto mesh : meshArray) {
+        intVecArray.push_back(atoi(mesh.get().c_str()));
+    }
+
+    std::sort(intVecArray.begin(), intVecArray.end());
+    for (int meshNum : intVecArray) {
+        for (auto mesh_ : meshArray) {
+            if (std::to_string(meshNum) == mesh_.get()) {
+                returnArray.Add(mesh_);
+            }
+        }
+    }
+
+    return returnArray;
 }

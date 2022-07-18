@@ -44,7 +44,6 @@ private:
     TArray<bool> m_existFeatures; //選択された地域に含まれる地物（その他あり）
     TArray<bool> m_selectFeature; //選択された地物（その他あり）
     bool m_gmlFileSelected = false;
-    int m_selectFeatureSize;
     UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
 
@@ -68,4 +67,6 @@ private:
     void onBuildMaxLODChanged(int value);
     void onBuildMinLODChanged(int value);
     void checkRegionMesh();
+
+    TArray<MeshCode> sortMeshCodes(TArray<MeshCode> meshArray);
 };
