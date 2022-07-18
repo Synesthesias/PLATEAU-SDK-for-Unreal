@@ -582,16 +582,41 @@ FReply PlateauWindow::onBtnConvertClicked() {
 
         //convert gml file to obj file
         const citygml::ParserParams params;
-        const auto cityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
-        if (cityModel == nullptr) {
-            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
+        TArray<std::string> gmlFilePathArray;
+        TArray<FString> objFilePahtArray;
+
+        for (auto gmlFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")))) {
+            if (gmlFile.path().extension() == ".gml") {
+                gmlFilePathArray.Add(gmlFile.path().string());
+            }
         }
 
-        //for (auto subfoloder : m_subFolders_old) {
-        //    meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), TCHAR_TO_UTF8(*m_gmlFilePath),
-        //        cityModel, nullptr);
-        //}
-        //PLATEAUFileUtils::ImportFbx();
+        for (auto objFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*m_objFolderPath))) {
+            if (objFile.path().extension() == ".obj") {
+                objFilePahtArray.Add(FString(objFile.path().string().c_str()));
+            }
+        }
+
+        for (auto gmlFilePath : gmlFilePathArray) {
+            const auto cityModel = citygml::load(gmlFilePath, params, nullptr);
+            if (cityModel == nullptr) {
+                throw std::runtime_error(std::string("Failed to load") + gmlFilePath);
+            }
+            meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), gmlFilePath,
+                cityModel, nullptr);
+        }
+
+        TSharedRef<SDlgPickPath> PickContentPathDlg =
+            SNew(SDlgPickPath)
+            .Title(LOCTEXT("ChooseImportRootContentPath", "Choose Location for importing the scene content"));
+
+        if (PickContentPathDlg->ShowModal() == EAppReturnType::Cancel) {
+            return FReply::Handled();
+        }
+
+        FString path = PickContentPathDlg->GetPath().ToString();
+
+        PLATEAUFileUtils::ImportFbx(objFilePahtArray, path);
 
         return FReply::Handled();
     }

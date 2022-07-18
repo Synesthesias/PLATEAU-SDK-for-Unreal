@@ -22,7 +22,6 @@ private:
     TSharedPtr<FExtender> m_extender;
     TWeakPtr<SWindow> m_rootWindow;
     TWeakPtr<SWindow> m_myWindow;
-    FString m_gmlFilePath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     FString m_gmlCopyPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + "PLATEAU/");
     FString m_gmlFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     FString m_objFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
