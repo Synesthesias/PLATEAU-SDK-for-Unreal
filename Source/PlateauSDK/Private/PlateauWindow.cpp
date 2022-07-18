@@ -115,7 +115,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         ]
     + SVerticalBox::Slot()
         .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 30))
+        .Padding(FMargin(0, 0, 0, 10))
         [
             SNew(SEditableTextBox)
             .IsReadOnly(true)
@@ -144,6 +144,32 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                 thirdMesh.Add(meshCode);
             }
         }
+        vbMeshCodes->AddSlot()
+            .Padding(FMargin(0, 0, 0, 3))[
+                SNew(STextBlock)
+                    .Text(FText::FromString((FString(TEXT("含める地域")))))
+            ];
+
+        vbMeshCodes->AddSlot()
+            .Padding(FMargin(0, 0, 0, 3))
+            .AutoHeight()[
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    .AutoWidth()
+                    .Padding(FMargin(0, 0, 15, 0))
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString(FString(TEXT("全選択"))))
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionSelectClicked)
+                    ]
+                + SHorizontalBox::Slot()
+                    .AutoWidth()
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString(FString(TEXT("全除外"))))
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionRelieveClicked)
+                    ]
+            ];
 
         for (auto sMesh : secondMesh) {
             selectSecondMesh = m_selectRegion[indexRegion];
@@ -225,25 +251,6 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 
         m_meshCodes = std::make_shared<std::vector<MeshCode>>(tempMeshCodes);
 
-        vbMeshCodes->AddSlot()
-            .Padding(FMargin(0, 0, 0, 3))[
-                SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    .AutoWidth()
-                    .Padding(FMargin(0, 0, 15, 0))
-                    [
-                        SNew(SButton)
-                        .Text(FText::FromString(FString(TEXT("全選択"))))
-                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionSelectClicked)
-                    ]
-                + SHorizontalBox::Slot()
-                    .AutoWidth()
-                    [
-                        SNew(SButton)
-                        .Text(FText::FromString(FString(TEXT("全除外"))))
-                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionRelieveClicked)
-                    ]
-            ];
 
         if ((*m_meshCodes).size() != 0) {
             scrollBox->AddSlot()[
@@ -254,14 +261,41 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 #pragma endregion
 
 #pragma region select_feature_mesh
-        if (m_selectFeature.Num() != 0) {
-
-            auto vbRegionMesh = SNew(SVerticalBox);
+        if (m_selectFeatureSize != 0) {
+            auto vbFeatureMesh = SNew(SVerticalBox);
             int selectIndex = 0;
+
+            vbFeatureMesh->AddSlot()
+                .Padding(FMargin(0, 20, 0, 0))[
+                    SNew(STextBlock)
+                        .Text(FText::FromString(FString(TEXT("含める地物"))))
+                ];
+
+            vbFeatureMesh->AddSlot()
+                .Padding(FMargin(0, 0, 0, 8))
+                .AutoHeight()[
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        .Padding(FMargin(0, 0, 10, 0))
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(FString(TEXT("全選択"))))
+                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureSelectClicked)
+                        ]
+                    + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(FString(TEXT("全除外"))))
+                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureRelieveClicked)
+                        ]
+                ];
+
             for (int j = 0; j < m_existFeatures.Num(); j++) {
                 if (m_existFeatures[j]) {
                     bool checkFeature = m_selectFeature[selectIndex];
-                    vbRegionMesh->AddSlot()
+                    vbFeatureMesh->AddSlot()
                         .Padding(FMargin(0, 0, 0, 3))[
                             SNew(SHorizontalBox)
                                 + SHorizontalBox::Slot()
@@ -280,27 +314,8 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                 }
             }
 
-            vbRegionMesh->AddSlot()
-                .Padding(FMargin(0, 0, 0, 8))[
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        .AutoWidth()
-                        .Padding(FMargin(0, 0, 15, 0))
-                        [
-                            SNew(SButton)
-                            .Text(FText::FromString(FString(TEXT("全選択"))))
-                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureSelectClicked)
-                        ]
-                    + SHorizontalBox::Slot()
-                        .AutoWidth()
-                        [
-                            SNew(SButton)
-                            .Text(FText::FromString(FString(TEXT("全除外"))))
-                        .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureRelieveClicked)
-                        ]
-                ];
             scrollBox->AddSlot()[
-                vbRegionMesh
+                vbFeatureMesh
             ];
         }
     }
@@ -735,7 +750,7 @@ void PlateauWindow::checkRegionMesh() {
         i++;
     }
     m_existFeatures.Init(false, m_Features.Num());
-    int selectFeatureSize = 0;
+    m_selectFeatureSize = 0;
     if (targetMeshCodes.size() != 0) {
 
         m_filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
@@ -762,9 +777,9 @@ void PlateauWindow::checkRegionMesh() {
             }
         }
         for (bool flg : m_existFeatures) {
-            if (flg) selectFeatureSize++;
+            if (flg) m_selectFeatureSize++;
         }
-        m_selectFeature.Init(false, selectFeatureSize);
+        m_selectFeature.Init(false, m_selectFeatureSize);
     }
 }
 

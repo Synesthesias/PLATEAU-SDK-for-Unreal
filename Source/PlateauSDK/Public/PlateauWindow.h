@@ -42,6 +42,7 @@ private:
     TArray<bool> m_selectRegion; //選択された地域メッシュ
     TArray<bool> m_existFeatures; //選択された地域に含まれる地物（その他あり）
     TArray<bool> m_selectFeature; //選択された地物（その他あり）
+    int m_selectFeatureSize;
     bool m_gmlFileSelected = false;
     UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
