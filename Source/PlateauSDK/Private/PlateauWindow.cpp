@@ -1,4 +1,5 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "PlateauWindow.h"
@@ -129,20 +130,22 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         int indexRegion = 0;
         bool check;
         TArray<FString> secondMesh;
-        //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
-        //auto collection = UdxFileCollection::find(rootPath);
-        //m_meshCodes = collection.getMeshCodes();
+        TArray<FString> thirdMesh;
 
         for (auto meshCode : *m_meshCodes)
         {
-            check = m_selectRegion[indexRegion];
             FString regionName = FString(meshCode.get().c_str());
-            auto len = regionName.Len();
-            UE_LOG(LogTemp, Warning, TEXT("%d"), len);
-
-            if (int(regionName.Len()) == 8) {
+            if (regionName.Len() == 6) {
                 secondMesh.Add(regionName);
             }
+            else {
+                thirdMesh.Add(regionName);
+            }
+        }
+
+        for (auto sMesh : secondMesh) {
+            check = m_selectRegion[indexRegion];
+
             vbMeshCodes->AddSlot()
                 .AutoHeight()
                 .Padding(FMargin(0, 0, 0, 3))[
@@ -150,7 +153,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                         + SHorizontalBox::Slot()
                         [
                             SNew(STextBlock)
-                            .Text(FText::FromString(regionName))
+                            .Text(FText::FromString(sMesh))
                         ]
                     + SHorizontalBox::Slot()
                         [
@@ -160,7 +163,50 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                         ]
                 ];
             indexRegion++;
+
+            for (auto tMesh : thirdMesh) {
+                check = m_selectRegion[indexRegion];
+                if (tMesh.Contains(sMesh)) {
+                    vbMeshCodes->AddSlot()
+                        .AutoHeight()
+                        .Padding(FMargin(30, 0, 0, 3))[
+                            SNew(SHorizontalBox)
+                                + SHorizontalBox::Slot()
+                                [
+                                    SNew(STextBlock)
+                                    .Text(FText::FromString(tMesh))
+                                ]
+                            + SHorizontalBox::Slot()
+                                [
+                                    SNew(SCheckBox)
+                                    .IsChecked(check)
+                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                                ]
+                        ];
+                }
+                else {
+                    vbMeshCodes->AddSlot()
+                        .AutoHeight()
+                        .Padding(FMargin(0, 0, 0, 3))[
+                            SNew(SHorizontalBox)
+                                + SHorizontalBox::Slot()
+                                [
+                                    SNew(STextBlock)
+                                    .Text(FText::FromString(tMesh))
+                                ]
+                            + SHorizontalBox::Slot()
+                                [
+                                    SNew(SCheckBox)
+                                    .IsChecked(check)
+                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                                ]
+                        ];
+                }
+                indexRegion++;
+
+            }
         }
+
         vbMeshCodes->AddSlot()
             .Padding(FMargin(0, 0, 0, 3))[
                 SNew(SHorizontalBox)
@@ -193,10 +239,10 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         if (m_selectFeatureSize != 0) {
 
             auto vbRegionMesh = SNew(SVerticalBox);
-
+            int selectIndex = 0;
             for (int j = 0; j < m_existFeatures.Num(); j++) {
-                //check = m_selectFeature[j];
                 if (m_existFeatures[j]) {
+                    bool checkFeature = m_selectFeature[selectIndex];
                     vbRegionMesh->AddSlot()
                         .Padding(FMargin(0, 0, 0, 3))[
                             SNew(SHorizontalBox)
@@ -208,10 +254,11 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                             + SHorizontalBox::Slot()
                                 [
                                     SNew(SCheckBox)
-                                    .IsChecked(false)
-                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, j)
+                                    .IsChecked(checkFeature)
+                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, selectIndex)
                                 ]
                         ];
+                    selectIndex++;
                 }
             }
 
@@ -470,30 +517,31 @@ FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        std::vector<MeshCode> targetMeshCodes;
-        int i = 0;
-        //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
-        //auto collection = UdxFileCollection::find(rootPath);
-        //m_meshCodes = collection.getMeshCodes();
-        for (auto meshCode : *m_meshCodes) {
-            if (m_selectRegion[i]) {
-                targetMeshCodes.push_back(meshCode);
+        int selectIndex = 0;
+        TArray<std::string>checkSubFolder = {
+            UdxSubFolder::bldg().name(),
+            UdxSubFolder::tran().name(),
+            UdxSubFolder::veg().name(),
+            UdxSubFolder::frn().name(),
+            UdxSubFolder::dem().name()
+        };
+        for (int i = 0; i < m_existFeatures.Num(); i++) {
+            if (!m_existFeatures[i])continue;
+            if (!m_selectFeature[selectIndex]) {
+                selectIndex++;
+                continue;
             }
-            i++;
-        }
-        if (targetMeshCodes.size() != 0) return FReply::Handled();
-
-        auto filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
-        m_subFolders = filteredCollection.getSubFolders();
-        i = 0;
-        for (auto subfolder : *m_subFolders) {
-            if (m_selectFeature[i]) {
-                filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+            for (auto subfolder : *m_subFolders) {
+                if (i < m_existFeatures.Num() - 1 && subfolder.name() == checkSubFolder[i]) {
+                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                }
+                else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
+                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                }
             }
-            i++;
+            selectIndex++;
         }
-        filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
-
+        m_filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
 
         //setting convert option
         MeshConverter meshConverter;
@@ -515,11 +563,12 @@ FReply PlateauWindow::onBtnConvertClicked() {
         meshConverter.setOptions(options);
 
         //convert gml file to obj file
-        //const citygml::ParserParams params;
-        //const auto cityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
-        //if (cityModel == nullptr) {
-        //    throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
-        //}
+        const citygml::ParserParams params;
+        const auto cityModel = citygml::load(TCHAR_TO_UTF8(*m_gmlFilePath), params, nullptr);
+        if (cityModel == nullptr) {
+            throw std::runtime_error(std::string("Failed to load") + TCHAR_TO_UTF8(*m_gmlFilePath));
+        }
+
         //for (auto subfoloder : m_subFolders_old) {
         //    meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), TCHAR_TO_UTF8(*m_gmlFilePath),
         //        cityModel, nullptr);
@@ -560,7 +609,7 @@ void PlateauWindow::onToggleCbSelectRegion(ECheckBoxState checkState, int num) {
 }
 
 FReply PlateauWindow::onBtnAllFeatureSelectClicked() {
-    for (int i = 0; i < m_existFeatures.Num(); i++) {
+    for (int i = 0; i < m_selectFeature.Num(); i++) {
         m_selectFeature[i] = true;
     }
     updatePlateauWindow(m_myWindow.Pin());
@@ -568,7 +617,7 @@ FReply PlateauWindow::onBtnAllFeatureSelectClicked() {
 }
 
 FReply PlateauWindow::onBtnAllFeatureRelieveClicked() {
-    for (int i = 0; i < m_existFeatures.Num(); i++) {
+    for (int i = 0; i < m_selectFeature.Num(); i++) {
         m_selectFeature[i] = false;
     }
     updatePlateauWindow(m_myWindow.Pin());
@@ -636,9 +685,6 @@ void PlateauWindow::checkRegionMesh() {
     std::vector<MeshCode> targetMeshCodes;
 
     int i = 0;
-    //std::string rootPath = TCHAR_TO_UTF8(*(m_gmlFolderPath + "/udx"));
-    //auto collection = UdxFileCollection::find(rootPath);
-    //m_meshCodes = collection.getMeshCodes();
     for (auto meshCode : *m_meshCodes) {
         if (m_selectRegion[i]) {
             targetMeshCodes.push_back(meshCode);
@@ -648,8 +694,9 @@ void PlateauWindow::checkRegionMesh() {
     m_existFeatures.Init(false, m_Features.Num());
     m_selectFeatureSize = 0;
     if (targetMeshCodes.size() != 0) {
-        auto filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
-        m_subFolders = filteredCollection.getSubFolders();
+
+        m_filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
+        m_subFolders = m_filteredCollection.getSubFolders();
 
         for (auto subfolder : *m_subFolders) {
             if (subfolder.name() == "bldg") {
@@ -671,7 +718,7 @@ void PlateauWindow::checkRegionMesh() {
                 m_existFeatures[5] = true;
             }
         }
-        for (bool flg : m_existFeatures){
+        for (bool flg : m_existFeatures) {
             if (flg) m_selectFeatureSize++;
         }
         m_selectFeature.Init(false, m_selectFeatureSize);

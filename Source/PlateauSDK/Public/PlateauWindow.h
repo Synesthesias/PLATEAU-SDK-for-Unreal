@@ -26,9 +26,6 @@ private:
     FString m_gmlCopyPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + "PLATEAU/");
     FString m_gmlFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     FString m_objFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
-    int32 m_axesConversionIndex = 1;
-    bool m_cbOptimize;
-    bool m_cbMergeMesh;
     std::shared_ptr<std::vector<MeshCode>> m_meshCodes;
     std::shared_ptr<std::vector<UdxSubFolder>> m_subFolders;
     TArray<TSharedPtr<FString>> m_outputModeArray;
@@ -49,8 +46,6 @@ private:
     bool m_gmlFileSelected = false;
     int m_selectFeatureSize;
     UdxFileCollection m_collection;
-
-    //UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
 
     void onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder);
@@ -73,6 +68,4 @@ private:
     void onBuildMaxLODChanged(int value);
     void onBuildMinLODChanged(int value);
     void checkRegionMesh();
-
-    //void copyGmlFiles(FString path);
 };
