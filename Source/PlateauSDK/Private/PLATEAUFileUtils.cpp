@@ -7,6 +7,7 @@
 
 #include "AssetTools/Private/AssetTools.h"
 #include "AssetToolsModule.h"
+#include "CityMapMetadata.h"
 #include "ActorFactories/ActorFactoryEmptyActor.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
@@ -36,53 +37,13 @@ namespace {
     /// <param name="objects"></param>
     /// <returns></returns>
     template <class TObject>
-    const TObject* FindObject(const TArray<UObject*> objects) {
-        for (const UObject* object : objects) {
+    TObject* FindObject(const TArray<UObject*> objects) {
+        for (UObject* object : objects) {
             if (object->IsA(TObject::StaticClass())) {
                 return Cast<TObject>(object);
             }
         }
         return nullptr;
-    }
-
-    /// <summary>
-    /// CityMapアクタをレベル内に生成します。
-    /// </summary>
-    /// <param name="blueprints">CityMapに含めるブループリント</param>
-    void CreateCityMapActor(const TArray<const UBlueprint*> blueprints) {
-        UBlueprint* NewBluePrintActor = nullptr;
-        AActor* RootActorContainer = nullptr;
-        USceneComponent* ActorRootComponent = nullptr;
-        TMap<uint64, USceneComponent*> NewSceneComponentNameMap;
-
-        auto* Factory = GEditor->FindActorFactoryByClass(UActorFactoryEmptyActor::StaticClass());
-        const auto EmptyActorAssetData = FAssetData(Factory->GetDefaultActorClass(FAssetData()));
-        //This is a group create an empty actor that just have a transform
-        auto* EmptyActorAsset = EmptyActorAssetData.GetAsset();
-        //Place an empty actor
-        RootActorContainer = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
-        check(RootActorContainer != nullptr);
-        ActorRootComponent = NewObject<USceneComponent>(RootActorContainer, USceneComponent::GetDefaultSceneRootVariableName());
-        check(ActorRootComponent != nullptr);
-        ActorRootComponent->Mobility = EComponentMobility::Static;
-        ActorRootComponent->bVisualizeComponent = true;
-        RootActorContainer->SetRootComponent(ActorRootComponent);
-        RootActorContainer->AddInstanceComponent(ActorRootComponent);
-        ActorRootComponent->RegisterComponent();
-        RootActorContainer->SetActorLabel(TEXT("CityMap"));
-        RootActorContainer->SetFlags(RF_Transactional);
-        ActorRootComponent->SetFlags(RF_Transactional);
-        
-        for (const auto blueprint : blueprints) {
-            const auto nodes = blueprint->SimpleConstructionScript->GetAllNodes();
-            for (const auto node : nodes) {
-                USceneComponent* SceneComponent = NewObject<USceneComponent>(RootActorContainer, node->ComponentClass, node->GetVariableName(), RF_NoFlags, node->ComponentTemplate);
-
-                //Add the component to the owner actor and register it
-                RootActorContainer->AddInstanceComponent(SceneComponent);
-                SceneComponent->RegisterComponent();
-            }
-        }
     }
 }
 
@@ -108,12 +69,24 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& files, const FString& de
             const FString packageName = destinationPath + TEXT("/") + assetName;
             UPackage* assetPackage = CreatePackage(*packageName);
             const EObjectFlags flags = RF_Public | RF_Standalone;
-            metadataFactory->CreateOrOverwriteAsset(metadataFactory->GetSupportedClass(), assetPackage, FName(*assetName), flags);
+
+            // メタデータアセット作成
+            auto* metadata =
+                Cast<UCityMapMetadata>(metadataFactory->CreateOrOverwriteAsset(metadataFactory->GetSupportedClass(), assetPackage, FName(*assetName), flags));
+
+            // BluePrintエディタ開いている必要あり
+            const auto nodes = blueprint->SimpleConstructionScript->GetAllNodes();
+            for (const auto node : nodes) {
+                if (node->ComponentClass != UStaticMeshComponent::StaticClass())
+                    continue;
+                auto staticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
+                auto& container = metadata->StaticMeshes.FindOrAdd(0);
+                container.Value.Add(staticMeshComponent->GetStaticMesh());
+            }
+
             assetPackage->SetDirtyFlag(true);
 
-            TArray<const UBlueprint*> blueprints;
-            blueprints.Add(blueprint);
-            CreateCityMapActor(blueprints);
+            //CreateCityMapActor(*metadata);
         }
 
         // FbxSceneImporterFactoryによって開かれるBluePrintエディタを閉じるための措置

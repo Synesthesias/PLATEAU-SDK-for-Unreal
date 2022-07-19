@@ -49,6 +49,7 @@ public class PlateauSDK : ModuleRules
                 "FBX",
                 "UnrealEd",
                 "AssetTools",
+                "EditorStyle",
                 // ... add private dependencies that you statically link with here ...	
             }
             );

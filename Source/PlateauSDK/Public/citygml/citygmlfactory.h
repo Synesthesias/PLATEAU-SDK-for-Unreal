@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include <parser/codelisthandlerxerces.h>
+
 namespace citygml {
 
     class AppearanceManager;
@@ -41,7 +43,7 @@ namespace citygml {
 
         std::shared_ptr<Polygon> createPolygon(const std::string& id);
         std::shared_ptr<LineString> createLineString(const std::string& id);
-        std::shared_ptr<ExternalReference> createExternalReference(const std::string& id);
+        ExternalReference* createExternalReference(const std::string& id);
 
         /**
          * @brief requests a polygon for a Geometry object that will be added later
@@ -66,6 +68,8 @@ namespace citygml {
 
         void closeFactory();
 
+        std::string getCodeValue(const std::string& codeSpace, const std::string& gmlPath, const std::string& id);
+
         ~CityGMLFactory();
     protected:
         void appearanceTargetCreated(AppearanceTarget* obj);
@@ -74,6 +78,8 @@ namespace citygml {
         std::unique_ptr<AppearanceManager> m_appearanceManager;
         std::unique_ptr<PolygonManager> m_polygonManager;
         std::unique_ptr<GeometryManager> m_geometryManager;
+
+        std::shared_ptr<CodeLists> m_codeLists;
     };
 
 }
