@@ -1,4 +1,6 @@
 #include <PLATEAUFileUtils.h>
+#include <plateau/mesh/mesh_converter.h>
+#include <plateau/udx/gml_file_info.h>
 
 #include "AssetSelection.h"
 #include "AutomatedAssetImportData.h"
@@ -13,6 +15,7 @@
 #include "Engine/SimpleConstructionScript.h"
 #include "Factories/CityMapMetadataFactory.h"
 #include "Factories/FbxSceneImportOptions.h"
+#include "Kismet/GameplayStatics.h"
 
 namespace {
     /// <summary>
@@ -45,55 +48,90 @@ namespace {
         }
         return nullptr;
     }
-}
 
-void PLATEAUFileUtils::ImportFbx(const TArray<FString>& files, const FString& destinationPath) {
-    auto* sceneImportFactory = FindFactory<UFbxSceneImportFactory>();
-
-    if (sceneImportFactory) {
-        auto* automatedData = NewObject<UAutomatedAssetImportData>();
-        automatedData->DestinationPath = destinationPath;
-        automatedData->Filenames = files;
-        automatedData->Factory = sceneImportFactory;
-        sceneImportFactory->SceneImportOptions->bCreateContentFolderHierarchy = 1;
-        sceneImportFactory->SceneImportOptions->HierarchyType = EFBXSceneOptionsCreateHierarchyType::FBXSOCHT_CreateBlueprint;
-
-        const FAssetToolsModule& assetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-        const auto importedAssets = assetToolsModule.Get().ImportAssetsAutomated(automatedData);
-
-        auto* blueprint = FindObject<UBlueprint>(importedAssets);
-
+    UCityMapMetadata* CreateMetadataAsset(const FString& DestinationPath) {
         const auto* metadataFactory = FindFactory<UCityMapMetadataFactory>();
-        if (metadataFactory != nullptr && blueprint != nullptr) {
+        if (metadataFactory != nullptr) {
             const FString assetName = TEXT("CityMapMetadata");
-            const FString packageName = destinationPath + TEXT("/") + assetName;
+            const FString packageName = DestinationPath + TEXT("/") + assetName;
             UPackage* assetPackage = CreatePackage(*packageName);
             const EObjectFlags flags = RF_Public | RF_Standalone;
 
-            // メタデータアセット作成
             auto* metadata =
                 Cast<UCityMapMetadata>(metadataFactory->CreateOrOverwriteAsset(metadataFactory->GetSupportedClass(), assetPackage, FName(*assetName), flags));
+            assetPackage->SetDirtyFlag(true);
+            return metadata;
+        }
+        return nullptr;
+    }
+}
 
-            // BluePrintエディタ開いている必要あり
+void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString& DestinationPath, const TMap<ECityModelPackage, MeshConvertOptions>& MeshConvertOptionsMap) {
+    const auto Metadata = CreateMetadataAsset(DestinationPath);
+    const auto DestinationFullPath = DestinationPath.Replace(*FString("/Game"), *FPaths::ProjectContentDir());
+
+    // メッシュ変換
+    MeshConverter MeshConverter;
+    auto& CityModelInfoArray = Metadata->ImportedCityModelInfoArray;
+    CityModelInfoArray.SetNum(GmlFiles.Num());
+    for (int i = 0; i < CityModelInfoArray.Num(); ++i) {
+        const auto& GmlFile = GmlFiles[i];
+        auto& CityModelInfo = CityModelInfoArray[i];
+        // TODO: Refactor
+        FString RelativeGmlPath = GmlFile.RightChop(GmlFile.Find(_TEXT("PLATEAU"), ESearchCase::CaseSensitive, ESearchDir::FromEnd) + 8);
+        CityModelInfo.GmlFilePath = RelativeGmlPath;
+
+        const auto FileInfo = GmlFileInfo(TCHAR_TO_UTF8(*GmlFile));
+        const ECityModelPackage Package = FCityModelPlacementSettings::GetPackage(UTF8_TO_TCHAR(FileInfo.getFeatureType().c_str()));
+        const auto MeshConvertOptions = MeshConvertOptionsMap[Package];
+
+        MeshConverter.setOptions(MeshConvertOptions);
+        const auto MeshFilePathVector = MeshConverter.convert(TCHAR_TO_UTF8(*DestinationFullPath), FileInfo.getPath(),
+            nullptr);
+        TArray<FString> MeshFilePaths;
+        MeshFilePaths.SetNum(MeshFilePathVector->size());
+        for (int MeshIndex = 0; MeshIndex < MeshFilePathVector->size(); ++MeshIndex) {
+            MeshFilePaths[MeshIndex] = UTF8_TO_TCHAR((*MeshFilePathVector)[MeshIndex].c_str());
+        }
+
+        // アセット化
+        auto* sceneImportFactory = FindFactory<UFbxSceneImportFactory>();
+
+        if (sceneImportFactory) {
+            auto* automatedData = NewObject<UAutomatedAssetImportData>();
+            automatedData->DestinationPath = DestinationPath;
+            automatedData->Filenames = MeshFilePaths;
+            automatedData->Factory = sceneImportFactory;
+            sceneImportFactory->SceneImportOptions->bCreateContentFolderHierarchy = 1;
+            sceneImportFactory->SceneImportOptions->HierarchyType = EFBXSceneOptionsCreateHierarchyType::FBXSOCHT_CreateBlueprint;
+
+            const FAssetToolsModule& assetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+            const auto importedAssets = assetToolsModule.Get().ImportAssetsAutomated(automatedData);
+
+            auto* blueprint = FindObject<UBlueprint>(importedAssets);
+
+            // BluePrintエディタ開いている必要あり(FbxSceneImporterFactoryの内部で開かれる)
             const auto nodes = blueprint->SimpleConstructionScript->GetAllNodes();
-
-            //metadata->ImportedCityModelInfoArray.SetNum(files.Num());
 
             for (const auto node : nodes) {
                 if (node->ComponentClass != UStaticMeshComponent::StaticClass())
                     continue;
-                auto staticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
-                //auto& container = metadata->StaticMeshes.FindOrAdd(0);
-                //container.Value.Add(staticMeshComponent->GetStaticMesh());
+                const auto StaticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
+                CityModelInfo.StaticMeshes.Add(StaticMeshComponent->GetStaticMesh());
             }
 
-            assetPackage->SetDirtyFlag(true);
+            TArray<AActor*> ActorsToFind;
+            UGameplayStatics::GetAllActorsOfClass(GWorld, AActor::StaticClass(), ActorsToFind);
+            for (const auto Actor : ActorsToFind) {
+                // TODO: 生成されたアクタだけ消したい。。。
+                if (Actor->GetName().Find(_TEXT("FbxScene_LOD")) == 0) {
+                    Actor->Destroy();
+                }
+            }
 
-            //CreateCityMapActor(*metadata);
+            // FbxSceneImporterFactoryによって開かれるBluePrintエディタを閉じるための措置
+            // TODO: 他のアセットエディタは閉じないように変更。現状では全てのアセットエディタを閉じる挙動。
+            GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllAssetEditors();
         }
-
-        // FbxSceneImporterFactoryによって開かれるBluePrintエディタを閉じるための措置
-        // TODO: 他のアセットエディタは閉じないように変更。現状では全てのアセットエディタを閉じる挙動。
-        GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllAssetEditors();
     }
 }

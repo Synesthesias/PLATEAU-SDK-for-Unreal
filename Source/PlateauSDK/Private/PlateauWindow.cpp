@@ -138,8 +138,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             int meshLevel = meshCode.getLevel();
             if (FString(meshCode.get().c_str()).Len() == 6) {
                 m_secondMesh.Add(meshCode);
-            }
-            else {
+            } else {
                 thirdMesh.Add(meshCode);
             }
         }
@@ -212,7 +211,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                     if (selectSecondMesh) {
                         selectThirdMesh = m_selectRegion[indexRegion];
 
-                        if (!btnDisplayed){
+                        if (!btnDisplayed) {
                             vbMeshCodes->AddSlot()
                                 .Padding(FMargin(0, 0, 0, 3))
                                 .AutoHeight()[
@@ -416,9 +415,8 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             SNew(SComboBox<TSharedPtr<FString>>)
             .OptionsSource(&this->m_outputModeArray)
         .OnSelectionChanged_Raw(this, &PlateauWindow::onSelectOutputMode)
-        .OnGenerateWidget_Lambda([](TSharedPtr<FString> value)->TSharedRef<SWidget>
-            {
-                return SNew(STextBlock).Text(FText::FromString(*value));
+        .OnGenerateWidget_Lambda([](TSharedPtr<FString> value)->TSharedRef<SWidget> {
+        return SNew(STextBlock).Text(FText::FromString(*value));
             })
         [
             SNew(STextBlock)
@@ -565,6 +563,7 @@ FReply PlateauWindow::onBtnConvertClicked() {
             UdxSubFolder::frn().name(),
             UdxSubFolder::dem().name()
         };
+        TArray<FString> CopiedGmlFiles;
         for (int i = 0; i < m_existFeatures.Num(); i++) {
             if (!m_existFeatures[i])continue;
             if (!m_selectFeature[selectIndex]) {
@@ -573,10 +572,15 @@ FReply PlateauWindow::onBtnConvertClicked() {
             }
             for (auto subfolder : *m_subFolders) {
                 if (i < m_existFeatures.Num() - 1 && subfolder.name() == checkSubFolder[i]) {
-                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
-                }
-                else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
-                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    for (const auto& GmlFile : *GmlFileVector) {
+                        CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
+                    }
+                } else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
+                    const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    for (const auto& GmlFile : *GmlFileVector) {
+                        CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
+                    }
                 }
             }
             selectIndex++;
@@ -600,44 +604,46 @@ FReply PlateauWindow::onBtnConvertClicked() {
         default:
             break;
         }
-        meshConverter.setOptions(options);
+        TMap<ECityModelPackage, MeshConvertOptions> MeshConvertOptionsMap;
+        MeshConvertOptionsMap.FindOrAdd(ECityModelPackage::Building, options);
+        //meshConverter.setOptions(options);
 
-        //convert gml file to obj file
-        const citygml::ParserParams params;
-        TArray<std::string> gmlFilePathArray;
-        TArray<FString> objFilePahtArray;
+        ////convert gml file to obj file
+        //const citygml::ParserParams params;
+        //TArray<std::string> gmlFilePathArray;
+        //TArray<FString> objFilePahtArray;
 
-        for (auto gmlFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")))) {
-            if (gmlFile.path().extension() == ".gml") {
-                gmlFilePathArray.Add(gmlFile.path().string());
-            }
-        }
+        //for (auto gmlFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")))) {
+        //    if (gmlFile.path().extension() == ".gml") {
+        //        gmlFilePathArray.Add(gmlFile.path().string());
+        //    }
+        //}
 
-        for (auto objFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*m_objFolderPath))) {
-            if (objFile.path().extension() == ".obj") {
-                objFilePahtArray.Add(FString(objFile.path().string().c_str()));
-            }
-        }
+        //for (auto objFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*m_objFolderPath))) {
+        //    if (objFile.path().extension() == ".obj") {
+        //        objFilePahtArray.Add(FString(objFile.path().string().c_str()));
+        //    }
+        //}
 
-        for (auto gmlFilePath : gmlFilePathArray) {
-            const auto cityModel = citygml::load(gmlFilePath, params, nullptr);
-            if (cityModel == nullptr) {
-                throw std::runtime_error(std::string("Failed to load") + gmlFilePath);
-            }
-            meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), gmlFilePath,
-                cityModel, nullptr);
-        }
+        //for (auto gmlFilePath : gmlFilePathArray) {
+        //    const auto cityModel = citygml::load(gmlFilePath, params, nullptr);
+        //    if (cityModel == nullptr) {
+        //        throw std::runtime_error(std::string("Failed to load") + gmlFilePath);
+        //    }
+        //    meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), gmlFilePath,
+        //        cityModel, nullptr);
+        //}
 
         TSharedRef<SDlgPickPath> PickContentPathDlg =
             SNew(SDlgPickPath)
-            .Title(LOCTEXT("ChooseImportRootContentPath", "Choose Location for importing the scene content"));
+            .Title(LOCTEXT("ChooseImportRootContentPath", "メッシュの出力先選択"));
 
         if (PickContentPathDlg->ShowModal() == EAppReturnType::Cancel) {
             return FReply::Handled();
         }
 
         FString path = PickContentPathDlg->GetPath().ToString();
-        PLATEAUFileUtils::ImportFbx(objFilePahtArray, path);
+        PLATEAUFileUtils::ImportFbx(CopiedGmlFiles, path, MeshConvertOptionsMap);
 
         return FReply::Handled();
     }
@@ -797,20 +803,15 @@ void PlateauWindow::checkRegionMesh() {
         for (auto subfolder : *m_subFolders) {
             if (subfolder.name() == "bldg") {
                 m_existFeatures[0] = true;
-            }
-            else if (subfolder.name() == "tran") {
+            } else if (subfolder.name() == "tran") {
                 m_existFeatures[1] = true;
-            }
-            else if (subfolder.name() == "veg") {
+            } else if (subfolder.name() == "veg") {
                 m_existFeatures[2] = true;
-            }
-            else if (subfolder.name() == "frn") {
+            } else if (subfolder.name() == "frn") {
                 m_existFeatures[3] = true;
-            }
-            else if (subfolder.name() == "dem") {
+            } else if (subfolder.name() == "dem") {
                 m_existFeatures[4] = true;
-            }
-            else {
+            } else {
                 m_existFeatures[5] = true;
             }
         }

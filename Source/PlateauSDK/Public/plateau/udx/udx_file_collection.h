@@ -1,8 +1,6 @@
 #pragma once
 
 #include <map>
-#include <memory>
-#include <vector>
 
 #include <libplateau_api.h>
 #include <plateau/udx/gml_file_info.h>
@@ -107,8 +105,9 @@ class LIBPLATEAU_EXPORT UdxFileCollection {
 public:
     static UdxFileCollection find(const std::string& udx_path);
     static UdxFileCollection filter(const UdxFileCollection& collection, const std::vector<MeshCode>& mesh_codes);
-    void copyFiles(const std::string& destination_root_path);
-    void copyFiles(const std::string& destination_root_path, const UdxSubFolder& sub_folder);
+    std::shared_ptr<std::vector<std::string>> copyAllFiles(const std::string& destination_root_path);
+    std::shared_ptr<std::vector<std::string>> copyFiles(const std::string& destination_root_path, const UdxSubFolder& sub_folder);
+    void copyFiles(const std::string& destination_root_path, const UdxSubFolder& sub_folder, std::vector<std::string>& copied_gml_files);
     void copyCodelistFiles(const std::string& destination_root_path);
 
     std::vector<GmlFileInfo>& getGmlFiles(const UdxSubFolder& sub_folder);
