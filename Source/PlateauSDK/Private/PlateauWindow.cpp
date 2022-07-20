@@ -60,7 +60,7 @@ void PlateauWindow::showPlateauWindow() {
     if (!m_myWindow.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
             .Title(LOCTEXT("Model File Converter Window", "Model File Converter"))
-            .ClientSize(FVector2D(500.f, 500.f));
+            .ClientSize(FVector2D(500.f, 800.f));
         m_myWindow = TWeakPtr<SWindow>(window);
 
         if (m_rootWindow.IsValid()) {
@@ -127,23 +127,35 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 #pragma region select_region_mesh
     if (m_gmlFileSelected) {
         auto vbMeshCodes = SNew(SVerticalBox);
-
         int indexRegion = 0;
         bool selectSecondMesh;
         bool selectThirdMesh;
-        TArray<MeshCode> secondMesh;
         TArray<MeshCode> thirdMesh;
-        TArray<MeshCode> delThirdMesh;
         std::vector<MeshCode> tempMeshCodes;
 
+        m_secondMesh.Reset();
         for (auto meshCode : *m_meshCodes) {
+            int meshLevel = meshCode.getLevel();
             if (FString(meshCode.get().c_str()).Len() == 6) {
-                secondMesh.Add(meshCode);
+                m_secondMesh.Add(meshCode);
             }
             else {
                 thirdMesh.Add(meshCode);
             }
         }
+
+        //疑似2次メッシュ作成
+        for (auto mesh3 : thirdMesh) {
+            auto sim = MeshCode(mesh3.getAsLevel2());
+            if (m_secondMesh.Find(sim) == INDEX_NONE) {
+                m_secondMesh.Add(sim);
+                m_selectRegion.Add(false);
+            }
+        }
+
+        m_secondMesh = sortMeshCodes(m_secondMesh);
+        thirdMesh = sortMeshCodes(thirdMesh);
+
         vbMeshCodes->AddSlot()
             .Padding(FMargin(0, 0, 0, 3))[
                 SNew(STextBlock)
@@ -160,18 +172,18 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                     [
                         SNew(SButton)
                         .Text(FText::FromString(FString(TEXT("全選択"))))
-                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionSelectClicked)
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllSecondMeshSelectClicked)
                     ]
                 + SHorizontalBox::Slot()
                     .AutoWidth()
                     [
                         SNew(SButton)
                         .Text(FText::FromString(FString(TEXT("全除外"))))
-                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllRegionRelieveClicked)
+                    .OnClicked_Raw(this, &PlateauWindow::onBtnAllSecondMeshRelieveClicked)
                     ]
             ];
 
-        for (auto sMesh : secondMesh) {
+        for (auto sMesh : m_secondMesh) {
             selectSecondMesh = m_selectRegion[indexRegion];
             tempMeshCodes.push_back(sMesh);
             vbMeshCodes->AddSlot()
@@ -187,18 +199,43 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                         [
                             SNew(SCheckBox)
                             .IsChecked(selectSecondMesh)
-                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion, sMesh.get())
                         ]
                 ];
             indexRegion++;
 
             thirdMesh = sortMeshCodes(thirdMesh);
+            bool btnDisplayed = false;
             for (auto tMesh : thirdMesh) {
                 if (FString(tMesh.get().c_str()).Contains(FString(sMesh.get().c_str()))) {
-                    delThirdMesh.Add(tMesh);
                     tempMeshCodes.push_back(tMesh);
                     if (selectSecondMesh) {
                         selectThirdMesh = m_selectRegion[indexRegion];
+
+                        if (!btnDisplayed){
+                            vbMeshCodes->AddSlot()
+                                .Padding(FMargin(0, 0, 0, 3))
+                                .AutoHeight()[
+                                    SNew(SHorizontalBox)
+                                        + SHorizontalBox::Slot()
+                                        .AutoWidth()
+                                        .Padding(FMargin(30, 0, 15, 0))
+                                        [
+                                            SNew(SButton)
+                                            .Text(FText::FromString(FString(TEXT("全選択"))))
+                                        .OnClicked_Raw(this, &PlateauWindow::onBtnThirdMeshSelectClicked, sMesh.get())
+                                        ]
+                                    + SHorizontalBox::Slot()
+                                        .AutoWidth()
+                                        [
+                                            SNew(SButton)
+                                            .Text(FText::FromString(FString(TEXT("全除外"))))
+                                        .OnClicked_Raw(this, &PlateauWindow::onBtnThirdMeshRelieveClicked, sMesh.get())
+                                        ]
+                                ];
+
+                            btnDisplayed = true;
+                        }
 
                         vbMeshCodes->AddSlot()
                             .AutoHeight()
@@ -213,45 +250,15 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                                     [
                                         SNew(SCheckBox)
                                         .IsChecked(selectThirdMesh)
-                                    .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
+                                    .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion, tMesh.get())
                                     ]
                             ];
                     }
                     indexRegion++;
                 }
             }
-            for (auto delTMesh : delThirdMesh) {
-                thirdMesh.Remove(delTMesh);
-            }
         }
-        //2次メッシュのない３次メッシュ
-        for (auto tMesh : thirdMesh) {
-            delThirdMesh.Add(tMesh);
-            tempMeshCodes.push_back(tMesh);
-            selectThirdMesh = m_selectRegion[indexRegion];
-
-            vbMeshCodes->AddSlot()
-                .AutoHeight()
-                .Padding(FMargin(0, 0, 0, 3))[
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        [
-                            SNew(STextBlock)
-                            .Text(FText::FromString(FString(tMesh.get().c_str())))
-                        ]
-                    + SHorizontalBox::Slot()
-                        [
-                            SNew(SCheckBox)
-                            .IsChecked(selectThirdMesh)
-                        .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion)
-                        ]
-                ];
-            indexRegion++;
-        }
-
         m_meshCodes = std::make_shared<std::vector<MeshCode>>(tempMeshCodes);
-
-
         if ((*m_meshCodes).size() != 0) {
             scrollBox->AddSlot()[
                 vbMeshCodes
@@ -533,7 +540,7 @@ FReply PlateauWindow::onBtnSelectGmlFileClicked() {
 FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
     TSharedRef<SDlgPickPath> PickContentPathDlg =
         SNew(SDlgPickPath)
-        .Title(LOCTEXT("ChooseImportRootContentPath", "Choose Location for importing the scene content"));
+        .Title(LOCTEXT("ChooseSaveObjFilePath", "Choose Location for saving obj file"));
 
     if (PickContentPathDlg->ShowModal() == EAppReturnType::Cancel) {
         return FReply::Handled();
@@ -630,7 +637,6 @@ FReply PlateauWindow::onBtnConvertClicked() {
         }
 
         FString path = PickContentPathDlg->GetPath().ToString();
-
         PLATEAUFileUtils::ImportFbx(objFilePahtArray, path);
 
         return FReply::Handled();
@@ -642,16 +648,18 @@ FReply PlateauWindow::onBtnConvertClicked() {
     }
 }
 
-FReply PlateauWindow::onBtnAllRegionSelectClicked() {
+FReply PlateauWindow::onBtnAllSecondMeshSelectClicked() {
     for (int i = 0; i < m_selectRegion.Num(); i++) {
-        m_selectRegion[i] = true;
+        if (m_secondMesh.Find((*m_meshCodes)[i]) != INDEX_NONE) {
+            m_selectRegion[i] = true;
+        }
     }
     checkRegionMesh();
     updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
-FReply PlateauWindow::onBtnAllRegionRelieveClicked() {
+FReply PlateauWindow::onBtnAllSecondMeshRelieveClicked() {
     for (int i = 0; i < m_selectRegion.Num(); i++) {
         m_selectRegion[i] = false;
     }
@@ -660,8 +668,38 @@ FReply PlateauWindow::onBtnAllRegionRelieveClicked() {
     return FReply::Handled();
 }
 
-void PlateauWindow::onToggleCbSelectRegion(ECheckBoxState checkState, int num) {
+FReply PlateauWindow::onBtnThirdMeshSelectClicked(std::string secondMesh) {
+    for (int i = 0; i < m_selectRegion.Num(); i++) {
+        if ((*m_meshCodes)[i].getAsLevel2() == secondMesh && (*m_meshCodes)[i].get() != secondMesh) {
+            m_selectRegion[i] = true;
+        }
+    }
+    checkRegionMesh();
+    updatePlateauWindow(m_myWindow.Pin());
+    return FReply::Handled();
+}
+
+FReply PlateauWindow::onBtnThirdMeshRelieveClicked(std::string secondMesh) {
+    for (int i = 0; i < m_selectRegion.Num(); i++) {
+        if ((*m_meshCodes)[i].getAsLevel2() == secondMesh && (*m_meshCodes)[i].get() != secondMesh) {
+            m_selectRegion[i] = false;
+        }
+    }
+    checkRegionMesh();
+    updatePlateauWindow(m_myWindow.Pin());
+    return FReply::Handled();
+}
+
+void PlateauWindow::onToggleCbSelectRegion(ECheckBoxState checkState, int num, std::string meshName) {
     m_selectRegion[num] = (checkState == ECheckBoxState::Checked);
+    if (FString(meshName.c_str()).Len() == 6 && checkState == ECheckBoxState::Unchecked) {
+        for (int i = 0; i < m_selectRegion.Num(); i++) {
+            if ((*m_meshCodes)[i].getAsLevel2() == meshName) {
+                m_selectRegion[i] = false;
+            }
+        }
+    }
+
     checkRegionMesh();
     updatePlateauWindow(m_myWindow.Pin());
 }
