@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DetailCategoryBuilder.h"
+#include "FeaturePlacementSettingsPropertyRow.h"
 #include "IDetailCustomization.h"
-#include "IDetailPropertyRow.h"
 #include "PLATEAUCityMap.h"
-
-#define LOCTEXT_NAMESPACE "PLATEAUCityMapDetails"
 
 /**
  *
@@ -21,30 +20,20 @@ public:
     virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-    TSharedRef<SWidget> OnGetFeaturePlacementModeComboContent() const;
-    void CommitPlacementMode(EFeaturePlacementMode NewMode);
-
     FReply OnClickPlace();
 
     void PlaceMeshes(APLATEAUCityMap& Actor);
-    void PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, int SourceGmlIndex, int TargetLOD, bool bShouldPlaceLowerLODs);
+    void PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, const FPLATEAUImportedCityModelInfo& CityModelInfo, int TargetLOD, bool bShouldPlaceLowerLODs);
     UStaticMeshComponent* PlaceStaticMesh(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, UStaticMesh* StaticMesh);
     USceneComponent* PlaceEmptyComponent(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, const FName& Name);
 
     FString GetMeshName(int LOD, FString CityObjectID);
 
-    TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
-    IDetailPropertyRow* BuildingLODPropertyRow;
-    
     TSharedPtr<IPropertyHandle> BuildingPlacementModeProperty;
+    TSharedPtr<IPropertyHandle> BuildingLODProperty;
 
-    TMap<EFeaturePlacementMode, FText> FeaturePlacementTexts() const
-    {
-        TMap<EFeaturePlacementMode, FText> Items;
-        Items.Add(EFeaturePlacementMode::DontPlace, LOCTEXT("DontPlace", "配置無し"));
-        Items.Add(EFeaturePlacementMode::PlaceMaxLOD, LOCTEXT("PlaceMaxLOD", "最大LODを配置"));
-        return Items;
-    }
+    // UIの内部状態
+    TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
+
+    TMap<ECityModelPackage, FFeaturePlacementRow> FeaturePlacementRows;
 };
-
-#undef LOCTEXT_NAMESPACE

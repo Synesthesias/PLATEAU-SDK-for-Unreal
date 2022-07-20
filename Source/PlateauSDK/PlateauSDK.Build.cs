@@ -50,6 +50,7 @@ public class PlateauSDK : ModuleRules
                 "UnrealEd",
                 "AssetTools",
                 "EditorStyle",
+                "PropertyEditor"
                 // ... add private dependencies that you statically link with here ...	
             }
             );

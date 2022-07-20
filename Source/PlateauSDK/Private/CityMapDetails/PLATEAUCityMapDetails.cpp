@@ -7,79 +7,92 @@
 #include "PropertyHandle.h"
 #include "DetailLayoutBuilder.h"
 #include "Widgets/Input/SNumericEntryBox.h"
-#include "Widgets/Layout/SWidgetSwitcher.h"
-#include "Widgets/Input/SSlider.h"
-#include "IDetailPropertyRow.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
-#include "IDetailGroup.h"
 #include "PLATEAUCityMap.h"
 #include "Engine/StaticMesh.h"
+#include "PropertyCustomizationHelpers.h"
 
 #include "citygml/citygml.h"
 #include "citygml/citymodel.h"
 #include "citygml/geometry.h"
 #include "plateau/mesh/primary_city_object_types.h"
+#include "plateau/udx/gml_file_info.h"
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityMapDetails"
 
-TSharedRef<IDetailCustomization> FPLATEAUCityMapDetails::MakeInstance() {
-    return MakeShareable(new FPLATEAUCityMapDetails);
+namespace {
+    FName GetFeaturePlacementSettingsPropertyName(ECityModelPackage Package) {
+        switch (Package) {
+        case ECityModelPackage::Building: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, BuildingPlacementSettings);
+        case ECityModelPackage::Road: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, RoadPlacementSettings);
+        default: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, OtherPlacementSettings);
+        }
+    }
 }
 
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
 void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
-    // Create a category so this is displayed early in the properties
-    auto& cityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
-
-    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, Metadata));
-    const auto BuildingPlacementSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, BuildingPlacementSettings));
-    BuildingPlacementModeProperty = BuildingPlacementSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FBuildingPlacementSettings, FeaturePlacementMode));
-
-    auto& BuildingPlacementSettingsRow = cityModelCategory.AddProperty(BuildingPlacementSettingsProperty);
-    BuildingPlacementSettingsRow.DisplayName(LOCTEXT("Building", "建築物"));
-    BuildingPlacementSettingsRow.CustomWidget()
-        .NameContent()[BuildingPlacementSettingsProperty->CreatePropertyNameWidget()]
-        .ValueContent()
-        [SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        [SNew(SComboButton)
-        .OnGetMenuContent(this, &FPLATEAUCityMapDetails::OnGetFeaturePlacementModeComboContent)
-        .ContentPadding(0.0f)
-        .ButtonStyle(FEditorStyle::Get(), "ToggleButton")
-        .ForegroundColor(FSlateColor::UseForeground())
-        .VAlign(VAlign_Center)
-        .ButtonContent()
-        [SNew(STextBlock).Text_Lambda(
-            [this]() {
-                uint8 out;
-                BuildingPlacementModeProperty->GetValue(out);
-                return FeaturePlacementTexts()[static_cast<EFeaturePlacementMode>(out)];
-            })
-        ]]
-    + SVerticalBox::Slot()
-        [SNew(SHorizontalBox)
-        .Visibility_Lambda(
-            [this]() {
-                uint8 out;
-                BuildingPlacementModeProperty->GetValue(out);
-                return static_cast<EFeaturePlacementMode>(out) != EFeaturePlacementMode::DontPlace ? EVisibility::Visible : EVisibility::Hidden;
-            }
-        )
-        + SHorizontalBox::Slot()
-                [SNew(STextBlock).Text(LOCTEXT("LOD", "LOD"))]
-            + SHorizontalBox::Slot()
-                [SNew(SSlider)
-                .MaxValue(3)
-                .MinValue(0)
-                .StepSize(1)
-                ]]];
-
-
+    auto& CityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
     DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
-    cityModelCategory.AddCustomRow(FText::FromString("PlaceCityModel"))
+    auto CityMap = Cast<APLATEAUCityMap>(ObjectsBeingCustomized[0].Get());
+
+    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, Metadata));
+    const auto DetailBuilderPtr = &DetailBuilder;
+    CityModelCategory.AddProperty(MetadataProperty)
+        .CustomWidget()
+        .NameContent()
+        [
+            SNew(STextBlock).Text(LOCTEXT("CityMapMetadata", "メタデータ"))
+        ]
+    .ValueContent()
+        [
+            SNew(SObjectPropertyEntryBox)
+            .AllowedClass(UCityMapMetadata::StaticClass())
+        .OnObjectChanged_Lambda(
+            [this, DetailBuilderPtr, CityMap](const FAssetData& InAssetData) {
+                auto* MetadataAsset = Cast<UCityMapMetadata>(InAssetData.GetAsset());
+                CityMap->Metadata = MetadataAsset;
+
+                if (DetailBuilderPtr != nullptr)
+                    DetailBuilderPtr->ForceRefreshDetails();
+            })
+        .ObjectPath_Lambda(
+            [this, CityMap]() {
+                if (CityMap == nullptr)
+                    return FString("");
+                if (CityMap->Metadata == nullptr)
+                    return FString("");
+                return CityMap->Metadata->GetPathName();
+            })
+                //.OnShouldFilterAsset(this, &SDataprepInstanceParentWidget::ShouldFilterAsset)
+                //        .ObjectPath(this, &SDataprepInstanceParentWidget::GetDataprepInstanceParent);
+        ];
+
+
+    const auto Metadata = CityMap->Metadata;
+    if (Metadata == nullptr)
+        return;
+
+    const auto CityModelPlacementSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, CityModelPlacementSettings));
+
+    const auto CityModelInfoArray = Metadata->ImportedCityModelInfoArray;
+    for (const auto& CityModelInfo : CityModelInfoArray) {
+        const auto FileInfo = GmlFileInfo(TCHAR_TO_UTF8(*CityModelInfo.GmlFilePath));
+        const ECityModelPackage Package = FCityModelPlacementSettings::GetPackage(UTF8_TO_TCHAR(FileInfo.getFeatureType().c_str()));
+        // TODO: Refactor
+        if (!FeaturePlacementRows.Find(Package)) {
+            FeaturePlacementRows.Add(Package, FFeaturePlacementRow(Package));
+
+            const auto PropertyName = GetFeaturePlacementSettingsPropertyName(Package);
+            const auto FeaturePlacementSettingsProperty = CityModelPlacementSettingsProperty->GetChildHandle(PropertyName);
+            FeaturePlacementRows[Package].AddToCategory(CityModelCategory, FeaturePlacementSettingsProperty);
+        }
+    }
+
+    CityModelCategory.AddCustomRow(FText::FromString("PlaceCityModel"))
         .NameContent()
         [
             SNew(STextBlock).Text(LOCTEXT("PlaceCityModel", "都市モデルを配置"))
@@ -100,25 +113,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
         ]
         ];
 }
-
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
-
-TSharedRef<SWidget> FPLATEAUCityMapDetails::OnGetFeaturePlacementModeComboContent() const {
-    // Fill the combo menu with presets of common screen resolutions
-    FMenuBuilder MenuBuilder(true, NULL);
-    auto Items = FeaturePlacementTexts();
-    for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
-        FText ItemText = ItemIter->Value;
-        FUIAction ItemAction(FExecuteAction::CreateSP(const_cast<FPLATEAUCityMapDetails*>(this), &FPLATEAUCityMapDetails::CommitPlacementMode, ItemIter->Key));
-        MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
-    }
-
-    return MenuBuilder.MakeWidget();
-}
-
-void FPLATEAUCityMapDetails::CommitPlacementMode(EFeaturePlacementMode NewMode) {
-    BuildingPlacementModeProperty->SetValue(static_cast<uint8>(NewMode));
-}
 
 
 
@@ -152,15 +147,15 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
 
-    for (const auto Entry : Actor.Metadata->StaticMeshes) {
-        PlaceCityModel(Actor, *ActorRootComponent, Entry.Key, 2, true);
+    for (const auto CityModelInfo : Actor.Metadata->ImportedCityModelInfoArray) {
+        PlaceCityModel(Actor, *ActorRootComponent, CityModelInfo, 2, true);
     }
     GEngine->BroadcastLevelActorListChanged();
 }
 
-void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& RootComponent, int SourceGmlIndex, int TargetLOD, bool bShouldPlaceLowerLODs) {
+void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& RootComponent, const FPLATEAUImportedCityModelInfo& CityModelInfo, int TargetLOD, bool bShouldPlaceLowerLODs) {
     // GML読み込み
-    const auto GmlPath = FPaths::ProjectContentDir().Append("/PLATEAU/").Append(Actor.Metadata->SourceGmlFiles[SourceGmlIndex]);
+    const auto GmlPath = FPaths::ProjectContentDir().Append("/PLATEAU/").Append(CityModelInfo.GmlFilePath);
     citygml::ParserParams params;
     params.tesselate = false;
     const auto CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), params);
@@ -175,7 +170,7 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneCompon
 
     // ハッシュテーブル作成
     TMap<FString, UStaticMesh*> StaticMeshMap;
-    for (const auto StaticMesh : Actor.Metadata->StaticMeshes[SourceGmlIndex].Value) {
+    for (const auto StaticMesh : CityModelInfo.StaticMeshes) {
         const auto Key = StaticMesh->GetName();
         StaticMeshMap.Add(Key, StaticMesh);
     }
@@ -255,7 +250,6 @@ USceneComponent* FPLATEAUCityMapDetails::PlaceEmptyComponent(APLATEAUCityMap& Ac
 FString FPLATEAUCityMapDetails::GetMeshName(int LOD, FString CityObjectID) {
     return FString("LOD") + FString::FromInt(LOD) + FString("_") + CityObjectID;
 }
-
 
 
 #undef LOCTEXT_NAMESPACE

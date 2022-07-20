@@ -5,18 +5,21 @@
 #include "CoreMinimal.h"
 #include "CityMapMetadata.h"
 #include "GameFramework/Actor.h"
+
 #include "PLATEAUCityMap.generated.h"
 
 UENUM(BlueprintType)
 enum class EFeaturePlacementMode : uint8 {
     DontPlace,
-    PlaceMaxLOD
+    PlaceMaxLOD,
+    PlaceTargetLODOrLower,
+    PlaceTargetLOD,
 };
 
 UENUM(BlueprintType)
-enum class EBuildingLOD3TypeMask : uint8 {
-    Door,
-    Window,
+enum class EBuildingTypeMask : uint8 {
+    Door = 0,
+    Window = 1,
     WallSurface,
     RoofSurface,
     GroundSurface,
@@ -26,32 +29,11 @@ enum class EBuildingLOD3TypeMask : uint8 {
 };
 
 UENUM(BlueprintType)
-enum class EBuildingLOD2TypeMask : uint8 {
-    WallSurface,
-    RoofSurface,
-    GroundSurface,
-    ClosureSurface,
-    OuterFloorSurface,
-    OuterCeilingSurface
-};
-
-
-USTRUCT()
-struct FBuildingPlacementSettings {
-    GENERATED_USTRUCT_BODY()
-
-public:
-    UPROPERTY(EditAnywhere)
-        EFeaturePlacementMode FeaturePlacementMode;
-
-    UPROPERTY(EditAnywhere)
-        int TargetLOD;
-
-    UPROPERTY(EditAnywhere)
-        EBuildingLOD3TypeMask BuildingLOD3TypeMask;
-
-    UPROPERTY(EditAnywhere)
-        EBuildingLOD2TypeMask BuildingLOD2TypeMask;
+enum class ECityModelPackage : uint8 {
+    Building,
+    Road,
+    Relief,
+    Others
 };
 
 USTRUCT()
@@ -64,6 +46,42 @@ public:
 
     UPROPERTY(EditAnywhere)
         int TargetLOD;
+};
+
+USTRUCT()
+struct FCityModelPlacementSettings {
+    GENERATED_USTRUCT_BODY()
+
+public:
+    //UPROPERTY(EditAnywhere)
+    //    FFeaturePlacementSettings BuildingPlacementSettingsMap;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings BuildingPlacementSettings;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings RoadPlacementSettings;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings OtherPlacementSettings;
+
+    FFeaturePlacementSettings& GetFeaturePlacementSettings(ECityModelPackage Package) {
+        switch (Package) {
+        case ECityModelPackage::Building: return BuildingPlacementSettings;
+        case ECityModelPackage::Road: return RoadPlacementSettings;
+        default: return OtherPlacementSettings;
+        }
+    }
+
+    static ECityModelPackage GetPackage(const FString& SubDirectoryName) {
+        if (SubDirectoryName == FString(L"bldg"))
+            return ECityModelPackage::Building;
+        if (SubDirectoryName == FString(L"tran"))
+            return ECityModelPackage::Road;
+        if (SubDirectoryName == FString(L"dem"))
+            return ECityModelPackage::Relief;
+        return ECityModelPackage::Others;
+    }
 };
 
 UCLASS()
@@ -79,7 +97,7 @@ public:
         UCityMapMetadata* Metadata;
 
     UPROPERTY(EditAnywhere, Category = "CityModel")
-        FBuildingPlacementSettings BuildingPlacementSettings;
+        FCityModelPlacementSettings CityModelPlacementSettings;
 
 protected:
     // Called when the game starts or when spawned

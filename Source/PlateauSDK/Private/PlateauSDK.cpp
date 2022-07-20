@@ -3,7 +3,7 @@
 #include "PlateauSDK.h"
 
 #include "PLATEAUCityMap.h"
-#include "PLATEAUCityMapDetails.h"
+#include "CityMapDetails/PLATEAUCityMapDetails.h"
 
 #define LOCTEXT_NAMESPACE "FPlateauSDKModule"
 

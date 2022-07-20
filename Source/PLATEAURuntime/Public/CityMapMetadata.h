@@ -6,11 +6,12 @@
 #include "CityMapMetadata.generated.h"
 
 USTRUCT()
-struct PLATEAURUNTIME_API FStaticMeshCollection {
+struct PLATEAURUNTIME_API FPLATEAUImportedCityModelInfo {
     GENERATED_BODY()
-
         UPROPERTY(EditAnywhere)
-        TArray<UStaticMesh*> Value;
+        FString GmlFilePath;
+        UPROPERTY(EditAnywhere)
+        TArray<UStaticMesh*> StaticMeshes;
 };
 
 /**
@@ -22,14 +23,5 @@ class PLATEAURUNTIME_API UCityMapMetadata : public UObject {
 
 public:
     UPROPERTY(EditAnywhere)
-        TMap<int32, FStaticMeshCollection> StaticMeshes;
-
-    UPROPERTY(EditAnywhere)
-        TArray<FString> SourceGmlFiles;
-
-    UPROPERTY(EditAnywhere)
-        int32 ValueC;
-
-    //UFUNCTION(CallInEditor)
-    //    void CreateActor();
+        TArray<FPLATEAUImportedCityModelInfo> ImportedCityModelInfoArray;
 };

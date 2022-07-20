@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <libplateau_api.h>
 #include <plateau/udx/gml_file_info.h>

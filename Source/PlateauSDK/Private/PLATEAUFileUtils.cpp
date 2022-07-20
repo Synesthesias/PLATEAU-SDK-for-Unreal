@@ -76,12 +76,15 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& files, const FString& de
 
             // BluePrintエディタ開いている必要あり
             const auto nodes = blueprint->SimpleConstructionScript->GetAllNodes();
+
+            //metadata->ImportedCityModelInfoArray.SetNum(files.Num());
+
             for (const auto node : nodes) {
                 if (node->ComponentClass != UStaticMeshComponent::StaticClass())
                     continue;
                 auto staticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
-                auto& container = metadata->StaticMeshes.FindOrAdd(0);
-                container.Value.Add(staticMeshComponent->GetStaticMesh());
+                //auto& container = metadata->StaticMeshes.FindOrAdd(0);
+                //container.Value.Add(staticMeshComponent->GetStaticMesh());
             }
 
             assetPackage->SetDirtyFlag(true);
