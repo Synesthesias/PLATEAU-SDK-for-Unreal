@@ -28,6 +28,28 @@ public:
         TArray<UStaticMesh*> StaticMeshes;
 };
 
+USTRUCT()
+struct FPLATEAUFeatureMeshConvertSettings {
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditAnywhere)
+        int MinLOD;
+    UPROPERTY(EditAnywhere)
+        int MaxLOD;
+    UPROPERTY(EditAnywhere)
+        bool ExportLowerLODs;
+};
+
+USTRUCT()
+struct FPLATEAUMeshConvertSettings {
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditAnywhere)
+        bool IsPerCityModelArea;
+};
+
 /**
  *
  */
@@ -38,4 +60,7 @@ class PLATEAURUNTIME_API UCityMapMetadata : public UObject {
 public:
     UPROPERTY(EditAnywhere)
         TArray<FPLATEAUImportedCityModelInfo> ImportedCityModelInfoArray;
+
+    UPROPERTY(EditAnywhere)
+        FPLATEAUMeshConvertSettings MeshConvertSettings;
 };

@@ -103,7 +103,7 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString&
         CityModelInfo.Package = Package;
 
         const auto MeshConvertOptions = MeshConvertOptionsMap[Package];
-
+        Metadata->MeshConvertSettings.IsPerCityModelArea = MeshConvertOptions.mesh_granularity == MeshGranularity::PerCityModelArea;
         MeshConverter.setOptions(MeshConvertOptions);
         const auto MeshFilePathVector = MeshConverter.convert(TCHAR_TO_UTF8(*DestinationFullPath), FileInfo.getPath(),
             nullptr);

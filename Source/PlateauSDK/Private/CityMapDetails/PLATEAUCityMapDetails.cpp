@@ -163,6 +163,9 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
 }
 
 void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& RootComponent, const FPLATEAUImportedCityModelInfo& CityModelInfo, int TargetLOD, bool bShouldPlaceLowerLODs) {
+    if (CityModelInfo.StaticMeshes.Num() == 0)
+        return;
+
     // GML読み込み
     const auto GmlPath = FPaths::ProjectContentDir().Append("/PLATEAU/").Append(CityModelInfo.GmlFilePath);
     citygml::ParserParams params;
@@ -170,6 +173,12 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneCompon
     const auto CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), params);
     if (CityModel == nullptr) {
         UE_LOG(LogTemp, Warning, TEXT("Failed to load gml: %s"), *GmlPath);
+        return;
+    }
+
+    if (Actor.Metadata->MeshConvertSettings.IsPerCityModelArea) {
+        // メッシュ結合単位が都市モデル単位の場合1つだけStaticMeshが存在するのでそれを配置する。
+        PlaceStaticMesh(Actor, RootComponent, CityModelInfo.StaticMeshes[0]);
         return;
     }
 
@@ -203,7 +212,7 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneCompon
             TargetLOD--;
         }
 
-        if (bShouldPlaceLowerLODs && TargetLOD != DefaultTargetLOD)
+        if (!bShouldPlaceLowerLODs && TargetLOD != DefaultTargetLOD)
             continue;
         if (TargetLOD < 0)
             continue;

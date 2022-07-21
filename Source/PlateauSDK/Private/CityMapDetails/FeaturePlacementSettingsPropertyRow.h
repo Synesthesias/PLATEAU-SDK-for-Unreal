@@ -13,7 +13,6 @@ public:
 
     void AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeaturePlacementSettingsProperty);
 
-    static FText GetDisplayName(ECityModelPackage Package);
 private:
     ECityModelPackage Package;
 
@@ -25,7 +24,7 @@ private:
         TMap<EFeaturePlacementMode, FText> Items;
         Items.Add(EFeaturePlacementMode::DontPlace, LOCTEXT("DontPlace", "配置無し"));
         Items.Add(EFeaturePlacementMode::PlaceTargetLOD, LOCTEXT("PlaceTargetLOD", "選択LODを配置、無ければ配置しない"));
-        Items.Add(EFeaturePlacementMode::PlaceTargetLODOrLower, LOCTEXT("PlaceTargetLOD", "選択LODを配置、無ければ最大LODを配置する"));
+        Items.Add(EFeaturePlacementMode::PlaceTargetLODOrLower, LOCTEXT("PlaceTargetLODOrLower", "選択LODを配置、無ければ最大LODを配置する"));
         return Items;
     }
 

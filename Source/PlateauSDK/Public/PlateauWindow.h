@@ -5,9 +5,10 @@
 #include "CoreMinimal.h"
 #include <vector>
 
+#include "CityMapMetadata.h"
 #include "plateau/udx/mesh_code.h"
 #include "plateau/udx/udx_file_collection.h"
-
+#include "plateau/mesh/mesh_convert_options.h"
 
 class PLATEAUSDK_API PlateauWindow : public TSharedFromThis<PlateauWindow>
 {
@@ -27,16 +28,13 @@ private:
     std::shared_ptr<std::vector<MeshCode>> m_meshCodes;
     std::shared_ptr<std::vector<UdxSubFolder>> m_subFolders;
     TArray<TSharedPtr<FString>> m_outputModeArray;
-    int m_buildOutputIndex = 0;
-    int m_buildMaxLOD = 3;
-    int m_buildMinLOD = 1;
-    TArray<FString> m_Features = {
-        TEXT("建築物"),
-        TEXT("道路"),
-        TEXT("植生"),
-        TEXT("都市設備"),
-        TEXT("起伏"),
-        TEXT("その他")
+    TArray<ECityModelPackage> m_Features = {
+        ECityModelPackage::Building,
+        ECityModelPackage::Road,
+        ECityModelPackage::UrbanFacility,
+        ECityModelPackage::Relief,
+        ECityModelPackage::Vegetation,
+        ECityModelPackage::Others
     };
     TArray<bool> m_selectRegion; //選択された地域メッシュ
     TArray<bool> m_existFeatures; //選択された地域に含まれる地物（その他あり）
@@ -47,6 +45,7 @@ private:
     UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
     bool m_includeAppearance = true;
+    MeshGranularity m_meshGranularity = MeshGranularity::PerPrimaryFeatureObject;
 
     void onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder);
     void onPulldownMenuExtension(FMenuBuilder& menuBuilder);
@@ -65,11 +64,11 @@ private:
     FReply onBtnAllFeatureSelectClicked();
     FReply onBtnAllFeatureRelieveClicked();
     void onToggleCbSelectFeature(ECheckBoxState checkState, int index);
-    void onSelectOutputMode(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo);
-    FText onGetBuildOutputMode() const;
-    void onBuildMaxLODChanged(int value);
-    void onBuildMinLODChanged(int value);
     void checkRegionMesh();
 
     TArray<MeshCode> sortMeshCodes(TArray<MeshCode> meshArray);
+
+    TSharedRef<SVerticalBox> CreateLODSettingsPanel(ECityModelPackage Package);
+
+    TMap<ECityModelPackage, MeshConvertOptions> MeshConvertOptionsMap;
 };

@@ -8,6 +8,8 @@
 
 #include "PLATEAUCityMap.generated.h"
 
+#define LOCTEXT_NAMESPACE "APLATEAUCityMap"
+
 UENUM(BlueprintType)
 enum class EFeaturePlacementMode : uint8 {
     DontPlace,
@@ -83,6 +85,17 @@ public:
             return ECityModelPackage::Relief;
         return ECityModelPackage::Others;
     }
+
+    static FText GetDisplayName(ECityModelPackage Package) {
+        switch (Package) {
+        case ECityModelPackage::Building: return LOCTEXT("Building", "建築物");
+        case ECityModelPackage::Road: return LOCTEXT("Transportation", "道路");
+        case ECityModelPackage::Relief: return LOCTEXT("Relief", "起伏");
+        case ECityModelPackage::UrbanFacility: return LOCTEXT("UrbanFacility", "都市設備");
+        case ECityModelPackage::Vegetation: return LOCTEXT("Vegetation", "植生");
+        default: return LOCTEXT("Others", "その他(災害警戒区域等)");
+        }
+    }
 };
 
 UCLASS()
@@ -109,3 +122,5 @@ public:
     virtual void Tick(float DeltaTime) override;
 
 };
+
+#undef LOCTEXT_NAMESPACE

@@ -38,10 +38,11 @@ void FFeaturePlacementRow::AddToCategory(IDetailCategoryBuilder& Category, TShar
     FeatureLODProperty = FeaturePlacementSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFeaturePlacementSettings, TargetLOD));
 
     auto& FeaturePlacementSettingsRow = Category.AddProperty(FeaturePlacementSettingsProperty);
-    FeaturePlacementSettingsRow.DisplayName(GetDisplayName(Package));
+    FeaturePlacementSettingsRow.DisplayName(FCityModelPlacementSettings::GetDisplayName(Package));
     FeaturePlacementSettingsRow.CustomWidget()
         .NameContent()[FeaturePlacementSettingsProperty->CreatePropertyNameWidget()]
         .ValueContent()
+        .MaxDesiredWidth(200)
         [SNew(SVerticalBox)
         + SVerticalBox::Slot()
         [SNew(SComboButton)
@@ -89,19 +90,7 @@ FText FFeaturePlacementRow::GetComboButtonText() const {
     return FeaturePlacementTexts()[static_cast<EFeaturePlacementMode>(out)];
 }
 
-
-FText FFeaturePlacementRow::GetDisplayName(ECityModelPackage Package) {
-    switch (Package) {
-    case ECityModelPackage::Building: return LOCTEXT("Building", "建築物");
-    case ECityModelPackage::Road: return LOCTEXT("Transportation", "道路");
-    case ECityModelPackage::Relief: return LOCTEXT("Relief", "起伏");
-    default: return LOCTEXT("Others", "その他(災害警戒区域等)");
-    }
-}
-
-
 TSharedRef<SWidget> FFeaturePlacementRow::OnGetFeaturePlacementModeComboContent() const {
-    // Fill the combo menu with presets of common screen resolutions
     FMenuBuilder MenuBuilder(true, nullptr);
     auto Items = FeaturePlacementTexts();
     for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
