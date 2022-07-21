@@ -21,6 +21,7 @@
 
 #include "citygml/citygml.h"
 #include "plateau/mesh/mesh_converter.h"
+#include "plateau/mesh/mesh_convert_options_factory.h"
 #include "PLATEAUFileUtils.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
@@ -328,54 +329,6 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 
 #pragma endregion
 
-#pragma region Select_obj_File_Destination
-    scrollBox->AddSlot()
-        [
-            SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SEditableTextBox)
-            .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block2", "2.Select obj File Destination"))
-        .IsReadOnly(true)
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
-    + SVerticalBox::Slot()
-        .Padding(FMargin(20, 5, 20, 5))
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Raw(this, &PlateauWindow::onBtnSelectObjDestinationClicked)
-        .Content()
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Center)
-        .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button2", "Select obj Destination"))
-        ]
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 2, 0, 5))
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("TEXT2", "Destination obj file path:"))
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 30))
-        [
-            SNew(SEditableTextBox)
-            .IsReadOnly(true)
-        .Text(FText::FromString(m_objFolderPath))
-        ]
-        ];
-#pragma endregion
-
 #pragma region Configure
     scrollBox->AddSlot()
         [
@@ -585,15 +538,23 @@ FReply PlateauWindow::onBtnConvertClicked() {
             }
             selectIndex++;
         }
+
+        if (CopiedGmlFiles.Num() == 0)
+            return FReply::Handled();
+
         m_filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
 
-        //setting convert option
-        MeshConverter meshConverter;
+        // メッシュ変換設定
         MeshConvertOptions options;
         options.unit_scale = 0.01;
         options.mesh_axes = AxesConversion::NWU;
         options.max_lod = m_buildMaxLOD;
         options.min_lod = m_buildMinLOD;
+        ParserParams ParserParams;
+        ParserParams.tesselate = false;
+        const auto FirstCityModel = citygml::load(TCHAR_TO_UTF8(*CopiedGmlFiles[0]), ParserParams);
+
+        MeshConvertOptionsFactory::setValidReferencePoint(options, *FirstCityModel);
         switch (m_buildOutputIndex) {
         case 0:
             options.export_lower_lod = true;
@@ -606,33 +567,6 @@ FReply PlateauWindow::onBtnConvertClicked() {
         }
         TMap<ECityModelPackage, MeshConvertOptions> MeshConvertOptionsMap;
         MeshConvertOptionsMap.FindOrAdd(ECityModelPackage::Building, options);
-        //meshConverter.setOptions(options);
-
-        ////convert gml file to obj file
-        //const citygml::ParserParams params;
-        //TArray<std::string> gmlFilePathArray;
-        //TArray<FString> objFilePahtArray;
-
-        //for (auto gmlFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")))) {
-        //    if (gmlFile.path().extension() == ".gml") {
-        //        gmlFilePathArray.Add(gmlFile.path().string());
-        //    }
-        //}
-
-        //for (auto objFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*m_objFolderPath))) {
-        //    if (objFile.path().extension() == ".obj") {
-        //        objFilePahtArray.Add(FString(objFile.path().string().c_str()));
-        //    }
-        //}
-
-        //for (auto gmlFilePath : gmlFilePathArray) {
-        //    const auto cityModel = citygml::load(gmlFilePath, params, nullptr);
-        //    if (cityModel == nullptr) {
-        //        throw std::runtime_error(std::string("Failed to load") + gmlFilePath);
-        //    }
-        //    meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), gmlFilePath,
-        //        cityModel, nullptr);
-        //}
 
         TSharedRef<SDlgPickPath> PickContentPathDlg =
             SNew(SDlgPickPath)

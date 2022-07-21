@@ -95,7 +95,7 @@ FText FFeaturePlacementRow::GetDisplayName(ECityModelPackage Package) {
     case ECityModelPackage::Building: return LOCTEXT("Building", "建築物");
     case ECityModelPackage::Road: return LOCTEXT("Transportation", "道路");
     case ECityModelPackage::Relief: return LOCTEXT("Relief", "起伏");
-    default: return LOCTEXT("Others", "その他");
+    default: return LOCTEXT("Others", "その他(災害警戒区域等)");
     }
 }
 

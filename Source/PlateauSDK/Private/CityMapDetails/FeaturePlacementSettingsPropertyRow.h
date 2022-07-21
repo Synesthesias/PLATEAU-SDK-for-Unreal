@@ -24,7 +24,8 @@ private:
     TMap<EFeaturePlacementMode, FText> FeaturePlacementTexts() const {
         TMap<EFeaturePlacementMode, FText> Items;
         Items.Add(EFeaturePlacementMode::DontPlace, LOCTEXT("DontPlace", "配置無し"));
-        Items.Add(EFeaturePlacementMode::PlaceMaxLOD, LOCTEXT("PlaceMaxLOD", "最大LODを配置"));
+        Items.Add(EFeaturePlacementMode::PlaceTargetLOD, LOCTEXT("PlaceTargetLOD", "選択LODを配置、無ければ配置しない"));
+        Items.Add(EFeaturePlacementMode::PlaceTargetLODOrLower, LOCTEXT("PlaceTargetLOD", "選択LODを配置、無ければ最大LODを配置する"));
         return Items;
     }
 

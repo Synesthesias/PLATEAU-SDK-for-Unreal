@@ -11,7 +11,6 @@
 UENUM(BlueprintType)
 enum class EFeaturePlacementMode : uint8 {
     DontPlace,
-    PlaceMaxLOD,
     PlaceTargetLODOrLower,
     PlaceTargetLOD,
 };
@@ -26,14 +25,6 @@ enum class EBuildingTypeMask : uint8 {
     ClosureSurface,
     OuterFloorSurface,
     OuterCeilingSurface
-};
-
-UENUM(BlueprintType)
-enum class ECityModelPackage : uint8 {
-    Building,
-    Road,
-    Relief,
-    Others
 };
 
 USTRUCT()
@@ -53,14 +44,20 @@ struct FCityModelPlacementSettings {
     GENERATED_USTRUCT_BODY()
 
 public:
-    //UPROPERTY(EditAnywhere)
-    //    FFeaturePlacementSettings BuildingPlacementSettingsMap;
-
     UPROPERTY(EditAnywhere)
         FFeaturePlacementSettings BuildingPlacementSettings;
 
     UPROPERTY(EditAnywhere)
         FFeaturePlacementSettings RoadPlacementSettings;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings ReliefPlacementSettings;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings UrbanFacilityPlacementSettings;
+
+    UPROPERTY(EditAnywhere)
+        FFeaturePlacementSettings VegetationPlacementSettings;
 
     UPROPERTY(EditAnywhere)
         FFeaturePlacementSettings OtherPlacementSettings;
@@ -69,10 +66,14 @@ public:
         switch (Package) {
         case ECityModelPackage::Building: return BuildingPlacementSettings;
         case ECityModelPackage::Road: return RoadPlacementSettings;
+        case ECityModelPackage::Relief: return ReliefPlacementSettings;
+        case ECityModelPackage::UrbanFacility: return UrbanFacilityPlacementSettings;
+        case ECityModelPackage::Vegetation: return VegetationPlacementSettings;
         default: return OtherPlacementSettings;
         }
     }
 
+    // TODO: libplateau側に委譲
     static ECityModelPackage GetPackage(const FString& SubDirectoryName) {
         if (SubDirectoryName == FString(L"bldg"))
             return ECityModelPackage::Building;

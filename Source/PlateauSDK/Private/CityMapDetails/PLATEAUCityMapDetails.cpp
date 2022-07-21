@@ -22,10 +22,14 @@
 #define LOCTEXT_NAMESPACE "PLATEAUCityMapDetails"
 
 namespace {
+    // TODO: もっといい方法？
     FName GetFeaturePlacementSettingsPropertyName(ECityModelPackage Package) {
         switch (Package) {
         case ECityModelPackage::Building: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, BuildingPlacementSettings);
         case ECityModelPackage::Road: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, RoadPlacementSettings);
+        case ECityModelPackage::Relief: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, ReliefPlacementSettings);
+        case ECityModelPackage::UrbanFacility: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, UrbanFacilityPlacementSettings);
+        case ECityModelPackage::Vegetation: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, VegetationPlacementSettings);
         default: return GET_MEMBER_NAME_CHECKED(FCityModelPlacementSettings, OtherPlacementSettings);
         }
     }
@@ -81,7 +85,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
     const auto CityModelInfoArray = Metadata->ImportedCityModelInfoArray;
     for (const auto& CityModelInfo : CityModelInfoArray) {
         const auto FileInfo = GmlFileInfo(TCHAR_TO_UTF8(*CityModelInfo.GmlFilePath));
-        const ECityModelPackage Package = FCityModelPlacementSettings::GetPackage(UTF8_TO_TCHAR(FileInfo.getFeatureType().c_str()));
+        const ECityModelPackage Package = CityModelInfo.Package;
         // TODO: Refactor
         if (!FeaturePlacementRows.Find(Package)) {
             FeaturePlacementRows.Add(Package, FFeaturePlacementRow(Package));
@@ -115,12 +119,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-
-
-
-
-
-
+// TODO: ロジックUI分離
 FReply FPLATEAUCityMapDetails::OnClickPlace() {
     for (auto Object : ObjectsBeingCustomized) {
         auto* Actor = Cast<APLATEAUCityMap>(Object.Get());
@@ -135,6 +134,8 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
         return;
     }
 
+    Actor.ClearInstanceComponents(true);
+
     USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
         USceneComponent::GetDefaultSceneRootVariableName());
 
@@ -146,9 +147,17 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
     ActorRootComponent->RegisterComponent();
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
-
     for (const auto CityModelInfo : Actor.Metadata->ImportedCityModelInfoArray) {
-        PlaceCityModel(Actor, *ActorRootComponent, CityModelInfo, 2, true);
+        const auto FeaturePlacementSettings = Actor.CityModelPlacementSettings.GetFeaturePlacementSettings(CityModelInfo.Package);
+        if (FeaturePlacementSettings.FeaturePlacementMode == EFeaturePlacementMode::DontPlace)
+            continue;
+        const auto shouldPlaceLowerLODs =
+            FeaturePlacementSettings.FeaturePlacementMode == EFeaturePlacementMode::PlaceTargetLODOrLower;
+
+        PlaceCityModel(
+            Actor, *ActorRootComponent,
+            CityModelInfo, FeaturePlacementSettings.TargetLOD,
+            shouldPlaceLowerLODs);
     }
     GEngine->BroadcastLevelActorListChanged();
 }

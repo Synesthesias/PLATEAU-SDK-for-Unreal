@@ -5,12 +5,26 @@
 
 #include "CityMapMetadata.generated.h"
 
+UENUM(BlueprintType)
+enum class ECityModelPackage : uint8 {
+    Building,
+    Road,
+    Relief,
+    UrbanFacility,
+    Vegetation,
+    Others
+};
+
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUImportedCityModelInfo {
     GENERATED_BODY()
-        UPROPERTY(EditAnywhere)
+
+public:
+    UPROPERTY(EditAnywhere)
         FString GmlFilePath;
-        UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere)
+        ECityModelPackage Package;
+    UPROPERTY(EditAnywhere)
         TArray<UStaticMesh*> StaticMeshes;
 };
 

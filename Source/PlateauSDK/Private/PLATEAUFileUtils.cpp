@@ -49,6 +49,23 @@ namespace {
         return nullptr;
     }
 
+    /// <summary>
+    /// <paramref name="objects"/>から<typeparamref name="TObject"/>型の要素を全て取得します。
+    /// </summary>
+    /// <typeparam name="TObject"></typeparam>
+    /// <param name="objects"></param>
+    /// <returns></returns>
+    template <class TObject>
+    TArray<TObject*> FindObjects(const TArray<UObject*> objects) {
+        TArray<TObject*> Result;
+        for (UObject* object : objects) {
+            if (object->IsA(TObject::StaticClass())) {
+                Result.Add(Cast<TObject>(object));
+            }
+        }
+        return Result;
+    }
+
     UCityMapMetadata* CreateMetadataAsset(const FString& DestinationPath) {
         const auto* metadataFactory = FindFactory<UCityMapMetadataFactory>();
         if (metadataFactory != nullptr) {
@@ -83,6 +100,8 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString&
 
         const auto FileInfo = GmlFileInfo(TCHAR_TO_UTF8(*GmlFile));
         const ECityModelPackage Package = FCityModelPlacementSettings::GetPackage(UTF8_TO_TCHAR(FileInfo.getFeatureType().c_str()));
+        CityModelInfo.Package = Package;
+
         const auto MeshConvertOptions = MeshConvertOptionsMap[Package];
 
         MeshConverter.setOptions(MeshConvertOptions);
@@ -108,16 +127,18 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString&
             const FAssetToolsModule& assetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
             const auto importedAssets = assetToolsModule.Get().ImportAssetsAutomated(automatedData);
 
-            auto* blueprint = FindObject<UBlueprint>(importedAssets);
+            const auto Blueprints = FindObjects<UBlueprint>(importedAssets);
 
-            // BluePrintエディタ開いている必要あり(FbxSceneImporterFactoryの内部で開かれる)
-            const auto nodes = blueprint->SimpleConstructionScript->GetAllNodes();
+            for (const auto Blueprint : Blueprints) {
+                // BluePrintエディタ開いている必要あり(FbxSceneImporterFactoryの内部で開かれる)
+                const auto nodes = Blueprint->SimpleConstructionScript->GetAllNodes();
 
-            for (const auto node : nodes) {
-                if (node->ComponentClass != UStaticMeshComponent::StaticClass())
-                    continue;
-                const auto StaticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
-                CityModelInfo.StaticMeshes.Add(StaticMeshComponent->GetStaticMesh());
+                for (const auto node : nodes) {
+                    if (node->ComponentClass != UStaticMeshComponent::StaticClass())
+                        continue;
+                    const auto StaticMeshComponent = Cast<UStaticMeshComponent>(node->ComponentTemplate);
+                    CityModelInfo.StaticMeshes.Add(StaticMeshComponent->GetStaticMesh());
+                }
             }
 
             TArray<AActor*> ActorsToFind;
