@@ -339,10 +339,30 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         [
             SNew(SEditableTextBox)
             .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block3", "3.Configure"))
+        .Text(LOCTEXT("MeshSettings", "メッシュ設定"))
         .IsReadOnly(true)
         .BackgroundColor(FColor(200, 200, 200, 255))
         ]
+
+    + SVerticalBox::Slot()
+        .AutoHeight()
+            .Padding(FMargin(0, 0, 0, 0))[
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    [
+                        SNew(STextBlock)
+                        .Text(LOCTEXT("IncludeAppearance", "テクスチャを含める"))
+                    ]
+                + SHorizontalBox::Slot()
+                    [
+                        SNew(SCheckBox)
+                        .IsChecked(true)
+                    .OnCheckStateChanged_Lambda(
+                        [this](ECheckBoxState State) {
+                            m_includeAppearance = State != ECheckBoxState::Unchecked;
+                        })
+                    ]
+            ]
 
     + SVerticalBox::Slot()
         .AutoHeight()
@@ -550,6 +570,7 @@ FReply PlateauWindow::onBtnConvertClicked() {
         options.mesh_axes = AxesConversion::NWU;
         options.max_lod = m_buildMaxLOD;
         options.min_lod = m_buildMinLOD;
+        options.export_appearance = m_includeAppearance;
         ParserParams ParserParams;
         ParserParams.tesselate = false;
         const auto FirstCityModel = citygml::load(TCHAR_TO_UTF8(*CopiedGmlFiles[0]), ParserParams);

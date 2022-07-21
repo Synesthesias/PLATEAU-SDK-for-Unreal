@@ -46,6 +46,7 @@ private:
     bool m_gmlFileSelected = false;
     UdxFileCollection m_collection;
     UdxFileCollection m_filteredCollection;
+    bool m_includeAppearance = true;
 
     void onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder);
     void onPulldownMenuExtension(FMenuBuilder& menuBuilder);
