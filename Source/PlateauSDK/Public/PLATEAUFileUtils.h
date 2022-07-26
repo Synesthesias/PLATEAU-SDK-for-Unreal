@@ -2,6 +2,10 @@
 
 #include "CoreMinimal.h"
 
+#include "PLATEAUCityModelLoader.h"
+
+#include "plateau/mesh/mesh_convert_options.h"
+
 /*
  * ファイル操作のためのユーティリティを提供します。
  */
@@ -10,9 +14,9 @@ public:
     /*
      * メッシュファイルを全て出力先のパスにインポートします。
      *
-     * @param files インポートするメッシュファイル
-     * @param destinationPath 出力先のコンテンツパス(/Game/...)
+     * @param GmlFiles インポートするGMLファイル
+     * @param DestinationPath 出力先のコンテンツパス(/Game/...)
      * @return 
      */
-    static void ImportFbx(const TArray<FString>& files, const FString& destinationPath);
+    static void ImportFbx(const TArray<FString>& GmlFiles, const FString& DestinationPath, const TMap<ECityModelPackage, MeshConvertOptions>& MeshConvertOptionsMap);
 };

@@ -10,6 +10,7 @@
 #include "Widgets/Input/SComboBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SSpinBox.h"
+#include "Widgets/Input/SSlider.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Templates/SharedPointer.h"
 #include "IDesktopPlatform.h"
@@ -21,16 +22,30 @@
 
 #include "citygml/citygml.h"
 #include "plateau/mesh/mesh_converter.h"
+#include "plateau/mesh/mesh_convert_options_factory.h"
 #include "PLATEAUFileUtils.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPlateauSDKModule"
 
+namespace {
+    TMap<MeshGranularity, FText> GetMeshGranularityTexts() {
+        TMap<MeshGranularity, FText> Items;
+        Items.Add(MeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PerPrimaryFeatureObject", "主要地物単位"));
+        Items.Add(MeshGranularity::PerAtomicFeatureObject, LOCTEXT("PerAtomicFeatureObject", "最小地物単位"));
+        Items.Add(MeshGranularity::PerCityModelArea, LOCTEXT("PerCityModelArea", "都市モデル地域単位"));
+        return Items;
+    }
+
+    TMap<bool, FText> GetLODModeTexts() {
+        TMap<bool, FText> Items;
+        Items.Add(true, LOCTEXT("AllLODs", "全てのLOD"));
+        Items.Add(false, LOCTEXT("OnlyMaxLOD", "最大LODのみ"));
+        return Items;
+    }
+}
 
 PlateauWindow::PlateauWindow() {
-    m_outputModeArray.Add(MakeShareable(new FString(TEXT("全てのLOD"))));
-    m_outputModeArray.Add(MakeShareable(new FString(TEXT("最大LODのみ"))));
-
     m_existFeatures.Init(false, m_Features.Num());
 }
 
@@ -42,16 +57,16 @@ void PlateauWindow::onMainFrameLoad(TSharedPtr<SWindow> inRootWindow, bool isNew
 
 void PlateauWindow::onWindowMenuBarExtension(FMenuBarBuilder& menuBarBuilder) {
     menuBarBuilder.AddPullDownMenu(
-        LOCTEXT("MenuBarTitle", "Plateau"),
-        LOCTEXT("MenuBarToolkit", "Open Plateau menu."),
+        LOCTEXT("MenuBarTitle", "PLATEAU"),
+        LOCTEXT("MenuBarToolkit", "PLATEAUメニューを開く."),
         FNewMenuDelegate::CreateRaw(this, &PlateauWindow::onPulldownMenuExtension)
     );
 }
 
 void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menuBuilder) {
     menuBuilder.AddMenuEntry(
-        LOCTEXT("MenuTitle", "Model File Converter Window"),
-        LOCTEXT("PulldownMenuToolTip", "Show Model File Converter Window."),
+        LOCTEXT("MenuTitle", "都市モデルをインポート"),
+        LOCTEXT("PulldownMenuToolTip", "都市モデルインポート画面を開く."),
         FSlateIcon(),
         FUIAction(FExecuteAction::CreateRaw(this, &PlateauWindow::showPlateauWindow)));
 }
@@ -59,7 +74,7 @@ void PlateauWindow::onPulldownMenuExtension(FMenuBuilder& menuBuilder) {
 void PlateauWindow::showPlateauWindow() {
     if (!m_myWindow.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
-            .Title(LOCTEXT("Model File Converter Window", "Model File Converter"))
+            .Title(LOCTEXT("Model File Converter Window", "都市モデルインポート画面"))
             .ClientSize(FVector2D(500.f, 800.f));
         m_myWindow = TWeakPtr<SWindow>(window);
 
@@ -85,7 +100,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         [
             SNew(SEditableTextBox)
             .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block1", "1.Select gml File"))
+        .Text(LOCTEXT("Block1", "1. インポート元フォルダ選択"))
         .IsReadOnly(true)
         .BackgroundColor(FColor(200, 200, 200, 255))
         ]
@@ -103,15 +118,8 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             SNew(STextBlock)
             .Justification(ETextJustify::Center)
         .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button1", "Select gml File"))
+        .Text(LOCTEXT("Button1", "参照..."))
         ]
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 2, 0, 5))
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("TEXT1", "gml file path:"))
         ]
     + SVerticalBox::Slot()
         .AutoHeight()
@@ -138,8 +146,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             int meshLevel = meshCode.getLevel();
             if (FString(meshCode.get().c_str()).Len() == 6) {
                 m_secondMesh.Add(meshCode);
-            }
-            else {
+            } else {
                 thirdMesh.Add(meshCode);
             }
         }
@@ -212,7 +219,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                     if (selectSecondMesh) {
                         selectThirdMesh = m_selectRegion[indexRegion];
 
-                        if (!btnDisplayed){
+                        if (!btnDisplayed) {
                             vbMeshCodes->AddSlot()
                                 .Padding(FMargin(0, 0, 0, 3))
                                 .AutoHeight()[
@@ -308,7 +315,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                                 + SHorizontalBox::Slot()
                                 [
                                     SNew(STextBlock)
-                                    .Text(FText::FromString(m_Features[j]))
+                                    .Text(FCityModelPlacementSettings::GetDisplayName(m_Features[j]))
                                 ]
                             + SHorizontalBox::Slot()
                                 [
@@ -329,54 +336,6 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 
 #pragma endregion
 
-#pragma region Select_obj_File_Destination
-    scrollBox->AddSlot()
-        [
-            SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SEditableTextBox)
-            .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block2", "2.Select obj File Destination"))
-        .IsReadOnly(true)
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
-    + SVerticalBox::Slot()
-        .Padding(FMargin(20, 5, 20, 5))
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Raw(this, &PlateauWindow::onBtnSelectObjDestinationClicked)
-        .Content()
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Center)
-        .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button2", "Select obj Destination"))
-        ]
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 2, 0, 5))
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("TEXT2", "Destination obj file path:"))
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 30))
-        [
-            SNew(SEditableTextBox)
-            .IsReadOnly(true)
-        .Text(FText::FromString(m_objFolderPath))
-        ]
-        ];
-#pragma endregion
-
 #pragma region Configure
     scrollBox->AddSlot()
         [
@@ -387,86 +346,90 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         [
             SNew(SEditableTextBox)
             .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block3", "3.Configure"))
+        .Text(LOCTEXT("MeshSettings", "メッシュ設定"))
         .IsReadOnly(true)
         .BackgroundColor(FColor(200, 200, 200, 255))
         ]
 
     + SVerticalBox::Slot()
         .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [
-            SNew(STextBlock)
-            .Text(FText::FromString(TEXT("LOD設定")))
-        ]
-
-
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 10)
-        [
+        .Padding(FMargin(0, 0, 0, 0))[
             SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                [
+                    SNew(STextBlock)
+                    .Text(LOCTEXT("IncludeAppearance", "テクスチャを含める"))
+                ]
             + SHorizontalBox::Slot()
-        [
-            SNew(STextBlock)
-            .Text(FText::FromString(TEXT("出力モード")))
-        ]
-    + SHorizontalBox::Slot()
-        [
-            SNew(SComboBox<TSharedPtr<FString>>)
-            .OptionsSource(&this->m_outputModeArray)
-        .OnSelectionChanged_Raw(this, &PlateauWindow::onSelectOutputMode)
-        .OnGenerateWidget_Lambda([](TSharedPtr<FString> value)->TSharedRef<SWidget>
-            {
-                return SNew(STextBlock).Text(FText::FromString(*value));
-            })
-        [
-            SNew(STextBlock)
-            .Text_Raw(this, &PlateauWindow::onGetBuildOutputMode)
-        ]
-        ]
+                [
+                    SNew(SCheckBox)
+                    .IsChecked(true)
+                .OnCheckStateChanged_Lambda(
+                    [this](ECheckBoxState State) {
+                        m_includeAppearance = State != ECheckBoxState::Unchecked;
+                    })
+                ]
         ]
 
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 10)
-        [
-            SNew(SHorizontalBox)
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 10)
+            [SNew(SHorizontalBox)
             + SHorizontalBox::Slot()
-        [
-            SNew(STextBlock)
-            .Text(FText::FromString(FString(TEXT("出力LOD(MAX)1-3"))))
-        ]
-    + SHorizontalBox::Slot()
-        [
-            SNew(SSpinBox<int>)
-            .Value(m_buildMaxLOD)
-        .MinSliderValue(1)
-        .MaxSliderValue(3)
-        .OnValueChanged_Raw(this, &PlateauWindow::onBuildMaxLODChanged)
-        ]
-        ]
+            [SNew(STextBlock)
+            .Text(FText::FromString(TEXT("メッシュ結合単位")))]
+        + SHorizontalBox::Slot()
+            [SNew(SComboButton)
+            .OnGetMenuContent_Lambda(
+                [this]() {
+                    FMenuBuilder MenuBuilder(true, nullptr);
+                    const auto Items = GetMeshGranularityTexts();
+                    for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
+                        FText ItemText = ItemIter->Value;
+                        MeshGranularity Granularity = ItemIter->Key;
+                        FUIAction ItemAction(FExecuteAction::CreateLambda(
+                            [this, Granularity]() {
+                                m_meshGranularity = Granularity;
+                            }));
+                        MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                    }
+                    return MenuBuilder.MakeWidget();
+                })
+            .ContentPadding(0.0f)
+                    //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
+                    //.ForegroundColor(FSlateColor::UseForeground())
+                    .VAlign(VAlign_Center)
+                    .ButtonContent()
+                    [SNew(STextBlock).Text_Lambda(
+                        [this]() {
+                            return GetMeshGranularityTexts()[m_meshGranularity];
+                        })]]]
 
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 10)
-        [
-            SNew(SHorizontalBox)
-            + SHorizontalBox::Slot()
-        [
-            SNew(STextBlock)
-            .Text(FText::FromString(FString(TEXT("出力LOD(MIN)1-3"))))
-        ]
-    + SHorizontalBox::Slot()
-        [
-            SNew(SSpinBox<int>)
-            .Value(m_buildMinLOD)
-        .MinSliderValue(1)
-        .MaxSliderValue(3)
-        .OnValueChanged_Raw(this, &PlateauWindow::onBuildMinLODChanged)
-        ]
-        ]
 
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::Building)]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::Road)]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::Relief)]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::UrbanFacility)]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::Vegetation)]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [CreateLODSettingsPanel(ECityModelPackage::Others)]
         ];
 #pragma endregion
 
@@ -474,16 +437,6 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
     scrollBox->AddSlot()
         [
             SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SEditableTextBox)
-            .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block4", "4.Convert"))
-        .IsReadOnly(true)
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
     + SVerticalBox::Slot()
         .Padding(FMargin(20, 5, 20, 20))
         [
@@ -497,7 +450,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             SNew(STextBlock)
             .Justification(ETextJustify::Center)
         .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button4", "Convert"))
+        .Text(LOCTEXT("Button4", "出力"))
         ]
         ]
 
@@ -510,7 +463,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 
 FReply PlateauWindow::onBtnSelectGmlFileClicked() {
     void* windowHandle = m_myWindow.Pin()->GetNativeWindow()->GetOSWindowHandle();
-    FString dialogTitle = FString("Select gml File");
+    FString dialogTitle = FString("Select folder.");
     FString defaultPath = m_gmlFolderPath;
     FString outFolderName;
 
@@ -561,10 +514,11 @@ FReply PlateauWindow::onBtnConvertClicked() {
         TArray<std::string>checkSubFolder = {
             UdxSubFolder::bldg().name(),
             UdxSubFolder::tran().name(),
-            UdxSubFolder::veg().name(),
             UdxSubFolder::frn().name(),
-            UdxSubFolder::dem().name()
+            UdxSubFolder::dem().name(),
+            UdxSubFolder::veg().name()
         };
+        TArray<FString> CopiedGmlFiles;
         for (int i = 0; i < m_existFeatures.Num(); i++) {
             if (!m_existFeatures[i])continue;
             if (!m_selectFeature[selectIndex]) {
@@ -573,71 +527,48 @@ FReply PlateauWindow::onBtnConvertClicked() {
             }
             for (auto subfolder : *m_subFolders) {
                 if (i < m_existFeatures.Num() - 1 && subfolder.name() == checkSubFolder[i]) {
-                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
-                }
-                else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
-                    m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    for (const auto& GmlFile : *GmlFileVector) {
+                        CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
+                    }
+                } else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
+                    const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
+                    for (const auto& GmlFile : *GmlFileVector) {
+                        CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
+                    }
                 }
             }
             selectIndex++;
         }
+
+        if (CopiedGmlFiles.Num() == 0)
+            return FReply::Handled();
+
         m_filteredCollection.copyCodelistFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")));
 
-        //setting convert option
-        MeshConverter meshConverter;
-        MeshConvertOptions options;
-        options.unit_scale = 0.01;
-        options.mesh_axes = AxesConversion::NWU;
-        options.max_lod = m_buildMaxLOD;
-        options.min_lod = m_buildMinLOD;
-        switch (m_buildOutputIndex) {
-        case 0:
-            options.export_lower_lod = true;
-            break;
-        case 1:
-            options.export_lower_lod = false;
-            break;
-        default:
-            break;
-        }
-        meshConverter.setOptions(options);
-
-        //convert gml file to obj file
-        const citygml::ParserParams params;
-        TArray<std::string> gmlFilePathArray;
-        TArray<FString> objFilePahtArray;
-
-        for (auto gmlFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")))) {
-            if (gmlFile.path().extension() == ".gml") {
-                gmlFilePathArray.Add(gmlFile.path().string());
-            }
-        }
-
-        for (auto objFile : std::filesystem::recursive_directory_iterator(TCHAR_TO_ANSI(*m_objFolderPath))) {
-            if (objFile.path().extension() == ".obj") {
-                objFilePahtArray.Add(FString(objFile.path().string().c_str()));
-            }
-        }
-
-        for (auto gmlFilePath : gmlFilePathArray) {
-            const auto cityModel = citygml::load(gmlFilePath, params, nullptr);
-            if (cityModel == nullptr) {
-                throw std::runtime_error(std::string("Failed to load") + gmlFilePath);
-            }
-            meshConverter.convert(TCHAR_TO_UTF8(*m_objFolderPath), gmlFilePath,
-                cityModel, nullptr);
+        // メッシュ変換設定
+        ParserParams ParserParams;
+        ParserParams.tesselate = false;
+        const auto FirstCityModel = citygml::load(TCHAR_TO_UTF8(*CopiedGmlFiles[0]), ParserParams);
+        for (auto& Entry : MeshConvertOptionsMap) {
+            auto& Options = Entry.Value;
+            Options.unit_scale = 0.01;
+            Options.mesh_axes = AxesConversion::NWU;
+            Options.export_appearance = m_includeAppearance;
+            Options.mesh_granularity = m_meshGranularity;
+            MeshConvertOptionsFactory::setValidReferencePoint(Options, *FirstCityModel);
         }
 
         TSharedRef<SDlgPickPath> PickContentPathDlg =
             SNew(SDlgPickPath)
-            .Title(LOCTEXT("ChooseImportRootContentPath", "Choose Location for importing the scene content"));
+            .Title(LOCTEXT("ChooseImportRootContentPath", "メッシュの出力先選択"));
 
         if (PickContentPathDlg->ShowModal() == EAppReturnType::Cancel) {
             return FReply::Handled();
         }
 
         FString path = PickContentPathDlg->GetPath().ToString();
-        PLATEAUFileUtils::ImportFbx(objFilePahtArray, path);
+        PLATEAUFileUtils::ImportFbx(CopiedGmlFiles, path, MeshConvertOptionsMap);
 
         return FReply::Handled();
     }
@@ -761,22 +692,6 @@ void PlateauWindow::shutdown() {
     }
 }
 
-void PlateauWindow::onSelectOutputMode(TSharedPtr<FString> newSelection, ESelectInfo::Type selectInfo) {
-    m_buildOutputIndex = m_outputModeArray.Find(newSelection);
-}
-
-FText PlateauWindow::onGetBuildOutputMode()const {
-    return FText::FromString(*m_outputModeArray[m_buildOutputIndex]);
-}
-
-void PlateauWindow::onBuildMaxLODChanged(int value) {
-    m_buildMaxLOD = value;
-}
-
-void PlateauWindow::onBuildMinLODChanged(int value) {
-    m_buildMinLOD = value;
-}
-
 void PlateauWindow::checkRegionMesh() {
     std::vector<MeshCode> targetMeshCodes;
 
@@ -797,20 +712,16 @@ void PlateauWindow::checkRegionMesh() {
         for (auto subfolder : *m_subFolders) {
             if (subfolder.name() == "bldg") {
                 m_existFeatures[0] = true;
-            }
-            else if (subfolder.name() == "tran") {
+            } else if (subfolder.name() == "tran") {
                 m_existFeatures[1] = true;
-            }
-            else if (subfolder.name() == "veg") {
+            } else if (subfolder.name() == "frn") 
+            {
                 m_existFeatures[2] = true;
-            }
-            else if (subfolder.name() == "frn") {
+            } else if (subfolder.name() == "dem") {
                 m_existFeatures[3] = true;
-            }
-            else if (subfolder.name() == "dem") {
+            } else if (subfolder.name() == "veg") {
                 m_existFeatures[4] = true;
-            }
-            else {
+            } else {
                 m_existFeatures[5] = true;
             }
         }
@@ -838,4 +749,114 @@ TArray<MeshCode> PlateauWindow::sortMeshCodes(TArray<MeshCode> meshArray) {
     }
 
     return returnArray;
+}
+
+
+TSharedRef<SVerticalBox> PlateauWindow::CreateLODSettingsPanel(ECityModelPackage Package) {
+    MeshConvertOptionsMap.FindOrAdd(Package, MeshConvertOptions()).min_lod = Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1;
+    return SNew(SVerticalBox).Visibility_Lambda(
+        [this, Package]() {
+            int selectIndex = 0;
+            for (int i = 0; i < m_Features.Num(); ++i) {
+                if (m_existFeatures[i]) {
+                    if (m_selectFeature[selectIndex] && Package == m_Features[i]) {
+                        return EVisibility::Visible;
+                    }
+                    selectIndex++;
+                }
+            }
+            return EVisibility::Collapsed;
+        })
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 10, 0, 0)
+            [SNew(STextBlock)
+            .Text(FCityModelPlacementSettings::GetDisplayName(Package))
+            ]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(20, 0, 0, 0)
+            [SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString(TEXT("出力モード")))
+            ]
+        + SHorizontalBox::Slot()
+            [SNew(SComboButton)
+            .OnGetMenuContent_Lambda(
+                [this, Package]() {
+                    FMenuBuilder MenuBuilder(true, nullptr);
+                    const auto Items = GetLODModeTexts();
+                    for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
+                        FText ItemText = ItemIter->Value;
+                        bool Mode = ItemIter->Key;
+                        FUIAction ItemAction(FExecuteAction::CreateLambda(
+                            [this, Mode, Package]() {
+                                MeshConvertOptionsMap[Package].export_lower_lod = Mode;
+                            }));
+                        MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                    }
+                    return MenuBuilder.MakeWidget();
+                })
+            .ContentPadding(0.0f)
+                    //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
+                    //.ForegroundColor(FSlateColor::UseForeground())
+                    .VAlign(VAlign_Center)
+                    .ButtonContent()
+                    [SNew(STextBlock).Text_Lambda(
+                        [this, Package]() {
+                            return GetLODModeTexts()[MeshConvertOptionsMap[Package].export_lower_lod];
+                        })]
+            ]]
+
+        // 最小LODスライダー
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [SNew(SSlider)
+            .MaxValue(3)
+            .MinValue(Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1)
+            .StepSize(1)
+            .MouseUsesStep(true)
+            .Value(MeshConvertOptionsMap[Package].min_lod)
+            .OnValueChanged_Lambda(
+                [this, Package](int Value) {
+                    MeshConvertOptionsMap[Package].min_lod = Value;
+                })]
+
+        // 最大LODスライダー
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 0, 0, 0)
+            [SNew(SSlider)
+            .MaxValue(3)
+            .MinValue(Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1)
+            .StepSize(1)
+            .MouseUsesStep(true)
+            .Value(MeshConvertOptionsMap[Package].max_lod)
+            .OnValueChanged_Lambda(
+                [this, Package](int Value) {
+                    MeshConvertOptionsMap[Package].max_lod = Value;
+                })]
+
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 5, 0, 0)
+            [
+                SNew(STextBlock)
+                .Text_Lambda(
+                    [this, Package]() {
+                        return  FText::Format(
+                            LOCTEXT("LODRangeFormat", "最小LOD: {0}, 最大LOD: {1}"),
+                            FText::AsNumber(MeshConvertOptionsMap[Package].min_lod),
+                            FText::AsNumber(MeshConvertOptionsMap[Package].max_lod));
+                    })
+            ]
+            ];
 }

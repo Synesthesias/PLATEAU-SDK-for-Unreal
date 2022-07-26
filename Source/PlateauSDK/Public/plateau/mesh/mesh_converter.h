@@ -30,7 +30,7 @@ public:
      * \param gml_file_path 入力GMLファイル
      * \param city_model 入力GMLファイルをパースした都市モデル。nullptrを入力した場合は内部でパースされます。
      */
-    void convert(const std::string& destination_directory, const std::string& gml_file_path, std::shared_ptr<const citygml::CityModel> city_model = nullptr, std::shared_ptr<PlateauDllLogger> logger = nullptr) const;
+    std::shared_ptr<std::vector<std::string>> convert(const std::string& destination_directory, const std::string& gml_file_path, std::shared_ptr<const citygml::CityModel> city_model = nullptr, std::shared_ptr<PlateauDllLogger> logger = nullptr) const;
 
     /**
      * \brief GMLファイルをメッシュファイルに変換します。
