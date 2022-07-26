@@ -9,13 +9,15 @@
 
 #include "AssetTools/Private/AssetTools.h"
 #include "AssetToolsModule.h"
-#include "CityMapMetadata.h"
+#include "CityModelImportData.h"
 #include "ActorFactories/ActorFactoryEmptyActor.h"
+#include "CityMapDetails/PLATEAUCityMapDetails.h"
 #include "Engine/SCS_Node.h"
 #include "Engine/SimpleConstructionScript.h"
-#include "Factories/CityMapMetadataFactory.h"
+#include "Factories/CityModelImportDataFactory.h"
 #include "Factories/FbxSceneImportOptions.h"
 #include "Kismet/GameplayStatics.h"
+#include "CityMapDetails/PLATEAUCityMapDetails.h"
 
 namespace {
     /// <summary>
@@ -66,8 +68,8 @@ namespace {
         return Result;
     }
 
-    UCityMapMetadata* CreateMetadataAsset(const FString& DestinationPath) {
-        const auto* metadataFactory = FindFactory<UCityMapMetadataFactory>();
+    UCityModelImportData* CreateMetadataAsset(const FString& DestinationPath) {
+        const auto* metadataFactory = FindFactory<UCityModelImportDataFactory>();
         if (metadataFactory != nullptr) {
             const FString assetName = TEXT("CityMapMetadata");
             const FString packageName = DestinationPath + TEXT("/") + assetName;
@@ -75,7 +77,7 @@ namespace {
             const EObjectFlags flags = RF_Public | RF_Standalone;
 
             auto* metadata =
-                Cast<UCityMapMetadata>(metadataFactory->CreateOrOverwriteAsset(metadataFactory->GetSupportedClass(), assetPackage, FName(*assetName), flags));
+                Cast<UCityModelImportData>(metadataFactory->CreateOrOverwriteAsset(metadataFactory->GetSupportedClass(), assetPackage, FName(*assetName), flags));
             assetPackage->SetDirtyFlag(true);
             return metadata;
         }
@@ -155,4 +157,10 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString&
             GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->CloseAllAssetEditors();
         }
     }
+
+    FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
+    UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
+    auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
+    Cast<APLATEAUCityModelLoader>(Actor)->Metadata = Metadata;
+    FPLATEAUCityMapDetails::PlaceMeshes(*Cast<APLATEAUCityModelLoader>(Actor));
 }

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include <vector>
 
-#include "CityMapMetadata.h"
+#include "CityModelImportData.h"
 #include "plateau/udx/mesh_code.h"
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/mesh/mesh_convert_options.h"

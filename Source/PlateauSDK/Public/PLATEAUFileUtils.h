@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 
-#include "PLATEAUCityMap.h"
+#include "PLATEAUCityModelLoader.h"
 
 #include "plateau/mesh/mesh_convert_options.h"
 

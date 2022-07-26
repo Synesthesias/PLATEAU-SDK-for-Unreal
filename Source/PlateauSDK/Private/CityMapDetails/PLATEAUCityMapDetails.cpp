@@ -9,7 +9,7 @@
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
-#include "PLATEAUCityMap.h"
+#include "PLATEAUCityModelLoader.h"
 #include "Engine/StaticMesh.h"
 #include "PropertyCustomizationHelpers.h"
 
@@ -41,23 +41,23 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
     auto& CityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
     DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
-    auto CityMap = Cast<APLATEAUCityMap>(ObjectsBeingCustomized[0].Get());
+    auto CityMap = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0].Get());
 
-    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, Metadata));
+    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityModelLoader, Metadata));
     const auto DetailBuilderPtr = &DetailBuilder;
     CityModelCategory.AddProperty(MetadataProperty)
         .CustomWidget()
         .NameContent()
         [
-            SNew(STextBlock).Text(LOCTEXT("CityMapMetadata", "メタデータ"))
+            SNew(STextBlock).Text(LOCTEXT("CityModelImportData", "都市モデルインポートデータ"))
         ]
     .ValueContent()
         [
             SNew(SObjectPropertyEntryBox)
-            .AllowedClass(UCityMapMetadata::StaticClass())
+            .AllowedClass(UCityModelImportData::StaticClass())
         .OnObjectChanged_Lambda(
             [this, DetailBuilderPtr, CityMap](const FAssetData& InAssetData) {
-                auto* MetadataAsset = Cast<UCityMapMetadata>(InAssetData.GetAsset());
+                auto* MetadataAsset = Cast<UCityModelImportData>(InAssetData.GetAsset());
                 CityMap->Metadata = MetadataAsset;
 
                 if (DetailBuilderPtr != nullptr)
@@ -80,7 +80,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
     if (Metadata == nullptr)
         return;
 
-    const auto CityModelPlacementSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityMap, CityModelPlacementSettings));
+    const auto CityModelPlacementSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityModelLoader, CityModelPlacementSettings));
 
     const auto CityModelInfoArray = Metadata->ImportedCityModelInfoArray;
     for (const auto& CityModelInfo : CityModelInfoArray) {
@@ -122,14 +122,14 @@ END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 // TODO: ロジックUI分離
 FReply FPLATEAUCityMapDetails::OnClickPlace() {
     for (auto Object : ObjectsBeingCustomized) {
-        auto* Actor = Cast<APLATEAUCityMap>(Object.Get());
+        auto* Actor = Cast<APLATEAUCityModelLoader>(Object.Get());
         if (Actor != nullptr)
             PlaceMeshes(*Actor);
     }
     return FReply::Handled();
 }
 
-void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
+void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityModelLoader& Actor) {
     if (Actor.Metadata == nullptr) {
         return;
     }
@@ -162,7 +162,7 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityMap& Actor) {
     GEngine->BroadcastLevelActorListChanged();
 }
 
-void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneComponent& RootComponent, const FPLATEAUImportedCityModelInfo& CityModelInfo, int TargetLOD, bool bShouldPlaceLowerLODs) {
+void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityModelLoader& Actor, USceneComponent& RootComponent, const FPLATEAUImportedCityModelInfo& CityModelInfo, int TargetLOD, bool bShouldPlaceLowerLODs) {
     if (CityModelInfo.StaticMeshes.Num() == 0)
         return;
 
@@ -198,6 +198,7 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneCompon
     const auto PrimaryCityObjects = CityModel->getAllCityObjectsOfType(PrimaryTypeMask);
     int DefaultTargetLOD = TargetLOD;
     for (const auto& CityObject : *PrimaryCityObjects) {
+        TargetLOD = DefaultTargetLOD;
         // 配置可能なジオメトリのLODを探す
         while (TargetLOD >= 0) {
             bool bHasTargetLOD = false;
@@ -239,7 +240,7 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityMap& Actor, USceneCompon
     }
 }
 
-UStaticMeshComponent* FPLATEAUCityMapDetails::PlaceStaticMesh(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, UStaticMesh* StaticMesh) {
+UStaticMeshComponent* FPLATEAUCityMapDetails::PlaceStaticMesh(APLATEAUCityModelLoader& Actor, USceneComponent& ParentComponent, UStaticMesh* StaticMesh) {
     const auto Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
     Component->SetStaticMesh(StaticMesh);
     Component->DepthPriorityGroup = SDPG_World;
@@ -256,7 +257,7 @@ UStaticMeshComponent* FPLATEAUCityMapDetails::PlaceStaticMesh(APLATEAUCityMap& A
     return Component;
 }
 
-USceneComponent* FPLATEAUCityMapDetails::PlaceEmptyComponent(APLATEAUCityMap& Actor, USceneComponent& ParentComponent, const FName& Name) {
+USceneComponent* FPLATEAUCityMapDetails::PlaceEmptyComponent(APLATEAUCityModelLoader& Actor, USceneComponent& ParentComponent, const FName& Name) {
     USceneComponent* SceneComponent = NewObject<USceneComponent>(&Actor, Name);
     Actor.AddInstanceComponent(SceneComponent);
     SceneComponent->RegisterComponent();

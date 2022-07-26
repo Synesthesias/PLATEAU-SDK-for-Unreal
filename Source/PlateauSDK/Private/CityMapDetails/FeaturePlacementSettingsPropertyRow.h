@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "DetailCategoryBuilder.h"
-#include "PLATEAUCityMap.h"
+#include "PLATEAUCityModelLoader.h"
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityMapDetails"
 

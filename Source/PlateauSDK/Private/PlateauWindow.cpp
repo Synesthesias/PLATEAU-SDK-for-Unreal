@@ -100,7 +100,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
         [
             SNew(SEditableTextBox)
             .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block1", "1.Select gml File"))
+        .Text(LOCTEXT("Block1", "1. インポート元フォルダ選択"))
         .IsReadOnly(true)
         .BackgroundColor(FColor(200, 200, 200, 255))
         ]
@@ -118,15 +118,8 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             SNew(STextBlock)
             .Justification(ETextJustify::Center)
         .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button1", "Select gml File"))
+        .Text(LOCTEXT("Button1", "参照..."))
         ]
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 2, 0, 5))
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("TEXT1", "gml file path:"))
         ]
     + SVerticalBox::Slot()
         .AutoHeight()
@@ -444,16 +437,6 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
     scrollBox->AddSlot()
         [
             SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SEditableTextBox)
-            .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("Block4", "4.Convert"))
-        .IsReadOnly(true)
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
     + SVerticalBox::Slot()
         .Padding(FMargin(20, 5, 20, 20))
         [
@@ -467,7 +450,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             SNew(STextBlock)
             .Justification(ETextJustify::Center)
         .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Button4", "Convert"))
+        .Text(LOCTEXT("Button4", "出力"))
         ]
         ]
 
@@ -480,7 +463,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 
 FReply PlateauWindow::onBtnSelectGmlFileClicked() {
     void* windowHandle = m_myWindow.Pin()->GetNativeWindow()->GetOSWindowHandle();
-    FString dialogTitle = FString("Select gml File");
+    FString dialogTitle = FString("Select folder.");
     FString defaultPath = m_gmlFolderPath;
     FString outFolderName;
 
@@ -531,9 +514,9 @@ FReply PlateauWindow::onBtnConvertClicked() {
         TArray<std::string>checkSubFolder = {
             UdxSubFolder::bldg().name(),
             UdxSubFolder::tran().name(),
-            UdxSubFolder::veg().name(),
             UdxSubFolder::frn().name(),
-            UdxSubFolder::dem().name()
+            UdxSubFolder::dem().name(),
+            UdxSubFolder::veg().name()
         };
         TArray<FString> CopiedGmlFiles;
         for (int i = 0; i < m_existFeatures.Num(); i++) {
@@ -731,11 +714,12 @@ void PlateauWindow::checkRegionMesh() {
                 m_existFeatures[0] = true;
             } else if (subfolder.name() == "tran") {
                 m_existFeatures[1] = true;
-            } else if (subfolder.name() == "veg") {
+            } else if (subfolder.name() == "frn") 
+            {
                 m_existFeatures[2] = true;
-            } else if (subfolder.name() == "frn") {
-                m_existFeatures[3] = true;
             } else if (subfolder.name() == "dem") {
+                m_existFeatures[3] = true;
+            } else if (subfolder.name() == "veg") {
                 m_existFeatures[4] = true;
             } else {
                 m_existFeatures[5] = true;
@@ -769,7 +753,7 @@ TArray<MeshCode> PlateauWindow::sortMeshCodes(TArray<MeshCode> meshArray) {
 
 
 TSharedRef<SVerticalBox> PlateauWindow::CreateLODSettingsPanel(ECityModelPackage Package) {
-    MeshConvertOptionsMap.FindOrAdd(Package, MeshConvertOptions()).min_lod = Package == ECityModelPackage::Building ? 0 : 1;
+    MeshConvertOptionsMap.FindOrAdd(Package, MeshConvertOptions()).min_lod = Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1;
     return SNew(SVerticalBox).Visibility_Lambda(
         [this, Package]() {
             int selectIndex = 0;
@@ -837,7 +821,7 @@ TSharedRef<SVerticalBox> PlateauWindow::CreateLODSettingsPanel(ECityModelPackage
             .Padding(0, 0, 0, 0)
             [SNew(SSlider)
             .MaxValue(3)
-            .MinValue(Package == ECityModelPackage::Building ? 0 : 1)
+            .MinValue(Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1)
             .StepSize(1)
             .MouseUsesStep(true)
             .Value(MeshConvertOptionsMap[Package].min_lod)
@@ -852,7 +836,7 @@ TSharedRef<SVerticalBox> PlateauWindow::CreateLODSettingsPanel(ECityModelPackage
             .Padding(0, 0, 0, 0)
             [SNew(SSlider)
             .MaxValue(3)
-            .MinValue(Package == ECityModelPackage::Building ? 0 : 1)
+            .MinValue(Package == ECityModelPackage::Building || Package == ECityModelPackage::Others ? 0 : 1)
             .StepSize(1)
             .MouseUsesStep(true)
             .Value(MeshConvertOptionsMap[Package].max_lod)

@@ -10,7 +10,7 @@
 #include "IDetailPropertyRow.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
-#include "PLATEAUCityMap.h"
+#include "PLATEAUCityModelLoader.h"
 
 #include "citygml/citygml.h"
 #include "citygml/citymodel.h"
