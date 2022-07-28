@@ -7,7 +7,7 @@
 
 #include "PlateauWindow.h"
 
-class FPlateauSDKModule : public IModuleInterface
+class FPLATEAUEditorModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;

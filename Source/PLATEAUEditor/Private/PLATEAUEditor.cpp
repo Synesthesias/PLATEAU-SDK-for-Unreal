@@ -1,13 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "PlateauSDK.h"
+#include "PLATEAUEditor.h"
 
 #include "PLATEAUCityModelLoader.h"
 #include "CityMapDetails/PLATEAUCityMapDetails.h"
 
 #define LOCTEXT_NAMESPACE "FPlateauSDKModule"
 
-void FPlateauSDKModule::StartupModule()
+void FPLATEAUEditorModule::StartupModule()
 {
     m_instance.startup();
 
@@ -18,7 +18,7 @@ void FPlateauSDKModule::StartupModule()
     );
 }
 
-void FPlateauSDKModule::ShutdownModule()
+void FPLATEAUEditorModule::ShutdownModule()
 {
     m_instance.shutdown();
 
@@ -30,4 +30,4 @@ void FPlateauSDKModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 
-IMPLEMENT_MODULE(FPlateauSDKModule, PlateauSDK)
+IMPLEMENT_MODULE(FPLATEAUEditorModule, PLATEAUEditor)

@@ -10,7 +10,7 @@
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/mesh/mesh_convert_options.h"
 
-class PLATEAUSDK_API PlateauWindow : public TSharedFromThis<PlateauWindow>
+class PLATEAUEDITOR_API PlateauWindow : public TSharedFromThis<PlateauWindow>
 {
 public:
     PlateauWindow();
