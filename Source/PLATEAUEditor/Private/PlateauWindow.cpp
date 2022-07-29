@@ -47,6 +47,7 @@ namespace {
 
 PlateauWindow::PlateauWindow() {
     m_existFeatures.Init(false, m_Features.Num());
+    m_selectFeature.Init(false, m_Features.Num());
 }
 
 void PlateauWindow::onMainFrameLoad(TSharedPtr<SWindow> inRootWindow, bool isNewProjectWindow) {
@@ -75,7 +76,7 @@ void PlateauWindow::showPlateauWindow() {
     if (!m_myWindow.IsValid()) {
         TSharedPtr<SWindow> window = SNew(SWindow)
             .Title(LOCTEXT("Model File Converter Window", "都市モデルインポート画面"))
-            .ClientSize(FVector2D(500.f, 800.f));
+            .ClientSize(FVector2D(500.f, 400.f));
         m_myWindow = TWeakPtr<SWindow>(window);
 
         if (m_rootWindow.IsValid()) {
@@ -136,17 +137,15 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
     if (m_gmlFileSelected) {
         auto vbMeshCodes = SNew(SVerticalBox);
         int indexRegion = 0;
-        bool selectSecondMesh;
-        bool selectThirdMesh;
         TArray<MeshCode> thirdMesh;
         std::vector<MeshCode> tempMeshCodes;
 
         m_secondMesh.Reset();
         for (auto meshCode : *m_meshCodes) {
-            int meshLevel = meshCode.getLevel();
             if (FString(meshCode.get().c_str()).Len() == 6) {
                 m_secondMesh.Add(meshCode);
-            } else {
+            }
+            else {
                 thirdMesh.Add(meshCode);
             }
         }
@@ -191,7 +190,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             ];
 
         for (auto sMesh : m_secondMesh) {
-            selectSecondMesh = m_selectRegion[indexRegion];
+            int secondIndex = indexRegion;
             tempMeshCodes.push_back(sMesh);
             vbMeshCodes->AddSlot()
                 .AutoHeight()
@@ -205,7 +204,14 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                     + SHorizontalBox::Slot()
                         [
                             SNew(SCheckBox)
-                            .IsChecked(selectSecondMesh)
+                            .IsChecked_Lambda(
+                                [this, indexRegion]()
+                                {
+                                    if (m_selectRegion[indexRegion]) {
+                                        return ECheckBoxState::Checked;
+                                    }
+                                    return ECheckBoxState::Unchecked;
+                                })
                         .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion, sMesh.get())
                         ]
                 ];
@@ -216,15 +222,21 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
             for (auto tMesh : thirdMesh) {
                 if (FString(tMesh.get().c_str()).Contains(FString(sMesh.get().c_str()))) {
                     tempMeshCodes.push_back(tMesh);
-                    if (selectSecondMesh) {
-                        selectThirdMesh = m_selectRegion[indexRegion];
 
-                        if (!btnDisplayed) {
-                            vbMeshCodes->AddSlot()
-                                .Padding(FMargin(0, 0, 0, 3))
-                                .AutoHeight()[
-                                    SNew(SHorizontalBox)
-                                        + SHorizontalBox::Slot()
+                    if (!btnDisplayed) {
+                        vbMeshCodes->AddSlot()
+                            .Padding(FMargin(0, 0, 0, 3))
+                            .AutoHeight()[
+                                SNew(SHorizontalBox).Visibility_Lambda(
+                                    [this, secondIndex]() {
+                                        if (m_selectRegion[secondIndex]) {
+                                            return EVisibility::Visible;
+                                        }
+                                        else {
+                                            return EVisibility::Collapsed;
+                                        }
+                                    })
+                                    + SHorizontalBox::Slot()
                                         .AutoWidth()
                                         .Padding(FMargin(30, 0, 15, 0))
                                         [
@@ -239,16 +251,24 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                                             .Text(FText::FromString(FString(TEXT("全除外"))))
                                         .OnClicked_Raw(this, &PlateauWindow::onBtnThirdMeshRelieveClicked, sMesh.get())
                                         ]
-                                ];
+                            ];
 
-                            btnDisplayed = true;
-                        }
+                        btnDisplayed = true;
+                    }
 
-                        vbMeshCodes->AddSlot()
-                            .AutoHeight()
-                            .Padding(FMargin(30, 0, 0, 3))[
-                                SNew(SHorizontalBox)
-                                    + SHorizontalBox::Slot()
+                    vbMeshCodes->AddSlot()
+                        .AutoHeight()
+                        .Padding(FMargin(30, 0, 0, 3))[
+                            SNew(SHorizontalBox).Visibility_Lambda(
+                                [this, secondIndex]() {
+                                    if (m_selectRegion[secondIndex]) {
+                                        return EVisibility::Visible;
+                                    }
+                                    else {
+                                        return EVisibility::Collapsed;
+                                    }
+                                })
+                                + SHorizontalBox::Slot()
                                     [
                                         SNew(STextBlock)
                                         .Text(FText::FromString(FString(tMesh.get().c_str())))
@@ -256,11 +276,16 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                                 + SHorizontalBox::Slot()
                                     [
                                         SNew(SCheckBox)
-                                        .IsChecked(selectThirdMesh)
-                                    .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion, tMesh.get())
+                                        .IsChecked_Lambda(
+                                            [this, indexRegion]()
+                                            {
+                                                if (m_selectRegion[indexRegion]) {
+                                                    return ECheckBoxState::Checked;
+                                                }
+                                                return ECheckBoxState::Unchecked;
+                                            }).OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectRegion, indexRegion, tMesh.get())
                                     ]
-                            ];
-                    }
+                        ];
                     indexRegion++;
                 }
             }
@@ -275,21 +300,35 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
 #pragma endregion
 
 #pragma region select_feature_mesh
-        if (m_selectFeatureSize != 0) {
-            auto vbFeatureMesh = SNew(SVerticalBox);
-            int selectIndex = 0;
+        auto vbFeatureMesh = SNew(SVerticalBox);
 
-            vbFeatureMesh->AddSlot()
-                .Padding(FMargin(0, 20, 0, 0))[
-                    SNew(STextBlock)
-                        .Text(FText::FromString(FString(TEXT("含める地物"))))
-                ];
+        vbFeatureMesh->AddSlot()
+            .Padding(FMargin(0, 20, 0, 0))[
+                SNew(STextBlock).Visibility_Lambda(
+                    [this]() {
+                        for (int i = 0; i < m_existFeatures.Num(); i++) {
+                            if (m_existFeatures[i]) {
+                                return EVisibility::Visible;
+                            }
+                        }
+                        return EVisibility::Collapsed;
+                    })
+                    .Text(FText::FromString(FString(TEXT("含める地物"))))
+            ];
 
-            vbFeatureMesh->AddSlot()
-                .Padding(FMargin(0, 0, 0, 8))
-                .AutoHeight()[
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
+        vbFeatureMesh->AddSlot()
+            .Padding(FMargin(0, 0, 0, 8))
+            .AutoHeight()[
+                SNew(SHorizontalBox).Visibility_Lambda(
+                    [this]() {
+                        for (int i = 0; i < m_existFeatures.Num(); i++) {
+                            if (m_existFeatures[i]) {
+                                return EVisibility::Visible;
+                            }
+                        }
+                        return EVisibility::Collapsed;
+                    })
+                    + SHorizontalBox::Slot()
                         .AutoWidth()
                         .Padding(FMargin(0, 0, 10, 0))
                         [
@@ -304,34 +343,39 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
                             .Text(FText::FromString(FString(TEXT("全除外"))))
                         .OnClicked_Raw(this, &PlateauWindow::onBtnAllFeatureRelieveClicked)
                         ]
-                ];
-
-            for (int j = 0; j < m_existFeatures.Num(); j++) {
-                if (m_existFeatures[j]) {
-                    bool checkFeature = m_selectFeature[selectIndex];
-                    vbFeatureMesh->AddSlot()
-                        .Padding(FMargin(0, 0, 0, 3))[
-                            SNew(SHorizontalBox)
-                                + SHorizontalBox::Slot()
-                                [
-                                    SNew(STextBlock)
-                                    .Text(FCityModelPlacementSettings::GetDisplayName(m_Features[j]))
-                                ]
-                            + SHorizontalBox::Slot()
-                                [
-                                    SNew(SCheckBox)
-                                    .IsChecked(checkFeature)
-                                .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, selectIndex)
-                                ]
-                        ];
-                    selectIndex++;
-                }
-            }
-
-            scrollBox->AddSlot()[
-                vbFeatureMesh
             ];
+
+        for (int j = 0; j < m_existFeatures.Num(); j++) {
+            vbFeatureMesh->AddSlot()
+                .Padding(FMargin(0, 0, 0, 3))[
+                    SNew(SHorizontalBox).Visibility_Lambda(
+                        [this, j]() {
+                            if (m_existFeatures[j]) return EVisibility::Visible;
+                            return EVisibility::Collapsed;
+                        })
+                        + SHorizontalBox::Slot()
+                            [
+                                SNew(STextBlock)
+                                .Text(FCityModelPlacementSettings::GetDisplayName(m_Features[j]))
+                            ]
+                        + SHorizontalBox::Slot()
+                            [
+                                SNew(SCheckBox)
+                                .IsChecked_Lambda(
+                                [this, j](){
+                                    if(m_selectFeature[j]){
+                                        return ECheckBoxState::Checked;
+                                    }
+                                    return ECheckBoxState::Unchecked;
+                                })
+                            .OnCheckStateChanged_Raw(this, &PlateauWindow::onToggleCbSelectFeature, j)
+                            ]
+                ];
         }
+
+        scrollBox->AddSlot()[
+            vbFeatureMesh
+        ];
     }
 
 #pragma endregion
@@ -437,7 +481,7 @@ void PlateauWindow::updatePlateauWindow(TWeakPtr<SWindow> window) {
     scrollBox->AddSlot()
         [
             SNew(SVerticalBox)
-    + SVerticalBox::Slot()
+            + SVerticalBox::Slot()
         .Padding(FMargin(20, 5, 20, 20))
         [
             SNew(SButton)
@@ -510,7 +554,6 @@ FReply PlateauWindow::onBtnSelectObjDestinationClicked() {
 
 FReply PlateauWindow::onBtnConvertClicked() {
     try {
-        int selectIndex = 0;
         TArray<std::string>checkSubFolder = {
             UdxSubFolder::bldg().name(),
             UdxSubFolder::tran().name(),
@@ -520,25 +563,21 @@ FReply PlateauWindow::onBtnConvertClicked() {
         };
         TArray<FString> CopiedGmlFiles;
         for (int i = 0; i < m_existFeatures.Num(); i++) {
-            if (!m_existFeatures[i])continue;
-            if (!m_selectFeature[selectIndex]) {
-                selectIndex++;
-                continue;
-            }
+            if (!m_existFeatures[i] || !m_selectFeature[i])continue;
             for (auto subfolder : *m_subFolders) {
                 if (i < m_existFeatures.Num() - 1 && subfolder.name() == checkSubFolder[i]) {
                     const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
                     for (const auto& GmlFile : *GmlFileVector) {
                         CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
                     }
-                } else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
+                }
+                else if (i == m_existFeatures.Num() - 1 && checkSubFolder.Find(subfolder.name()) == INDEX_NONE) {
                     const auto GmlFileVector = m_filteredCollection.copyFiles(TCHAR_TO_ANSI(*(FPaths::ProjectContentDir() + "PLATEAU/")), subfolder);
                     for (const auto& GmlFile : *GmlFileVector) {
                         CopiedGmlFiles.Add(UTF8_TO_TCHAR(GmlFile.c_str()));
                     }
                 }
             }
-            selectIndex++;
         }
 
         if (CopiedGmlFiles.Num() == 0)
@@ -586,7 +625,6 @@ FReply PlateauWindow::onBtnAllSecondMeshSelectClicked() {
         }
     }
     checkRegionMesh();
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
@@ -595,7 +633,6 @@ FReply PlateauWindow::onBtnAllSecondMeshRelieveClicked() {
         m_selectRegion[i] = false;
     }
     checkRegionMesh();
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
@@ -606,7 +643,6 @@ FReply PlateauWindow::onBtnThirdMeshSelectClicked(std::string secondMesh) {
         }
     }
     checkRegionMesh();
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
@@ -617,7 +653,6 @@ FReply PlateauWindow::onBtnThirdMeshRelieveClicked(std::string secondMesh) {
         }
     }
     checkRegionMesh();
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
@@ -632,28 +667,28 @@ void PlateauWindow::onToggleCbSelectRegion(ECheckBoxState checkState, int num, s
     }
 
     checkRegionMesh();
-    updatePlateauWindow(m_myWindow.Pin());
 }
 
 FReply PlateauWindow::onBtnAllFeatureSelectClicked() {
     for (int i = 0; i < m_selectFeature.Num(); i++) {
-        m_selectFeature[i] = true;
+        if (m_existFeatures[i]) {
+            m_selectFeature[i] = true;
+        }
     }
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
 FReply PlateauWindow::onBtnAllFeatureRelieveClicked() {
     for (int i = 0; i < m_selectFeature.Num(); i++) {
-        m_selectFeature[i] = false;
+        if (m_existFeatures[i]) {
+            m_selectFeature[i] = false;
+        }
     }
-    updatePlateauWindow(m_myWindow.Pin());
     return FReply::Handled();
 }
 
 void PlateauWindow::onToggleCbSelectFeature(ECheckBoxState checkState, int index) {
     m_selectFeature[index] = (checkState == ECheckBoxState::Checked);
-    updatePlateauWindow(m_myWindow.Pin());
 }
 
 void PlateauWindow::startup() {
@@ -703,7 +738,7 @@ void PlateauWindow::checkRegionMesh() {
         i++;
     }
     m_existFeatures.Init(false, m_Features.Num());
-    m_selectFeatureSize = 0;
+    m_existFeatures.Init(false, m_Features.Num());
     if (targetMeshCodes.size() != 0) {
 
         m_filteredCollection = UdxFileCollection::filter(m_collection, targetMeshCodes);
@@ -712,23 +747,24 @@ void PlateauWindow::checkRegionMesh() {
         for (auto subfolder : *m_subFolders) {
             if (subfolder.name() == "bldg") {
                 m_existFeatures[0] = true;
-            } else if (subfolder.name() == "tran") {
+            }
+            else if (subfolder.name() == "tran") {
                 m_existFeatures[1] = true;
-            } else if (subfolder.name() == "frn") 
+            }
+            else if (subfolder.name() == "frn")
             {
                 m_existFeatures[2] = true;
-            } else if (subfolder.name() == "dem") {
+            }
+            else if (subfolder.name() == "dem") {
                 m_existFeatures[3] = true;
-            } else if (subfolder.name() == "veg") {
+            }
+            else if (subfolder.name() == "veg") {
                 m_existFeatures[4] = true;
-            } else {
+            }
+            else {
                 m_existFeatures[5] = true;
             }
         }
-        for (bool flg : m_existFeatures) {
-            if (flg) m_selectFeatureSize++;
-        }
-        m_selectFeature.Init(false, m_selectFeatureSize);
     }
 }
 
@@ -759,10 +795,9 @@ TSharedRef<SVerticalBox> PlateauWindow::CreateLODSettingsPanel(ECityModelPackage
             int selectIndex = 0;
             for (int i = 0; i < m_Features.Num(); ++i) {
                 if (m_existFeatures[i]) {
-                    if (m_selectFeature[selectIndex] && Package == m_Features[i]) {
+                    if (m_selectFeature[i] && Package == m_Features[i]) {
                         return EVisibility::Visible;
                     }
-                    selectIndex++;
                 }
             }
             return EVisibility::Collapsed;
