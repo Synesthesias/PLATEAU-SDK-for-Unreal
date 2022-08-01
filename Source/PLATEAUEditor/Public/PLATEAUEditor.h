@@ -6,6 +6,7 @@
 #include "Modules/ModuleManager.h"
 
 #include "PlateauWindow.h"
+#include "PLATEAUCityModelImportWindow.h"
 
 class FPLATEAUEditorModule : public IModuleInterface
 {
@@ -15,4 +16,5 @@ public:
 
 private:
     PlateauWindow m_instance;
+    FPLATEAUCityModelImportWindow WindowInstance;
 };

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUGmlSelectPanel.h"
 
 /**
  * 
@@ -14,4 +15,15 @@ public:
 
 	void Startup();
 	void Shutdown();
+
+private:
+	FPLATEAUGmlSelectPanel GmlSelectPanelInstance;
+	TSharedPtr<FExtender> Extender;
+	TWeakPtr<SWindow> RootWindow;
+	TWeakPtr<SWindow> MyWindow;
+
+	void OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder);
+	void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
+	void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
+	void ShowPlateauWindow();
 };

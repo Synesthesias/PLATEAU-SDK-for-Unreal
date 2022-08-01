@@ -5,11 +5,10 @@
 #include "PLATEAUCityModelLoader.h"
 #include "CityMapDetails/PLATEAUCityMapDetails.h"
 
-#define LOCTEXT_NAMESPACE "FPlateauSDKModule"
 
 void FPLATEAUEditorModule::StartupModule()
 {
-    m_instance.startup();
+    WindowInstance.Startup();
 
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
     PropertyModule.RegisterCustomClassLayout(
@@ -20,7 +19,7 @@ void FPLATEAUEditorModule::StartupModule()
 
 void FPLATEAUEditorModule::ShutdownModule()
 {
-    m_instance.shutdown();
+    WindowInstance.Shutdown();
 
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
     PropertyModule.UnregisterCustomPropertyTypeLayout(
