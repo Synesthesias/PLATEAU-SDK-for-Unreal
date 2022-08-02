@@ -397,14 +397,14 @@ TSharedRef<SVerticalBox> FPLATEAUGmlSelectPanel::CreateSelectFeatureMesh() {
 
     VbFeatureMesh->AddSlot()
         .Padding(FMargin(0, 20, 0, 0))[
-            SNew(STextBlock).Visibility_Lambda(
+            SNew(STextBlock).IsEnabled_Lambda(
                 [this]() {
                     for (int i = 0; i < ExistFeatures.Num(); i++) {
                         if (ExistFeatures[i]) {
-                            return EVisibility::Visible;
+                            return true;
                         }
                     }
-                    return EVisibility::Collapsed;
+                    return false;
                 })
                 .Text(FText::FromString(FString(TEXT("含める地物"))))
         ];
@@ -441,10 +441,10 @@ TSharedRef<SVerticalBox> FPLATEAUGmlSelectPanel::CreateSelectFeatureMesh() {
     for (int j = 0; j < ExistFeatures.Num(); j++) {
         VbFeatureMesh->AddSlot()
             .Padding(FMargin(0, 0, 0, 3))[
-                SNew(SHorizontalBox).Visibility_Lambda(
+                SNew(SHorizontalBox).IsEnabled_Lambda(
                     [this, j]() {
-                        if (ExistFeatures[j]) return EVisibility::Visible;
-                        return EVisibility::Collapsed;
+                        if (ExistFeatures[j]) return true;
+                        return false;
                     })
                     + SHorizontalBox::Slot()
                         [
