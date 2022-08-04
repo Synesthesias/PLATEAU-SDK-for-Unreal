@@ -8,7 +8,7 @@
  *
  */
 UCLASS()
-class PLATEAUSDK_API UCityModelImportDataFactory : public UFactory {
+class PLATEAUEDITOR_API UCityModelImportDataFactory : public UFactory {
     GENERATED_UCLASS_BODY()
 
     virtual bool DoesSupportClass(UClass* Class) override;

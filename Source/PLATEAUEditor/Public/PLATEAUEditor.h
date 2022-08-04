@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-#include "PlateauWindow.h"
+#include "PLATEAUCityModelImportWindow.h"
 
-class FPlateauSDKModule : public IModuleInterface
+class FPLATEAUEditorModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
 
 private:
-    PlateauWindow m_instance;
+    FPLATEAUCityModelImportWindow WindowInstance;
 };

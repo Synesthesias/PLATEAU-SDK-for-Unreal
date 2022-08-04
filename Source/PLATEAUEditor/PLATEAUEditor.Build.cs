@@ -4,9 +4,9 @@ using UnrealBuildTool;
 using System;
 using System.IO;
 
-public class PlateauSDK : ModuleRules
+public class PLATEAUEditor : ModuleRules
 {
-    public PlateauSDK(ReadOnlyTargetRules Target) : base(Target)
+    public PLATEAUEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
@@ -67,55 +67,7 @@ public class PlateauSDK : ModuleRules
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
 
-        string libPath = Path.Combine(ModuleDirectory, "Private");
-        PublicLibraryPaths.Add(libPath);
-        PublicAdditionalLibraries.Add("plateau.lib");
-        PublicAdditionalLibraries.Add("citygml.lib");
-
-        string dllPath = Path.Combine(libPath, "plateau.dll");
-        string dllName = "plateau.dll";
-        CopyDll(dllName, dllPath);
-        PublicDelayLoadDLLs.Add(dllName);
-        RuntimeDependencies.Add(dllPath);
-
-        dllPath = Path.Combine(libPath, "citygml.dll");
-        dllName = "citygml.dll";
-        CopyDll(dllName, dllPath);
-        PublicDelayLoadDLLs.Add(dllName);
-        RuntimeDependencies.Add(dllPath);
-
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
-    }
-
-    // copy dll file to Binaries
-    private void CopyDll(string dllName, string dllFullPath)
-    {
-        if (!File.Exists(dllFullPath))
-        {
-            Console.WriteLine("file {0} does not exist", dllName);
-            return;
-        }
-
-        string binariesDir = Path.Combine(ModuleDirectory, "../../../../Binaries/Win64/");
-        if (!Directory.Exists(binariesDir))
-        {
-            Directory.CreateDirectory(binariesDir);
-        }
-
-        string binariesDllFullPath = Path.Combine(binariesDir, dllName);
-        if (File.Exists(binariesDllFullPath))
-        {
-            File.SetAttributes(binariesDllFullPath, File.GetAttributes(binariesDllFullPath) & ~FileAttributes.ReadOnly);
-        }
-
-        try
-        {
-            File.Copy(dllFullPath, binariesDllFullPath, true);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("failed to copy file: {0}", dllName);
-        }
     }
 }

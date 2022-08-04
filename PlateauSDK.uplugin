@@ -21,7 +21,7 @@
 			"LoadingPhase": "Default"
 		},
 		{
-			"Name": "PlateauSDK",
+			"Name": "PLATEAUEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
 		}
