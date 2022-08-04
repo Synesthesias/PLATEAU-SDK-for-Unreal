@@ -209,7 +209,7 @@ TSharedRef<SVerticalBox> FPLATEAUGmlSelectPanel::CreateSelectRegionMesh() {
                                     if (SelectRegion[SecondIndex]) {
                                         return EVisibility::Visible;
                                     }
-                                        return EVisibility::Collapsed;
+                                    return EVisibility::Collapsed;
                                 })
                                 + SHorizontalBox::Slot()
                                     .AutoWidth()
@@ -377,8 +377,8 @@ void FPLATEAUGmlSelectPanel::CheckRegionMesh() {
         }
     }
 
-    for(int j = 0; j< ExistFeatures.Num();j++){
-        if(!ExistFeatures[j]){
+    for (int j = 0; j < ExistFeatures.Num(); j++) {
+        if (!ExistFeatures[j]) {
             SelectFeatures[j] = false;
         }
     }

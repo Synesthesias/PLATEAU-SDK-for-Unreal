@@ -6,24 +6,24 @@
 #include "PLATEAUGmlSelectPanel.h"
 
 /**
- * 
+ *
  */
 class PLATEAUEDITOR_API FPLATEAUCityModelImportWindow
 {
 public:
-	FPLATEAUCityModelImportWindow();
+    FPLATEAUCityModelImportWindow();
 
-	void Startup();
-	void Shutdown();
+    void Startup();
+    void Shutdown();
 
 private:
-	FPLATEAUGmlSelectPanel GmlSelectPanelInstance;
-	TSharedPtr<FExtender> Extender;
-	TWeakPtr<SWindow> RootWindow;
-	TWeakPtr<SWindow> MyWindow;
+    FPLATEAUGmlSelectPanel GmlSelectPanelInstance;
+    TSharedPtr<FExtender> Extender;
+    TWeakPtr<SWindow> RootWindow;
+    TWeakPtr<SWindow> MyWindow;
 
-	void OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder);
-	void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
-	void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
-	void ShowPlateauWindow();
+    void OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder);
+    void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
+    void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
+    void ShowPlateauWindow();
 };
