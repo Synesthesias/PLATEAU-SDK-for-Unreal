@@ -43,7 +43,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 
     auto CityMap = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0].Get());
 
-    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityModelLoader, Metadata));
+    const auto MetadataProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityModelLoader, ImportData));
     const auto DetailBuilderPtr = &DetailBuilder;
     CityModelCategory.AddProperty(MetadataProperty)
         .CustomWidget()
@@ -58,7 +58,7 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
         .OnObjectChanged_Lambda(
             [this, DetailBuilderPtr, CityMap](const FAssetData& InAssetData) {
                 auto* MetadataAsset = Cast<UCityModelImportData>(InAssetData.GetAsset());
-                CityMap->Metadata = MetadataAsset;
+                CityMap->ImportData = MetadataAsset;
 
                 if (DetailBuilderPtr != nullptr)
                     DetailBuilderPtr->ForceRefreshDetails();
@@ -67,16 +67,16 @@ void FPLATEAUCityMapDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
             [this, CityMap]() {
                 if (CityMap == nullptr)
                     return FString("");
-                if (CityMap->Metadata == nullptr)
+                if (CityMap->ImportData == nullptr)
                     return FString("");
-                return CityMap->Metadata->GetPathName();
+                return CityMap->ImportData->GetPathName();
             })
                 //.OnShouldFilterAsset(this, &SDataprepInstanceParentWidget::ShouldFilterAsset)
                 //        .ObjectPath(this, &SDataprepInstanceParentWidget::GetDataprepInstanceParent);
         ];
 
 
-    const auto Metadata = CityMap->Metadata;
+    const auto Metadata = CityMap->ImportData;
     if (Metadata == nullptr)
         return;
 
@@ -130,7 +130,7 @@ FReply FPLATEAUCityMapDetails::OnClickPlace() {
 }
 
 void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityModelLoader& Actor) {
-    if (Actor.Metadata == nullptr) {
+    if (Actor.ImportData == nullptr) {
         return;
     }
 
@@ -147,7 +147,7 @@ void FPLATEAUCityMapDetails::PlaceMeshes(APLATEAUCityModelLoader& Actor) {
     ActorRootComponent->RegisterComponent();
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
-    for (const auto CityModelInfo : Actor.Metadata->ImportedCityModelInfoArray) {
+    for (const auto CityModelInfo : Actor.ImportData->ImportedCityModelInfoArray) {
         const auto FeaturePlacementSettings = Actor.CityModelPlacementSettings.GetFeaturePlacementSettings(CityModelInfo.Package);
         if (FeaturePlacementSettings.FeaturePlacementMode == EFeaturePlacementMode::DontPlace)
             continue;
@@ -176,7 +176,7 @@ void FPLATEAUCityMapDetails::PlaceCityModel(APLATEAUCityModelLoader& Actor, USce
         return;
     }
 
-    if (Actor.Metadata->MeshConvertSettings.IsPerCityModelArea) {
+    if (Actor.ImportData->MeshConvertSettings.IsPerCityModelArea) {
         // メッシュ結合単位が都市モデル単位の場合1つだけStaticMeshが存在するのでそれを配置する。
         PlaceStaticMesh(Actor, RootComponent, CityModelInfo.StaticMeshes[0]);
         return;

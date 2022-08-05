@@ -161,6 +161,6 @@ void PLATEAUFileUtils::ImportFbx(const TArray<FString>& GmlFiles, const FString&
     FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
     UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
     auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
-    Cast<APLATEAUCityModelLoader>(Actor)->Metadata = Metadata;
+    Cast<APLATEAUCityModelLoader>(Actor)->ImportData = Metadata;
     FPLATEAUCityMapDetails::PlaceMeshes(*Cast<APLATEAUCityModelLoader>(Actor));
 }

@@ -3,6 +3,8 @@
 
 #include "PLATEAUCityModelLoader.h"
 
+#include "citygml/citygml.h"
+
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
     CityModelPlacementSettings.BuildingPlacementSettings.TargetLOD = 3;
@@ -20,4 +22,18 @@ void APLATEAUCityModelLoader::BeginPlay() {
 
 void APLATEAUCityModelLoader::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
+}
+
+FPLATEAUCityModel APLATEAUCityModelLoader::LoadCityModel(int GmlIndex) {
+    if (CityModelCache.Contains(GmlIndex)) {
+        return CityModelCache[GmlIndex];
+    }
+
+    citygml::ParserParams params;
+    params.tesselate = false;
+    const auto RelativeGmlPath = ImportData->ImportedCityModelInfoArray[GmlIndex].GmlFilePath;
+    const auto FullGmlPath = FPaths::ProjectContentDir() + "PLATEAU/" + RelativeGmlPath;
+    const auto CityModelData = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), params);
+    CityModelCache.Add(GmlIndex, FPLATEAUCityModel(CityModelData));
+    return CityModelCache[GmlIndex];
 }
