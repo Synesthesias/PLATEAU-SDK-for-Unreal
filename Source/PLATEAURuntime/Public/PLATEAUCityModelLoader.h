@@ -4,11 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "CityModelImportData.h"
+#include "CityGML/PLATEAUCityModel.h"
 #include "GameFramework/Actor.h"
 
 #include "PLATEAUCityModelLoader.generated.h"
 
 #define LOCTEXT_NAMESPACE "APLATEAUCityMap"
+
+namespace citygml {
+    class CityModel;
+}
 
 UENUM(BlueprintType)
 enum class EFeaturePlacementMode : uint8 {
@@ -108,12 +113,15 @@ public:
 
 
     UPROPERTY(EditAnywhere, Category = "CityModel")
-        UCityModelImportData* Metadata;
+        UCityModelImportData* ImportData;
 
     UPROPERTY(EditAnywhere, Category = "CityModel")
         FCityModelPlacementSettings CityModelPlacementSettings;
 
-    
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+        FPLATEAUCityModel LoadCityModel(int GmlIndex);
+
 
 protected:
     // Called when the game starts or when spawned
@@ -123,6 +131,8 @@ public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
+private:
+    TMap<int, FPLATEAUCityModel> CityModelCache;
 };
 
 #undef LOCTEXT_NAMESPACE
