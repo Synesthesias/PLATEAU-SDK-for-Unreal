@@ -92,7 +92,7 @@
    - 変換したモデルがUnrealのシーンに自動で配置されます。
    - 変換元ファイルが ```Content/PLATEAU``` にコピーされています。
    - メタデータが出力先に配置されます。
-![](../resources/manual/importCityModels/exported.png)
+![](../resources/manual/importCityModels/export.png)
 
 >[!NOTE]
 > メタデータを選択すると再変換の画面がインスペクタに表示されます。  
