@@ -1,26 +1,27 @@
 # インストール
-## 対応Unityバージョンのインストール
-- PLATEAU Unity SDK は、Unityバージョン ```2020.3``` を想定しています。  
+## 対応Unrealバージョンのインストール
+- PLATEAU UE SDK は、Unrealバージョン ```4.27``` を想定しています。  
   そのバージョンがインストールされていない場合は、次の手順でインストールしてください。
-  - [Unity Hub をこちらからインストールします](https://unity3d.com/jp/get-unity/download)。
-  - Unity Hubを起動し、左のサイドバーから```インストール``` → 右上のボタンから```インストール``` をクリックします。
-![](../resources/manual/installation/unityHub.png)
-  - Unity 2020.3 で始まるバージョンを選択し、```次へ```を押します。
-![](../resources/manual/installation/unityHubSelectVersion.png)
-  - ```実行``` してインストールします。
+  - [Epic Games Launcher をこちらからインストールします](https://www.unrealengine.com/ja/download)。
+  - Epic Games Launcherを起動し、左のサイドバーから```Unreal Engine``` → 上のメニューから```ライブラリ``` をクリックします。
+![](../resources/manual/installation/epicGameLauncher.png)
+  - ```Engineバージョン```の隣のプラスボタンをクリックしてバージョンを追加し、数字を選択して4.27 で始まるバージョンを選択し、```インストール```を押します。
+![](../resources/manual/installation/epicGameLauncherSelectVersion.png)
 
-## Unityプロジェクトの作成
-- Unity Hub の左サイドバーの```プロジェクト``` を押し、右上の```新規作成```ボタンの右隣にある矢印マークをクリックします。
-![](../resources/manual/installation/unityHubNewProjectVersion.png)
-- 先ほどインストールしたバージョンを選択して```次へ```を押します。
-- プロジェクト名と保存先を入力し```作成```を押します。
-![](../resources/manual/installation/unityHubNewProject.png)
+## Unrealプロジェクトの作成
+- 先ほどインストールしたバージョンを起動します。
+![](../resources/manual/installation/epicGameLauncherLaunchUnrealEngine.png)
+- 新規プロジェクトの欄から```ゲーム```を選択し、```次へ```を押します。
+![](../resources/manual/installation/unrealEngineNewProjectCategory.png)
+- テンプレート選択で```blank```を選択し、```次へ```を押します。
+![](../resources/manual/installation/unrealEngineNewProjectTemplate.png)
+- プロジェクト名と保存先を入力し```プロジェクト作成```を押します。
+![](../resources/manual/installation/unrealEngineNewProject.png)
 
-## PLATEAU Unity SDK の導入
- - Unityのメニューバーから ```Window``` → ```Package Manager``` を選択します。
- - Package Manager ウィンドウの左上の＋ボタンから ```Add package from git URL...``` を選択します。
-![](../resources/manual/installation/packageAddFromGit.png)
- - 次のURLを入力して ```Add``` を押します。  
-   https://github.com/Synesthesias/PlateauUnitySDK.git
- - ウィンドウのパッケージ一覧に ```Plateau Unity SDK``` が表示されたら完了です。
-![](../resources/manual/installation/packageInstalled.png)
+## PLATEAU UE SDK の導入
+ - [PLATEAU UE SDK をこちらからダウンロードします](https://github.com/Synesthesias/PlateauUESDK)。
+![](../resources/manual/installation/downloadFromGit.png)
+ - 作成したプロジェクトのフォルダに```Plugins```という名前のフォルダを作成し、先程ダウンロードしたSDKをコピーします。
+![](../resources/manual/installation/pluginInstall.png)
+ - プロジェクトを開く際に以下の画面が表示されるので```はい```を押して完了です。
+![](../resources/manual/installation/pluginBuild.png)

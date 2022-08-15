@@ -3,8 +3,8 @@
     ],
     "build": {
         "globalMetadata": {
-            "_appTitle": "PLATEAU SDK for Unity",
-            "_appFooter": "PLATEAU SDK for Unity",
+            "_appTitle": "PLATEAU SDK for Unreal",
+            "_appFooter": "PLATEAU SDK for Unreal",
             "_enableSearch": true
         },
         "content": [
