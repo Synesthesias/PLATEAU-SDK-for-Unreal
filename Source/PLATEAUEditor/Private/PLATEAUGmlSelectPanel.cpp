@@ -6,6 +6,7 @@
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
 #include "PLATEAUFileUtils.h"
 #include <algorithm>
+#include "PLATEAUCityModelImportWindow.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
 
@@ -98,7 +99,7 @@ void FPLATEAUGmlSelectPanel::UpdateWindow(TWeakPtr<SWindow> MyWindow) {
     }
 
     ScrollBox->AddSlot()[
-        ConvertSettingsPanelInstance.CreateConvertSettingsPanel()
+        FPLATEAUCityModelImportWindow::GetInstance()->GetMeshConvertSettingsPanel().CreateConvertSettingsPanel()
     ];
 
     MyWindow.Pin()->SetContent(ScrollBox);
@@ -382,8 +383,7 @@ void FPLATEAUGmlSelectPanel::CheckRegionMesh() {
             SelectFeatures[j] = false;
         }
     }
-
-    ConvertSettingsPanelInstance.UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
+    FPLATEAUCityModelImportWindow::GetInstance()->UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
 }
 
 TSharedRef<SVerticalBox> FPLATEAUGmlSelectPanel::CreateSelectFeatureMesh() {
@@ -475,7 +475,7 @@ FReply FPLATEAUGmlSelectPanel::OnBtnAllFeatureSelectClicked() {
             SelectFeatures[i] = true;
         }
     }
-    ConvertSettingsPanelInstance.UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
+    FPLATEAUCityModelImportWindow::GetInstance()->UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
     return FReply::Handled();
 }
 
@@ -485,11 +485,11 @@ FReply FPLATEAUGmlSelectPanel::OnBtnAllFeatureRelieveClicked() {
             SelectFeatures[i] = false;
         }
     }
-    ConvertSettingsPanelInstance.UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
+    FPLATEAUCityModelImportWindow::GetInstance()->UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
     return FReply::Handled();
 }
 
 void FPLATEAUGmlSelectPanel::OnToggleCbSelectFeature(ECheckBoxState CheckState, int Index) {
     SelectFeatures[Index] = (CheckState == ECheckBoxState::Checked);
-    ConvertSettingsPanelInstance.UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
+    FPLATEAUCityModelImportWindow::GetInstance()->UpdateFeaturesInfo(ExistFeatures, SelectFeatures, FilteredCollection);
 }

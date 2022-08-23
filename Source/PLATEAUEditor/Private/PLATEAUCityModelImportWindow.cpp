@@ -10,8 +10,8 @@
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
 
-FPLATEAUCityModelImportWindow::FPLATEAUCityModelImportWindow() {
-}
+
+FPLATEAUCityModelImportWindow* FPLATEAUCityModelImportWindow::CityModelImportWindow = 0;
 
 void FPLATEAUCityModelImportWindow::Startup() {
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(LEVEL_EDITOR_NAME);
@@ -50,6 +50,22 @@ void FPLATEAUCityModelImportWindow::Shutdown() {
     }
 }
 
+void FPLATEAUCityModelImportWindow::UpdateFeaturesInfo(TArray<bool> ExistArray, TArray<bool> SelectArray, UdxFileCollection Collection) {
+    MeshConvertSettingsPanel.UpdateFeaturesInfo(ExistArray, SelectArray, Collection);
+}
+
+FPLATEAUCityModelImportWindow* FPLATEAUCityModelImportWindow::GetInstance() {
+    if (CityModelImportWindow == NULL) {
+        CityModelImportWindow = new FPLATEAUCityModelImportWindow();
+    }
+    return  CityModelImportWindow;
+}
+
+FPLATEAUMeshConvertSettingsPanel& FPLATEAUCityModelImportWindow::GetMeshConvertSettingsPanel() {
+    return MeshConvertSettingsPanel;
+}
+
+
 void FPLATEAUCityModelImportWindow::OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder) {
     MenuBarBuilder.AddPullDownMenu(
         LOCTEXT("MenuBarTitle", "PLATEAU"),
@@ -83,7 +99,7 @@ void FPLATEAUCityModelImportWindow::ShowPlateauWindow() {
             FSlateApplication::Get().AddWindowAsNativeChild(
                 Window.ToSharedRef(), RootWindow.Pin().ToSharedRef());
         }
-        GmlSelectPanelInstance.UpdateWindow(MyWindow);
+        GmlSelectPanel.UpdateWindow(MyWindow);
     }
     MyWindow.Pin()->BringToFront();
 }

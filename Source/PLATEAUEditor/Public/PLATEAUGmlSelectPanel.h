@@ -9,7 +9,6 @@
 #include <memory>
 #include <vector>
 
-#include "PLATEAUMeshConvertSettingsPanel.h"
 
 /**
  *
@@ -20,7 +19,6 @@ public:
     void UpdateWindow(TWeakPtr<SWindow> MyWindow);
 
 private:
-    FPLATEAUMeshConvertSettingsPanel ConvertSettingsPanelInstance;
     FString GmlFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     bool GmlFileSelected = false;
     UdxFileCollection Collection;

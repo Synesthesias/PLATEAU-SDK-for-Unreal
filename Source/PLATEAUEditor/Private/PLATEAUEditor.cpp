@@ -4,11 +4,12 @@
 
 #include "PLATEAUCityModelLoader.h"
 #include "CityMapDetails/PLATEAUCityMapDetails.h"
+#include "PLATEAUCityModelImportWindow.h"
 
 
 void FPLATEAUEditorModule::StartupModule()
 {
-    WindowInstance.Startup();
+    FPLATEAUCityModelImportWindow::GetInstance()->Startup();
 
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
     PropertyModule.RegisterCustomClassLayout(
@@ -19,7 +20,7 @@ void FPLATEAUEditorModule::StartupModule()
 
 void FPLATEAUEditorModule::ShutdownModule()
 {
-    WindowInstance.Shutdown();
+    FPLATEAUCityModelImportWindow::GetInstance()->Shutdown();
 
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
     PropertyModule.UnregisterCustomPropertyTypeLayout(
