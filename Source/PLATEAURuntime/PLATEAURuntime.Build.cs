@@ -53,9 +53,8 @@ public class PLATEAURuntime : ModuleRules
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
 
         string libPath = Path.Combine(ModuleDirectory, "Private");
-        PublicLibraryPaths.Add(libPath);
-        PublicAdditionalLibraries.Add("plateau.lib");
-        PublicAdditionalLibraries.Add("citygml.lib");
+        PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));
+        PublicAdditionalLibraries.Add(Path.Combine(libPath, "citygml.lib"));
 
         string dllPath = Path.Combine(libPath, "plateau.dll");
         string dllName = "plateau.dll";
