@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/Layout/SScrollBox.h"
-#include "plateau/udx/udx_file_collection.h"
+//#include "plateau/udx/udx_file_collection.h"
 #include "CityModelImportData.h"
 #include <memory>
 #include <vector>
 
-#include "PLATEAUMeshConvertSettingsPanel.h"
+//#include "PLATEAUMeshConvertSettingsPanel.h"
 
 /**
  *
@@ -20,15 +20,15 @@ public:
     void UpdateWindow(TWeakPtr<SWindow> MyWindow);
 
 private:
-    FPLATEAUMeshConvertSettingsPanel ConvertSettingsPanelInstance;
+    //FPLATEAUMeshConvertSettingsPanel ConvertSettingsPanelInstance;
     FString GmlFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir());
     bool GmlFileSelected = false;
-    UdxFileCollection Collection;
-    UdxFileCollection FilteredCollection;
-    std::shared_ptr<std::vector<MeshCode>> MeshCodes;
-    std::shared_ptr<std::vector<UdxSubFolder>> SubFolders;
+    //UdxFileCollection Collection;
+    //UdxFileCollection FilteredCollection;
+    //std::shared_ptr<std::vector<MeshCode>> MeshCodes;
+    //std::shared_ptr<std::vector<UdxSubFolder>> SubFolders;
     TArray<bool> SelectRegion; //選択された地域メッシュ
-    TArray<MeshCode> SecondMesh;
+    //TArray<MeshCode> SecondMesh;
     TArray<bool> ExistFeatures; //選択された地域に含まれる地物（その他あり）
     TArray<ECityModelPackage> Features = {
         ECityModelPackage::Building,
@@ -40,18 +40,22 @@ private:
     };
     TArray<bool> SelectFeatures; //選択された地物（その他あり）
 
-    TSharedRef<SVerticalBox> CreateSelectGmlFilePanel(TWeakPtr<SWindow> MyWindow);
-    TSharedRef<SVerticalBox> CreateSelectRegionMesh();
-    TSharedRef<SVerticalBox> CreateSelectFeatureMesh();
-    FReply OnBtnSelectGmlFileClicked(TWeakPtr<SWindow> MyWindow);
-    TArray<MeshCode> SortMeshCodes(TArray<MeshCode> MeshArray);
-    FReply OnBtnAllSecondMeshSelectClicked();
-    FReply OnBtnAllSecondMeshRelieveClicked();
-    FReply OnBtnThirdMeshSelectClicked(std::string SecondMeshName);
-    FReply OnBtnThirdMeshRelieveClicked(std::string SecondMeshName);
-    void OnToggleCbSelectRegion(ECheckBoxState CheckState, int Num, std::string MeshName);
-    void CheckRegionMesh();
-    FReply OnBtnAllFeatureSelectClicked();
-    FReply OnBtnAllFeatureRelieveClicked();
-    void OnToggleCbSelectFeature(ECheckBoxState CheckState, int Index);
+    //TSharedRef<SVerticalBox> CreateSelectGmlFilePanel(TWeakPtr<SWindow> MyWindow);
+    //TSharedRef<SVerticalBox> CreateSelectRegionMesh();
+    //TSharedRef<SVerticalBox> CreateSelectFeatureMesh();
+    //FReply OnBtnSelectGmlFileClicked(TWeakPtr<SWindow> MyWindow);
+    //TArray<MeshCode> SortMeshCodes(TArray<MeshCode> MeshArray);
+    //FReply OnBtnAllSecondMeshSelectClicked();
+    //FReply OnBtnAllSecondMeshRelieveClicked();
+    //FReply OnBtnThirdMeshSelectClicked(std::string SecondMeshName);
+    //FReply OnBtnThirdMeshRelieveClicked(std::string SecondMeshName);
+    //void OnToggleCbSelectRegion(ECheckBoxState CheckState, int Num, std::string MeshName);
+    //void CheckRegionMesh();
+    //FReply OnBtnAllFeatureSelectClicked();
+    //FReply OnBtnAllFeatureRelieveClicked();
+    //void OnToggleCbSelectFeature(ECheckBoxState CheckState, int Index);
+
+    //add sample xyzTiles
+    FReply OnBtnSampleXyzTilesClicked();
+    void SampleSaveFig(TArray<uint8> fileData);
 };

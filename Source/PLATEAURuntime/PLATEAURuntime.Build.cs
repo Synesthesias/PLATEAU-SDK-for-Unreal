@@ -11,7 +11,7 @@ public class PLATEAURuntime : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                Path.Combine(ModuleDirectory, "Public/libplateau")
+                Path.Combine(ModuleDirectory, "Public/libplateau"),
             }
             );
 
@@ -51,6 +51,7 @@ public class PLATEAURuntime : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
 
         string libPath = Path.Combine(ModuleDirectory, "Private");
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));
@@ -99,4 +100,7 @@ public class PLATEAURuntime : ModuleRules
             Console.WriteLine("failed to copy file: {0}", dllName);
         }
     }
+
+    //using c++17
+    CppStandard = CppStandardVersion.Cpp17;
 }

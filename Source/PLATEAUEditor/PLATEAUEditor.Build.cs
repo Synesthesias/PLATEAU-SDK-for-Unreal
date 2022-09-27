@@ -65,7 +65,7 @@ public class PLATEAUEditor : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
+        //PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
