@@ -68,6 +68,9 @@ public class PLATEAURuntime : ModuleRules
         CopyDll(dllName, dllPath);
         PublicDelayLoadDLLs.Add(dllName);
         RuntimeDependencies.Add(dllPath);
+
+        //using c++17
+        CppStandard = CppStandardVersion.Cpp17;
     }
 
     // copy dll file to Binaries
@@ -100,7 +103,4 @@ public class PLATEAURuntime : ModuleRules
             Console.WriteLine("failed to copy file: {0}", dllName);
         }
     }
-
-    //using c++17
-    CppStandard = CppStandardVersion.Cpp17;
 }
