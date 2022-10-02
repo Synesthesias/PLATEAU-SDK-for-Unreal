@@ -3,16 +3,46 @@
 
 #include "PLATEAUCityModelLoader.h"
 
+#include "plateau/udx/udx_file_collection.h"
+#include "plateau/polygon_mesh/mesh_extractor.h"
+#include "plateau/polygon_mesh/mesh_extract_options.h"
 #include "citygml/citygml.h"
+
+using namespace plateau::udx;
+using namespace plateau::polygonMesh;
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
-    CityModelPlacementSettings.BuildingPlacementSettings.TargetLOD = 3;
-    CityModelPlacementSettings.RoadPlacementSettings.TargetLOD = 3;
-    CityModelPlacementSettings.UrbanFacilityPlacementSettings.TargetLOD = 3;
-    CityModelPlacementSettings.ReliefPlacementSettings.TargetLOD = 3;
-    CityModelPlacementSettings.VegetationPlacementSettings.TargetLOD = 3;
-    CityModelPlacementSettings.OtherPlacementSettings.TargetLOD = 3;
+}
+
+void APLATEAUCityModelLoader::Load() {
+    // 仮の範囲情報(53392642の地域メッシュ)
+    Extent.Min.Latitude = 35.54136964;
+    Extent.Min.Longitude = 139.7755041;
+    Extent.Min.Height = -1000;
+    Extent.Max.Latitude = 35.5335751;
+    Extent.Max.Longitude = 139.78712557;
+    Extent.Min.Height = 1000;
+
+    // GeoReference更新
+    //GeoReference.ReferencePoint = GeoReference Extent.GetNativeData().centerPoint();
+
+    // ファイル検索
+    const auto UdxFileCollection =
+        UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
+        ->filter(Extent.GetNativeData());
+    const auto GmlFiles = UdxFileCollection->getGmlFiles(PredefinedCityModelPackage::Building);
+
+    if (GmlFiles->size() == 0)
+        return;
+
+    // 都市モデルパース
+    citygml::ParserParams ParserParams;
+    ParserParams.tesselate = true;
+    const auto CityModel = citygml::load(*GmlFiles->begin(), ParserParams);
+
+    //MeshExtractOptions MeshExtractOptions()
+    //MeshExtractor::extract(CityModel, )
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {
@@ -22,18 +52,4 @@ void APLATEAUCityModelLoader::BeginPlay() {
 
 void APLATEAUCityModelLoader::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
-}
-
-FPLATEAUCityModel APLATEAUCityModelLoader::LoadCityModel(int GmlIndex) {
-    if (CityModelCache.Contains(GmlIndex)) {
-        return CityModelCache[GmlIndex];
-    }
-
-    citygml::ParserParams params;
-    params.tesselate = false;
-    const auto RelativeGmlPath = ImportData->ImportedCityModelInfoArray[GmlIndex].GmlFilePath;
-    const auto FullGmlPath = FPaths::ProjectContentDir() + "PLATEAU/" + RelativeGmlPath;
-    const auto CityModelData = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), params);
-    CityModelCache.Add(GmlIndex, FPLATEAUCityModel(CityModelData));
-    return CityModelCache[GmlIndex];
 }

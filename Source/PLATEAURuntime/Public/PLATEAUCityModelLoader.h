@@ -3,23 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CityModelImportData.h"
-#include "CityGML/PLATEAUCityModel.h"
 #include "GameFramework/Actor.h"
+
+#include "CityGML/PLATEAUCityModel.h"
+#include "PLATEAUGeometry.h"
 
 #include "PLATEAUCityModelLoader.generated.h"
 
-#define LOCTEXT_NAMESPACE "APLATEAUCityMap"
+#define LOCTEXT_NAMESPACE "APLATEAUCityModelLoader"
 
 namespace citygml {
     class CityModel;
 }
 
+
 UENUM(BlueprintType)
-enum class EFeaturePlacementMode : uint8 {
-    PlaceTargetLODOrLower,
-    DontPlace,
-    PlaceTargetLOD,
+enum class ECityModelPackage : uint8 {
+    Building,
+    Road,
+    Relief,
+    UrbanFacility,
+    Vegetation,
+    Others
 };
 
 UENUM(BlueprintType)
@@ -34,13 +39,14 @@ enum class EBuildingTypeMask : uint8 {
     OuterCeilingSurface
 };
 
+
 USTRUCT()
 struct FFeaturePlacementSettings {
     GENERATED_USTRUCT_BODY()
 
 public:
     UPROPERTY(EditAnywhere)
-        EFeaturePlacementMode FeaturePlacementMode;
+        bool ShouldImport;
 
     UPROPERTY(EditAnywhere)
         int TargetLOD;
@@ -111,17 +117,24 @@ public:
     // Sets default values for this actor's properties
     APLATEAUCityModelLoader();
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        FString Source;
 
-    UPROPERTY(EditAnywhere, Category = "CityModel")
-        UCityModelImportData* ImportData;
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        FPLATEAUExtent Extent;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        FPLATEAUGeoReference GeoReference;
 
     UPROPERTY(EditAnywhere, Category = "CityModel")
         FCityModelPlacementSettings CityModelPlacementSettings;
 
 
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-        FPLATEAUCityModel LoadCityModel(int GmlIndex);
+    //UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+    //    FPLATEAUCityModel LoadCityModel(int GmlIndex);
 
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+        void Load();
 
 protected:
     // Called when the game starts or when spawned

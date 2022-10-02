@@ -50,7 +50,9 @@ public class PLATEAUEditor : ModuleRules
                 "UnrealEd",
                 "AssetTools",
                 "EditorStyle",
-                "PropertyEditor"
+                "PropertyEditor",
+                "AdvancedPreviewScene",
+                "WorkspaceMenuStructure"
                 // ... add private dependencies that you statically link with here ...	
             }
             );
@@ -65,7 +67,7 @@ public class PLATEAUEditor : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
+        //PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
