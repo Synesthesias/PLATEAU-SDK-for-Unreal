@@ -17,15 +17,20 @@ APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
 
 void APLATEAUCityModelLoader::Load() {
     // 仮の範囲情報(53392642の地域メッシュ)
-    Extent.Min.Latitude = 35.54136964;
+    Extent.Min.Latitude = 35.5335751;
     Extent.Min.Longitude = 139.7755041;
-    Extent.Min.Height = -1000;
-    Extent.Max.Latitude = 35.5335751;
+    Extent.Min.Height = -10000;
+    Extent.Max.Latitude = 35.54136964;
     Extent.Max.Longitude = 139.78712557;
-    Extent.Min.Height = 1000;
+    Extent.Max.Height = 10000;
 
-    // GeoReference更新
-    //GeoReference.ReferencePoint = GeoReference Extent.GetNativeData().centerPoint();
+    // GeoReferenceを選択範囲の中心に更新
+    const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
+    const auto MaxPoint = GeoReference.GetData().project(Extent.GetNativeData().max);
+    const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
+    GeoReference.ReferencePoint.X = NativeReferencePoint.x;
+    GeoReference.ReferencePoint.Y = NativeReferencePoint.y;
+    GeoReference.ReferencePoint.Z = NativeReferencePoint.z;
 
     // ファイル検索
     const auto UdxFileCollection =
@@ -41,8 +46,15 @@ void APLATEAUCityModelLoader::Load() {
     ParserParams.tesselate = true;
     const auto CityModel = citygml::load(*GmlFiles->begin(), ParserParams);
 
-    //MeshExtractOptions MeshExtractOptions()
-    //MeshExtractor::extract(CityModel, )
+    // ポリゴンメッシュ抽出
+    const MeshExtractOptions MeshExtractOptions(
+        NativeReferencePoint, CoordinateSystem::NWU,
+        MeshGranularity::PerPrimaryFeatureObject,
+        3, 0, true,
+        1, 0.01, Extent.GetNativeData());
+    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+
+    // StaticMesh生成
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

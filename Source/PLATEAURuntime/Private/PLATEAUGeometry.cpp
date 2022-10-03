@@ -18,8 +18,9 @@ plateau::geometry::GeoCoordinate FPLATEAUGeoCoordinate::GetNativeData() const {
 
 /**** Extent ****/
 
-FPLATEAUExtent::FPLATEAUExtent(plateau::geometry::Extent InExtent) : Min(InExtent.min)
-, Max(InExtent.max) {}
+FPLATEAUExtent::FPLATEAUExtent(plateau::geometry::Extent InExtent)
+    : Min(InExtent.min)
+    , Max(InExtent.max) {}
 
 plateau::geometry::Extent FPLATEAUExtent::GetNativeData() const {
     return plateau::geometry::Extent(
@@ -47,6 +48,11 @@ FPLATEAUGeoReference::FPLATEAUGeoReference(const plateau::geometry::GeoReference
     ReferencePoint.Z = InGeoReference.getReferencePoint().z;
 }
 
+plateau::geometry::GeoReference& FPLATEAUGeoReference::GetData() {
+    UpdateNativeData();
+    return Data;
+}
+
 void FPLATEAUGeoReference::UpdateNativeData() {
     const TVec3d NativePoint(ReferencePoint.X, ReferencePoint.Y, ReferencePoint.Z);
     Data.setReferencePoint(NativePoint);
@@ -55,14 +61,12 @@ void FPLATEAUGeoReference::UpdateNativeData() {
 
 FPLATEAUGeoCoordinate UPLATEAUGeoReferenceBlueprintLibrary::Unproject(FPLATEAUGeoReference& GeoReference,
     const FVector& Point) {
-    GeoReference.UpdateNativeData();
     const TVec3d NativePoint(Point.X, Point.Y, Point.Z);
-    return GeoReference.Data.unproject(NativePoint);
+    return GeoReference.GetData().unproject(NativePoint);
 }
 
 FVector UPLATEAUGeoReferenceBlueprintLibrary::Project(FPLATEAUGeoReference& GeoReference,
     const FPLATEAUGeoCoordinate& GeoCoordinate) {
-    GeoReference.UpdateNativeData();
-    const auto NativePoint = GeoReference.Data.project(GeoCoordinate.GetNativeData());
+    const auto NativePoint = GeoReference.GetData().project(GeoCoordinate.GetNativeData());
     return FVector(NativePoint.x, NativePoint.y, NativePoint.z);
 }

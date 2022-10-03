@@ -10,7 +10,7 @@
 #include "PLATEAUCityModelLoader.h"
 #include "Widgets/Layout/SScrollBox.h"
 
-#define LOCTEXT_NAMESPACE "FPLATEAUEditorModule"
+#define LOCTEXT_NAMESPACE "FPLATEAUCityModelAddPanel"
 
 
 FPLATEAUCityModelAddPanel::FPLATEAUCityModelAddPanel() {}
@@ -37,7 +37,7 @@ TSharedRef<SVerticalBox> FPLATEAUCityModelAddPanel::CreateSourcePathSelectPanel(
             SNew(SEditableTextBox)
             .Padding(FMargin(3, 3, 0, 3))
         .IsReadOnly(true)
-        .Text(LOCTEXT("SelectSource", "ÉCÉìÉ|Å[Égå≥ÉtÉHÉãÉ_ëIë"))
+        .Text(LOCTEXT("SelectSource", "ÂÖ•ÂäõÂÖÉ„Éï„Ç©„É´„ÉÄ„ÇíÈÅ∏Êäû"))
         .BackgroundColor(FColor(200, 200, 200, 255))
         ]
     + SVerticalBox::Slot()
@@ -54,7 +54,7 @@ TSharedRef<SVerticalBox> FPLATEAUCityModelAddPanel::CreateSourcePathSelectPanel(
             SNew(STextBlock)
             .Justification(ETextJustify::Center)
         .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Ref Button", "éQè∆..."))
+        .Text(LOCTEXT("Ref Button", "ÂèÇÁÖß..."))
         ]
         ]
     + SVerticalBox::Slot()
@@ -86,7 +86,7 @@ TSharedRef<SVerticalBox> FPLATEAUCityModelAddPanel::CreateSourcePathSelectPanel(
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
                 .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("AddButton2", "í«â¡"))
+                .Text(LOCTEXT("AddButton2", "ËøΩÂä†"))
                 ]];
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

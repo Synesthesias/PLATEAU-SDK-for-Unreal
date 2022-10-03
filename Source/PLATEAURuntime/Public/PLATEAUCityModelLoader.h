@@ -129,10 +129,6 @@ public:
     UPROPERTY(EditAnywhere, Category = "CityModel")
         FCityModelPlacementSettings CityModelPlacementSettings;
 
-
-    //UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-    //    FPLATEAUCityModel LoadCityModel(int GmlIndex);
-
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Load();
 

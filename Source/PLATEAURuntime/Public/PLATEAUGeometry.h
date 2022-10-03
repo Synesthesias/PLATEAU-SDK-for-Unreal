@@ -56,6 +56,8 @@ public:
     FPLATEAUGeoReference();
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);
 
+    plateau::geometry::GeoReference& GetData();
+
 private:
     friend class UPLATEAUGeoReferenceBlueprintLibrary;
 
@@ -72,14 +74,14 @@ public:
     UFUNCTION(
         BlueprintCallable,
         Category = "PLATEAU|Geometry")
-    static FPLATEAUGeoCoordinate Unproject(
+        static FPLATEAUGeoCoordinate Unproject(
             UPARAM(ref) FPLATEAUGeoReference& GeoReference,
             const FVector& Point);
 
     UFUNCTION(
         BlueprintCallable,
         Category = "PLATEAU|Geometry")
-    static FVector Project(
+        static FVector Project(
             UPARAM(ref) FPLATEAUGeoReference& GeoReference,
             const FPLATEAUGeoCoordinate& GeoCoordinate);
 };
