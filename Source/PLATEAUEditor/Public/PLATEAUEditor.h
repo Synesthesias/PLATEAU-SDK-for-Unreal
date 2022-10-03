@@ -3,16 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Modules/ModuleManager.h"
 
-#include "PLATEAUCityModelImportWindow.h"
-
-class FPLATEAUEditorModule : public IModuleInterface
+class IPLATEAUEditorModule : public IModuleInterface
 {
 public:
-    virtual void StartupModule() override;
-    virtual void ShutdownModule() override;
+    static IPLATEAUEditorModule& Get();
+    static bool IsAvailable();
 
-private:
-    FPLATEAUCityModelImportWindow WindowInstance;
+    virtual TSharedRef<class FPLATEAUExtentEditor> GetExtentEditor() = 0;
 };

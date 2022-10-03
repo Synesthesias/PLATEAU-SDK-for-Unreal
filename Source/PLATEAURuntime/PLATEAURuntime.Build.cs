@@ -11,7 +11,7 @@ public class PLATEAURuntime : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                Path.Combine(ModuleDirectory, "Public/libplateau")
+                Path.Combine(ModuleDirectory, "../libplateau/include"),
             }
             );
 
@@ -51,8 +51,9 @@ public class PLATEAURuntime : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public/../libplateau/include"));
 
-        string libPath = Path.Combine(ModuleDirectory, "Private");
+        string libPath = Path.Combine(ModuleDirectory, "../libplateau/lib");
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "citygml.lib"));
 
@@ -67,6 +68,9 @@ public class PLATEAURuntime : ModuleRules
         CopyDll(dllName, dllPath);
         PublicDelayLoadDLLs.Add(dllName);
         RuntimeDependencies.Add(dllPath);
+
+        //using c++17
+        CppStandard = CppStandardVersion.Cpp17;
     }
 
     // copy dll file to Binaries

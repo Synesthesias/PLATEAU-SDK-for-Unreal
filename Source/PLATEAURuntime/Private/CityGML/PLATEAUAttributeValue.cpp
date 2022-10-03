@@ -2,7 +2,7 @@
 
 
 #include "CityGML/PLATEAUAttributeValue.h"
-#include "libplateau/citygml/attributesmap.h"
+#include "citygml/attributesmap.h"
 
 EPLATEAUAttributeType UPLATEAUAttributeValueBlueprintLibrary::GetType(const FPLATEAUAttributeValue& Value) {
     if (Value.Data == nullptr)
