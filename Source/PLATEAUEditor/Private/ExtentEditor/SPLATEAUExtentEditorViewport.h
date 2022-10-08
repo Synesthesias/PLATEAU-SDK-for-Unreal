@@ -60,7 +60,6 @@ private:
     /** One-off active timer to update the preview */
     EActiveTimerReturnType DeferredUpdatePreview(double InCurrentTime, float InDeltaTime, bool bResetCamera);
 
-private:
     /** Pointer back to editor tool (owner) */
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
 

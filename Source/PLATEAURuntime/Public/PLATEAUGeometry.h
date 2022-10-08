@@ -10,7 +10,7 @@
 #include "PLATEAUGeometry.generated.h"
 
 USTRUCT(BlueprintType)
-struct FPLATEAUGeoCoordinate {
+struct PLATEAURUNTIME_API FPLATEAUGeoCoordinate {
     GENERATED_USTRUCT_BODY()
 
 public:
@@ -28,7 +28,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FPLATEAUExtent {
+struct PLATEAURUNTIME_API FPLATEAUExtent {
     GENERATED_USTRUCT_BODY()
 
 public:
@@ -57,7 +57,7 @@ public:
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);
 
     plateau::geometry::GeoReference& GetData();
-
+    
 private:
     friend class UPLATEAUGeoReferenceBlueprintLibrary;
 

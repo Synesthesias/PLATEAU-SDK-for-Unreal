@@ -3,20 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/GCObject.h"
-#include "Toolkits/IToolkitHost.h"
-#include "Misc/NotifyHook.h"
-#include "EditorUndoClient.h"
-#include "ISocketManager.h"
-#include "TickableEditorObject.h"
-#include "SEditorViewport.h"
 #include "AdvancedPreviewSceneModule.h"
-#include "AssetEditorViewportLayout.h"
+#include "PLATEAUGeometry.h"
 
 class FEditorViewportClient;
 class SDockTab;
 class FViewportTabContent;
 
+/**
+ * @brief 範囲選択画面の表示、操作、情報取得、設定を行うためのインスタンスメソッドを提供します。
+ *
+ */
 class FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
 public:
     FPLATEAUExtentEditor();
@@ -28,11 +25,26 @@ public:
     void UnregisterTabSpawner(const TSharedRef<class FTabManager>& TabManager);
 
     TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
+
     const FString& GetSourcePath() const;
     void SetSourcePath(const FString& Path);
 
+    FPLATEAUGeoReference GetGeoReference() const;
+    void SetGeoReference(const FPLATEAUGeoReference& InGeoReference);
+
+    const TOptional<FPLATEAUExtent>& GetExtent() const;
+    void SetExtent(const FPLATEAUExtent& InExtent);
+
+    void RegisterLoaderActor(TWeakObjectPtr<class APLATEAUCityModelLoader> InLoader);
+    void UnregisterLoaderActor();
+
+    void HandleClickOK() const;
+
 private:
     FString SourcePath;
+    FPLATEAUGeoReference GeoReference;
+    TOptional<FPLATEAUExtent> Extent;
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
+    TWeakObjectPtr<class APLATEAUCityModelLoader> Loader;
 };
