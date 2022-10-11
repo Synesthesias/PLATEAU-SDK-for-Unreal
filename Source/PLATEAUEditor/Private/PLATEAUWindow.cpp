@@ -88,6 +88,7 @@ void FPLATEAUWindow::Show() {
         CityModelAddPanel->UpdateWindow(MyWindow);
     }
     MyWindow.Pin()->BringToFront();
-
-
 }
+
+#undef LEVEL_EDITOR_NAME
+#undef LOCTEXT_NAMESPACE

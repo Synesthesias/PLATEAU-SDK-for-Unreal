@@ -12,10 +12,10 @@ class FAdvancedPreviewScene;
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
     SLATE_BEGIN_ARGS(SPLATEAUExtentEditorViewport) {}
-        SLATE_ARGUMENT(TWeakPtr<FPLATEAUExtentEditor>, ExtentEditor)
-    SLATE_END_ARGS()
+    SLATE_ARGUMENT(TWeakPtr<FPLATEAUExtentEditor>, ExtentEditor)
+        SLATE_END_ARGS()
 
-    void Construct(const FArguments& InArgs);
+        void Construct(const FArguments& InArgs);
 
     SPLATEAUExtentEditorViewport();
     ~SPLATEAUExtentEditorViewport();
@@ -60,7 +60,6 @@ private:
     /** One-off active timer to update the preview */
     EActiveTimerReturnType DeferredUpdatePreview(double InCurrentTime, float InDeltaTime, bool bResetCamera);
 
-private:
     /** Pointer back to editor tool (owner) */
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
 

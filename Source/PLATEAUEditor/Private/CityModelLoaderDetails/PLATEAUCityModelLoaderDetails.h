@@ -7,6 +7,7 @@
 #include "PLATEAUFeatureLoadSettingsPropertyRow.h"
 #include "IDetailCustomization.h"
 #include "PLATEAUCityModelLoader.h"
+#include "ExtentEditor/PLATEAUExtentEditor.h"
 
 /**
  * APLATEAUCityModelLoaderの詳細パネルをカスタマイズします。
@@ -18,7 +19,7 @@ public:
      */
     static TSharedRef<IDetailCustomization> MakeInstance();
 
-    /** IDetailCustomization interface */
+    /** IDetailCustomization インターフェース **/
     virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
     
 private:

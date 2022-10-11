@@ -41,8 +41,9 @@ namespace {
 FPLATEAUGeoReference::FPLATEAUGeoReference() : ZoneID(9)
 , Data(GetDefaultNativeData()) {}
 
-FPLATEAUGeoReference::FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference) : ZoneID(InGeoReference.getZoneID())
-, Data(GetDefaultNativeData()) {
+FPLATEAUGeoReference::FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference)
+    : ZoneID(InGeoReference.getZoneID())
+    , Data(InGeoReference) {
     ReferencePoint.X = InGeoReference.getReferencePoint().x;
     ReferencePoint.Y = InGeoReference.getReferencePoint().y;
     ReferencePoint.Z = InGeoReference.getReferencePoint().z;

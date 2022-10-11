@@ -8,11 +8,14 @@
 #include "SSubobjectEditor.h"
 #include "Slate/SceneViewport.h"
 #include "BlueprintEditorSettings.h"
-#include "PLATEAUExtentEditor.h"
+#include "SlateOptMacros.h"
 #include "ExtentEditor/MeshCodeGizmoComponent.h"
 
 #include "plateau/udx/mesh_code.h"
 #include "plateau/udx/udx_file_collection.h"
+
+
+#define LOCTEXT_NAMESPACE "SPLATEAUExtentEditorViewport"
 
 SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport()
     : PreviewScene(MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))) {}
@@ -25,7 +28,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
     ExtentEditorPtr = InArgs._ExtentEditor;
 
     SEditorViewport::Construct(SEditorViewport::FArguments());
-    
+
     if (ViewportClient.IsValid()) {
         UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
         if (World != nullptr) {
@@ -46,20 +49,25 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         if (FileCollection->getMeshCodes().size() == 0)
             return;
 
-        ViewportClient->InitCamera();
-
-        plateau::geometry::GeoReference GeoReference(TVec3d(0, 0, 0), 1, plateau::geometry::CoordinateSystem::NWU);
-        const auto ReferencePoint = GeoReference.project(FileCollection->getMeshCodes().begin()->getExtent().min);
-        GeoReference.setReferencePoint(ReferencePoint);
+        auto GeoReference = ExtentEditorPtr.Pin()->GetGeoReference();
+        const auto RawCenterPoint = FileCollection->calculateCenterPoint(GeoReference.GetData());
+        GeoReference.ReferencePoint.X = RawCenterPoint.x;
+        GeoReference.ReferencePoint.Y = RawCenterPoint.y;
+        GeoReference.ReferencePoint.Z = RawCenterPoint.z;
+        //plateau::geometry::GeoReference GeoReference(TVec3d(0, 0, 0), 1, plateau::geometry::CoordinateSystem::NWU);
+        //const auto ReferencePoint = GeoReference.project(FileCollection->getMeshCodes().begin()->getExtent().min);
+        //GeoReference.setReferencePoint(ReferencePoint);
 
         for (const auto& MeshCode : FileCollection->getMeshCodes()) {
             const auto MeshCodeGizmo = NewObject<UMeshCodeGizmoComponent>();
-            MeshCodeGizmo->Init(MeshCode, GeoReference);
+            MeshCodeGizmo->Init(MeshCode, GeoReference.GetData());
             ViewportClient->GetPreviewScene()->AddComponent(MeshCodeGizmo, FTransform::Identity);
         }
+
+        ViewportClient->Initialize();
     }
 
-    UEditorEngine* Editor = (UEditorEngine*)GEngine;
+    UEditorEngine* Editor = static_cast<UEditorEngine*>(GEngine);
     PreviewFeatureLevelChangedHandle = Editor->OnPreviewFeatureLevelChanged().AddLambda([this](ERHIFeatureLevel::Type NewFeatureLevel) {
         if (ViewportClient.IsValid()) {
             UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
@@ -70,7 +78,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
             }
         }
         });
-    
+
     RequestRefresh(true);
 }
 
@@ -90,9 +98,8 @@ bool SPLATEAUExtentEditorViewport::IsVisible() const {
 }
 
 TSharedRef<FEditorViewportClient> SPLATEAUExtentEditorViewport::MakeEditorViewportClient() {
-
     // Construct a new viewport client instance.
-    ViewportClient = MakeShareable(new FPLATEAUExtentEditorViewportClient(SharedThis(this), PreviewScene.ToSharedRef()));
+    ViewportClient = MakeShareable(new FPLATEAUExtentEditorViewportClient(ExtentEditorPtr, SharedThis(this), PreviewScene.ToSharedRef()));
     ViewportClient->SetRealtime(true);
     ViewportClient->bSetListenerPosition = false;
     ViewportClient->VisibilityDelegate.BindSP(this, &SPLATEAUExtentEditorViewport::IsVisible);
@@ -100,18 +107,73 @@ TSharedRef<FEditorViewportClient> SPLATEAUExtentEditorViewport::MakeEditorViewpo
     return ViewportClient.ToSharedRef();
 }
 
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOverlay> Overlay) {
     SEditorViewport::PopulateViewportOverlays(Overlay);
 
     // add the feature level display widget
     Overlay->AddSlot()
-        .VAlign(VAlign_Bottom)
-        .HAlign(HAlign_Right)
+        .VAlign(VAlign_Top)
+        .HAlign(HAlign_Left)
         .Padding(5.0f)
         [
-            BuildFeatureLevelWidget()
+            SNew(SBorder)
+            .BorderImage(FAppStyle::Get().GetBrush("FloatingBorder"))
+        .Padding(4.0f)
+        [
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [
+            SNew(SButton)
+            .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .OnClicked_Lambda(
+            [this]() {
+                if (GetOwnerTab())
+                    GetOwnerTab()->RequestCloseTab();
+                return FReply::Handled();
+            })
+        .Content()
+                [
+                    SNew(STextBlock)
+                    .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Cancel Button", "キャンセル"))
+                ]
+        ]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [
+            SNew(SButton)
+            .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .OnClicked_Lambda(
+            [this]() {
+                const auto Extent = ViewportClient->GetExtent();
+                ExtentEditorPtr.Pin()->SetExtent(Extent);
+                ExtentEditorPtr.Pin()->HandleClickOK();
+
+                if (GetOwnerTab())
+                    GetOwnerTab()->RequestCloseTab();
+                return FReply::Handled();
+            })
+        .Content()
+                [
+                    SNew(STextBlock)
+                    .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("OK Button", "決定"))
+                ]
+        ]
+        ]
         ];
 }
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SPLATEAUExtentEditorViewport::BindCommands() {}
 
@@ -198,3 +260,5 @@ EActiveTimerReturnType SPLATEAUExtentEditorViewport::DeferredUpdatePreview(doubl
     bIsActiveTimerRegistered = false;
     return EActiveTimerReturnType::Stop;
 }
+
+#undef LOCTEXT_NAMESPACE
