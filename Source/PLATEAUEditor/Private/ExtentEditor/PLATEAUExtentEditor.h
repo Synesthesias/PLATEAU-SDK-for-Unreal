@@ -11,7 +11,7 @@ class SDockTab;
 class FViewportTabContent;
 
 /**
- * @brief �͈͑I����ʂ̕\���A����A���擾�A�ݒ���s�����߂̃C���X�^���X���\�b�h��񋟂��܂��B
+ * @brief 範囲選択画面の表示、操作、情報取得、設定を行うためのインスタンスメソッドを提供します。
  *
  */
 class FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {

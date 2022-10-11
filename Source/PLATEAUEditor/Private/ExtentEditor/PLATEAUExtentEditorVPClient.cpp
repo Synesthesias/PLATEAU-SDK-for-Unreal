@@ -26,7 +26,7 @@
 
 namespace {
     /**
-     * ”ÍˆÍ‘I‘ğ‚Ì‚Â‚Ü‚İ‚Ì‚½‚ß‚ÌHitProxyƒNƒ‰ƒX
+     * ç¯„å›²é¸æŠã®ã¤ã¾ã¿ã®ãŸã‚ã®HitProxyã‚¯ãƒ©ã‚¹
      */
     struct HPLATEAUExtentHandleProxy : public HHitProxy {
         DECLARE_HIT_PROXY();
@@ -83,7 +83,7 @@ void FPLATEAUExtentEditorViewportClient::InitCamera() {
 }
 
 void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
-    // ‰½‚à‘I‘ğ‚³‚ê‚Ä‚¢‚È‚¢ê‡‚ÍŠù’è‚Ì“®ì(‹“_ˆÚ“®“™)
+    // ä½•ã‚‚é¸æŠã•ã‚Œã¦ã„ãªã„å ´åˆã¯æ—¢å®šã®å‹•ä½œ(è¦–ç‚¹ç§»å‹•ç­‰)
     if (SelectedHandleIndex == -1) {
         FEditorViewportClient::Tick(DeltaSeconds);
         return;

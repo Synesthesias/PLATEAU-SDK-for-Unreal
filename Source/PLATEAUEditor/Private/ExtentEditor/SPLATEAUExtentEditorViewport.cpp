@@ -141,7 +141,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
                 .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("Cancel Button", "ƒLƒƒƒ“ƒZƒ‹"))
+                .Text(LOCTEXT("Cancel Button", "ã‚­ãƒ£ãƒ³ã‚»ãƒ«"))
                 ]
         ]
     + SVerticalBox::Slot()
@@ -167,7 +167,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
                 .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("OK Button", "OK"))
+                .Text(LOCTEXT("OK Button", "æ±ºå®š"))
                 ]
         ]
         ]

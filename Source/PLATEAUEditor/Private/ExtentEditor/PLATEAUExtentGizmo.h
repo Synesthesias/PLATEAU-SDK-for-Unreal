@@ -6,7 +6,7 @@
 #include "PLATEAUGeometry.h"
 
 /**
- * @brief �͈͑I���M�Y����\���܂��B
+ * @brief 範囲選択ギズモを表します。
  */
 class FPLATEAUExtentGizmo {
 public:
@@ -19,12 +19,12 @@ public:
     void SetHandlePosition(int Index, FVector Position);
 
     /**
-     * @brief Extent����͂Ƃ��ē�����Ԃ��X�V���܂��B
+     * @brief Extentを入力として内部状態を更新します。
      */
     void SetExtent(const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference);
 
     /**
-     * @brief ������Ԃ���Extent���擾���܂��B
+     * @brief 内部状態からExtentを取得します。
      */
     FPLATEAUExtent GetExtent(FPLATEAUGeoReference& GeoReference) const;
 
