@@ -34,7 +34,7 @@ plateau::geometry::Extent FPLATEAUExtent::GetNativeData() const {
 namespace {
     plateau::geometry::GeoReference GetDefaultNativeData() {
         return plateau::geometry::GeoReference(
-            TVec3d(0, 0, 0), 0.01, plateau::geometry::CoordinateSystem::NWU);
+            9, TVec3d(0, 0, 0), 0.01, plateau::geometry::CoordinateSystem::NWU);
     }
 }
 

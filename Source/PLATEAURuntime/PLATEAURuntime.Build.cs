@@ -93,7 +93,7 @@ public class PLATEAURuntime : ModuleRules
         {
             File.SetAttributes(binariesDllFullPath, File.GetAttributes(binariesDllFullPath) & ~FileAttributes.ReadOnly);
         }
-
+        
         try
         {
             File.Copy(dllFullPath, binariesDllFullPath, true);

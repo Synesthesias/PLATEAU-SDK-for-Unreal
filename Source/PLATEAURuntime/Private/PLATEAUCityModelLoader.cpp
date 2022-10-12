@@ -33,9 +33,9 @@ void APLATEAUCityModelLoader::Load() {
     const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
     const auto MaxPoint = GeoReference.GetData().project(Extent.GetNativeData().max);
     const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
-    GeoReference.ReferencePoint.X = NativeReferencePoint.x;
-    GeoReference.ReferencePoint.Y = NativeReferencePoint.y;
-    GeoReference.ReferencePoint.Z = NativeReferencePoint.z;
+    GeoReference.ReferencePoint.X += NativeReferencePoint.x;
+    GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
+    GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
 
     // ファイル検索
     const auto UdxFileCollection =
@@ -55,10 +55,10 @@ void APLATEAUCityModelLoader::Load() {
 
     // ポリゴンメッシュ抽出
     const MeshExtractOptions MeshExtractOptions(
-        NativeReferencePoint, CoordinateSystem::NWU,
+        GeoReference.GetData().getReferencePoint(), CoordinateSystem::NWU,
         MeshGranularity::PerPrimaryFeatureObject,
         3, 0, true,
-        1, 0.01, Extent.GetNativeData());
+        1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
     const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
     UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
 

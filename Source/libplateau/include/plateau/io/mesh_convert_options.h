@@ -81,6 +81,12 @@ struct MeshConvertOptions {
      */
     MeshFileFormat mesh_file_format;
 
+    /**
+     * 次のWebサイトで示される座標系番号です。
+     * https://www.gsi.go.jp/sokuchikijun/jpc.html
+     */
+    int coordinate_zone_id;
+
     MeshConvertOptions() :
             mesh_axes(CoordinateSystem::WUN),
             mesh_file_format(MeshFileFormat::OBJ),
@@ -90,6 +96,7 @@ struct MeshConvertOptions {
             max_lod(3),
             export_lower_lod(true),
             export_appearance(true),
-            unit_scale(1) {
+            unit_scale(1),
+            coordinate_zone_id(9){
     }
 };

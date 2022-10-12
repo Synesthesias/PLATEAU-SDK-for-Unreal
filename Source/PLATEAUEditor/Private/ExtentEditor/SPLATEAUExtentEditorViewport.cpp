@@ -48,7 +48,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
 
         ViewportClient->InitCamera();
 
-        plateau::geometry::GeoReference GeoReference(TVec3d(0, 0, 0), 1, plateau::geometry::CoordinateSystem::NWU);
+        plateau::geometry::GeoReference GeoReference(9, TVec3d(0, 0, 0), 1, plateau::geometry::CoordinateSystem::NWU);
         const auto ReferencePoint = GeoReference.project(FileCollection->getMeshCodes().begin()->getExtent().min);
         GeoReference.setReferencePoint(ReferencePoint);
 
