@@ -138,18 +138,20 @@ TUniquePtr<FStaticMeshRenderData> APLATEAUCityModelLoader::CreateRenderData(std:
     }
 
     TArray<FStaticMeshBuildVertex> StaticMeshBuildVertices;
-    StaticMeshBuildVertices.SetNum(indices.Num());
+    StaticMeshBuildVertices.SetNum(vertices.Num());
 
     for (int i = 0; i < StaticMeshBuildVertices.Num(); ++i) {
         auto& Vertex = StaticMeshBuildVertices[i];
-        uint32 vertexIndex = indices[i];
-        Vertex.Position = FVector3f(vertices[vertexIndex]);
+        //uint32 vertexIndex = indices[i];
+        Vertex.Position = FVector3f(vertices[i]);
         //UE_LOG(LogTemp, Log, TEXT("Vertex position : %s"), *Vertex.Position.ToString());
         Vertex.UVs[0] = { 0.0f, 0.0f };
         Vertex.UVs[2] = { 0.0f, 0.0f };
         RenderData->Bounds.SphereRadius = FMath::Max(
             (Vertex.Position - FVector3f(RenderData->Bounds.Origin)).Size(),
             RenderData->Bounds.SphereRadius);
+        RenderData->Bounds.Origin = FVector(0, 0, 0);
+        RenderData->Bounds.BoxExtent = FVector(10000000000000, 10000000000000, 10000000000000);
     }
 
     computeFlatNormals(indices, StaticMeshBuildVertices);
@@ -159,9 +161,7 @@ TUniquePtr<FStaticMeshRenderData> APLATEAUCityModelLoader::CreateRenderData(std:
     //テクスチャ貼るときに変えないといけないかも
     LODResources.VertexBuffers.StaticMeshVertexBuffer.Init(StaticMeshBuildVertices, 1, false);
     for (int i = 2; i < indices.Num(); i += 3) {
-        indices[i - 2] = i;
-        indices[i - 1] = i - 1;
-        indices[i] = i - 2;
+        std::swap(indices[i - 2], indices[i]);
     }
 #if ENGINE_MAJOR_VERSION == 5
     FStaticMeshSectionArray& Sections = LODResources.Sections;
@@ -292,7 +292,7 @@ UStaticMeshComponent* APLATEAUCityModelLoader::CreateStaticMeshComponent(AActor&
     StaticMesh->SetFlags(
         RF_Transient | RF_DuplicateTransient | RF_TextExportTransient);
     UMaterial* mat = UMaterial::GetDefaultMaterial(MD_Surface);
-    mat->TwoSided = true;
+    mat->TwoSided = false;
     StaticMesh->AddMaterial(mat);
     // RenderData適用
     StaticMesh->NeverStream = true;
