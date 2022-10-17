@@ -28,9 +28,20 @@ public:
      */
     FPLATEAUExtent GetExtent(FPLATEAUGeoReference& GeoReference) const;
 
+    /**
+     * @brief 内部状態から範囲の最小値を取得します。
+     */
+    FVector2D GetMin() const;
+
+    /**
+     * @brief 内部状態から範囲の最大値を取得します。
+     */
+    FVector2D GetMax() const;
+
+
 private:
-    double XMin;
-    double XMax;
-    double YMin;
-    double YMax;
+    double MinX;
+    double MaxX;
+    double MinY;
+    double MaxY;
 };

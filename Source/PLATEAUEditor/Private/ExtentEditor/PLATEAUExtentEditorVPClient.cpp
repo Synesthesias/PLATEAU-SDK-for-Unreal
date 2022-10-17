@@ -1,25 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PLATEAUExtentEditorVPClient.h"
+
+#include <plateau/udx/udx_file_collection.h>
+
 #include "PLATEAUExtentGizmo.h"
+#include "PLATEAUMeshCodeGizmo.h"
 
 #include "EditorModeManager.h"
-#include "EngineGlobals.h"
-#include "RawIndexBuffer.h"
-#include "Settings/LevelEditorViewportSettings.h"
-#include "Editor.h"
-#include "CanvasItem.h"
 #include "CanvasTypes.h"
-#include "Engine/Canvas.h"
-#include "ThumbnailRendering/SceneThumbnailInfo.h"
-#include "UnrealEngine.h"
 
 #include "SEditorViewport.h"
 #include "AdvancedPreviewScene.h"
 #include "SPLATEAUExtentEditorViewport.h"
 
 #include "AssetViewerSettings.h"
-#include "UnrealWidget.h"
 #include "EditorViewportClient.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEAUExtentEditorViewportClient"
@@ -56,13 +51,19 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
     UAssetViewerSettings::Get()->OnAssetViewerSettingsChanged().RemoveAll(this);
 }
 
-void FPLATEAUExtentEditorViewportClient::Initialize() {
+void FPLATEAUExtentEditorViewportClient::Initialize(plateau::udx::UdxFileCollection& FileCollection) {
     InitCamera();
 
     const auto ExtentEditor = ExtentEditorPtr.Pin();
     auto GeoReference = ExtentEditor->GetGeoReference();
     if (ExtentEditor->GetExtent().IsSet())
         ExtentGizmo->SetExtent(ExtentEditor->GetExtent().GetValue(), GeoReference);
+
+    MeshCodeGizmos.Reset();
+    for (const auto& MeshCode : FileCollection.getMeshCodes()) {
+        MeshCodeGizmos.AddDefaulted();
+        MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
+    }
 }
 
 FPLATEAUExtent FPLATEAUExtentEditorViewportClient::GetExtent() const {
@@ -83,6 +84,12 @@ void FPLATEAUExtentEditorViewportClient::InitCamera() {
 }
 
 void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
+    const auto ExtentMin = ExtentGizmo->GetMin();
+    const auto ExtentMax = ExtentGizmo->GetMax();
+    for (auto& Gizmo : MeshCodeGizmos) {
+        Gizmo.SetSelected(Gizmo.IntersectsWith(ExtentMin, ExtentMax));
+    }
+
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {
         FEditorViewportClient::Tick(DeltaSeconds);
@@ -101,8 +108,8 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitiveDrawInterface* PDI) {
     FEditorViewportClient::Draw(View, PDI);
 
-    constexpr FColor SelectedColor(20, 220, 20);
-    constexpr FColor UnselectedColor(0, 125, 0);
+    constexpr FColor SelectedColor(225, 225, 110);
+    constexpr FColor UnselectedColor(20, 20, 220);
 
     for (int i = 0; i < 4; ++i) {
         const auto HitProxy = new HPLATEAUExtentHandleProxy(i);
@@ -112,6 +119,10 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
         PDI->SetHitProxy(nullptr);
     }
     ExtentGizmo->DrawExtent(View, PDI);
+
+    for (const auto& Gizmo : MeshCodeGizmos) {
+        Gizmo.DrawExtent(View, PDI);
+    }
 }
 
 void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState& InInputState, bool bIsDragging,

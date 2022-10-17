@@ -6,6 +6,10 @@
 #include "EditorViewportClient.h"
 #include "PLATEAUGeometry.h"
 
+namespace plateau::udx {
+    class UdxFileCollection;
+}
+
 /** Viewport Client for the preview viewport */
 class FPLATEAUExtentEditorViewportClient : public FEditorViewportClient, public TSharedFromThis<FPLATEAUExtentEditorViewportClient> {
 public:
@@ -18,8 +22,8 @@ public:
     /**
      * @brief ViewportのConstructから呼び出される初期化処理です。
      */
-    void Initialize();
-
+    void Initialize(plateau::udx::UdxFileCollection& FileCollection);
+    
     FPLATEAUExtent GetExtent() const;
 
     // FEditorViewportClient interface
@@ -35,6 +39,7 @@ private:
     FAdvancedPreviewScene* AdvancedPreviewScene;
 
     TUniquePtr<class FPLATEAUExtentGizmo> ExtentGizmo;
+    TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
 
     // 内部状態
     int SelectedHandleIndex = -1;

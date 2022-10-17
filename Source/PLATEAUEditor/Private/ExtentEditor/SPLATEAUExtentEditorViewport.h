@@ -19,20 +19,12 @@ public:
 
     SPLATEAUExtentEditorViewport();
     ~SPLATEAUExtentEditorViewport();
-
-    void Invalidate();
-    void EnablePreview(bool bEnable);
-    void RequestRefresh(bool bResetCamera = false, bool bRefreshNow = false);
-
+    
     // SWidget interface
     virtual FReply OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
     // End of SWidget interface
-
-    void OnComponentSelectionChanged();
-    virtual void OnFocusViewportToSelection() override;
-    bool GetIsSimulateEnabled();
+    
     void SetOwnerTab(TSharedRef<SDockTab> Tab);
-
     TSharedPtr<SDockTab> GetOwnerTab() const;
 
 protected:
@@ -41,15 +33,7 @@ protected:
      *
      * @return true if the viewport is visible; false otherwise.
      */
-    bool IsVisible() const override;
-
-    /**
-     * Returns true if the viewport commands should be shown
-     */
-    bool ShouldShowViewportCommands() const;
-
-    /** Called when the simulation toggle command is fired */
-    void ToggleIsSimulateEnabled();
+    virtual bool IsVisible() const override;
 
     /** SEditorViewport interface */
     virtual TSharedRef<class FEditorViewportClient> MakeEditorViewportClient() override;

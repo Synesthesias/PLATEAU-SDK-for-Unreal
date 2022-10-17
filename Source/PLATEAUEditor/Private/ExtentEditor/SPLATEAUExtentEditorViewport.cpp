@@ -9,9 +9,7 @@
 #include "Slate/SceneViewport.h"
 #include "BlueprintEditorSettings.h"
 #include "SlateOptMacros.h"
-#include "ExtentEditor/MeshCodeGizmoComponent.h"
 
-#include "plateau/udx/mesh_code.h"
 #include "plateau/udx/udx_file_collection.h"
 
 
@@ -54,32 +52,10 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         GeoReference.ReferencePoint.X = RawCenterPoint.x;
         GeoReference.ReferencePoint.Y = RawCenterPoint.y;
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
-        //plateau::geometry::GeoReference GeoReference(TVec3d(0, 0, 0), 1, plateau::geometry::CoordinateSystem::NWU);
-        //const auto ReferencePoint = GeoReference.project(FileCollection->getMeshCodes().begin()->getExtent().min);
-        //GeoReference.setReferencePoint(ReferencePoint);
+        ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
 
-        for (const auto& MeshCode : FileCollection->getMeshCodes()) {
-            const auto MeshCodeGizmo = NewObject<UMeshCodeGizmoComponent>();
-            MeshCodeGizmo->Init(MeshCode, GeoReference.GetData());
-            ViewportClient->GetPreviewScene()->AddComponent(MeshCodeGizmo, FTransform::Identity);
-        }
-
-        ViewportClient->Initialize();
+        ViewportClient->Initialize(*FileCollection);
     }
-
-    UEditorEngine* Editor = static_cast<UEditorEngine*>(GEngine);
-    PreviewFeatureLevelChangedHandle = Editor->OnPreviewFeatureLevelChanged().AddLambda([this](ERHIFeatureLevel::Type NewFeatureLevel) {
-        if (ViewportClient.IsValid()) {
-            UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
-            if (World != nullptr) {
-                World->ChangeFeatureLevel(NewFeatureLevel);
-
-                RequestRefresh(false);
-            }
-        }
-        });
-
-    RequestRefresh(true);
 }
 
 SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
@@ -176,66 +152,6 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SPLATEAUExtentEditorViewport::BindCommands() {}
-
-void SPLATEAUExtentEditorViewport::Invalidate() {
-    //ViewportClient->Invalidate();
-}
-
-void SPLATEAUExtentEditorViewport::ToggleIsSimulateEnabled() {
-    // Make the viewport visible if the simulation is starting.
-    //if (!ViewportClient->GetIsSimulateEnabled()) {
-    //    if (GetDefault<UBlueprintEditorSettings>()->bShowViewportOnSimulate) {
-    //        BlueprintEditorPtr.Pin()->GetTabManager()->TryInvokeTab(FBlueprintEditorTabs::SCSViewportID);
-    //    }
-    //}
-
-    //ViewportClient->ToggleIsSimulateEnabled();
-}
-
-void SPLATEAUExtentEditorViewport::EnablePreview(bool bEnable) {
-    //const FText SystemDisplayName = NSLOCTEXT("BlueprintEditor", "RealtimeOverrideMessage_Blueprints", "the active blueprint mode");
-    //if (bEnable) {
-    //    // Restore the previously-saved realtime setting
-    //    ViewportClient->RemoveRealtimeOverride(SystemDisplayName);
-    //} else {
-    //    // Disable and store the current realtime setting. This will bypass real-time rendering in the preview viewport (see UEditorEngine::UpdateSingleViewportClient).
-    //    const bool bShouldBeRealtime = false;
-    //    ViewportClient->AddRealtimeOverride(bShouldBeRealtime, SystemDisplayName);
-    //}
-}
-
-void SPLATEAUExtentEditorViewport::RequestRefresh(bool bResetCamera, bool bRefreshNow) {
-    //if (bRefreshNow) {
-    //    if (ViewportClient.IsValid()) {
-    //        ViewportClient->InvalidatePreview(bResetCamera);
-    //    }
-    //} else {
-    //    // Defer the update until the next tick. This way we don't accidentally spawn the preview actor in the middle of a transaction, for example.
-    //    if (!bIsActiveTimerRegistered) {
-    //        bIsActiveTimerRegistered = true;
-    //        RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SPLATEAUExtentEditorViewport::DeferredUpdatePreview, bResetCamera));
-    //    }
-    //}
-}
-
-void SPLATEAUExtentEditorViewport::OnComponentSelectionChanged() {
-    // When the component selection changes, make sure to invalidate hit proxies to sync with the current selection
-    SceneViewport->Invalidate();
-}
-
-void SPLATEAUExtentEditorViewport::OnFocusViewportToSelection() {
-    //ViewportClient->FocusViewportToSelection();
-}
-
-bool SPLATEAUExtentEditorViewport::ShouldShowViewportCommands() const {
-    // Hide if actively debugging
-    return !GIntraFrameDebuggingGameThread;
-}
-
-bool SPLATEAUExtentEditorViewport::GetIsSimulateEnabled() {
-    // return ViewportClient->GetIsSimulateEnabled();
-    return false;
-}
 
 void SPLATEAUExtentEditorViewport::SetOwnerTab(TSharedRef<SDockTab> Tab) {
     OwnerTab = Tab;
