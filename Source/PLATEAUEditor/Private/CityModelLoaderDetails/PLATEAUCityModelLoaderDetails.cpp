@@ -45,7 +45,7 @@ void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 
                 // TODO: ExtentEditorに委譲
                 // ビューポートの操作性向上のため100分の1スケールで設定
-                const plateau::geometry::GeoReference RawGeoReference({}, 1, plateau::geometry::CoordinateSystem::NWU, 9);
+                const plateau::geometry::GeoReference RawGeoReference(9, {}, 1, plateau::geometry::CoordinateSystem::NWU);
                 IPLATEAUEditorModule::Get().GetExtentEditor()->SetGeoReference(RawGeoReference);
 
                 const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();

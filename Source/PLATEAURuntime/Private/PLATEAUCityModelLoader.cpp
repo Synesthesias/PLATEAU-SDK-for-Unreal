@@ -16,7 +16,7 @@ APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
 }
 
 void APLATEAUCityModelLoader::Load() {
-    // ‰¼‚Ì”ÍˆÍî•ñ(53392642‚Ì’nˆæƒƒbƒVƒ…)
+    // ï¿½ï¿½ï¿½Ì”ÍˆÍï¿½ï¿½(53392642ï¿½Ì’nï¿½æƒï¿½bï¿½Vï¿½ï¿½)
     Extent.Min.Latitude = 35.5335751;
     Extent.Min.Longitude = 139.7755041;
     Extent.Min.Height = -10000;
@@ -24,7 +24,7 @@ void APLATEAUCityModelLoader::Load() {
     Extent.Max.Longitude = 139.78712557;
     Extent.Max.Height = 10000;
 
-    // GeoReference‚ğ‘I‘ğ”ÍˆÍ‚Ì’†S‚ÉXV
+    // GeoReferenceï¿½ï¿½Iï¿½ï¿½ÍˆÍ‚Ì’ï¿½ï¿½Sï¿½ÉXï¿½V
     const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
     const auto MaxPoint = GeoReference.GetData().project(Extent.GetNativeData().max);
     const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
@@ -32,7 +32,7 @@ void APLATEAUCityModelLoader::Load() {
     GeoReference.ReferencePoint.Y = NativeReferencePoint.y;
     GeoReference.ReferencePoint.Z = NativeReferencePoint.z;
 
-    // ƒtƒ@ƒCƒ‹ŒŸõ
+    // ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     const auto UdxFileCollection =
         UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
         ->filter(Extent.GetNativeData());
@@ -41,20 +41,20 @@ void APLATEAUCityModelLoader::Load() {
     if (GmlFiles->size() == 0)
         return;
 
-    // “ssƒ‚ƒfƒ‹ƒp[ƒX
+    // ï¿½sï¿½sï¿½ï¿½ï¿½fï¿½ï¿½ï¿½pï¿½[ï¿½X
     citygml::ParserParams ParserParams;
     ParserParams.tesselate = true;
     const auto CityModel = citygml::load(*GmlFiles->begin(), ParserParams);
 
-    // ƒ|ƒŠƒSƒ“ƒƒbƒVƒ…’Šo
+    // ï¿½|ï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½bï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½o
     const MeshExtractOptions MeshExtractOptions(
         NativeReferencePoint, CoordinateSystem::NWU,
         MeshGranularity::PerPrimaryFeatureObject,
         3, 0, true,
-        1, 0.01, Extent.GetNativeData());
+        1, 0.01, 9, Extent.GetNativeData());
     const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
 
-    // StaticMesh¶¬
+    // StaticMeshï¿½ï¿½ï¿½ï¿½
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

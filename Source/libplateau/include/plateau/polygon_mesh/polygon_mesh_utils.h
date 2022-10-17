@@ -18,7 +18,7 @@ namespace plateau::polygonMesh {
          * また GMLファイルから city_model の Envelope を読み取れない場合は、
          * 中心点が分からないので原点座標を返します。
          */
-        static TVec3d getCenterPoint(const citygml::CityModel& city_model);
+        static TVec3d getCenterPoint(const citygml::CityModel& city_model, int coordinate_zone_id);
 
         /**
          * city_obj の子を再帰的に検索して返します。
