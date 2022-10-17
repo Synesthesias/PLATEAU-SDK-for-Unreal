@@ -146,12 +146,6 @@ public:
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
     void CreateRootComponent(AActor& Actor);
-    TUniquePtr<FStaticMeshRenderData> CreateRenderData(std::vector<int> _inIndices, TArray<FVector> _vertices);
-    void LoadNodes_InModel(USceneComponent* _parentComponent, plateau::polygonMesh::Node* _node, AActor& _actor,int index, int count);
-    void SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData);
-    UStaticMeshComponent* CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<int> _indices,
-                                            TArray<FVector> _vertArr, FString _name);
-    void computeFlatNormals(const TArray<uint32_t>& indices, TArray<FStaticMeshBuildVertex>& vertices);
 };
 
 #undef LOCTEXT_NAMESPACE
