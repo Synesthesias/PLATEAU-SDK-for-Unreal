@@ -74,8 +74,11 @@ FPLATEAUExtent FPLATEAUExtentGizmo::GetExtent(FPLATEAUGeoReference& GeoReference
     const TVec3d Min(MinX, MinY, 0);
     const TVec3d Max(MaxX, MaxY, 0);
 
-    const auto RawMin = GeoReference.GetData().unproject(Min);
-    const auto RawMax = GeoReference.GetData().unproject(Max);
+    auto RawMin = GeoReference.GetData().unproject(Min);
+    auto RawMax = GeoReference.GetData().unproject(Max);
+
+    // 座標系変換時に経度の大小が逆転するのでSwapする。
+    Swap(RawMin.longitude, RawMax.longitude);
 
     return FPLATEAUExtent(plateau::geometry::Extent(RawMin, RawMax));
 }

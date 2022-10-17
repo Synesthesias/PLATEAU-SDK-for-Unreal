@@ -18,11 +18,13 @@
 SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport()
     : PreviewScene(MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))) {}
 
+SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
+    if (ViewportClient.IsValid()) {
+        ViewportClient->Viewport = nullptr;
+    }
+}
 
 void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
-    bIsActiveTimerRegistered = false;
-
-    // Save off the Blueprint editor reference, we'll need this later
     ExtentEditorPtr = InArgs._ExtentEditor;
 
     SEditorViewport::Construct(SEditorViewport::FArguments());
@@ -58,16 +60,6 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
     }
 }
 
-SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
-    UEditorEngine* Editor = (UEditorEngine*)GEngine;
-    Editor->OnPreviewFeatureLevelChanged().Remove(PreviewFeatureLevelChangedHandle);
-
-    if (ViewportClient.IsValid()) {
-        // Reset this to ensure it's no longer in use after destruction
-        ViewportClient->Viewport = NULL;
-    }
-}
-
 bool SPLATEAUExtentEditorViewport::IsVisible() const {
     // We consider the viewport to be visible if the reference is valid
     return ViewportWidget.IsValid() && SEditorViewport::IsVisible();
@@ -75,7 +67,11 @@ bool SPLATEAUExtentEditorViewport::IsVisible() const {
 
 TSharedRef<FEditorViewportClient> SPLATEAUExtentEditorViewport::MakeEditorViewportClient() {
     // Construct a new viewport client instance.
-    ViewportClient = MakeShareable(new FPLATEAUExtentEditorViewportClient(ExtentEditorPtr, SharedThis(this), PreviewScene.ToSharedRef()));
+    ViewportClient = MakeShareable(
+        new FPLATEAUExtentEditorViewportClient(
+            ExtentEditorPtr,
+            SharedThis(this),
+            PreviewScene.ToSharedRef()));
     ViewportClient->SetRealtime(true);
     ViewportClient->bSetListenerPosition = false;
     ViewportClient->VisibilityDelegate.BindSP(this, &SPLATEAUExtentEditorViewport::IsVisible);
@@ -159,22 +155,6 @@ void SPLATEAUExtentEditorViewport::SetOwnerTab(TSharedRef<SDockTab> Tab) {
 
 TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
     return OwnerTab.Pin();
-}
-
-FReply SPLATEAUExtentEditorViewport::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) {
-    //TSharedPtr<SSubobjectEditor> SubobjectEditor = BlueprintEditorPtr.Pin()->GetSubobjectEditor();
-
-    //return SubobjectEditor->TryHandleAssetDragDropOperation(DragDropEvent);
-    return FReply::Handled();
-}
-
-EActiveTimerReturnType SPLATEAUExtentEditorViewport::DeferredUpdatePreview(double InCurrentTime, float InDeltaTime, bool bResetCamera) {
-    if (ViewportClient.IsValid()) {
-        //ViewportClient->InvalidatePreview(bResetCamera);
-    }
-
-    bIsActiveTimerRegistered = false;
-    return EActiveTimerReturnType::Stop;
 }
 
 #undef LOCTEXT_NAMESPACE
