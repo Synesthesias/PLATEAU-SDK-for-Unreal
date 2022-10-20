@@ -6,6 +6,7 @@
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "plateau/polygon_mesh/mesh_extract_options.h"
+#include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 
 #include "Components/StaticMeshComponent.h"
@@ -75,6 +76,8 @@ void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
     UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
 
     //ノード走査開始
+
+    FPLATEAUMeshLoader MeshLoader;
     MeshLoader.CreateMesh(ModelActor, Model);
 }
 
