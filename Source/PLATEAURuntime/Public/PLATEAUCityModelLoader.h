@@ -19,6 +19,8 @@ namespace citygml {
     class CityModel;
 }
 
+class FPLATEAUMeshLoader;
+
 
 UENUM(BlueprintType)
 enum class ECityModelPackage : uint8 {
@@ -146,6 +148,9 @@ public:
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
     void CreateRootComponent(AActor& Actor);
+    void ThreadLoad(AActor* ModelActor);
+
+    FPLATEAUMeshLoader* MeshLoader = nullptr;
 };
 
 #undef LOCTEXT_NAMESPACE

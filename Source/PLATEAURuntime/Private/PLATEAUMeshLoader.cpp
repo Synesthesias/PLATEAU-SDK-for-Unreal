@@ -1,4 +1,4 @@
-#include "PLATEAUMeshLoader.h"
+ï»¿#include "PLATEAUMeshLoader.h"
 
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
@@ -9,85 +9,49 @@
 #include "StaticMeshResources.h"
 #include "ImageUtils.h"
 
-void FPLATEAUMeshLoader::CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData)
-{
-    //TUniqueFunction<void(USceneComponent*, plateau::polygonMesh::Node*, AActor&, int, int)> Task = LoadNodes_InModel;
+void FPLATEAUMeshLoader::CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData) {
     auto Result = Async(EAsyncExecution::Thread, [=] {
-        for (int i = 0; i < ModelData->getRootNodeCount(); i++)
-        {
+        for (int i = 0; i < ModelData->getRootNodeCount(); i++) {
             LoadNodes_InModel(ModelActor->GetRootComponent(), &ModelData->getRootNodeAt(i), *ModelActor, i, 0);
         }
-        });
-    /*
-    for (int i = 0; i < ModelData->getRootNodeCount(); i++)
-    {
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([=]
-            {
-                // Code placed here will run in the game thread]
-                LoadNodes_InModel(ModelActor->GetRootComponent(), &ModelData->getRootNodeAt(i), *ModelActor, i, 0);
-
-            }, TStatId(), NULL, ENamedThreads::GameThread);
-    }
-    */
-    /*
-	for (int i = 0; i < ModelData->getRootNodeCount(); i++)
-	{
-		LoadNodes_InModel(ModelActor->GetRootComponent(), &ModelData->getRootNodeAt(i), *ModelActor, i, 0);
-	}
-    */
+    });
 }
 
-void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, plateau::polygonMesh::Node* Node, AActor& Actor, int Index, int Count)
-{
+void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, plateau::polygonMesh::Node* Node, AActor& Actor, int Index, int Count) {
     USceneComponent* Comp = nullptr;
     FString CompName;
-
-    //UE_LOG(LogTemp, Log, TEXT("LoadNodes_InModel NodeName : %s"), Node->getName().c_str());
-
-    if (Node->getMesh() == std::nullopt)
-    {
-        //SceneComponent‚ğ•t—^
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&]
-            {
-                Comp = NewObject<USceneComponent>(&Actor, FName(Node->getName().c_str()));
-                UE_LOG(LogTemp, Log, TEXT("Node doesn't have Mesh"));
-                check(Comp != nullptr);
-                Comp->Mobility = EComponentMobility::Static;
-                Actor.AddInstanceComponent(Comp);
-                Comp->RegisterComponent();
-                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), NULL, ENamedThreads::GameThread);
+    if (Node->getMesh() == std::nullopt){
+        //SceneComponentã‚’ä»˜ä¸
+        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+            Comp = NewObject<USceneComponent>(&Actor, FName(Node->getName().c_str()));
+            UE_LOG(LogTemp, Log, TEXT("Node doesn't have Mesh"));
+            check(Comp != nullptr);
+            Comp->Mobility = EComponentMobility::Static;
+            Actor.AddInstanceComponent(Comp);
+            Comp->RegisterComponent();
+            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+        }, TStatId(), NULL, ENamedThreads::GameThread);
         Task->Wait();
     }
-    else
-    {
-        //StaticMeshComponent‚ğ•t—^
+    else{
+        //StaticMeshComponentã‚’ä»˜ä¸
         CompName = "Mesh" + FString::FromInt(Index) + "_" + FString::FromInt(Count);
         TArray<FVector> VertArr;
-        for (int j = 0; j < Node->getMesh()->getVertices().size(); j++)
-        {
+        for (int j = 0; j < Node->getMesh()->getVertices().size(); j++) {
             VertArr.Add(FVector(Node->getMesh()->getVertices()[j].x, Node->getMesh()->getVertices()[j].y, Node->getMesh()->getVertices()[j].z));
-            //UE_LOG(LogTemp, Log, TEXT("vertArr[%d] position : %s"), j, *VertArr[j].ToString());
         }
-#if false
-        for (int k = 0; k < Node->getMesh()->getIndices().size(); k++)
-        {
-            UE_LOG(LogTemp, Log, TEXT("Indices[%d] value : %d"), k, Node->getMesh()->getIndices()[k]);
-        }
-#endif
         UE_LOG(LogTemp, Log, TEXT("Node has Mesh"));
-        //ƒeƒNƒXƒ`ƒƒ“Ç‚İ‚İ
+
+        //ãƒ†ã‚¯ã‚¹ãƒãƒ£èª­ã¿è¾¼ã¿
         FString TexturePath;
-        for (int index = 0; index <  Node->getMesh()->getSubMeshes().size(); index++)
-        {
-            if (Node->getMesh()->getSubMeshes()[index].getTexturePath() != "")
-            {
-                //‚»‚Ì‚Ü‚Üˆø‚Á’£‚Á‚Ä‚­‚é‚Æ•¶š‰»‚¯‚µ‚Ä‚¢‚é‚Ì‚Å•¶šƒR[ƒh•ÏŠ·ˆ—
+        for (int index = 0; index <  Node->getMesh()->getSubMeshes().size(); index++) {
+            if (Node->getMesh()->getSubMeshes()[index].getTexturePath() != "") {
+                //ãã®ã¾ã¾å¼•ã£å¼µã£ã¦ãã‚‹ã¨æ–‡å­—åŒ–ã‘ã—ã¦ã„ã‚‹ã®ã§æ–‡å­—ã‚³ãƒ¼ãƒ‰å¤‰æ›å‡¦ç†
                 std::size_t converted{};
                 std::string src = Node->getMesh()->getSubMeshes()[index].getTexturePath();
                 std::vector<wchar_t> dest(src.size(), L'\0');
-                if (::_mbstowcs_s_l(&converted, dest.data(), dest.size(), src.data(), _TRUNCATE, ::_create_locale(LC_ALL, "jpn")) != 0) {
-                    //•K—v‚È‚çƒGƒ‰[ƒ`ƒFƒbƒN‚È‚Ç
+                if (::_mbstowcs_s_l(&converted, dest.data(), dest.size(), src.data(), _TRUNCATE, ::_create_locale(LC_ALL, "jpn")) != 0){
+                    //å¿…è¦ãªã‚‰ã‚¨ãƒ©ãƒ¼ãƒã‚§ãƒƒã‚¯ãªã©
                 }
                 dest.resize(std::char_traits<wchar_t>::length(dest.data()));
                 dest.shrink_to_fit();
@@ -97,155 +61,121 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, pla
             }
         }
         UTexture2D* Texture = nullptr;
-        FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady([&]
-            {
-                Texture = LoadTextureFromPath(TexturePath);
-            }, TStatId(), NULL, ENamedThreads::GameThread);
+        FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+            Texture = LoadTextureFromPath(TexturePath);
+        }, TStatId(), NULL, ENamedThreads::GameThread);
         std::vector<TVec2f> UVs[3] = { Node->getMesh()->getUV1(), Node->getMesh()->getUV2(), Node->getMesh()->getUV3()};
         Result->Wait();
         auto Result2 = Async(EAsyncExecution::Thread, [&] {
             UE_LOG(LogTemp, Log, TEXT(" %s"), (const char*)TCHAR_TO_ANSI(*CompName));
-            Comp = CreateStaticMeshComponent(Actor, *ParentComponent, Node->getMesh()->getIndices(), VertArr, CompName, Texture, UVs);
-            });
+            std::vector<int> Indices = Node->getMesh()->getIndices();
+            Comp = CreateStaticMeshComponent(Actor, *ParentComponent, Indices, VertArr, CompName, Texture, UVs);
+        });
         Result2.Wait();
     }
-
-    for (int i = 0; i < Node->getChildCount(); i++)
-    {
+    for (int i = 0; i < Node->getChildCount(); i++) {
         ++Count;
         auto Result3 = Async(EAsyncExecution::Thread, [&] {
             LoadNodes_InModel(Comp, &Node->getChildAt(i), Actor, Index, Count);
-            });
+        });
     }
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<int> Indices, TArray<FVector> Vertices, 
-    FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[])
-{
+    FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[]) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
-    // RenderDataì¬(‚±‚±‚Í”ñ“¯Šú‚Åo—ˆ‚é‚Í‚¸)
+
+    // RenderDataä½œæˆ(ã“ã“ã¯éåŒæœŸã§å‡ºæ¥ã‚‹ã¯ãš)
     TUniquePtr<FStaticMeshRenderData> RenderData = nullptr;
     auto Result = Async(EAsyncExecution::Thread, [&] {
-    RenderData = CreateRenderData(Indices, Vertices, UVs);
-        });
-
+        RenderData = CreateRenderData(Indices, Vertices, UVs);
+    });
     Result.Wait();
 
+    // ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆä½œæˆ
     UStaticMeshComponent* ComponentRef = nullptr;
-    FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&]
-        {
-            // Code placed here will run in the game thread]
-             // ƒRƒ“ƒ|[ƒlƒ“ƒgì¬
-            const auto Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-            Component->Mobility = EComponentMobility::Static;
-            Component->bVisualizeComponent = true;
+    FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        const auto Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+        Component->Mobility = EComponentMobility::Static;
+        Component->bVisualizeComponent = true;
 
-            // StaticMeshì¬
-            const auto StaticMesh = NewObject<UStaticMesh>(Component, FName(Name));
-            Component->SetStaticMesh(StaticMesh);
-            SetRenderData(StaticMesh, RenderData);
-            StaticMesh->SetFlags(
-                RF_Transient | RF_DuplicateTransient | RF_TextExportTransient);
-            //UMaterial* Mat = UMaterial::GetDefaultMaterial(MD_Surface);
-            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
-            UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-            if (Texture != nullptr)
-            {
-                DynMaterial->SetTextureParameterValue("Texture", Texture);
-            }
-            DynMaterial->TwoSided = false;
-            StaticMesh->AddMaterial(DynMaterial);
-            // RenderData“K—p
-            StaticMesh->NeverStream = true;
-            StaticMesh->InitResources();
-            StaticMesh->CalculateExtendedBounds();
-            StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
-            StaticMesh->CreateBodySetup();
+        // StaticMeshã€Materialä½œæˆ
+        const auto StaticMesh = NewObject<UStaticMesh>(Component, FName(Name));
+        Component->SetStaticMesh(StaticMesh);
+        SetRenderData(StaticMesh, RenderData);
+        StaticMesh->SetFlags(
+            RF_Transient | RF_DuplicateTransient | RF_TextExportTransient);
+        UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
+        UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+        if (Texture != nullptr) {
+            DynMaterial->SetTextureParameterValue("Texture", Texture);
+        }
+        DynMaterial->TwoSided = false;
+        StaticMesh->AddMaterial(DynMaterial);
 
-            // –¼‘Oİ’èAƒqƒGƒ‰ƒ‹ƒL[İ’è‚È‚Ç
-            Component->DepthPriorityGroup = SDPG_World;
-            // TODO: SetStaticMeshComponentOverrideMaterial(StaticMeshComponent, NodeInfo);
-            FString NewUniqueName = StaticMesh->GetName();
-            if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
-            }
-            Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-            Actor.AddInstanceComponent(Component);
-            Component->RegisterComponent();
-            Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            Component->PostEditChange();
-            ComponentRef = Component;
-            UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent End-----"));
+        // STaticMeshã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
+        StaticMesh->NeverStream = true;
+        StaticMesh->InitResources();
+        StaticMesh->CalculateExtendedBounds();
+        StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
+        StaticMesh->CreateBodySetup();
 
-        }, TStatId(), NULL, ENamedThreads::GameThread);
+        // åå‰è¨­å®šã€ãƒ’ã‚¨ãƒ©ãƒ«ã‚­ãƒ¼è¨­å®šãªã©
+        Component->DepthPriorityGroup = SDPG_World;
+        FString NewUniqueName = StaticMesh->GetName();
+        if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
+            NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
+        }
+        Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+        Actor.AddInstanceComponent(Component);
+        Component->RegisterComponent();
+        Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+        Component->PostEditChange();
+        ComponentRef = Component;
+        UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent End-----"));
+    }, TStatId(), NULL, ENamedThreads::GameThread);
     Task->Wait();
     return ComponentRef;
 }
 
-TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vector<int> InIndicesVector, TArray<FVector> VerticesArray, std::vector<TVec2f> UVs[])
-{
+TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vector<int> InIndicesVector, TArray<FVector> VerticesArray, std::vector<TVec2f> UVs[]) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateRenderData Start-----"));
     std::vector<int> InIndices = InIndicesVector;
     TArray<FVector> Vertices = VerticesArray;
-
-
-    //ƒfƒoƒbƒO—p ˆÈ‰º‚ğ—LŒø‰»‚·‚é‚ÆOŠpƒ|ƒŠƒSƒ“‚ª‚¿‚á‚ñ‚Æo‚é
-#if false
-    InIndices.clear();
-    InIndices.push_back(0);
-    InIndices.push_back(1);
-    InIndices.push_back(2);
-    vertices.Empty();
-    vertices.Add(FVector(100, 0, 0));
-    vertices.Add(FVector(0, 0, 0));
-    vertices.Add(FVector(0, 0, 100));
-#endif
-
-
     UE_LOG(LogTemp, Log, TEXT("InIndices size : %zu"), InIndices.size());
     UE_LOG(LogTemp, Log, TEXT("vertices size : %zu"), Vertices.Num());
 
+    //RenderDataç”Ÿæˆ
     auto RenderData = MakeUnique<FStaticMeshRenderData>();
     RenderData->AllocateLODResources(1);
     FStaticMeshLODResources& LODResources = RenderData->LODResources[0];
     LODResources.bHasColorVertexData = false;
 
-    //TODO: AABB
-
+    //é ‚ç‚¹ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã€UVãªã©ã®åæ˜ 
     TArray<uint32> indices;
     indices.SetNum(static_cast<TArray<uint32>::SizeType>(InIndices.size()));
-
     for (int32 i = 0; i < InIndices.size(); ++i) {
         indices[i] = InIndices[i];
     }
-
     TArray<FStaticMeshBuildVertex> StaticMeshBuildVertices;
     StaticMeshBuildVertices.SetNum(Vertices.Num());
-
     for (int i = 0; i < StaticMeshBuildVertices.Num(); ++i) {
         auto& Vertex = StaticMeshBuildVertices[i];
-        //uint32 vertexIndex = indices[i];
         Vertex.Position = FVector3f(Vertices[i]);
-        //UE_LOG(LogTemp, Log, TEXT("Vertex position : %s"), *Vertex.Position.ToString());
         Vertex.UVs[0] = FVector2f(UVs[0][i].x, UVs[0][i].y);
         Vertex.UVs[1] = FVector2f(UVs[1][i].x, UVs[1][i].y);
         Vertex.UVs[2] = FVector2f(UVs[2][i].x, UVs[2][i].y);
-        RenderData->Bounds.SphereRadius = FMath::Max(
-            (Vertex.Position - FVector3f(RenderData->Bounds.Origin)).Size(),
-            RenderData->Bounds.SphereRadius);
-        //RenderData->Bounds.Origin = FVector(0, 0, 0);
+        RenderData->Bounds.SphereRadius = FMath::Max((Vertex.Position - FVector3f(RenderData->Bounds.Origin)).Size(), RenderData->Bounds.SphereRadius);
         RenderData->Bounds.BoxExtent = FVector(10000000000000, 10000000000000, 10000000000000);
     }
-
     computeFlatNormals(indices, StaticMeshBuildVertices);
-
     LODResources.VertexBuffers.PositionVertexBuffer.Init(StaticMeshBuildVertices, false);
     FColorVertexBuffer& ColorVertexBuffer = LODResources.VertexBuffers.ColorVertexBuffer;
-    //ƒeƒNƒXƒ`ƒƒ“\‚é‚Æ‚«‚É•Ï‚¦‚È‚¢‚Æ‚¢‚¯‚È‚¢‚©‚à
     LODResources.VertexBuffers.StaticMeshVertexBuffer.Init(StaticMeshBuildVertices, 1, false);
     for (int i = 2; i < indices.Num(); i += 3) {
         std::swap(indices[i - 2], indices[i]);
     }
+
 #if ENGINE_MAJOR_VERSION == 5
     FStaticMeshSectionArray& Sections = LODResources.Sections;
 #else
@@ -253,9 +183,9 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vect
         LODResources.Sections;
 #endif
 
+    //ã‚»ã‚¯ã‚·ãƒ§ãƒ³ã¸ã®ãƒ‡ãƒ¼ã‚¿è¨­å®š
     FStaticMeshSection& section = Sections.AddDefaulted_GetRef();
     section.bEnableCollision = false;
-
     section.NumTriangles = indices.Num() / 3;
     section.FirstIndex = 0;
     section.MinVertexIndex = 0;
@@ -263,12 +193,10 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vect
     section.bEnableCollision = true;
     section.bCastShadow = true;
     section.MaterialIndex = 0;
-
     LODResources.IndexBuffer.SetIndices(indices,
         StaticMeshBuildVertices.Num() >= std::numeric_limits<uint16>::max()
         ? EIndexBufferStride::Type::Force32Bit
         : EIndexBufferStride::Type::Force16Bit);
-
     LODResources.bHasDepthOnlyIndices = false;
     LODResources.bHasReversedIndices = false;
     LODResources.bHasReversedDepthOnlyIndices = false;
@@ -281,8 +209,8 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vect
     return RenderData;
 }
 
-void FPLATEAUMeshLoader::SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData)
-{
+void FPLATEAUMeshLoader::SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData) {
+    //ãƒ¬ãƒ³ãƒ€ãƒ¼ãƒ‡ãƒ¼ã‚¿ã‚’è¨­å®š
 #if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION < 27
     StaticMesh->bIsBuiltAtRuntime = true;
     StaticMesh->RenderData = std::move(RenderData);
@@ -294,32 +222,24 @@ void FPLATEAUMeshLoader::SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStat
 #endif
 }
 
-void FPLATEAUMeshLoader::computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices)
-{
+void FPLATEAUMeshLoader::computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices) {
     for (int i = 0; i < Indices.Num(); i += 3) {
         int acc[3] = { Indices[i],Indices[i + 1],Indices[i + 2] };
+
+        //æ³•ç·šè¨ˆç®—
         FStaticMeshBuildVertex& v0 = Vertices[acc[0]];
         FStaticMeshBuildVertex& v1 = Vertices[acc[1]];
         FStaticMeshBuildVertex& v2 = Vertices[acc[2]];
-
         FVector3f v01 = v1.Position - v0.Position;
         FVector3f v02 = v2.Position - v0.Position;
         FVector3f normal = FVector3f::CrossProduct(v01, v02);
-
         v0.TangentX = v1.TangentX = v2.TangentX = FVector3f(0.0f);
         v0.TangentY = v1.TangentY = v2.TangentY = FVector3f(0.0f);
         v0.TangentZ = v1.TangentZ = v2.TangentZ = normal.GetSafeNormal();
     }
 }
 
-UTexture2D* FPLATEAUMeshLoader::LoadTextureFromPath(const FString& Path)
-{
+UTexture2D* FPLATEAUMeshLoader::LoadTextureFromPath(const FString& Path) {
     if (Path.IsEmpty()) return NULL; 
-
-    UTexture2D* TexRef = nullptr;
-
-    TexRef = FImageUtils::ImportFileAsTexture2D(Path);
-
-    return TexRef;
+    return FImageUtils::ImportFileAsTexture2D(Path);
 }
-

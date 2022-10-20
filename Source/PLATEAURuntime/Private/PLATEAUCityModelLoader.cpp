@@ -18,6 +18,7 @@ using namespace plateau::polygonMesh;
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
+    MeshLoader = new FPLATEAUMeshLoader();
 }
 
 void APLATEAUCityModelLoader::Load() {
@@ -39,6 +40,18 @@ void APLATEAUCityModelLoader::Load() {
     GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
     GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
 
+    // アクター生成
+    AActor* ModelActor = GetWorld()->SpawnActor<AActor>(FVector(0, 0, 0), FRotator(0, 0, 0));
+    CreateRootComponent(*ModelActor);
+    ModelActor->SetActorLabel("Model");
+
+    auto Result = Async(EAsyncExecution::Thread, [&] {
+        ThreadLoad(ModelActor);
+        });
+#endif
+}
+
+void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
     // ファイル検索
     const auto UdxFileCollection =
         UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
@@ -61,20 +74,15 @@ void APLATEAUCityModelLoader::Load() {
         MeshGranularity::PerPrimaryFeatureObject,
         3, 0, true,
         1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
-    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = nullptr;
+    auto Result = Async(EAsyncExecution::Thread, [&] {
+        Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+        });
+    Result.Wait();
     UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
 
-    // アクター生成
-    AActor* ModelActor = GetWorld()->SpawnActor<AActor>(FVector(0, 0, 0), FRotator(0, 0, 0));
-    CreateRootComponent(*ModelActor);
-    ModelActor->SetActorLabel("Model");
-
     //ノード走査開始
-    FPLATEAUMeshLoader* MeshLoader = new FPLATEAUMeshLoader();
     MeshLoader->CreateMesh(ModelActor, Model);
-    delete MeshLoader;
-    UE_LOG(LogTemp, Log, TEXT("-----Load End-----"));
-#endif
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

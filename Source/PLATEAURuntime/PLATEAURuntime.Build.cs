@@ -26,7 +26,7 @@ public class PLATEAURuntime : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore", "ProceduralMeshComponent",
+                "Core", "CoreUObject", "Engine", "InputCore",
             }
             );
 
