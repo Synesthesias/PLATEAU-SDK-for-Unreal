@@ -30,7 +30,7 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, pla
             Actor.AddInstanceComponent(Comp);
             Comp->RegisterComponent();
             Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-        }, TStatId(), NULL, ENamedThreads::GameThread);
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
     }
     else{
@@ -63,7 +63,7 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, pla
         UTexture2D* Texture = nullptr;
         FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
             Texture = LoadTextureFromPath(TexturePath);
-        }, TStatId(), NULL, ENamedThreads::GameThread);
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
         std::vector<TVec2f> UVs[3] = { Node->getMesh()->getUV1(), Node->getMesh()->getUV2(), Node->getMesh()->getUV3()};
         Result->Wait();
         auto Result2 = Async(EAsyncExecution::Thread, [&] {
@@ -86,11 +86,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
 
     // RenderData作成(ここは非同期で出来るはず)
-    TUniquePtr<FStaticMeshRenderData> RenderData = nullptr;
-    auto Result = Async(EAsyncExecution::Thread, [&] {
-        RenderData = CreateRenderData(Indices, Vertices, UVs);
-    });
-    Result.Wait();
+    auto RenderData = CreateRenderData(Indices, Vertices, UVs[0], UVs[1], UVs[2]);;
 
     // コンポーネント作成
     UStaticMeshComponent* ComponentRef = nullptr;
@@ -133,17 +129,16 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         Component->PostEditChange();
         ComponentRef = Component;
         UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent End-----"));
-    }, TStatId(), NULL, ENamedThreads::GameThread);
+    }, TStatId(), nullptr, ENamedThreads::GameThread);
     Task->Wait();
     return ComponentRef;
 }
 
-TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vector<int> InIndicesVector, TArray<FVector> VerticesArray, std::vector<TVec2f> UVs[]) {
+TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray, 
+    const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateRenderData Start-----"));
-    std::vector<int> InIndices = InIndicesVector;
-    TArray<FVector> Vertices = VerticesArray;
-    UE_LOG(LogTemp, Log, TEXT("InIndices size : %zu"), InIndices.size());
-    UE_LOG(LogTemp, Log, TEXT("vertices size : %zu"), Vertices.Num());
+    UE_LOG(LogTemp, Log, TEXT("InIndices size : %zu"), InIndicesVector.size());
+    UE_LOG(LogTemp, Log, TEXT("vertices size : %zu"), VerticesArray.Num());
 
     //RenderData生成
     auto RenderData = MakeUnique<FStaticMeshRenderData>();
@@ -153,18 +148,18 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(std::vect
 
     //頂点、インデックス、UVなどの反映
     TArray<uint32> indices;
-    indices.SetNum(static_cast<TArray<uint32>::SizeType>(InIndices.size()));
-    for (int32 i = 0; i < InIndices.size(); ++i) {
-        indices[i] = InIndices[i];
+    indices.SetNum(static_cast<TArray<uint32>::SizeType>(InIndicesVector.size()));
+    for (int32 i = 0; i < InIndicesVector.size(); ++i) {
+        indices[i] = InIndicesVector[i];
     }
     TArray<FStaticMeshBuildVertex> StaticMeshBuildVertices;
-    StaticMeshBuildVertices.SetNum(Vertices.Num());
+    StaticMeshBuildVertices.SetNum(VerticesArray.Num());
     for (int i = 0; i < StaticMeshBuildVertices.Num(); ++i) {
         auto& Vertex = StaticMeshBuildVertices[i];
-        Vertex.Position = FVector3f(Vertices[i]);
-        Vertex.UVs[0] = FVector2f(UVs[0][i].x, UVs[0][i].y);
-        Vertex.UVs[1] = FVector2f(UVs[1][i].x, UVs[1][i].y);
-        Vertex.UVs[2] = FVector2f(UVs[2][i].x, UVs[2][i].y);
+        Vertex.Position = FVector3f(VerticesArray[i]);
+        Vertex.UVs[0] = FVector2f(UV1[i].x, UV1[i].y);
+        Vertex.UVs[1] = FVector2f(UV2[i].x, UV2[i].y);
+        Vertex.UVs[2] = FVector2f(UV3[i].x, UV3[i].y);
         RenderData->Bounds.SphereRadius = FMath::Max((Vertex.Position - FVector3f(RenderData->Bounds.Origin)).Size(), RenderData->Bounds.SphereRadius);
         RenderData->Bounds.BoxExtent = FVector(10000000000000, 10000000000000, 10000000000000);
     }
@@ -240,6 +235,6 @@ void FPLATEAUMeshLoader::computeFlatNormals(const TArray<uint32_t>& Indices, TAr
 }
 
 UTexture2D* FPLATEAUMeshLoader::LoadTextureFromPath(const FString& Path) {
-    if (Path.IsEmpty()) return NULL; 
+    if (Path.IsEmpty()) return nullptr; 
     return FImageUtils::ImportFileAsTexture2D(Path);
 }
