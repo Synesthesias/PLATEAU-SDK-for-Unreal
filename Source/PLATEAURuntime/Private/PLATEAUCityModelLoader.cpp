@@ -11,14 +11,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "StaticMeshResources.h"
 
-#include "PLATEAUMeshLoader.h"
-
 using namespace plateau::udx;
 using namespace plateau::polygonMesh;
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
-    MeshLoader = new FPLATEAUMeshLoader();
 }
 
 void APLATEAUCityModelLoader::Load() {
@@ -74,15 +71,11 @@ void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
         MeshGranularity::PerPrimaryFeatureObject,
         3, 0, true,
         1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
-    std::shared_ptr<plateau::polygonMesh::Model> Model = nullptr;
-    auto Result = Async(EAsyncExecution::Thread, [&] {
-        Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
-        });
-    Result.Wait();
+    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
     UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
 
     //ノード走査開始
-    MeshLoader->CreateMesh(ModelActor, Model);
+    MeshLoader.CreateMesh(ModelActor, Model);
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

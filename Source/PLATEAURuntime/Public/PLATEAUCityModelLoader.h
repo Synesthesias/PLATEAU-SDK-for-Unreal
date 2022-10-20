@@ -10,6 +10,7 @@
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "plateau/polygon_mesh/mesh_extract_options.h"
+#include "PLATEAUMeshLoader.h"
 
 #include "PLATEAUCityModelLoader.generated.h"
 
@@ -18,8 +19,6 @@
 namespace citygml {
     class CityModel;
 }
-
-class FPLATEAUMeshLoader;
 
 
 UENUM(BlueprintType)
@@ -150,7 +149,7 @@ private:
     void CreateRootComponent(AActor& Actor);
     void ThreadLoad(AActor* ModelActor);
 
-    FPLATEAUMeshLoader* MeshLoader = nullptr;
+    FPLATEAUMeshLoader MeshLoader;
 };
 
 #undef LOCTEXT_NAMESPACE
