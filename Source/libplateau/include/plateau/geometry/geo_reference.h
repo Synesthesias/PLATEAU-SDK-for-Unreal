@@ -14,9 +14,8 @@ namespace plateau::geometry {
      */
     class LIBPLATEAU_EXPORT GeoReference {
     public:
-        explicit GeoReference(const TVec3d& reference_point = TVec3d(0, 0, 0), float unit_scale = 1.0,
-                              CoordinateSystem coordinate_system = CoordinateSystem::ENU,
-                              int zone_id = default_zone_id_);
+        explicit GeoReference(int coordinate_zone_id, const TVec3d& reference_point = TVec3d(0, 0, 0),
+                              float unit_scale = 1.0, CoordinateSystem coordinate_system = CoordinateSystem::ENU);
 
         /**
          * 緯度・経度・高さで表現される座標を平面直角座標系に変換します。
@@ -36,10 +35,5 @@ namespace plateau::geometry {
         int zone_id_;
         CoordinateSystem coordinate_system_;
         float unit_scale_;
-
-        /**
-         * 関東地方で歪みの少ない座標系です。
-         */
-        static int constexpr default_zone_id_ = 9;
     };
 }

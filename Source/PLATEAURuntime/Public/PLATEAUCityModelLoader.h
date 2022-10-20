@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
 #include "CityGML/PLATEAUCityModel.h"
 #include "PLATEAUGeometry.h"
 
@@ -15,6 +14,8 @@
 namespace citygml {
     class CityModel;
 }
+
+class FPLATEAUMeshLoader;
 
 
 UENUM(BlueprintType)
@@ -142,6 +143,8 @@ public:
 
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
+    void CreateRootComponent(AActor& Actor);
+    void ThreadLoad(AActor* ModelActor);
 };
 
 #undef LOCTEXT_NAMESPACE
