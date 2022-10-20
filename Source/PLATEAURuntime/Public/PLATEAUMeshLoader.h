@@ -1,12 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 
 #include "CityGML/PLATEAUCityModel.h"
 #include "PLATEAUGeometry.h"
-#include "plateau/udx/udx_file_collection.h"
-#include "plateau/polygon_mesh/mesh_extractor.h"
-#include "plateau/polygon_mesh/mesh_extract_options.h"
 #include "Engine/Texture2D.h"
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
@@ -21,6 +18,4 @@ private:
         TArray<FVector> Vertices, FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[]);
     void computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices);
     UTexture2D* LoadTextureFromPath(const FString& Path);
-
-
 };
