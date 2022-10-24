@@ -1,0 +1,481 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "SPLATEAUImportPanel.h"
+
+#include <plateau/io/mesh_convert_options.h>
+
+#include "PLATEAUCityModelLoader.h"
+
+#include <plateau/udx/city_model_package.h>
+
+#include "AssetSelection.h"
+#include "DesktopPlatformModule.h"
+#include "PLATEAUEditor.h"
+#include "Widgets/Input/SSlider.h"
+#include "SlateOptMacros.h"
+#include "ExtentEditor/PLATEAUExtentEditor.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+
+#define LOCTEXT_NAMESPACE "SPLATEAUImportPanel"
+
+using namespace plateau::udx;
+
+namespace {
+    TMap<MeshGranularity, FText> GetMeshGranularityTexts() {
+        TMap<MeshGranularity, FText> Items;
+        Items.Add(MeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PerPrimaryFeatureObject", "主要地物単位"));
+        Items.Add(MeshGranularity::PerAtomicFeatureObject, LOCTEXT("PerAtomicFeatureObject", "最小地物単位"));
+        Items.Add(MeshGranularity::PerCityModelArea, LOCTEXT("PerCityModelArea", "都市モデル地域単位"));
+        return Items;
+    }
+
+    TMap<int, FText> GetZoneIDTexts() {
+        TMap<int, FText> Items;
+        Items.Add(1, LOCTEXT("Zone01", "01: 長崎, 鹿児島(南西部)"));
+        Items.Add(2, LOCTEXT("Zone02", "02: 福岡, 佐賀, 熊本, 大分, 宮崎, 鹿児島(北東部)"));
+        Items.Add(3, LOCTEXT("Zone03", "03: 山口, 島根, 広島"));
+        Items.Add(4, LOCTEXT("Zone04", "04: 香川, 愛媛, 徳島, 高知"));
+        Items.Add(5, LOCTEXT("Zone05", "05: 兵庫, 鳥取, 岡山"));
+        Items.Add(6, LOCTEXT("Zone06", "06: 京都, 大阪, 福井, 滋賀, 三重, 奈良, 和歌山"));
+        Items.Add(7, LOCTEXT("Zone07", "07: 石川, 富山, 岐阜, 愛知"));
+        Items.Add(8, LOCTEXT("Zone08", "08: 新潟, 長野, 山梨, 静岡"));
+        Items.Add(9, LOCTEXT("Zone09", "09: 東京(本州), 福島, 栃木, 茨城, 埼玉, 千葉, 群馬, 神奈川"));
+        Items.Add(10, LOCTEXT("Zone10", "10: 青森, 秋田, 山形, 岩手, 宮城"));
+        Items.Add(11, LOCTEXT("Zone11", "11: 北海道(西部)"));
+        Items.Add(12, LOCTEXT("Zone12", "12: 北海道(中央部)"));
+        Items.Add(13, LOCTEXT("Zone13", "13: 北海道(東部)"));
+        Items.Add(14, LOCTEXT("Zone14", "14: 諸島(東京南部)"));
+        Items.Add(15, LOCTEXT("Zone15", "15: 沖縄"));
+        Items.Add(16, LOCTEXT("Zone16", "16: 諸島(沖縄西部)"));
+        Items.Add(17, LOCTEXT("Zone17", "17: 諸島(沖縄東部)"));
+        Items.Add(18, LOCTEXT("Zone18", "18: 小笠原諸島"));
+        Items.Add(19, LOCTEXT("Zone19", "19: 南鳥島"));
+        return Items;
+    }
+
+    static FText GetDisplayName(PredefinedCityModelPackage Package) {
+        switch (Package) {
+        case PredefinedCityModelPackage::Building: return LOCTEXT("Building", "建築物");
+        case PredefinedCityModelPackage::Road: return LOCTEXT("Transportation", "道路");
+        case PredefinedCityModelPackage::UrbanPlanningDecision: return LOCTEXT("UrbanPlanningDecision", "都市計画決定情報");
+        case PredefinedCityModelPackage::LandUse: return LOCTEXT("LandUse", "土地利用");
+        case PredefinedCityModelPackage::Relief: return LOCTEXT("Relief", "起伏");
+        case PredefinedCityModelPackage::CityFurniture: return LOCTEXT("UrbanFacility", "都市設備");
+        case PredefinedCityModelPackage::Vegetation: return LOCTEXT("Vegetation", "植生");
+        case PredefinedCityModelPackage::DisasterRisk: return LOCTEXT("DisasterRisk", "災害リスク");
+        default: return LOCTEXT("Others", "その他");
+        }
+    }
+}
+
+
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+void SPLATEAUImportPanel::Construct(const FArguments& InArgs) {
+    OwnerWindow = InArgs._OwnerWindow;
+
+    ChildSlot
+        [SNew(SVerticalBox)
+
+        // 都市の追加
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [CreateSourcePathSelectPanel()]
+
+    // 基準座標系の選択
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 10)
+        [SNew(SHorizontalBox)
+        + SHorizontalBox::Slot()
+        [SNew(STextBlock)
+        .Text(LOCTEXT("ReferenceCoordinate", "基準座標系の選択"))]
+    + SHorizontalBox::Slot()
+        [SNew(SComboButton)
+        .OnGetMenuContent_Lambda(
+            [this]() {
+                FMenuBuilder MenuBuilder(true, nullptr);
+                const auto Items = GetZoneIDTexts();
+                for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
+                    const auto ItemText = ItemIter->Value;
+                    const auto ID = ItemIter->Key;
+                    FUIAction ItemAction(FExecuteAction::CreateLambda(
+                        [this, ID]() {
+                            ZoneID = ID;
+                        }));
+                    MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                }
+                return MenuBuilder.MakeWidget();
+            })
+        .ContentPadding(0.0f)
+                //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
+                //.ForegroundColor(FSlateColor::UseForeground())
+                .VAlign(VAlign_Center)
+                .ButtonContent()
+                [SNew(STextBlock).Text_Lambda(
+                    [this]() {
+                        // TODO
+                        return GetZoneIDTexts()[ZoneID];
+                    })]]]
+
+    // マップ範囲選択
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 10)
+        [SNew(SButton)
+        .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .OnClicked_Lambda(
+            [this]() {
+                IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(SourcePath);
+
+                // TODO: ExtentEditorに委譲
+                // ビューポートの操作性向上のため100分の1スケールで設定
+                const plateau::geometry::GeoReference RawGeoReference(ZoneID, {}, 1, plateau::geometry::CoordinateSystem::NWU);
+                IPLATEAUEditorModule::Get().GetExtentEditor()->SetGeoReference(RawGeoReference);
+
+                const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
+                GlobalTabManager->TryInvokeTab(FPLATEAUExtentEditor::TabId);
+
+                return FReply::Handled();
+            })
+        .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Edit Extent Button", "範囲選択"))
+                ]
+        ]
+
+    // 地物別設定
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [
+            SNew(SEditableTextBox)
+            .Padding(FMargin(3, 3, 0, 3))
+        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))
+        .IsReadOnly(true)
+        .BackgroundColor(FColor(200, 200, 200, 255))
+        ]
+
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Building)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Road)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Relief)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::UrbanPlanningDecision)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::LandUse)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::CityFurniture)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Vegetation)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::DisasterRisk)]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 0)
+        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Unknown)]
+
+    // モデルをインポート
+    + SVerticalBox::Slot()
+        .Padding(FMargin(20, 5, 20, 20))
+        [SNew(SButton)
+        .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .OnClicked_Lambda(
+            [this]() {
+                const FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
+                UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
+                const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
+                const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
+                Loader->Source = SourcePath;
+                const auto ExtentOpt = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
+                if (!ExtentOpt.IsSet()) {
+                    // TODO: UI表示
+                    return FReply::Handled();
+                }
+                Loader->Extent = ExtentOpt.GetValue();
+
+                UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
+
+                // TODO: その他設定の保存
+
+                Loader->Load();
+
+                return FReply::Handled();
+            })
+        .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Import Button", "モデルをインポート"))
+                ]
+        ]
+
+        ];
+}
+
+TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
+    return
+        SNew(SVerticalBox)
+        + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [SNew(SEditableTextBox)
+        .Padding(FMargin(3, 3, 0, 3))
+        .IsReadOnly(true)
+        .Text(LOCTEXT("SelectSource", "入力元フォルダを選択"))
+        .BackgroundColor(FColor(200, 200, 200, 255))
+        ]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(20, 5, 20, 5))
+        [SNew(SButton)
+        .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .OnClicked_Raw(this, &SPLATEAUImportPanel::OnBtnSelectGmlFileClicked)
+        .Content()
+        [SNew(STextBlock)
+        .Justification(ETextJustify::Center)
+        .Margin(FMargin(0, 5, 0, 5))
+        .Text(LOCTEXT("Ref Button", "参照..."))
+        ]
+        ]
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 10))
+        [
+            SNew(SEditableTextBox)
+            .IsReadOnly(true)
+        .Text_Lambda(
+            [this]() {
+                return FText::FromString(SourcePath);
+            })
+        ];
+}
+
+TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateFeatureSettingsPanel(PredefinedCityModelPackage Package) {
+    const auto PackageInfo = plateau::udx::CityModelPackageInfo::getPredefined(static_cast<plateau::udx::PredefinedCityModelPackage>(Package));
+
+    FeatureSettingsMap.FindOrAdd(Package, FFeatureSettings());
+    return SNew(SVerticalBox).Visibility_Lambda(
+        [this, Package]() {
+            //for (int i = 0; i < Features.Num(); ++i) {
+            //    if (ExistFeatures[i]) {
+            //        if (SelectFeatures[i] && Package == Features[i]) {
+            //            return EVisibility::Visible;
+            //        }
+            //    }
+            //}
+            //return EVisibility::Collapsed;
+            // TODO: 存在する地物だけ表示
+            return EVisibility::Visible;
+        })
+
+        // 地物名
+            + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(0, 10, 0, 0)
+            [SNew(STextBlock)
+            .Text(GetDisplayName(Package))
+            ]
+
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(FMargin(0, 0, 0, 0))[
+                SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    [
+                        SNew(STextBlock)
+                        .Text(LOCTEXT("ToggleImport", "インポートする"))
+                    ]
+                + SHorizontalBox::Slot()
+                    [
+                        SNew(SCheckBox)
+                        .IsChecked(true)
+                    .OnCheckStateChanged_Lambda(
+                        [this, Package](ECheckBoxState State) {
+                            FeatureSettingsMap[Package].IncludeAppearance = State != ECheckBoxState::Unchecked;
+                        })
+                    ]
+            ]
+
+            + SVerticalBox::Slot()
+                .AutoHeight()
+                .Padding(FMargin(0, 0, 0, 0))[
+                    SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        [
+                            SNew(STextBlock)
+                            .Text(LOCTEXT("IncludeAppearance", "テクスチャをインポートする"))
+                        ]
+                    + SHorizontalBox::Slot()
+                        [
+                            SNew(SCheckBox)
+                            .IsChecked(FeatureSettingsMap[Package].IncludeAppearance)
+                        .OnCheckStateChanged_Lambda(
+                            [this, Package](ECheckBoxState State) {
+                                FeatureSettingsMap[Package].IncludeAppearance = State != ECheckBoxState::Unchecked;
+                            })
+                        ]
+                ]
+
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(FMargin(0, 0, 0, 0))[
+                        SNew(SHorizontalBox)
+                            + SHorizontalBox::Slot()
+                            [
+                                SNew(STextBlock)
+                                .Text(LOCTEXT("GenerateCollider", "Mesh Colliderをセットする"))
+                            ]
+                        + SHorizontalBox::Slot()
+                            [
+                                SNew(SCheckBox)
+                                .IsChecked(FeatureSettingsMap[Package].GenerateCollider)
+                            .OnCheckStateChanged_Lambda(
+                                [this, Package](ECheckBoxState State) {
+                                    FeatureSettingsMap[Package].GenerateCollider = State != ECheckBoxState::Unchecked;
+                                })
+                            ]
+                    ]
+
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(20, 0, 0, 0)
+                    [SNew(SVerticalBox)
+                    // 最小LODスライダー
+                    + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 0, 0, 0)
+                    [SNew(SSlider)
+                    .MaxValue(3)
+                    .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
+                    .StepSize(1)
+                    .MouseUsesStep(true)
+                    .Value(FeatureSettingsMap[Package].MinLod)
+                    .OnValueChanged_Lambda(
+                        [this, Package](int Value) {
+                            FeatureSettingsMap[Package].MinLod = Value;
+                        })]
+
+                // 最大LODスライダー
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 0, 0, 0)
+                    [SNew(SSlider)
+                    .MaxValue(3)
+                    .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
+                    .StepSize(1)
+                    .MouseUsesStep(true)
+                    .Value(FeatureSettingsMap[Package].MaxLod)
+                    .OnValueChanged_Lambda(
+                        [this, Package](int Value) {
+                            FeatureSettingsMap[Package].MaxLod = Value;
+                        })]
+
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 5, 0, 0)
+                    [
+                        SNew(STextBlock)
+                        .Text_Lambda(
+                            [this, Package]() {
+                                return  FText::Format(
+                                    LOCTEXT("LODRangeFormat", "最小LOD: {0}, 最大LOD: {1}"),
+                                    FText::AsNumber(FeatureSettingsMap[Package].MinLod),
+                                    FText::AsNumber(FeatureSettingsMap[Package].MaxLod));
+                            })
+                    ]
+
+                // モデル結合
+                + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 0, 0, 10)
+                    [SNew(SHorizontalBox)
+                    + SHorizontalBox::Slot()
+                    [SNew(STextBlock)
+                    .Text(LOCTEXT("MeshGranularity", "モデル結合"))]
+                + SHorizontalBox::Slot()
+                    [SNew(SComboButton)
+                    .OnGetMenuContent_Lambda(
+                        [this, Package]() {
+                            FMenuBuilder MenuBuilder(true, nullptr);
+                            const auto Items = GetMeshGranularityTexts();
+                            for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
+                                FText ItemText = ItemIter->Value;
+                                MeshGranularity Gran = ItemIter->Key;
+                                FUIAction ItemAction(FExecuteAction::CreateLambda(
+                                    [this, Gran, Package]() {
+                                        FeatureSettingsMap[Package].Granularity = Gran;
+                                    }));
+                                MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                            }
+                            return MenuBuilder.MakeWidget();
+                        })
+                    .ContentPadding(0.0f)
+                            //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
+                            //.ForegroundColor(FSlateColor::UseForeground())
+                            .VAlign(VAlign_Center)
+                            .ButtonContent()
+                            [SNew(STextBlock).Text_Lambda(
+                                [this, Package]() {
+                                    // TODO
+                                    return GetMeshGranularityTexts()[FeatureSettingsMap[Package].Granularity];
+                                })]]]
+
+                    ];
+}
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
+FReply SPLATEAUImportPanel::OnBtnSelectGmlFileClicked() {
+    const void* WindowHandle = nullptr;
+
+    IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
+    TSharedPtr<SWindow> MainWindow = MainFrameModule.GetParentWindow();
+
+    if (MainWindow.IsValid() && MainWindow->GetNativeWindow().IsValid()) {
+        WindowHandle = MainWindow->GetNativeWindow()->GetOSWindowHandle();
+    }
+    const FString DialogTitle("Select folder.");
+    FString OutFolderName;
+
+    IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+
+    if (DesktopPlatform->OpenDirectoryDialog(
+        WindowHandle,
+        DialogTitle,
+        SourcePath,
+        OutFolderName)) {
+        SourcePath = OutFolderName;
+        //UpdateWindow(MyWindow);
+    }
+
+    return FReply::Handled();
+}
+
+#undef LOCTEXT_NAMESPACE

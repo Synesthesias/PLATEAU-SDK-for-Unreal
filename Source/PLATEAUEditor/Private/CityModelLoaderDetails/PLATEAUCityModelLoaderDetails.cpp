@@ -28,40 +28,6 @@ void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 
     TWeakObjectPtr<APLATEAUCityModelLoader> CityModelLoader = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0]);
 
-    const auto CityModelPlacementSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(APLATEAUCityModelLoader, CityModelPlacementSettings));
-
-    CityModelCategory.AddCustomRow(FText::FromString("EditExtent"))
-        .WholeRowContent()
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda(
-            [CityModelLoader]() {
-                IPLATEAUEditorModule::Get().GetExtentEditor()->RegisterLoaderActor(CityModelLoader);
-
-                IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(CityModelLoader->Source);
-
-                // TODO: ExtentEditorに委譲
-                // ビューポートの操作性向上のため100分の1スケールで設定
-                const plateau::geometry::GeoReference RawGeoReference({}, 1, plateau::geometry::CoordinateSystem::NWU, 9);
-                IPLATEAUEditorModule::Get().GetExtentEditor()->SetGeoReference(RawGeoReference);
-
-                const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
-                GlobalTabManager->TryInvokeTab(FPLATEAUExtentEditor::TabId);
-
-                return FReply::Handled();
-            })
-        .Content()
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("Edit Extent Button", "範囲選択"))
-                ]
-        ];
-
     CityModelCategory.AddCustomRow(FText::FromString("LoadCityModel"))
         .WholeRowContent()
         [
@@ -71,7 +37,7 @@ void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
         .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
         .OnClicked_Lambda(
             [CityModelLoader]() {
-                CityModelLoader->Load();
+                // TODO: SDK画面を開く
                 return FReply::Handled();
             })
         .Content()
@@ -79,7 +45,7 @@ void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
                 .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("CityModel Load Button", "読み込み"))
+                .Text(LOCTEXT("Open SDK Window", "SDK画面を開く"))
                 ]
         ];
 }
