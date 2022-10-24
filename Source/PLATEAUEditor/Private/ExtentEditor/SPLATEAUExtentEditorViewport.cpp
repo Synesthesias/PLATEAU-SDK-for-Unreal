@@ -128,7 +128,6 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
             [this]() {
                 const auto Extent = ViewportClient->GetExtent();
                 ExtentEditorPtr.Pin()->SetExtent(Extent);
-                ExtentEditorPtr.Pin()->HandleClickOK();
 
                 if (GetOwnerTab())
                     GetOwnerTab()->RequestCloseTab();

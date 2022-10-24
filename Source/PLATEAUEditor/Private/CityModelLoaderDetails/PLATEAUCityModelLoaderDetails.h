@@ -4,10 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DetailCategoryBuilder.h"
-#include "PLATEAUFeatureLoadSettingsPropertyRow.h"
 #include "IDetailCustomization.h"
-#include "PLATEAUCityModelLoader.h"
-#include "ExtentEditor/PLATEAUExtentEditor.h"
 
 /**
  * APLATEAUCityModelLoaderの詳細パネルをカスタマイズします。
@@ -28,6 +25,4 @@ private:
 
     // UIの内部状態
     TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
-
-    TMap<ECityModelPackage, FPLATEAUFeatureLoadSettingsPropertyRow> FeaturePlacementRows;
 };

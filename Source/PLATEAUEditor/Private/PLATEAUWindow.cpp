@@ -3,15 +3,15 @@
 #include "PLATEAUWindow.h"
 
 #include "LevelEditor.h"
-#include "PLATEAUCityModelAddPanel.h"
+#include "SPLATEAUImportPanel.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
+#include "Widgets/Layout/SScrollBox.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
 
 FPLATEAUWindow::FPLATEAUWindow() {
-    CityModelAddPanel = MakeUnique<FPLATEAUCityModelAddPanel>();
 }
 
 void FPLATEAUWindow::Startup() {
@@ -78,6 +78,12 @@ void FPLATEAUWindow::Show() {
         TSharedPtr<SWindow> Window = SNew(SWindow)
             .Title(LOCTEXT("PLATEAU SDK Window Title", "PLATEAU SDK"))
             .ClientSize(FVector2D(500.f, 400.f));
+        Window->SetContent(
+            SNew(SScrollBox)
+            + SScrollBox::Slot()[
+                SNew(SPLATEAUImportPanel)
+            ]
+        );
         MyWindow = TWeakPtr<SWindow>(Window);
 
         if (RootWindow.IsValid()) {
@@ -85,7 +91,7 @@ void FPLATEAUWindow::Show() {
                 Window.ToSharedRef(), RootWindow.Pin().ToSharedRef());
         }
 
-        CityModelAddPanel->UpdateWindow(MyWindow);
+        //CityModelAddPanel->UpdateWindow(MyWindow);
     }
     MyWindow.Pin()->BringToFront();
 }

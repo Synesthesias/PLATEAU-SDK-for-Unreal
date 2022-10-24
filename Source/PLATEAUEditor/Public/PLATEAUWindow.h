@@ -19,7 +19,6 @@ private:
     TSharedPtr<FExtender> Extender;
     TWeakPtr<SWindow> RootWindow;
     TWeakPtr<SWindow> MyWindow;
-    TUniquePtr<class FPLATEAUCityModelAddPanel> CityModelAddPanel;
 
     void Show();
 

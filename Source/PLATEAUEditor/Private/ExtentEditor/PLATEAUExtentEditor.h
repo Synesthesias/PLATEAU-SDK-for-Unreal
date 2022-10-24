@@ -35,11 +35,6 @@ public:
     const TOptional<FPLATEAUExtent>& GetExtent() const;
     void SetExtent(const FPLATEAUExtent& InExtent);
 
-    void RegisterLoaderActor(TWeakObjectPtr<class APLATEAUCityModelLoader> InLoader);
-    void UnregisterLoaderActor();
-
-    void HandleClickOK() const;
-
 private:
     FString SourcePath;
     FPLATEAUGeoReference GeoReference;

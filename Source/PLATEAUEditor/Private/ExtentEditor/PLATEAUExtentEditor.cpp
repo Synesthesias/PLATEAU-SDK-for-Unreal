@@ -68,19 +68,4 @@ void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
     Extent = InExtent;
 }
 
-void FPLATEAUExtentEditor::RegisterLoaderActor(TWeakObjectPtr<APLATEAUCityModelLoader> InLoader) {
-    Loader = InLoader;
-}
-
-void FPLATEAUExtentEditor::UnregisterLoaderActor() {
-    Loader = nullptr;
-}
-
-void FPLATEAUExtentEditor::HandleClickOK() const {
-    if (!Extent.IsSet() || !Loader.IsValid())
-        return;
-
-    Loader->Extent = Extent.GetValue();
-}
-
 #undef LOCTEXT_NAMESPACE
