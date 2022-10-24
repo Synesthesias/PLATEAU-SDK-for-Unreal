@@ -1,6 +1,5 @@
 #pragma once
 
-#include <httplib.h>
 #include <memory>
 #include <vector>
 #include <libplateau_api.h>
