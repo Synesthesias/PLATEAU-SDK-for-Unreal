@@ -52,7 +52,7 @@ namespace plateau::polygonMesh {
         void addVerticesList(const std::vector<TVec3d>& other_vertices);
         void addIndicesList(const std::vector<unsigned>& other_indices, unsigned prev_num_vertices,
                             bool invert_mesh_front_back);
-        void addUV1(const citygml::Polygon& other_poly);
+        void addUV1(const std::vector<TVec2f>& other_uv_1, unsigned long long other_vertices_size);
         void addUV2WithSameVal(const TVec2f& uv_2_val, unsigned num_adding_vertices);
         void addUV3WithSameVal(const TVec2f& uv_3_val, unsigned num_adding_vertices);
 

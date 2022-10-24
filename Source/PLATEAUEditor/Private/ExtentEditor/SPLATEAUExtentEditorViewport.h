@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
 
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
@@ -25,6 +26,8 @@ protected:
     virtual void BindCommands() override;
 
 private:
+    void AttachVectorTile(FPLATEAUExtent Extent);
+
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
 
@@ -36,3 +39,4 @@ private:
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
 };
+

@@ -1,10 +1,13 @@
 #pragma once
 
 #include <list>
-#include "citygml/citymodel.h"
-#include "citygml/polygon.h"
-#include <plateau/polygon_mesh/mesh.h>
-#include "citygml/vecs.hpp"
+#include <citygml/vecs.hpp>
+
+namespace citygml{
+    class CityModel;
+    class CityObject;
+    class Polygon;
+}
 
 namespace plateau::polygonMesh {
 

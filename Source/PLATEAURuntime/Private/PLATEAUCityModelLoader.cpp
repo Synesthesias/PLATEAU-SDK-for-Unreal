@@ -47,11 +47,7 @@ void APLATEAUCityModelLoader::Load() {
     const auto CityModel = citygml::load(*GmlFiles->begin(), ParserParams);
 
     // �|���S�����b�V�����o
-    const MeshExtractOptions MeshExtractOptions(
-        NativeReferencePoint, CoordinateSystem::NWU,
-        MeshGranularity::PerPrimaryFeatureObject,
-        3, 0, true,
-        1, 0.01, 9, Extent.GetNativeData());
+    const MeshExtractOptions MeshExtractOptions();
     const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
 
     // StaticMesh����
