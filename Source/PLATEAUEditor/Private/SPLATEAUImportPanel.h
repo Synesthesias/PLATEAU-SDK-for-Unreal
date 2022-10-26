@@ -6,6 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Styling/ISlateStyle.h"
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
@@ -30,7 +31,7 @@ public:
 
 public:
     /** Constructs this widget with InArgs */
-    void Construct(const FArguments& InArgs);
+    void Construct(const FArguments& InArgs, const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
 
 private:
     FString SourcePath;
@@ -38,6 +39,14 @@ private:
     TMap<plateau::udx::PredefinedCityModelPackage, FFeatureSettings> FeatureSettingsMap;
 
     TWeakPtr<SWindow> OwnerWindow;
+    TSharedPtr<class FPLATEAUEditorStyle> Style;
+
+    TSharedPtr<IDetailsView> BuildingImportSettingsView = nullptr;
+    TSharedPtr<IDetailsView> RoadImportSettingsView = nullptr;
+
+    /** The current arguments. */
+    //TStrongObjectPtr<class UPLATEAUFeatureImportSettings> BuildingImportSettings = nullptr;
+
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
     TSharedRef<SVerticalBox> CreateFeatureSettingsPanel(plateau::udx::PredefinedCityModelPackage Package);

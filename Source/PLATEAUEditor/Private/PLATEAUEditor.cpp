@@ -2,9 +2,12 @@
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUCityModelLoader.h"
+#include "PLATEAUEditorStyle.h"
 #include "PLATEAUWindow.h"
 #include "CityModelLoaderDetails/PLATEAUCityModelLoaderDetails.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
+
+#include "Styling/ISlateStyle.h"
 
 IPLATEAUEditorModule& IPLATEAUEditorModule::Get() {
     return FModuleManager::LoadModuleChecked<IPLATEAUEditorModule>("PLATEAUEditor");
@@ -17,9 +20,11 @@ bool IPLATEAUEditorModule::IsAvailable() {
 class FPLATEAUEditorModule : public IPLATEAUEditorModule {
 public:
     virtual void StartupModule() override {
+        Style = MakeShareable(new FPLATEAUEditorStyle());
+        Window = MakeShareable(new FPLATEAUWindow(Style.ToSharedRef()));
         ExtentEditor = MakeShareable(new FPLATEAUExtentEditor());
 
-        Window.Startup();
+        Window->Startup();
 
         FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
         PropertyModule.RegisterCustomClassLayout(
@@ -31,7 +36,7 @@ public:
     }
 
     virtual void ShutdownModule() override {
-        Window.Shutdown();
+        Window->Shutdown();
 
         FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
         PropertyModule.UnregisterCustomPropertyTypeLayout(
@@ -47,8 +52,9 @@ public:
     }
 
 private:
-    FPLATEAUWindow Window;
+    TSharedPtr<FPLATEAUWindow> Window;
     TSharedPtr<FPLATEAUExtentEditor> ExtentEditor;
+    TSharedPtr<FPLATEAUEditorStyle> Style;
 
     void RegisterExtentEditorTabSpawner() const {
         const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();

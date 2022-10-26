@@ -10,7 +10,7 @@
 class PLATEAUEDITOR_API FPLATEAUWindow
 {
 public:
-    FPLATEAUWindow();
+    FPLATEAUWindow(const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
 
     void Startup();
     void Shutdown();
@@ -19,6 +19,7 @@ private:
     TSharedPtr<FExtender> Extender;
     TWeakPtr<SWindow> RootWindow;
     TWeakPtr<SWindow> MyWindow;
+    TSharedPtr<class FPLATEAUEditorStyle> Style;
 
     void Show();
 
