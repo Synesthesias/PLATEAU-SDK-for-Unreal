@@ -10,7 +10,6 @@
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
-    struct FFeatureSettings;
 }
 
 /**
@@ -29,7 +28,6 @@ public:
 private:
     FString SourcePath;
     int ZoneID = 9;
-    TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings> FeatureSettingsMap;
 
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
@@ -37,12 +35,6 @@ private:
     TSharedPtr<IDetailsView> BuildingImportSettingsView = nullptr;
     TSharedPtr<IDetailsView> RoadImportSettingsView = nullptr;
 
-    /** The current arguments. */
-    //TStrongObjectPtr<class UPLATEAUFeatureImportSettings> BuildingImportSettings = nullptr;
-
-
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
-    TSharedRef<SVerticalBox> CreateFeatureSettingsPanel(plateau::udx::PredefinedCityModelPackage Package);
-
     FReply OnBtnSelectGmlFileClicked();
 };

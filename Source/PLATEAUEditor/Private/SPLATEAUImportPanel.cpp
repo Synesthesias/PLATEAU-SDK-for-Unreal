@@ -25,14 +25,6 @@
 using namespace plateau::udx;
 
 namespace {
-    TMap<MeshGranularity, FText> GetMeshGranularityTexts() {
-        TMap<MeshGranularity, FText> Items;
-        Items.Add(MeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PerPrimaryFeatureObject", "主要地物単位"));
-        Items.Add(MeshGranularity::PerAtomicFeatureObject, LOCTEXT("PerAtomicFeatureObject", "最小地物単位"));
-        Items.Add(MeshGranularity::PerCityModelArea, LOCTEXT("PerCityModelArea", "都市モデル地域単位"));
-        return Items;
-    }
-
     TMap<int, FText> GetZoneIDTexts() {
         TMap<int, FText> Items;
         Items.Add(1, LOCTEXT("Zone01", "01: 長崎, 鹿児島(南西部)"));
@@ -310,10 +302,14 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 }
                 Loader->Extent = ExtentOpt.GetValue();
 
-                UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
+                // TODO: 無しでも動くように変更
+                Loader->Extent.Min.Height = -100000;
+                Loader->Extent.Max.Height = 100000;
 
-                // 設定マップを登録,ロード処理実行
-                Loader->SetFeatureSettingsMap(FeatureSettingsMap);
+                //UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
+
+                // 設定を登録,ロード処理実行
+                Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
                 Loader->Load();
 
                 return FReply::Handled();
@@ -369,178 +365,6 @@ TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
         ];
 }
 
-TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateFeatureSettingsPanel(PredefinedCityModelPackage Package) {
-    const auto PackageInfo = plateau::udx::CityModelPackageInfo::getPredefined(static_cast<plateau::udx::PredefinedCityModelPackage>(Package));
-
-    FeatureSettingsMap.FindOrAdd(Package, plateau::udx::FFeatureSettings());
-    return SNew(SVerticalBox).Visibility_Lambda(
-        [this, Package]() {
-            //for (int i = 0; i < Features.Num(); ++i) {
-            //    if (ExistFeatures[i]) {
-            //        if (SelectFeatures[i] && Package == Features[i]) {
-            //            return EVisibility::Visible;
-            //        }
-            //    }
-            //}
-            //return EVisibility::Collapsed;
-            // TODO: 存在する地物だけ表示
-            return EVisibility::Visible;
-        })
-
-        // 地物名
-            + SVerticalBox::Slot()
-            .AutoHeight()
-            .Padding(0, 10, 0, 0)
-            [SNew(STextBlock)
-            .Text(GetDisplayName(Package))
-            ]
-
-        + SVerticalBox::Slot()
-            .AutoHeight()
-            .Padding(FMargin(0, 0, 0, 0))[
-                SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    [
-                        SNew(STextBlock)
-                        .Text(LOCTEXT("ToggleImport", "インポートする"))
-                    ]
-                + SHorizontalBox::Slot()
-                    [
-                        SNew(SCheckBox)
-                        .IsChecked(true)
-                    .OnCheckStateChanged_Lambda(
-                        [this, Package](ECheckBoxState State) {
-                            FeatureSettingsMap[Package].IncludeAppearance = State != ECheckBoxState::Unchecked;
-                        })
-                    ]
-            ]
-
-            + SVerticalBox::Slot()
-                .AutoHeight()
-                .Padding(FMargin(0, 0, 0, 0))[
-                    SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        [
-                            SNew(STextBlock)
-                            .Text(LOCTEXT("IncludeAppearance", "テクスチャをインポートする"))
-                        ]
-                    + SHorizontalBox::Slot()
-                        [
-                            SNew(SCheckBox)
-                            .IsChecked(FeatureSettingsMap[Package].IncludeAppearance)
-                        .OnCheckStateChanged_Lambda(
-                            [this, Package](ECheckBoxState State) {
-                                FeatureSettingsMap[Package].IncludeAppearance = State != ECheckBoxState::Unchecked;
-                            })
-                        ]
-                ]
-
-                + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(FMargin(0, 0, 0, 0))[
-                        SNew(SHorizontalBox)
-                            + SHorizontalBox::Slot()
-                            [
-                                SNew(STextBlock)
-                                .Text(LOCTEXT("GenerateCollider", "Mesh Colliderをセットする"))
-                            ]
-                        + SHorizontalBox::Slot()
-                            [
-                                SNew(SCheckBox)
-                                .IsChecked(FeatureSettingsMap[Package].GenerateCollider)
-                            .OnCheckStateChanged_Lambda(
-                                [this, Package](ECheckBoxState State) {
-                                    FeatureSettingsMap[Package].GenerateCollider = State != ECheckBoxState::Unchecked;
-                                })
-                            ]
-                    ]
-
-                    + SVerticalBox::Slot()
-                        .AutoHeight()
-                        .Padding(20, 0, 0, 0)
-                        [SNew(SVerticalBox)
-                        // 最小LODスライダー
-                        + SVerticalBox::Slot()
-                        .AutoHeight()
-                        .Padding(0, 0, 0, 0)
-                        [SNew(SSlider)
-                        .MaxValue(3)
-                        .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
-                        .StepSize(1)
-                        .MouseUsesStep(true)
-                        .Value(FeatureSettingsMap[Package].MinLod)
-                        .OnValueChanged_Lambda(
-                            [this, Package](int Value) {
-                                FeatureSettingsMap[Package].MinLod = Value;
-                            })]
-
-                    // 最大LODスライダー
-                    + SVerticalBox::Slot()
-                        .AutoHeight()
-                        .Padding(0, 0, 0, 0)
-                        [SNew(SSlider)
-                        .MaxValue(3)
-                        .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
-                        .StepSize(1)
-                        .MouseUsesStep(true)
-                        .Value(FeatureSettingsMap[Package].MaxLod)
-                        .OnValueChanged_Lambda(
-                            [this, Package](int Value) {
-                                FeatureSettingsMap[Package].MaxLod = Value;
-                            })]
-
-                    + SVerticalBox::Slot()
-                        .AutoHeight()
-                        .Padding(0, 5, 0, 0)
-                        [
-                            SNew(STextBlock)
-                            .Text_Lambda(
-                                [this, Package]() {
-                                    return  FText::Format(
-                                        LOCTEXT("LODRangeFormat", "最小LOD: {0}, 最大LOD: {1}"),
-                                        FText::AsNumber(FeatureSettingsMap[Package].MinLod),
-                                        FText::AsNumber(FeatureSettingsMap[Package].MaxLod));
-                                })
-                        ]
-
-                    // モデル結合
-                    + SVerticalBox::Slot()
-                        .AutoHeight()
-                        .Padding(0, 0, 0, 10)
-                        [SNew(SHorizontalBox)
-                        + SHorizontalBox::Slot()
-                        [SNew(STextBlock)
-                        .Text(LOCTEXT("MeshGranularity", "モデル結合"))]
-                    + SHorizontalBox::Slot()
-                        [SNew(SComboButton)
-                        .OnGetMenuContent_Lambda(
-                            [this, Package]() {
-                                FMenuBuilder MenuBuilder(true, nullptr);
-                                const auto Items = GetMeshGranularityTexts();
-                                for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
-                                    FText ItemText = ItemIter->Value;
-                                    MeshGranularity Gran = ItemIter->Key;
-                                    FUIAction ItemAction(FExecuteAction::CreateLambda(
-                                        [this, Gran, Package]() {
-                                            FeatureSettingsMap[Package].Granularity = Gran;
-                                        }));
-                                    MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
-                                }
-                                return MenuBuilder.MakeWidget();
-                            })
-                        .ContentPadding(0.0f)
-                                //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
-                                //.ForegroundColor(FSlateColor::UseForeground())
-                                .VAlign(VAlign_Center)
-                                .ButtonContent()
-                                [SNew(STextBlock).Text_Lambda(
-                                    [this, Package]() {
-                                        // TODO
-                                        return GetMeshGranularityTexts()[FeatureSettingsMap[Package].Granularity];
-                                    })]]]
-
-                        ];
-}
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 FReply SPLATEAUImportPanel::OnBtnSelectGmlFileClicked() {

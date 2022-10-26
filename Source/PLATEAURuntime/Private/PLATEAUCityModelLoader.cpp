@@ -31,46 +31,74 @@ void APLATEAUCityModelLoader::Load() {
     GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
     GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
 
-    // アクター生成
-    AActor* ModelActor = GetWorld()->SpawnActor<AActor>(FVector(0, 0, 0), FRotator(0, 0, 0));
-    CreateRootComponent(*ModelActor);
-    ModelActor->SetActorLabel("Model");
-
-    auto Result = Async(EAsyncExecution::Thread, [&] {
-        ThreadLoad(ModelActor);
-        });
+    LoadAsync();
 #endif
 }
 
-void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
-    // ファイル検索
-    const auto UdxFileCollection =
-        UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
-        ->filter(Extent.GetNativeData());
-    const auto GmlFiles = UdxFileCollection->getGmlFiles(PredefinedCityModelPackage::Building);
+void APLATEAUCityModelLoader::LoadAsync() {
+    for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
+        const auto Settings = ImportSettings->GetFeatureSettings(Package);
+        if (!Settings.bImport)
+            continue;
 
-    if (GmlFiles->size() == 0)
-        return;
-    UE_LOG(LogTemp, Log, TEXT("GmlFiles size : %zu"), GmlFiles->size());
+        // アクター生成
+        AActor* ModelActor = GetWorld()->SpawnActor<AActor>(FVector(0, 0, 0), FRotator(0, 0, 0));
+        CreateRootComponent(*ModelActor);
 
-    // 都市モデルパース、ポリゴンメッシュ抽出、ノード走査 各ファイルに対して行う
-    citygml::ParserParams ParserParams;
-    ParserParams.tesselate = true;
-    for (int i = 0; i < GmlFiles->size(); i++)
-    {
-        const auto CityModel = citygml::load(GmlFiles->at(i), ParserParams);
-        UE_LOG(LogTemp, Log, TEXT("CityModel ID : %s"), CityModel->getId().c_str());
+        // キャプチャ用ローカル変数
+        const auto& GeoReferenceData = GeoReference.GetData();
         const MeshExtractOptions MeshExtractOptions(
-            GeoReference.GetData().getReferencePoint(), CoordinateSystem::NWU,
-            MeshGranularity::PerPrimaryFeatureObject,
-            3, 0, true,
-            1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
-        const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
-        UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
-        FPLATEAUMeshLoader MeshLoader;
-        MeshLoader.CreateMesh(ModelActor, Model);
-    }
+            GeoReferenceData.getReferencePoint(), CoordinateSystem::NWU,
+            UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity),
+            Settings.MaxLod, Settings.MinLod, Settings.bImportTexture,
+            10, 0.01, GeoReferenceData.getZoneID(), Extent.GetNativeData());
 
+        Async(EAsyncExecution::Thread,
+            [
+                Package, Source = Source,
+                ExtentData = Extent.GetNativeData(),
+                ModelActor,
+                MeshExtractOptions
+            ]{
+                // ファイル検索
+                const auto UdxFileCollection =
+                    UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
+                    ->filter(ExtentData);
+                const auto GmlFiles = UdxFileCollection->getGmlFiles(Package);
+
+                // 都市モデルパース、ポリゴンメッシュ抽出、ノード走査 各ファイルに対して行う
+                citygml::ParserParams ParserParams;
+                ParserParams.tesselate = true;
+
+                for (const auto& GmlFile : *GmlFiles) {
+                    // TODO: fetch
+                    // UdxFileCollection->fetch(TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU")), GmlFileInfo(GmlFile));
+
+                    std::shared_ptr<const citygml::CityModel> CityModel;
+                    try {
+                        CityModel = citygml::load(GmlFile, ParserParams);
+                    }
+                    catch (...) {
+                        //TODO: Error Handling
+                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), GmlFile.c_str());
+
+                        continue;
+                    }
+                    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+
+                    const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [&ModelActor, &GmlFile] {
+                            // アクター名設定
+                            FString PathPart, GmlFileNameWithoutExtension, Extension;
+                            FPaths::Split(UTF8_TO_TCHAR(GmlFile.c_str()), PathPart, GmlFileNameWithoutExtension, Extension);
+                            ModelActor->SetActorLabel(GmlFileNameWithoutExtension);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    Task->Wait();
+
+                    FPLATEAUMeshLoader().CreateMesh(ModelActor, Model);
+                }
+            });
+    }
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {
@@ -95,9 +123,4 @@ void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) {
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
     GEngine->BroadcastLevelActorListChanged();
-}
-
-void APLATEAUCityModelLoader::SetFeatureSettingsMap(TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings> Map)
-{
-    FeatureSettingsMap = Map;
 }
