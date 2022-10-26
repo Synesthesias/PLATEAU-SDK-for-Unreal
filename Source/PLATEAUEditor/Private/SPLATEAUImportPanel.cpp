@@ -312,8 +312,8 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
                 UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
 
-                // TODO: その他設定の保存
-
+                // 設定マップを登録,ロード処理実行
+                Loader->SetFeatureSettingsMap(FeatureSettingsMap);
                 Loader->Load();
 
                 return FReply::Handled();
@@ -372,7 +372,7 @@ TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
 TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateFeatureSettingsPanel(PredefinedCityModelPackage Package) {
     const auto PackageInfo = plateau::udx::CityModelPackageInfo::getPredefined(static_cast<plateau::udx::PredefinedCityModelPackage>(Package));
 
-    FeatureSettingsMap.FindOrAdd(Package, FFeatureSettings());
+    FeatureSettingsMap.FindOrAdd(Package, plateau::udx::FFeatureSettings());
     return SNew(SVerticalBox).Visibility_Lambda(
         [this, Package]() {
             //for (int i = 0; i < Features.Num(); ++i) {

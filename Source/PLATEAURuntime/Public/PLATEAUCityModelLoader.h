@@ -16,6 +16,7 @@ namespace citygml {
 }
 
 class FPLATEAUMeshLoader;
+enum class MeshGranularity;
 
 UENUM(BlueprintType)
 enum class EBuildingTypeMask : uint8 {
@@ -28,6 +29,18 @@ enum class EBuildingTypeMask : uint8 {
     OuterFloorSurface,
     OuterCeilingSurface
 };
+
+namespace plateau::udx {
+    enum class PredefinedCityModelPackage : uint32_t;
+
+    struct FFeatureSettings {
+        int MinLod;
+        int MaxLod;
+        bool IncludeAppearance;
+        MeshGranularity Granularity;
+        bool GenerateCollider;
+    };
+}
 
 UCLASS()
 class PLATEAURUNTIME_API APLATEAUCityModelLoader : public AActor {
@@ -49,6 +62,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Load();
 
+    void SetFeatureSettingsMap(TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings>);
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -58,6 +73,8 @@ public:
     virtual void Tick(float DeltaTime) override;
 
 private:
+    TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings> FeatureSettingsMap;
+
     TMap<int, FPLATEAUCityModel> CityModelCache;
     void CreateRootComponent(AActor& Actor);
     void ThreadLoad(AActor* ModelActor);

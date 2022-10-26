@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "PLATEAUCityModelLoader.h"
@@ -22,13 +22,6 @@ APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
 void APLATEAUCityModelLoader::Load() {
 #if WITH_EDITOR
     UE_LOG(LogTemp, Log, TEXT("-----Load Start-----"));
-    // 仮の範囲情報(53392642の地域メッシュ)
-    Extent.Min.Latitude = 35.5335751;
-    Extent.Min.Longitude = 139.7755041;
-    Extent.Min.Height = -10000;
-    Extent.Max.Latitude = 35.54136964;
-    Extent.Max.Longitude = 139.78712557;
-    Extent.Max.Height = 10000;
 
     // GeoReferenceを選択範囲の中心に更新
     const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
@@ -60,25 +53,24 @@ void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
         return;
     UE_LOG(LogTemp, Log, TEXT("GmlFiles size : %zu"), GmlFiles->size());
 
-    // 都市モデルパース
+    // 都市モデルパース、ポリゴンメッシュ抽出、ノード走査 各ファイルに対して行う
     citygml::ParserParams ParserParams;
     ParserParams.tesselate = true;
-    const auto CityModel = citygml::load(*GmlFiles->begin(), ParserParams);
-    UE_LOG(LogTemp, Log, TEXT("CityModel ID : %s"), CityModel->getId().c_str());
+    for (int i = 0; i < GmlFiles->size(); i++)
+    {
+        const auto CityModel = citygml::load(GmlFiles->at(i), ParserParams);
+        UE_LOG(LogTemp, Log, TEXT("CityModel ID : %s"), CityModel->getId().c_str());
+        const MeshExtractOptions MeshExtractOptions(
+            GeoReference.GetData().getReferencePoint(), CoordinateSystem::NWU,
+            MeshGranularity::PerPrimaryFeatureObject,
+            3, 0, true,
+            1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
+        const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+        UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
+        FPLATEAUMeshLoader MeshLoader;
+        MeshLoader.CreateMesh(ModelActor, Model);
+    }
 
-    // ポリゴンメッシュ抽出
-    const MeshExtractOptions MeshExtractOptions(
-        GeoReference.GetData().getReferencePoint(), CoordinateSystem::NWU,
-        MeshGranularity::PerPrimaryFeatureObject,
-        3, 0, true,
-        1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
-    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
-    UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
-
-    //ノード走査開始
-
-    FPLATEAUMeshLoader MeshLoader;
-    MeshLoader.CreateMesh(ModelActor, Model);
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {
@@ -103,4 +95,9 @@ void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) {
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
     GEngine->BroadcastLevelActorListChanged();
+}
+
+void APLATEAUCityModelLoader::SetFeatureSettingsMap(TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings> Map)
+{
+    FeatureSettingsMap = Map;
 }

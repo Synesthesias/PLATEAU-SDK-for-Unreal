@@ -10,15 +10,8 @@
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
+    struct FFeatureSettings;
 }
-
-struct FFeatureSettings {
-    int MinLod;
-    int MaxLod;
-    bool IncludeAppearance;
-    MeshGranularity Granularity;
-    bool GenerateCollider;
-};
 
 /**
  *
@@ -36,7 +29,7 @@ public:
 private:
     FString SourcePath;
     int ZoneID = 9;
-    TMap<plateau::udx::PredefinedCityModelPackage, FFeatureSettings> FeatureSettingsMap;
+    TMap<plateau::udx::PredefinedCityModelPackage, plateau::udx::FFeatureSettings> FeatureSettingsMap;
 
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
