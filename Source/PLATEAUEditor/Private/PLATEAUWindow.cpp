@@ -11,8 +11,8 @@
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
 
-FPLATEAUWindow::FPLATEAUWindow() {
-}
+FPLATEAUWindow::FPLATEAUWindow(const TSharedRef<FPLATEAUEditorStyle>& InStyle)
+    : Style(InStyle) {}
 
 void FPLATEAUWindow::Startup() {
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(LEVEL_EDITOR_NAME);
@@ -81,7 +81,7 @@ void FPLATEAUWindow::Show() {
         Window->SetContent(
             SNew(SScrollBox)
             + SScrollBox::Slot()[
-                SNew(SPLATEAUImportPanel)
+                SNew(SPLATEAUImportPanel, Style.ToSharedRef())
             ]
         );
         MyWindow = TWeakPtr<SWindow>(Window);

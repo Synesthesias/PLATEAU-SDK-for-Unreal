@@ -4,15 +4,18 @@
 #include "SPLATEAUImportPanel.h"
 
 #include <plateau/io/mesh_convert_options.h>
+#include <plateau/udx/city_model_package.h>
 
 #include "PLATEAUCityModelLoader.h"
-
-#include <plateau/udx/city_model_package.h>
+#include "PLATEAUImportSettings.h"
 
 #include "AssetSelection.h"
 #include "DesktopPlatformModule.h"
 #include "PLATEAUEditor.h"
+#include "PLATEAUEditorStyle.h"
+#include "PLATEAUFeatureImportSettingsDetails.h"
 #include "Widgets/Input/SSlider.h"
+#include "Widgets/Layout/SHeader.h"
 #include "SlateOptMacros.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
@@ -71,27 +74,115 @@ namespace {
 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SPLATEAUImportPanel::Construct(const FArguments& InArgs) {
+void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<FPLATEAUEditorStyle>& InStyle) {
     OwnerWindow = InArgs._OwnerWindow;
+    Style = InStyle;
 
+    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+    FDetailsViewArgs DetailsViewArgs;
+    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+    DetailsViewArgs.bAllowSearch = false;
+    
+    BuildingImportSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+    BuildingImportSettingsView->RegisterInstancedCustomPropertyLayout(
+        UPLATEAUImportSettings::StaticClass(),
+        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUFeatureSettingsDetails::MakeInstance));
+    BuildingImportSettingsView->SetObject(GetMutableDefault<UPLATEAUImportSettings>());
+    
     ChildSlot
         [SNew(SVerticalBox)
-
-        // 都市の追加
+        // ロゴ
         + SVerticalBox::Slot()
+        .AutoHeight()
+        .HAlign(HAlign_Fill)
+        .VAlign(VAlign_Center)
+        [SNew(SBorder)
+        .BorderImage(Style->GetBrush(TEXT("PLATEAUEditor.LogoBackground")))
+        .VAlign(VAlign_Fill)
+        .HAlign(HAlign_Center)
+        [SNew(SImage)
+        .Image(Style->GetBrush("PLATEAUEditor.LogoImage"))
+        ]]
+
+    // モデルデータのインポート(ヘッダー)
+    + SVerticalBox::Slot()
+        .Padding(FMargin(0, 20.5, 0, 5))
+        .AutoHeight()
+        [SNew(SHeader)
+        .HAlign(HAlign_Center)
+        .Content()
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading1")
+        .Text(LOCTEXT("Import ModelData", "モデルデータのインポートを行います。"))]]
+
+    // 都市の追加(ヘッダー)
+    +SVerticalBox::Slot()
+        .Padding(FMargin(0, 10, 0, 10))
+        .AutoHeight()
+        [SNew(SHeader)
+        .Content()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [SNew(SImage)
+        .Image(Style->GetBrush("PLATEAUEditor.BuildingIconImage"))] +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading2")
+        .Text(LOCTEXT("Add City", "都市の追加"))]]]
+
+    // 都市の追加
+    + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(0, 0, 0, 15))
         [CreateSourcePathSelectPanel()]
+
+    // モデルデータの配置(ヘッダー)
+    +SVerticalBox::Slot()
+        .Padding(FMargin(0, 15, 0, 5))
+        [SNew(SHeader)
+        .HAlign(HAlign_Center)
+        .Content()
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading1")
+        .Text(LOCTEXT("Place ModelData", "モデルデータの配置を行います。"))]]
+
+    // 基準座標系の選択(ヘッダー)
+    + SVerticalBox::Slot()
+        .Padding(FMargin(0, 10, 0, 10))
+        .AutoHeight()
+        [SNew(SHeader)
+        .Content()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [SNew(SImage)
+        .Image(Style->GetBrush("PLATEAUEditor.Section1IconImage"))] +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading2")
+        .Text(LOCTEXT("Select ReferenceCoordinate", "基準座標系の選択"))]]]
 
     // 基準座標系の選択
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(0, 0, 0, 10)
-        [SNew(SHorizontalBox)
-        + SHorizontalBox::Slot()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .Padding(19, 0, 0, 0)
         [SNew(STextBlock)
-        .Text(LOCTEXT("ReferenceCoordinate", "基準座標系の選択"))]
-    + SHorizontalBox::Slot()
+        .Text(LOCTEXT("ReferenceCoordinate", "基準座標系"))] +
+        SHorizontalBox::Slot()
+        .Padding(0, 0, 19, 0)
         [SNew(SComboButton)
         .OnGetMenuContent_Lambda(
             [this]() {
@@ -119,12 +210,34 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs) {
                         return GetZoneIDTexts()[ZoneID];
                     })]]]
 
+    // マップ範囲選択(ヘッダー)
+    + SVerticalBox::Slot()
+        .Padding(FMargin(0, 10, 0, 10))
+        .AutoHeight()
+        .VAlign(VAlign_Center)
+        [SNew(SHeader)
+        .Content()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [SNew(SImage)
+        .Image(Style->GetBrush("PLATEAUEditor.Section2IconImage"))] +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading2")
+        .Text(LOCTEXT("Edit Map Extent", "マップ範囲選択"))]]]
+
     // マップ範囲選択
     + SVerticalBox::Slot()
         .AutoHeight()
-        .Padding(0, 0, 0, 10)
+        .Padding(84, 0, 86, 10)
         [SNew(SButton)
         .VAlign(VAlign_Center)
+        .HAlign(HAlign_Center)
         .ForegroundColor(FColor::White)
         .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
         .OnClicked_Lambda(
@@ -144,63 +257,41 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs) {
         .Content()
                 [SNew(STextBlock)
                 .Justification(ETextJustify::Center)
-                .Margin(FMargin(0, 5, 0, 5))
+                .Margin(FMargin(80, 14, 80, 14))
                 .Text(LOCTEXT("Edit Extent Button", "範囲選択"))
                 ]
         ]
 
+    // 地物別設定(ヘッダー)
+    + SVerticalBox::Slot()
+        .Padding(FMargin(0, 10, 0, 10))
+        .AutoHeight()
+        [SNew(SHeader)
+        .Content()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [SNew(SImage)
+        .Image(Style->GetBrush("PLATEAUEditor.Section3IconImage"))] +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
+        [SNew(STextBlock)
+        .TextStyle(Style, "PLATEAUEditor.Heading2")
+        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))]]]
+
     // 地物別設定
     + SVerticalBox::Slot()
         .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SEditableTextBox)
-            .Padding(FMargin(3, 3, 0, 3))
-        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))
-        .IsReadOnly(true)
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
-
-    + SVerticalBox::Slot()
-        .AutoHeight()
         .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Building)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Road)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Relief)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::UrbanPlanningDecision)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::LandUse)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::CityFurniture)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Vegetation)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::DisasterRisk)]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(0, 0, 0, 0)
-        [CreateFeatureSettingsPanel(PredefinedCityModelPackage::Unknown)]
+        [BuildingImportSettingsView.ToSharedRef()]
 
     // モデルをインポート
     + SVerticalBox::Slot()
-        .Padding(FMargin(20, 5, 20, 20))
+        .AutoHeight()
+        .Padding(FMargin(84, 5, 86, 20))
         [SNew(SButton)
         .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
@@ -364,91 +455,91 @@ TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateFeatureSettingsPanel(Predefi
                             ]
                     ]
 
-                + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(20, 0, 0, 0)
-                    [SNew(SVerticalBox)
-                    // 最小LODスライダー
                     + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(0, 0, 0, 0)
-                    [SNew(SSlider)
-                    .MaxValue(3)
-                    .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
-                    .StepSize(1)
-                    .MouseUsesStep(true)
-                    .Value(FeatureSettingsMap[Package].MinLod)
-                    .OnValueChanged_Lambda(
-                        [this, Package](int Value) {
-                            FeatureSettingsMap[Package].MinLod = Value;
-                        })]
+                        .AutoHeight()
+                        .Padding(20, 0, 0, 0)
+                        [SNew(SVerticalBox)
+                        // 最小LODスライダー
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .Padding(0, 0, 0, 0)
+                        [SNew(SSlider)
+                        .MaxValue(3)
+                        .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
+                        .StepSize(1)
+                        .MouseUsesStep(true)
+                        .Value(FeatureSettingsMap[Package].MinLod)
+                        .OnValueChanged_Lambda(
+                            [this, Package](int Value) {
+                                FeatureSettingsMap[Package].MinLod = Value;
+                            })]
 
-                // 最大LODスライダー
-                + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(0, 0, 0, 0)
-                    [SNew(SSlider)
-                    .MaxValue(3)
-                    .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
-                    .StepSize(1)
-                    .MouseUsesStep(true)
-                    .Value(FeatureSettingsMap[Package].MaxLod)
-                    .OnValueChanged_Lambda(
-                        [this, Package](int Value) {
-                            FeatureSettingsMap[Package].MaxLod = Value;
-                        })]
+                    // 最大LODスライダー
+                    + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .Padding(0, 0, 0, 0)
+                        [SNew(SSlider)
+                        .MaxValue(3)
+                        .MinValue(Package == PredefinedCityModelPackage::Building || Package == PredefinedCityModelPackage::Unknown ? 0 : 1)
+                        .StepSize(1)
+                        .MouseUsesStep(true)
+                        .Value(FeatureSettingsMap[Package].MaxLod)
+                        .OnValueChanged_Lambda(
+                            [this, Package](int Value) {
+                                FeatureSettingsMap[Package].MaxLod = Value;
+                            })]
 
-                + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(0, 5, 0, 0)
-                    [
-                        SNew(STextBlock)
-                        .Text_Lambda(
-                            [this, Package]() {
-                                return  FText::Format(
-                                    LOCTEXT("LODRangeFormat", "最小LOD: {0}, 最大LOD: {1}"),
-                                    FText::AsNumber(FeatureSettingsMap[Package].MinLod),
-                                    FText::AsNumber(FeatureSettingsMap[Package].MaxLod));
-                            })
-                    ]
-
-                // モデル結合
-                + SVerticalBox::Slot()
-                    .AutoHeight()
-                    .Padding(0, 0, 0, 10)
-                    [SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    [SNew(STextBlock)
-                    .Text(LOCTEXT("MeshGranularity", "モデル結合"))]
-                + SHorizontalBox::Slot()
-                    [SNew(SComboButton)
-                    .OnGetMenuContent_Lambda(
-                        [this, Package]() {
-                            FMenuBuilder MenuBuilder(true, nullptr);
-                            const auto Items = GetMeshGranularityTexts();
-                            for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
-                                FText ItemText = ItemIter->Value;
-                                MeshGranularity Gran = ItemIter->Key;
-                                FUIAction ItemAction(FExecuteAction::CreateLambda(
-                                    [this, Gran, Package]() {
-                                        FeatureSettingsMap[Package].Granularity = Gran;
-                                    }));
-                                MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
-                            }
-                            return MenuBuilder.MakeWidget();
-                        })
-                    .ContentPadding(0.0f)
-                            //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
-                            //.ForegroundColor(FSlateColor::UseForeground())
-                            .VAlign(VAlign_Center)
-                            .ButtonContent()
-                            [SNew(STextBlock).Text_Lambda(
+                    + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .Padding(0, 5, 0, 0)
+                        [
+                            SNew(STextBlock)
+                            .Text_Lambda(
                                 [this, Package]() {
-                                    // TODO
-                                    return GetMeshGranularityTexts()[FeatureSettingsMap[Package].Granularity];
-                                })]]]
+                                    return  FText::Format(
+                                        LOCTEXT("LODRangeFormat", "最小LOD: {0}, 最大LOD: {1}"),
+                                        FText::AsNumber(FeatureSettingsMap[Package].MinLod),
+                                        FText::AsNumber(FeatureSettingsMap[Package].MaxLod));
+                                })
+                        ]
 
-                    ];
+                    // モデル結合
+                    + SVerticalBox::Slot()
+                        .AutoHeight()
+                        .Padding(0, 0, 0, 10)
+                        [SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        [SNew(STextBlock)
+                        .Text(LOCTEXT("MeshGranularity", "モデル結合"))]
+                    + SHorizontalBox::Slot()
+                        [SNew(SComboButton)
+                        .OnGetMenuContent_Lambda(
+                            [this, Package]() {
+                                FMenuBuilder MenuBuilder(true, nullptr);
+                                const auto Items = GetMeshGranularityTexts();
+                                for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
+                                    FText ItemText = ItemIter->Value;
+                                    MeshGranularity Gran = ItemIter->Key;
+                                    FUIAction ItemAction(FExecuteAction::CreateLambda(
+                                        [this, Gran, Package]() {
+                                            FeatureSettingsMap[Package].Granularity = Gran;
+                                        }));
+                                    MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                                }
+                                return MenuBuilder.MakeWidget();
+                            })
+                        .ContentPadding(0.0f)
+                                //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
+                                //.ForegroundColor(FSlateColor::UseForeground())
+                                .VAlign(VAlign_Center)
+                                .ButtonContent()
+                                [SNew(STextBlock).Text_Lambda(
+                                    [this, Package]() {
+                                        // TODO
+                                        return GetMeshGranularityTexts()[FeatureSettingsMap[Package].Granularity];
+                                    })]]]
+
+                        ];
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
