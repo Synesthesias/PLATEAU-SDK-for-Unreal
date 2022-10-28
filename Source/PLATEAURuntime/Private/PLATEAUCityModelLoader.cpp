@@ -3,6 +3,7 @@
 
 #include "PLATEAUCityModelLoader.h"
 
+#include "PLATEAUInstancedCityModel.h"
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "plateau/polygon_mesh/mesh_extract_options.h"
@@ -36,14 +37,16 @@ void APLATEAUCityModelLoader::Load() {
 }
 
 void APLATEAUCityModelLoader::LoadAsync() {
+    // アクター生成
+    APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
+    CreateRootComponent(*ModelActor);
+    ModelActor->SetActorLabel(FPaths::GetCleanFilename(Source));
+    ModelActor->GeoReference = GeoReference;
+
     for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
         const auto Settings = ImportSettings->GetFeatureSettings(Package);
         if (!Settings.bImport)
             continue;
-
-        // アクター生成
-        AActor* ModelActor = GetWorld()->SpawnActor<AActor>(FVector(0, 0, 0), FRotator(0, 0, 0));
-        CreateRootComponent(*ModelActor);
 
         // キャプチャ用ローカル変数
         const auto& GeoReferenceData = GeoReference.GetData();
@@ -86,16 +89,28 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     }
                     const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
 
+                    USceneComponent* GmlRootComponent;
                     const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-                        [&ModelActor, &GmlFile] {
-                            // アクター名設定
-                            FString PathPart, GmlFileNameWithoutExtension, Extension;
-                            FPaths::Split(UTF8_TO_TCHAR(GmlFile.c_str()), PathPart, GmlFileNameWithoutExtension, Extension);
-                            ModelActor->SetActorLabel(GmlFileNameWithoutExtension);
-                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                        [&GmlRootComponent, &ModelActor, &GmlFile] {
+                            GmlRootComponent = NewObject<USceneComponent>(ModelActor, NAME_None);
+                            // コンポーネント名設定(拡張子無しgml名)
+                            const auto DesiredName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(GmlFile.c_str()));
+                            FString NewUniqueName = DesiredName;
+                            if (!GmlRootComponent->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                                NewUniqueName = MakeUniqueObjectName(ModelActor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                            }
+                            GmlRootComponent->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
+                            check(GmlRootComponent != nullptr);
+                            GmlRootComponent->Mobility = EComponentMobility::Static;
+                            ModelActor->AddInstanceComponent(GmlRootComponent);
+                            GmlRootComponent->RegisterComponent();
+                            GmlRootComponent->AttachToComponent(ModelActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
                     Task->Wait();
 
-                    FPLATEAUMeshLoader().CreateMesh(ModelActor, Model);
+                    FPLATEAUMeshLoader().CreateMesh(ModelActor, GmlRootComponent, Model);
                 }
             });
     }

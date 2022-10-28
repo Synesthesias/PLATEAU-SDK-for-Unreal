@@ -8,11 +8,29 @@
 #include "StaticMeshResources.h"
 #include "ImageUtils.h"
 
-void FPLATEAUMeshLoader::CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData) {
-    auto Result = Async(EAsyncExecution::Thread, [=] {
-        for (int i = 0; i < ModelData->getRootNodeCount(); i++) {
-            LoadNodes_InModel(ModelActor->GetRootComponent(), &ModelData->getRootNodeAt(i), *ModelActor);
+namespace {
+    void ComputeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices) {
+        for (int i = 0; i < Indices.Num(); i += 3) {
+            //法線計算
+            FStaticMeshBuildVertex& V0 = Vertices[Indices[i]];
+            FStaticMeshBuildVertex& V1 = Vertices[Indices[i + 1]];
+            FStaticMeshBuildVertex& V2 = Vertices[Indices[i + 2]];
+            FVector3f V01 = V1.Position - V0.Position;
+            FVector3f V02 = V2.Position - V0.Position;
+            FVector3f Normal = FVector3f::CrossProduct(V01, V02);
+            V0.TangentX = V1.TangentX = V2.TangentX = FVector3f(0.0f);
+            V0.TangentY = V1.TangentY = V2.TangentY = FVector3f(0.0f);
+            V0.TangentZ = V1.TangentZ = V2.TangentZ = Normal.GetSafeNormal();
         }
+    }
+}
+
+void FPLATEAUMeshLoader::CreateMesh(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> ModelData) {
+    auto Result = Async(EAsyncExecution::Thread,
+        [=] {
+            for (int i = 0; i < ModelData->getRootNodeCount(); i++) {
+                LoadNodes_InModel(ParentComponent, &ModelData->getRootNodeAt(i), *ModelActor);
+            }
         });
 }
 
@@ -22,7 +40,14 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, con
         //SceneComponentを付与
         FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&] {
-                Comp = NewObject<USceneComponent>(&Actor, FName(Node->getName().c_str()));
+                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
+                const auto DesiredName = UTF8_TO_TCHAR(Node->getName().c_str());
+                FString NewUniqueName = DesiredName;
+                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                }
+                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
                 check(Comp != nullptr);
                 Comp->Mobility = EComponentMobility::Static;
                 Actor.AddInstanceComponent(Comp);
@@ -61,13 +86,20 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, con
             Actor, *ParentComponent, Indices, VertArr,
             CompName, SubmeshTextures, Node->getMesh()->getSubMeshes(), UVs);
     }
+
+    TArray<TFuture<void>> Results;
     for (int i = 0; i < Node->getChildCount(); i++) {
         const auto& TargetNode = Node->getChildAt(i);
 
-        auto Result3 = Async(EAsyncExecution::Thread,
+        // TODO: NodeのLifetimeへの依存解消
+        Results.Add(Async(EAsyncExecution::Thread,
             [this, Comp, &TargetNode, &Actor] {
                 LoadNodes_InModel(Comp, &TargetNode, Actor);
-            });
+            }));
+    }
+
+    for (const auto& Result : Results) {
+        Result.Wait();
     }
 }
 
@@ -86,7 +118,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 
     // コンポーネント作成
     UStaticMeshComponent* ComponentRef = nullptr;
-    FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+    const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
         const auto Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
         Component->Mobility = EComponentMobility::Static;
         Component->bVisualizeComponent = true;
@@ -95,8 +127,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         const auto StaticMesh = NewObject<UStaticMesh>(Component, FName(Name));
         Component->SetStaticMesh(StaticMesh);
         SetRenderData(StaticMesh, RenderData);
-        StaticMesh->SetFlags(
-            RF_Transient | RF_DuplicateTransient | RF_TextExportTransient);
+
+        // TODO: 適切なフラグの設定
+        // https://docs.unrealengine.com/4.26/ja/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Creation/
+        //StaticMesh->SetFlags();
 
         for (const auto& Texture : SubmeshTextures) {
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
@@ -159,7 +193,7 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(
     for (int i = 0; i < StaticMeshBuildVertices.Num(); ++i) {
         auto& Vertex = StaticMeshBuildVertices[i];
         Vertex.Position = FVector3f(VerticesArray[i]);
-        // UEだと恐らく原点が画像左上
+        // UEだと恐らくUV原点が画像左上
         Vertex.UVs[0] = FVector2f(UV1[i].x, 1.0f - UV1[i].y);
         Vertex.UVs[1] = FVector2f(UV2[i].x, UV2[i].y);
         Vertex.UVs[2] = FVector2f(UV3[i].x, UV3[i].y);
@@ -177,9 +211,8 @@ TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(
     RenderData->Bounds.Origin = (MinPosition + MaxPosition) / 2.0;
     RenderData->Bounds.BoxExtent = MaxPosition - MinPosition;
 
-    computeFlatNormals(indices, StaticMeshBuildVertices);
+    ComputeFlatNormals(indices, StaticMeshBuildVertices);
     LODResources.VertexBuffers.PositionVertexBuffer.Init(StaticMeshBuildVertices, false);
-    FColorVertexBuffer& ColorVertexBuffer = LODResources.VertexBuffers.ColorVertexBuffer;
     LODResources.VertexBuffers.StaticMeshVertexBuffer.Init(StaticMeshBuildVertices, 1, false);
     for (int i = 2; i < indices.Num(); i += 3) {
         std::swap(indices[i - 2], indices[i]);
@@ -245,23 +278,6 @@ void FPLATEAUMeshLoader::SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStat
 #else // UE5
     StaticMesh->SetRenderData(std::move(RenderData));
 #endif
-}
-
-void FPLATEAUMeshLoader::computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices) {
-    for (int i = 0; i < Indices.Num(); i += 3) {
-        int acc[3] = { Indices[i],Indices[i + 1],Indices[i + 2] };
-
-        //法線計算
-        FStaticMeshBuildVertex& v0 = Vertices[acc[0]];
-        FStaticMeshBuildVertex& v1 = Vertices[acc[1]];
-        FStaticMeshBuildVertex& v2 = Vertices[acc[2]];
-        FVector3f v01 = v1.Position - v0.Position;
-        FVector3f v02 = v2.Position - v0.Position;
-        FVector3f normal = FVector3f::CrossProduct(v01, v02);
-        v0.TangentX = v1.TangentX = v2.TangentX = FVector3f(0.0f);
-        v0.TangentY = v1.TangentY = v2.TangentY = FVector3f(0.0f);
-        v0.TangentZ = v1.TangentZ = v2.TangentZ = normal.GetSafeNormal();
-    }
 }
 
 UTexture2D* FPLATEAUMeshLoader::LoadTextureFromPath(const FString& Path) {

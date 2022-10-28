@@ -12,7 +12,7 @@ namespace plateau::polygonMesh {
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
 public:
-    void CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData);
+    void CreateMesh(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> ModelData);
 
 private:
     TUniquePtr<FStaticMeshRenderData> CreateRenderData(
@@ -30,6 +30,5 @@ private:
         const TArray<UTexture2D*>& SubmeshTextures,
         const std::vector<plateau::polygonMesh::SubMesh>& SubMeshes,
         const std::vector<std::vector<TVec2f>>& UVs);
-    void computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices);
     UTexture2D* LoadTextureFromPath(const FString& Path);
 };
