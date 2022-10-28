@@ -29,6 +29,8 @@ namespace plateau::geometry {
         TVec3d getReferencePoint() const;
         int getZoneID() const;
         void setZoneID(int value);
+        float getUnitScale() const;
+        CoordinateSystem getCoordinateSystem() const;
 
     private:
         TVec3d reference_point_;

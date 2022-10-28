@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plateau/io/mesh_convert_options.h>
+#include <plateau/polygon_mesh/mesh_extract_options.h>
 
 #include "CoreMinimal.h"
 
@@ -8,9 +8,11 @@
 
 #include "PLATEAUImportSettings.generated.h"
 
-//namespace plateau::udx {
-//    enum class PredefinedCityModelPackage : uint32;
-//}
+namespace plateau {
+    namespace udx {
+        enum class PredefinedCityModelPackage : uint32;
+    }
+}
 
 UENUM(BlueprintType)
 enum class EPLATEAUMeshGranularity : uint8 {
@@ -99,17 +101,17 @@ public:
         };
     }
 
-    static MeshGranularity ConvertGranularity(EPLATEAUMeshGranularity Value) {
+    static plateau::polygonMesh::MeshGranularity ConvertGranularity(EPLATEAUMeshGranularity Value) {
         // TODO: 共通化
         switch (Value) {
         case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
-            return MeshGranularity::PerPrimaryFeatureObject;
+            return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
         case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
-            return MeshGranularity::PerAtomicFeatureObject;
+            return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
         case EPLATEAUMeshGranularity::PerCityModelArea:
-            return MeshGranularity::PerCityModelArea;
+            return plateau::polygonMesh::MeshGranularity::PerCityModelArea;
         }
 
-        return MeshGranularity::PerPrimaryFeatureObject;
+        return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
     }
 };

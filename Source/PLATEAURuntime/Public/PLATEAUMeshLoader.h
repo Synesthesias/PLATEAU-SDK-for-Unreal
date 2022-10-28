@@ -16,7 +16,7 @@ public:
 
 private:
     TUniquePtr<FStaticMeshRenderData> CreateRenderData(
-        const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray, 
+        const std::vector<unsigned>& InIndicesVector, const TArray<FVector>& VerticesArray, 
         const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3,
         const std::vector<plateau::polygonMesh::SubMesh>& SubMeshes
         );
@@ -24,7 +24,7 @@ private:
     void SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData);
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor, USceneComponent& ParentComponent,
-        const std::vector<int>& Indices,
+        const std::vector<unsigned>& Indices,
         const TArray<FVector>& Vertices,
         FString Name,
         const TArray<UTexture2D*>& SubmeshTextures,

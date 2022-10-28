@@ -79,11 +79,11 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, con
         }
 
         std::vector UVs = { Node->getMesh()->getUV1(), Node->getMesh()->getUV2(), Node->getMesh()->getUV3() };
-        const std::vector<int> Indices = Node->getMesh()->getIndices();
 
         const FString CompName = UTF8_TO_TCHAR(Node->getName().c_str());
         Comp = CreateStaticMeshComponent(
-            Actor, *ParentComponent, Indices, VertArr,
+            Actor, *ParentComponent,
+            Node->getMesh()->getIndices(), VertArr,
             CompName, SubmeshTextures, Node->getMesh()->getSubMeshes(), UVs);
     }
 
@@ -105,7 +105,7 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, con
 
 UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     AActor& Actor, USceneComponent& ParentComponent,
-    const std::vector<int>& Indices,
+    const std::vector<unsigned>& Indices,
     const TArray<FVector>& Vertices,
     FString Name,
     const TArray<UTexture2D*>& SubmeshTextures,
@@ -169,7 +169,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 }
 
 TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(
-    const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray,
+    const std::vector<unsigned>& InIndicesVector, const TArray<FVector>& VerticesArray,
     const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3,
     const std::vector<plateau::polygonMesh::SubMesh>& SubMeshes
 ) {

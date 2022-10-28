@@ -50,18 +50,24 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
         // キャプチャ用ローカル変数
         const auto& GeoReferenceData = GeoReference.GetData();
-        const MeshExtractOptions MeshExtractOptions(
-            GeoReferenceData.getReferencePoint(), CoordinateSystem::NWU,
-            UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity),
-            Settings.MaxLod, Settings.MinLod, Settings.bImportTexture,
-            10, 0.01, GeoReferenceData.getZoneID(), Extent.GetNativeData());
+        MeshExtractOptions ExtractOptions;
+        ExtractOptions.reference_point = GeoReferenceData.getReferencePoint();
+        ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::NWU;
+        ExtractOptions.coordinate_zone_id = GeoReferenceData.getZoneID();
+        ExtractOptions.mesh_granularity = UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity);
+        ExtractOptions.max_lod = Settings.MaxLod;
+        ExtractOptions.min_lod = Settings.MinLod;
+        ExtractOptions.export_appearance = Settings.bImportTexture;
+        ExtractOptions.grid_count_of_side = 10;
+        ExtractOptions.unit_scale = 0.01f;
+        ExtractOptions.extent = Extent.GetNativeData();
 
         Async(EAsyncExecution::Thread,
             [
                 Package, Source = Source,
                 ExtentData = Extent.GetNativeData(),
                 ModelActor,
-                MeshExtractOptions
+                ExtractOptions
             ]{
                 // ファイル検索
                 const auto UdxFileCollection =
@@ -87,7 +93,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                         continue;
                     }
-                    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+                    const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
 
                     USceneComponent* GmlRootComponent;
                     const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
