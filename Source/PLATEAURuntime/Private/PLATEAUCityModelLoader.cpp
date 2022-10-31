@@ -83,9 +83,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                 for (const auto& GmlFile : *GmlFiles) {
                     const auto Destination = TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU"));
-                    std::string CopiedGmlPath;
                     try {
-                        CopiedGmlPath = UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
+                         UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
                     }
                     catch (...) {
                         //TODO: Error Handling
@@ -94,16 +93,38 @@ void APLATEAUCityModelLoader::LoadAsync() {
                         continue;
                     }
 
+                    // TODO: libplateauに委譲
+                    FString RelativeGmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
+                    // 末尾に/が無いなら追加
+                    FString RootPath = Source;
+                    if (RootPath[RootPath.Len() - 1] != *TEXT("/")) {
+                        RootPath.AppendChar(*TEXT("/"));
+                    }
+
+                    if (!FPaths::MakePathRelativeTo(RelativeGmlPath, *RootPath)) {
+                        //TODO: Error Handling
+                        UE_LOG(LogTemp, Error, TEXT("Invalid source: %s"), *Source);
+                        continue;
+                    }
+                    auto CopiedGmlPath = Source;
+                    CopiedGmlPath.PathAppend(*RelativeGmlPath, RelativeGmlPath.Len());
+
                     std::shared_ptr<const citygml::CityModel> CityModel;
                     try {
-                        CityModel = citygml::load(CopiedGmlPath, ParserParams);
+                        CityModel = citygml::load(TCHAR_TO_UTF8(*CopiedGmlPath), ParserParams);
                     }
                     catch (...) {
                         //TODO: Error Handling
                         UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), GmlFile.c_str());
-
                         continue;
                     }
+
+                    if (CityModel == nullptr) {
+                        //TODO: Error Handling
+                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), GmlFile.c_str());
+                        continue;
+                    }
+
                     const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
 
                     USceneComponent* GmlRootComponent;
@@ -129,7 +150,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                     FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
                 }
-            });
+                        });
     }
 }
 

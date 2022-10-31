@@ -90,9 +90,8 @@ namespace plateau::udx {
          * \brief CityGMLファイルとその関連ファイル(テクスチャ、コードリスト)をコピーします。コピー先にすでにファイルが存在する場合はスキップします。
          * \param destination_root_path コピー先のフォルダへのパス。このパスの配下に3D都市モデルデータ製品のルートフォルダが配置されます。
          * \param gml_file コピーするCityGMLファイル
-         * \return コピーされたもしくはスキップされたファイルのリスト
          */
-        const char* fetch(const std::string& destination_root_path, const GmlFileInfo& gml_file) const;
+        void fetch(const std::string& destination_root_path, const GmlFileInfo& gml_file) const;
 
         /**
          * \brief 座標範囲で都市モデルデータをフィルタリングします。
