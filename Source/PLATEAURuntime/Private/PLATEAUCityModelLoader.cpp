@@ -83,9 +83,9 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                 for (const auto& GmlFile : *GmlFiles) {
                     const auto Destination = TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU"));
-
+                    std::string CopiedGmlPath;
                     try {
-                        UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
+                        CopiedGmlPath = UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
                     }
                     catch (...) {
                         //TODO: Error Handling
@@ -96,7 +96,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                     std::shared_ptr<const citygml::CityModel> CityModel;
                     try {
-                        CityModel = citygml::load(GmlFile, ParserParams);
+                        CityModel = citygml::load(CopiedGmlPath, ParserParams);
                     }
                     catch (...) {
                         //TODO: Error Handling

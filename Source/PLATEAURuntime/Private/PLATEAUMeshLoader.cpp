@@ -179,8 +179,8 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
         Async(EAsyncExecution::Thread,
             [=] {
-        LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
-        });
+                LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
+            });
     }
 }
 
@@ -217,13 +217,23 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
         }
 
         //テクスチャ読み込み(無ければnullptrを入れる)
-        TArray<UTexture2D*> SubmeshTextures;
+        TArray<UTexture2D*> SubMeshTextures;
         for (const auto& SubMesh : Node->getMesh()->getSubMeshes()) {
             FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
 
-            FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady(
+            const FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady(
                 [&] {
-                    SubmeshTextures.Add(LoadTextureFromPath(TexturePath));
+                    const auto Texture = LoadTextureFromPath(TexturePath);
+                    if (Texture != nullptr) {
+                        auto DesiredName = TexturePath;
+                        FPaths::MakePathRelativeTo(DesiredName, *(FPaths::ProjectContentDir() + "PLATEAU/"));
+                        FString NewUniqueName = DesiredName;
+                        if (!Texture->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                            NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                        }
+                        Texture->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+                    }
+                    SubMeshTextures.Add(Texture);
                 }, TStatId(), nullptr, ENamedThreads::GameThread);
             Result->Wait();
         }
@@ -232,7 +242,7 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
         Comp = CreateStaticMeshComponent(
             Actor, *ParentComponent,
             Node->getMesh().value(),
-            CompName, SubmeshTextures);
+            CompName, SubMeshTextures);
     }
 
     //TArray<TFuture<void>> Results;
@@ -242,8 +252,8 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
         // TODO: NodeのLifetimeへの依存解消
         //Results.Add(Async(EAsyncExecution::Thread,
         //    [this, Comp, &TargetNode, &Actor] {
-                LoadNodeRecursive(Comp, &TargetNode, Actor);
-            //}));
+        LoadNodeRecursive(Comp, &TargetNode, Actor);
+        //}));
     }
 
     //for (const auto& Result : Results) {
