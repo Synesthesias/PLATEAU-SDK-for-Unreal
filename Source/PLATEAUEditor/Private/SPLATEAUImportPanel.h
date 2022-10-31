@@ -2,23 +2,12 @@
 
 #pragma once
 
-#include <plateau/io/mesh_convert_options.h>
-
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
-#include "Styling/ISlateStyle.h"
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
 }
-
-struct FFeatureSettings {
-    int MinLod;
-    int MaxLod;
-    bool IncludeAppearance;
-    MeshGranularity Granularity;
-    bool GenerateCollider;
-};
 
 /**
  *
@@ -36,7 +25,6 @@ public:
 private:
     FString SourcePath;
     int ZoneID = 9;
-    TMap<plateau::udx::PredefinedCityModelPackage, FFeatureSettings> FeatureSettingsMap;
 
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
@@ -44,12 +32,6 @@ private:
     TSharedPtr<IDetailsView> BuildingImportSettingsView = nullptr;
     TSharedPtr<IDetailsView> RoadImportSettingsView = nullptr;
 
-    /** The current arguments. */
-    //TStrongObjectPtr<class UPLATEAUFeatureImportSettings> BuildingImportSettings = nullptr;
-
-
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
-    TSharedRef<SVerticalBox> CreateFeatureSettingsPanel(plateau::udx::PredefinedCityModelPackage Package);
-
     FReply OnBtnSelectGmlFileClicked();
 };

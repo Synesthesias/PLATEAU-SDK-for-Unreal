@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "CityGML/PLATEAUCityModel.h"
 #include "PLATEAUGeometry.h"
+#include "PLATEAUImportSettings.h"
 
 #include "PLATEAUCityModelLoader.generated.h"
 
@@ -16,6 +17,7 @@ namespace citygml {
 }
 
 class FPLATEAUMeshLoader;
+enum class MeshGranularity;
 
 UENUM(BlueprintType)
 enum class EBuildingTypeMask : uint8 {
@@ -28,6 +30,10 @@ enum class EBuildingTypeMask : uint8 {
     OuterFloorSurface,
     OuterCeilingSurface
 };
+
+namespace plateau::udx {
+    enum class PredefinedCityModelPackage : uint32_t;
+}
 
 UCLASS()
 class PLATEAURUNTIME_API APLATEAUCityModelLoader : public AActor {
@@ -45,10 +51,13 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUGeoReference GeoReference;
-    
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        UPLATEAUImportSettings* ImportSettings;
+
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Load();
-
+    
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -60,7 +69,7 @@ public:
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
     void CreateRootComponent(AActor& Actor);
-    void ThreadLoad(AActor* ModelActor);
+    void LoadAsync();
 };
 
 #undef LOCTEXT_NAMESPACE

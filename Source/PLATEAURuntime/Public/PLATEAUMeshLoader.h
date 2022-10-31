@@ -1,22 +1,26 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 
-#include "CityGML/PLATEAUCityModel.h"
 #include "PLATEAUGeometry.h"
-#include "Engine/Texture2D.h"
+
+namespace plateau::polygonMesh {
+    class Model;
+    class Node;
+    class SubMesh;
+    class Mesh;
+}
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
 public:
-    void CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData);
+    void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel);
 
 private:
-    TUniquePtr<FStaticMeshRenderData> CreateRenderData(const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray, 
-        const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3);
-    void LoadNodes_InModel(USceneComponent* ParentComponent, plateau::polygonMesh::Node* Node, AActor& Actor, int Index, int Count);
-    void SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData);
-    UStaticMeshComponent* CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<int> Indices,
-        TArray<FVector> Vertices, FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[]);
-    void computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices);
+    void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
+    UStaticMeshComponent* CreateStaticMeshComponent(
+        AActor& Actor, USceneComponent& ParentComponent,
+        const plateau::polygonMesh::Mesh& InMesh,
+        FString Name,
+        const TArray<UTexture2D*>& SubMeshTextures) const;
     UTexture2D* LoadTextureFromPath(const FString& Path);
 };

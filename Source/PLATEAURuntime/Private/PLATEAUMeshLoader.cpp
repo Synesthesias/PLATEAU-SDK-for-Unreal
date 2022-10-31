@@ -1,115 +1,316 @@
-﻿#include "PLATEAUMeshLoader.h"
+#include "PLATEAUMeshLoader.h"
 
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
-#include "plateau/polygon_mesh/mesh_extract_options.h"
 #include "citygml/citygml.h"
 
 #include "Components/StaticMeshComponent.h"
 #include "StaticMeshResources.h"
 #include "ImageUtils.h"
+#include "LandscapeDataAccess.h"
+#include "MeshElementRemappings.h"
+#include "StaticMeshAttributes.h"
 
-void FPLATEAUMeshLoader::CreateMesh(AActor* ModelActor, std::shared_ptr<plateau::polygonMesh::Model> ModelData) {
-    auto Result = Async(EAsyncExecution::Thread, [=] {
-        for (int i = 0; i < ModelData->getRootNodeCount(); i++) {
-            LoadNodes_InModel(ModelActor->GetRootComponent(), &ModelData->getRootNodeAt(i), *ModelActor, i, 0);
+namespace {
+    void ComputeNormals(FStaticMeshAttributes& Attributes) {
+        auto Normals = Attributes.GetVertexInstanceNormals();
+        auto Indices = Attributes.GetVertexInstanceVertexIndices();
+        auto Vertices = Attributes.GetVertexPositions();
+
+        //Normals->Empty(Sample->Indices.Num());
+        //Normals.AddZeroed(Sample->Indices.Num());
+
+        const uint32 NumFaces = Indices.GetNumElements() / 3;
+        for (uint32 FaceIndex = 0; FaceIndex < NumFaces; ++FaceIndex) {
+            const int32 FaceOffset = FaceIndex * 3;
+
+            FVector3f VertexPositions[3];
+            int32 VertexIndices[3];
+
+            // Retrieve vertex indices and positions
+            VertexIndices[0] = Indices[FaceOffset];
+            VertexPositions[0] = Vertices[VertexIndices[0]];
+
+            VertexIndices[1] = Indices[FaceOffset + 1];
+            VertexPositions[1] = Vertices[VertexIndices[1]];
+
+            VertexIndices[2] = Indices[FaceOffset + 2];
+            VertexPositions[2] = Vertices[VertexIndices[2]];
+
+
+            // Calculate normal for triangle face			
+            FVector3f N = FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
+            N.Normalize();
+
+            // Unrolled loop
+            Normals[FaceOffset + 0] += N;
+            Normals[FaceOffset + 1] += N;
+            Normals[FaceOffset + 2] += N;
         }
-    });
+
+        for (int i = 0; i < Normals.GetNumElements(); ++i) {
+            Normals[i].Normalize();
+        }
+    }
+
+    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription) {
+        FStaticMeshAttributes Attributes(OutMeshDescription);
+
+        // UVチャンネル数を3に設定
+        const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
+        if (VertexInstanceUVs.GetNumChannels() < 3) {
+            VertexInstanceUVs.SetNumChannels(3);
+        }
+
+        const auto& InVertices = InMesh.getVertices();
+        const auto& InIndices = InMesh.getIndices();
+
+        const auto FaceCount = InIndices.size() / 3;
+        // 同じ頂点は複数の面に利用されないように複製されるため、頂点数はインデックス数と同じサイズになる。
+        const auto VertexCount = InIndices.size();
+
+        OutMeshDescription.ReserveNewVertices(VertexCount);
+        OutMeshDescription.ReserveNewPolygons(FaceCount);
+        OutMeshDescription.ReserveNewVertexInstances(VertexCount);
+        OutMeshDescription.ReserveNewEdges(VertexCount);
+
+        const auto VertexPositions = Attributes.GetVertexPositions();
+        for (const auto& Vertex : InVertices) {
+            const auto VertexID = OutMeshDescription.CreateVertex();
+            VertexPositions[VertexID] = FVector3f(Vertex.x, Vertex.y, Vertex.z);
+        }
+
+        // 頂点の再利用を防ぐため使用済みの頂点を保持
+        TSet<unsigned> UsedVertexIDs;
+
+        const auto PolygonGroupImportedMaterialSlotNames = Attributes.GetPolygonGroupMaterialSlotNames();
+
+        for (const auto& SubMesh : InMesh.getSubMeshes()) {
+            const auto PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
+
+            // マテリアル設定
+            FString MaterialName = "DefaultMaterial";
+            const auto& TexturePath = SubMesh.getTexturePath();
+            if (TexturePath != "") {
+                MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+            }
+            PolygonGroupImportedMaterialSlotNames[PolygonGroupID] = FName(MaterialName);
+
+            // インデックス、UV設定
+            const auto& StartIndex = SubMesh.getStartIndex();
+            const auto& EndIndex = SubMesh.getEndIndex();
+            TArray<FVertexInstanceID> VertexInstanceIDs;
+            for (int InIndexIndex = StartIndex; InIndexIndex <= EndIndex; ++InIndexIndex) {
+                auto VertexID = InIndices[InIndexIndex];
+
+                // 頂点が使用済みの場合は複製
+                if (UsedVertexIDs.Contains(VertexID)) {
+                    const auto NewVertexID = OutMeshDescription.CreateVertex();
+                    VertexPositions[NewVertexID] = VertexPositions[VertexID];
+                    VertexID = NewVertexID;
+                }
+
+                const auto NewVertexInstanceID = OutMeshDescription.CreateVertexInstance(VertexID);
+                VertexInstanceIDs.Add(NewVertexInstanceID);
+
+                const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
+                const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
+                VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
+                // TODO: UV2, UV3
+
+                UsedVertexIDs.Add(VertexID);
+            }
+
+            // 3頂点毎にPolygonを生成
+            TArray<FVertexInstanceID> VertexInstanceIDsCache;
+            VertexInstanceIDsCache.SetNumUninitialized(3);
+            TArray<FVector3f> TriangleVerticesCache;
+            TriangleVerticesCache.SetNumUninitialized(3);
+            for (int32 TriangleIndex = 0; TriangleIndex < (EndIndex - StartIndex + 1) / 3; ++TriangleIndex) {
+                FMemory::Memcpy(VertexInstanceIDsCache.GetData(), VertexInstanceIDs.GetData() + TriangleIndex * 3, sizeof(FVertexInstanceID) * 3);
+
+                // Invert winding order for triangles
+                VertexInstanceIDsCache.Swap(0, 2);
+
+                const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
+                // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
+                OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
+            }
+        }
+
+        ComputeNormals(Attributes);
+
+        //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
+        //FElementIDRemappings ElementIDRemappings;
+        //OutRawMesh.Compact(ElementIDRemappings);
+        return OutMeshDescription.Polygons().Num() > 0;
+    }
+
+    UStaticMesh* CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name) {
+        auto StaticMesh = NewObject<UStaticMesh>(InOuter, Name);// , RF_Public | RF_Standalone);
+
+        StaticMesh->InitResources();
+        // make sure it has a new lighting guid
+        StaticMesh->SetLightingGuid();
+
+        // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
+        StaticMesh->SetLightMapResolution(64);
+        StaticMesh->SetLightMapCoordinateIndex(1);
+
+        FStaticMeshSourceModel& SrcModel = StaticMesh->AddSourceModel();
+        /*Don't allow the engine to recalculate normals*/
+        SrcModel.BuildSettings.bRecomputeNormals = false;
+        SrcModel.BuildSettings.bRecomputeTangents = false;
+        SrcModel.BuildSettings.bRemoveDegenerates = false;
+        SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
+        SrcModel.BuildSettings.bUseFullPrecisionUVs = false;
+
+        //Assign the proxy material to the static mesh
+        //StaticMesh->GetStaticMaterials().Add(FStaticMaterial(StaticLandscapeMaterial));
+
+        //Set the Imported version before calling the build
+        StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
+
+        return StaticMesh;
+    }
 }
 
-void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, plateau::polygonMesh::Node* Node, AActor& Actor, int Index, int Count) {
-    USceneComponent* Comp = nullptr;
-    FString CompName;
-    if (Node->getMesh() == std::nullopt){
-        //SceneComponentを付与
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-            Comp = NewObject<USceneComponent>(&Actor, FName(Node->getName().c_str()));
-            UE_LOG(LogTemp, Log, TEXT("Node doesn't have Mesh"));
-            check(Comp != nullptr);
-            Comp->Mobility = EComponentMobility::Static;
-            Actor.AddInstanceComponent(Comp);
-            Comp->RegisterComponent();
-            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
-        Task->Wait();
+void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
+    for (int i = 0; i < InModel->getRootNodeCount(); i++) {
+        Async(EAsyncExecution::Thread,
+            [=] {
+                LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
+            });
     }
-    else{
+}
+
+void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
+    USceneComponent* Comp = nullptr;
+    if (Node->getMesh() == std::nullopt) {
+        //SceneComponentを付与
+        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&] {
+                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
+                const auto DesiredName = UTF8_TO_TCHAR(Node->getName().c_str());
+                FString NewUniqueName = DesiredName;
+                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                }
+                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
+                check(Comp != nullptr);
+                Comp->Mobility = EComponentMobility::Static;
+                Actor.AddInstanceComponent(Comp);
+                Comp->RegisterComponent();
+                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        Task->Wait();
+    } else {
+        // TODO: 空のMeshが入っている問題
+        if (Node->getMesh()->getVertices().size() == 0)
+            return;
+
         //StaticMeshComponentを付与
-        CompName = "Mesh" + FString::FromInt(Index) + "_" + FString::FromInt(Count);
         TArray<FVector> VertArr;
         for (int j = 0; j < Node->getMesh()->getVertices().size(); j++) {
             VertArr.Add(FVector(Node->getMesh()->getVertices()[j].x, Node->getMesh()->getVertices()[j].y, Node->getMesh()->getVertices()[j].z));
         }
-        UE_LOG(LogTemp, Log, TEXT("Node has Mesh"));
 
-        //テクスチャ読み込み
-        FString TexturePath;
-        for (int index = 0; index <  Node->getMesh()->getSubMeshes().size(); index++) {
-            if (Node->getMesh()->getSubMeshes()[index].getTexturePath() != "") {
-                //そのまま引っ張ってくると文字化けしているので文字コード変換処理
-                std::size_t converted{};
-                std::string src = Node->getMesh()->getSubMeshes()[index].getTexturePath();
-                std::vector<wchar_t> dest(src.size(), L'\0');
-                if (::_mbstowcs_s_l(&converted, dest.data(), dest.size(), src.data(), _TRUNCATE, ::_create_locale(LC_ALL, "jpn")) != 0){
-                    //必要ならエラーチェックなど
-                }
-                dest.resize(std::char_traits<wchar_t>::length(dest.data()));
-                dest.shrink_to_fit();
-                std::wstring text = std::wstring(dest.begin(), dest.end()) + L"f";
-                UE_LOG(LogTemp, Log, TEXT("Index : %d , Texture Path : %s"), index, text.c_str());
-                TexturePath = FString(text.c_str());
-            }
+        //テクスチャ読み込み(無ければnullptrを入れる)
+        TArray<UTexture2D*> SubMeshTextures;
+        for (const auto& SubMesh : Node->getMesh()->getSubMeshes()) {
+            FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
+
+            const FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [&] {
+                    const auto Texture = LoadTextureFromPath(TexturePath);
+                    if (Texture != nullptr) {
+                        auto DesiredName = TexturePath;
+                        FPaths::MakePathRelativeTo(DesiredName, *(FPaths::ProjectContentDir() + "PLATEAU/"));
+                        FString NewUniqueName = DesiredName;
+                        if (!Texture->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                            NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                        }
+                        Texture->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+                    }
+                    SubMeshTextures.Add(Texture);
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
+            Result->Wait();
         }
-        UTexture2D* Texture = nullptr;
-        FGraphEventRef Result = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-            Texture = LoadTextureFromPath(TexturePath);
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
-        std::vector<TVec2f> UVs[3] = { Node->getMesh()->getUV1(), Node->getMesh()->getUV2(), Node->getMesh()->getUV3()};
-        Result->Wait();
-        auto Result2 = Async(EAsyncExecution::Thread, [&] {
-            UE_LOG(LogTemp, Log, TEXT(" %s"), (const char*)TCHAR_TO_ANSI(*CompName));
-            std::vector<int> Indices = Node->getMesh()->getIndices();
-            Comp = CreateStaticMeshComponent(Actor, *ParentComponent, Indices, VertArr, CompName, Texture, UVs);
-        });
-        Result2.Wait();
+
+        const FString CompName = UTF8_TO_TCHAR(Node->getName().c_str());
+        Comp = CreateStaticMeshComponent(
+            Actor, *ParentComponent,
+            Node->getMesh().value(),
+            CompName, SubMeshTextures);
     }
+
+    //TArray<TFuture<void>> Results;
     for (int i = 0; i < Node->getChildCount(); i++) {
-        ++Count;
-        auto Result3 = Async(EAsyncExecution::Thread, [&] {
-            LoadNodes_InModel(Comp, &Node->getChildAt(i), Actor, Index, Count);
-        });
+        const auto& TargetNode = Node->getChildAt(i);
+
+        // TODO: NodeのLifetimeへの依存解消
+        //Results.Add(Async(EAsyncExecution::Thread,
+        //    [this, Comp, &TargetNode, &Actor] {
+        LoadNodeRecursive(Comp, &TargetNode, Actor);
+        //}));
     }
+
+    //for (const auto& Result : Results) {
+    //    Result.Wait();
+    //}
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<int> Indices, TArray<FVector> Vertices, 
-    FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[]) {
+UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
+    AActor& Actor, USceneComponent& ParentComponent,
+    const plateau::polygonMesh::Mesh& InMesh,
+    FString Name,
+    const TArray<UTexture2D*>& SubMeshTextures) const {
     UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
 
-    // RenderData作成(ここは非同期で出来るはず)
-    auto RenderData = CreateRenderData(Indices, Vertices, UVs[0], UVs[1], UVs[2]);;
-
     // コンポーネント作成
+    UStaticMesh* StaticMesh;
+    UStaticMeshComponent* Component;
     UStaticMeshComponent* ComponentRef = nullptr;
-    FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-        const auto Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-        Component->Mobility = EComponentMobility::Static;
-        Component->bVisualizeComponent = true;
+    {
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&]() {
+                Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                Component->Mobility = EComponentMobility::Static;
+                Component->bVisualizeComponent = true;
 
-        // StaticMesh、Material作成
-        const auto StaticMesh = NewObject<UStaticMesh>(Component, FName(Name));
-        Component->SetStaticMesh(StaticMesh);
-        SetRenderData(StaticMesh, RenderData);
-        StaticMesh->SetFlags(
-            RF_Transient | RF_DuplicateTransient | RF_TextExportTransient);
-        UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
-        UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-        if (Texture != nullptr) {
-            DynMaterial->SetTextureParameterValue("Texture", Texture);
+                // StaticMesh作成
+                StaticMesh = CreateStaticMesh(InMesh, Component, FName(Name));
+                Component->SetStaticMesh(StaticMesh);
+            }, TStatId(), nullptr, ENamedThreads::GameThread)
+            ->Wait();
+    }
+    FMeshDescription* RawMesh = StaticMesh->CreateMeshDescription(0);
+    FStaticMeshAttributes Attributes(*RawMesh);
+
+    ConvertMesh(InMesh, *RawMesh);
+    StaticMesh->CommitMeshDescription(0);
+
+    const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        //StaticMesh->Build();
+        StaticMesh->PostEditChange();
+
+        // TODO: 適切なフラグの設定
+        // https://docs.unrealengine.com/4.26/ja/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Creation/
+        //StaticMesh->SetFlags();
+
+        // マテリアル作成
+        for (const auto& Texture : SubMeshTextures) {
+            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
+            UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+            if (Texture != nullptr) {
+                DynMaterial->SetTextureParameterValue("Texture", Texture);
+            }
+            DynMaterial->TwoSided = false;
+            StaticMesh->AddMaterial(DynMaterial);
         }
-        DynMaterial->TwoSided = false;
-        StaticMesh->AddMaterial(DynMaterial);
 
-        // STaticMeshセットアップ
+        // StaticMeshセットアップ
         StaticMesh->NeverStream = true;
         StaticMesh->InitResources();
         StaticMesh->CalculateExtendedBounds();
@@ -129,112 +330,14 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         Component->PostEditChange();
         ComponentRef = Component;
         UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent End-----"));
-    }, TStatId(), nullptr, ENamedThreads::GameThread);
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
     Task->Wait();
+
     return ComponentRef;
 }
 
-TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray, 
-    const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3) {
-    UE_LOG(LogTemp, Log, TEXT("-----CreateRenderData Start-----"));
-    UE_LOG(LogTemp, Log, TEXT("InIndices size : %zu"), InIndicesVector.size());
-    UE_LOG(LogTemp, Log, TEXT("vertices size : %zu"), VerticesArray.Num());
-
-    //RenderData生成
-    auto RenderData = MakeUnique<FStaticMeshRenderData>();
-    RenderData->AllocateLODResources(1);
-    FStaticMeshLODResources& LODResources = RenderData->LODResources[0];
-    LODResources.bHasColorVertexData = false;
-
-    //頂点、インデックス、UVなどの反映
-    TArray<uint32> indices;
-    indices.SetNum(static_cast<TArray<uint32>::SizeType>(InIndicesVector.size()));
-    for (int32 i = 0; i < InIndicesVector.size(); ++i) {
-        indices[i] = InIndicesVector[i];
-    }
-    TArray<FStaticMeshBuildVertex> StaticMeshBuildVertices;
-    StaticMeshBuildVertices.SetNum(VerticesArray.Num());
-    for (int i = 0; i < StaticMeshBuildVertices.Num(); ++i) {
-        auto& Vertex = StaticMeshBuildVertices[i];
-        Vertex.Position = FVector3f(VerticesArray[i]);
-        Vertex.UVs[0] = FVector2f(UV1[i].x, UV1[i].y);
-        Vertex.UVs[1] = FVector2f(UV2[i].x, UV2[i].y);
-        Vertex.UVs[2] = FVector2f(UV3[i].x, UV3[i].y);
-        RenderData->Bounds.SphereRadius = FMath::Max((Vertex.Position - FVector3f(RenderData->Bounds.Origin)).Size(), RenderData->Bounds.SphereRadius);
-        RenderData->Bounds.BoxExtent = FVector(10000000000000, 10000000000000, 10000000000000);
-    }
-    computeFlatNormals(indices, StaticMeshBuildVertices);
-    LODResources.VertexBuffers.PositionVertexBuffer.Init(StaticMeshBuildVertices, false);
-    FColorVertexBuffer& ColorVertexBuffer = LODResources.VertexBuffers.ColorVertexBuffer;
-    LODResources.VertexBuffers.StaticMeshVertexBuffer.Init(StaticMeshBuildVertices, 1, false);
-    for (int i = 2; i < indices.Num(); i += 3) {
-        std::swap(indices[i - 2], indices[i]);
-    }
-
-#if ENGINE_MAJOR_VERSION == 5
-    FStaticMeshSectionArray& Sections = LODResources.Sections;
-#else
-    FStaticMeshLODResources::FStaticMeshSectionArray& Sections =
-        LODResources.Sections;
-#endif
-
-    //セクションへのデータ設定
-    FStaticMeshSection& section = Sections.AddDefaulted_GetRef();
-    section.bEnableCollision = false;
-    section.NumTriangles = indices.Num() / 3;
-    section.FirstIndex = 0;
-    section.MinVertexIndex = 0;
-    section.MaxVertexIndex = StaticMeshBuildVertices.Num() - 1;
-    section.bEnableCollision = true;
-    section.bCastShadow = true;
-    section.MaterialIndex = 0;
-    LODResources.IndexBuffer.SetIndices(indices,
-        StaticMeshBuildVertices.Num() >= std::numeric_limits<uint16>::max()
-        ? EIndexBufferStride::Type::Force32Bit
-        : EIndexBufferStride::Type::Force16Bit);
-    LODResources.bHasDepthOnlyIndices = false;
-    LODResources.bHasReversedIndices = false;
-    LODResources.bHasReversedDepthOnlyIndices = false;
-
-#if ENGINE_MAJOR_VERSION < 5
-    LODResources.bHasAdjacencyInfo = false;
-#endif
-
-    UE_LOG(LogTemp, Log, TEXT("-----CreateRenderData End-----"));
-    return RenderData;
-}
-
-void FPLATEAUMeshLoader::SetRenderData(UStaticMesh* StaticMesh, TUniquePtr<FStaticMeshRenderData>& RenderData) {
-    //レンダーデータを設定
-#if ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION < 27
-    StaticMesh->bIsBuiltAtRuntime = true;
-    StaticMesh->RenderData = std::move(RenderData);
-#elif ENGINE_MAJOR_VERSION == 4
-    StaticMesh->SetIsBuiltAtRuntime(true);
-    StaticMesh->SetRenderData(std::move(RenderData));
-#else // UE5
-    StaticMesh->SetRenderData(std::move(RenderData));
-#endif
-}
-
-void FPLATEAUMeshLoader::computeFlatNormals(const TArray<uint32_t>& Indices, TArray<FStaticMeshBuildVertex>& Vertices) {
-    for (int i = 0; i < Indices.Num(); i += 3) {
-        int acc[3] = { Indices[i],Indices[i + 1],Indices[i + 2] };
-
-        //法線計算
-        FStaticMeshBuildVertex& v0 = Vertices[acc[0]];
-        FStaticMeshBuildVertex& v1 = Vertices[acc[1]];
-        FStaticMeshBuildVertex& v2 = Vertices[acc[2]];
-        FVector3f v01 = v1.Position - v0.Position;
-        FVector3f v02 = v2.Position - v0.Position;
-        FVector3f normal = FVector3f::CrossProduct(v01, v02);
-        v0.TangentX = v1.TangentX = v2.TangentX = FVector3f(0.0f);
-        v0.TangentY = v1.TangentY = v2.TangentY = FVector3f(0.0f);
-        v0.TangentZ = v1.TangentZ = v2.TangentZ = normal.GetSafeNormal();
-    }
-}
-
 UTexture2D* FPLATEAUMeshLoader::LoadTextureFromPath(const FString& Path) {
-    if (Path.IsEmpty()) return nullptr; 
+    if (Path.IsEmpty()) return nullptr;
+    // TODO: 非同期化
     return FImageUtils::ImportFileAsTexture2D(Path);
 }

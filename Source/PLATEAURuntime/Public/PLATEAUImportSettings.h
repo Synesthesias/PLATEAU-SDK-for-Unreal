@@ -1,8 +1,18 @@
 #pragma once
 
+#include <plateau/polygon_mesh/mesh_extract_options.h>
+
 #include "CoreMinimal.h"
 
+#include <plateau/udx/city_model_package.h>
+
 #include "PLATEAUImportSettings.generated.h"
+
+namespace plateau {
+    namespace udx {
+        enum class PredefinedCityModelPackage : uint32;
+    }
+}
 
 UENUM(BlueprintType)
 enum class EPLATEAUMeshGranularity : uint8 {
@@ -41,7 +51,7 @@ public:
 UCLASS()
 class PLATEAURUNTIME_API UPLATEAUImportSettings : public UObject {
     GENERATED_BODY()
-        
+
 public:
     UPROPERTY(EditAnywhere)
         FPLATEAUFeatureImportSettings Building;
@@ -62,14 +72,46 @@ public:
     UPROPERTY(EditAnywhere)
         FPLATEAUFeatureImportSettings Unknown;
 
-    //FPLATEAUFeatureImportSettings& GetFeaturePlacementSettings(ECityModelPackage Package) {
-    //    switch (Package) {
-    //    case ECityModelPackage::Building: return BuildingPlacementSettings;
-    //    case ECityModelPackage::Road: return RoadPlacementSettings;
-    //    case ECityModelPackage::Relief: return ReliefPlacementSettings;
-    //    case ECityModelPackage::UrbanFacility: return UrbanFacilityPlacementSettings;
-    //    case ECityModelPackage::Vegetation: return VegetationPlacementSettings;
-    //    default: return OtherPlacementSettings;
-    //    }
-    //}
+    FPLATEAUFeatureImportSettings GetFeatureSettings(plateau::udx::PredefinedCityModelPackage Package) const {
+        switch (Package) {
+        case plateau::udx::PredefinedCityModelPackage::Building: return Building;
+        case plateau::udx::PredefinedCityModelPackage::Road: return Road;
+        case plateau::udx::PredefinedCityModelPackage::Vegetation: Vegetation;
+        case plateau::udx::PredefinedCityModelPackage::CityFurniture: return CityFurniture;
+        case plateau::udx::PredefinedCityModelPackage::Relief: return Relief;
+        case plateau::udx::PredefinedCityModelPackage::DisasterRisk: return DisasterRisk;
+        case plateau::udx::PredefinedCityModelPackage::LandUse: return LandUse;
+        case plateau::udx::PredefinedCityModelPackage::UrbanPlanningDecision: return UrbanPlanningDecision;
+        case plateau::udx::PredefinedCityModelPackage::Unknown: return Unknown;
+        default: return Unknown;
+        }
+    }
+
+    static TArray<plateau::udx::PredefinedCityModelPackage> GetAllPackages() {
+        return {
+            plateau::udx::PredefinedCityModelPackage::Building,
+            plateau::udx::PredefinedCityModelPackage::Road,
+            plateau::udx::PredefinedCityModelPackage::Vegetation,
+            plateau::udx::PredefinedCityModelPackage::CityFurniture,
+            plateau::udx::PredefinedCityModelPackage::Relief,
+            plateau::udx::PredefinedCityModelPackage::DisasterRisk,
+            plateau::udx::PredefinedCityModelPackage::LandUse,
+            plateau::udx::PredefinedCityModelPackage::UrbanPlanningDecision,
+            plateau::udx::PredefinedCityModelPackage::Unknown,
+        };
+    }
+
+    static plateau::polygonMesh::MeshGranularity ConvertGranularity(EPLATEAUMeshGranularity Value) {
+        // TODO: 共通化
+        switch (Value) {
+        case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
+            return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+        case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
+            return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
+        case EPLATEAUMeshGranularity::PerCityModelArea:
+            return plateau::polygonMesh::MeshGranularity::PerCityModelArea;
+        }
+
+        return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+    }
 };
