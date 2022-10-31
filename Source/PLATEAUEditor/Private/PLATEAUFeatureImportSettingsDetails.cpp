@@ -2,19 +2,13 @@
 
 #include "PLATEAUFeatureImportSettingsDetails.h"
 
-#include <plateau/io/mesh_convert_options.h>
 #include <plateau/udx/city_model_package.h>
 
 #include "DetailLayoutBuilder.h"
 #include "DetailCategoryBuilder.h"
 #include "Widgets/Input/SComboButton.h"
-#include "Widgets/Input/SEditableTextBox.h"
 #include "DetailWidgetRow.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
-#include "Widgets/SBoxPanel.h"
-#include "EditorFontGlyphs.h"
-#include "Widgets/Input/SButton.h"
-#include "Framework/Application/SlateApplication.h"
 
 #include "PLATEAUImportSettings.h"
 

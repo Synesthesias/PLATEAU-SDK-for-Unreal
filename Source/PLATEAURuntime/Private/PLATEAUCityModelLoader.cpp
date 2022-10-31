@@ -10,9 +10,6 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 
-#include "Components/StaticMeshComponent.h"
-#include "StaticMeshResources.h"
-
 using namespace plateau::udx;
 using namespace plateau::polygonMesh;
 
@@ -62,9 +59,14 @@ void APLATEAUCityModelLoader::LoadAsync() {
         ExtractOptions.unit_scale = 0.01f;
         ExtractOptions.extent = Extent.GetNativeData();
 
+        // 都市モデルパース、ポリゴンメッシュ抽出、ノード走査 各ファイルに対して行う
+        citygml::ParserParams ParserParams;
+        ParserParams.tesselate = true;
+
         Async(EAsyncExecution::Thread,
             [
-                Package, Source = Source,
+                Package,
+                Source = Source,
                 ExtentData = Extent.GetNativeData(),
                 ModelActor,
                 ExtractOptions
@@ -80,8 +82,17 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 ParserParams.tesselate = true;
 
                 for (const auto& GmlFile : *GmlFiles) {
-                    // TODO: fetch
-                    // UdxFileCollection->fetch(TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU")), GmlFileInfo(GmlFile));
+                    const auto Destination = TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU"));
+
+                    try {
+                        UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
+                    }
+                    catch (...) {
+                        //TODO: Error Handling
+                        UE_LOG(LogTemp, Error, TEXT("Failed to copy %s"), GmlFile.c_str());
+
+                        continue;
+                    }
 
                     std::shared_ptr<const citygml::CityModel> CityModel;
                     try {
@@ -116,7 +127,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     }, TStatId(), nullptr, ENamedThreads::GameThread);
                     Task->Wait();
 
-                    FPLATEAUMeshLoader().CreateMesh(ModelActor, GmlRootComponent, Model);
+                    FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
                 }
             });
     }

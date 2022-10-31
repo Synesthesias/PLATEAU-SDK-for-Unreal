@@ -3,7 +3,6 @@
 
 #include "SPLATEAUImportPanel.h"
 
-#include <plateau/io/mesh_convert_options.h>
 #include <plateau/udx/city_model_package.h>
 
 #include "PLATEAUCityModelLoader.h"

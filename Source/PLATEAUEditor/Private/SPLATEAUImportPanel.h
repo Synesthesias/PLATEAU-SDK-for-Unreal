@@ -2,11 +2,8 @@
 
 #pragma once
 
-#include <plateau/io/mesh_convert_options.h>
-
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
-#include "Styling/ISlateStyle.h"
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
