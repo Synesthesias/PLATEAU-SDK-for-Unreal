@@ -46,12 +46,15 @@
       "version": ""
     },
     {
+      "log_codes": [
+        "InvalidFileLink"
+      ],
       "type": "Conceptual",
       "source_relative_path": "manual/ImportCityModels.md",
       "output": {
         ".html": {
           "relative_path": "manual/ImportCityModels.html",
-          "hash": "Wf5wVJicf3xRafM0NlXcW8KamzChMSEkZFWtU+GFuts="
+          "hash": "CIdbrP9bp6WCcvxFpJIsJGX3WWubJBKICGgaM3yeXxg="
         }
       },
       "is_incremental": false,
@@ -117,10 +120,21 @@
     },
     {
       "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/export.png",
+      "source_relative_path": "resources/manual/importCityModels/areaSelectWindow.png",
       "output": {
         "resource": {
-          "relative_path": "resources/manual/importCityModels/export.png"
+          "relative_path": "resources/manual/importCityModels/areaSelectWindow.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/importCityModels/coordinateSystemSelect.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/importCityModels/coordinateSystemSelect.png"
         }
       },
       "is_incremental": false,
@@ -139,10 +153,10 @@
     },
     {
       "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowAreaSelect.png",
+      "source_relative_path": "resources/manual/importCityModels/importComplete.png",
       "output": {
         "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowAreaSelect.png"
+          "relative_path": "resources/manual/importCityModels/importComplete.png"
         }
       },
       "is_incremental": false,
@@ -150,10 +164,10 @@
     },
     {
       "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowConvertOption.png",
+      "source_relative_path": "resources/manual/importCityModels/importPerPackageConfig.png",
       "output": {
         "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowConvertOption.png"
+          "relative_path": "resources/manual/importCityModels/importPerPackageConfig.png"
         }
       },
       "is_incremental": false,
@@ -161,43 +175,10 @@
     },
     {
       "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowExport.png",
+      "source_relative_path": "resources/manual/importCityModels/plateauWindowImport.png",
       "output": {
         "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowExport.png"
-        }
-      },
-      "is_incremental": false,
-      "version": ""
-    },
-    {
-      "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowExportSelect.png",
-      "output": {
-        "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowExportSelect.png"
-        }
-      },
-      "is_incremental": false,
-      "version": ""
-    },
-    {
-      "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowGmlTypeSelect.png",
-      "output": {
-        "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowGmlTypeSelect.png"
-        }
-      },
-      "is_incremental": false,
-      "version": ""
-    },
-    {
-      "type": "Resource",
-      "source_relative_path": "resources/manual/importCityModels/importWindowInitial.png",
-      "output": {
-        "resource": {
-          "relative_path": "resources/manual/importCityModels/importWindowInitial.png"
+          "relative_path": "resources/manual/importCityModels/plateauWindowImport.png"
         }
       },
       "is_incremental": false,
