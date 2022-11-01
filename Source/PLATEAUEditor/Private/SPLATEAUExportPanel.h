@@ -8,31 +8,31 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Styling/ISlateStyle.h"
 
-enum class ExportModelType : uint8_t {
-    OBJ = 0,
-    FBX,
-    GLTF,
+enum class EExportFileFormat : uint8_t {
+	OBJ = 0,
+	FBX,
+	GLTF,
 
-    ExportModelType_MAX,
+	EExportFileFormat_MAX,
 };
 
 class SPLATEAUExportPanel : public SCompoundWidget {
 public:
-    SLATE_BEGIN_ARGS(SPLATEAUExportPanel) {}
-    SLATE_ARGUMENT(TWeakPtr<class SWindow>, OwnerWindow)
-        SLATE_END_ARGS()
+	SLATE_BEGIN_ARGS(SPLATEAUExportPanel) {}
+	SLATE_ARGUMENT(TWeakPtr<class SWindow>, OwnerWindow)
+		SLATE_END_ARGS()
 
 public:
-    /** Constructs this widget with InArgs */
-    void Construct(const FArguments& InArgs, const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
+	/** Constructs this widget with InArgs */
+	void Construct(const FArguments& InArgs, const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
 
 private:
-    TSharedRef<SVerticalBox> CreateExportPathSelectPanel();
-    FReply OnBtnSelectGmlFileClicked();
+	TSharedRef<SVerticalBox> CreateExportPathSelectPanel();
+	FReply OnBtnSelectGmlFileClicked();
 
-    FString ExportPath;
-    TWeakPtr<SWindow> OwnerWindow;
-    TSharedPtr<class FPLATEAUEditorStyle> Style;
-    ExportModelType CurrentModelType = ExportModelType::OBJ;
-    TSharedPtr<IDetailsView> BuildingImportSettingsView = nullptr;
+	FString ExportPath;
+	TWeakPtr<SWindow> OwnerWindow;
+	TSharedPtr<class FPLATEAUEditorStyle> Style;
+	EExportFileFormat CurrentModelType = EExportFileFormat::OBJ;
+	TSharedPtr<IDetailsView> ExportSettingsView = nullptr;
 };
