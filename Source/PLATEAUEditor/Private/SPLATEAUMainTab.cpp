@@ -16,38 +16,38 @@ void SPLATEAUMainTab::Construct(const FArguments& InArgs, const TSharedRef<class
 		[
 			SNew(SOverlay)
 			.RenderTransformPivot(FVector2D(0.0f, 0.0f))
-			+ SOverlay::Slot()
-			.VAlign(VAlign_Top)
-			.HAlign(HAlign_Center)
-			[
-				CreateTabBackground()
-			]
-			+ SOverlay::Slot()
-			.VAlign(VAlign_Top)
-			.HAlign(HAlign_Center)
-			[
-				CreateTabSelectBackground()
-			]
-			+ SOverlay::Slot()
-			.VAlign(VAlign_Top)
-			.HAlign(HAlign_Center)
-			[
-				CreateTabButtons()
-			]
+		+ SOverlay::Slot()
+		.VAlign(VAlign_Top)
+		.HAlign(HAlign_Center)
+		[
+			CreateTabBackground()
+		]
+	+ SOverlay::Slot()
+		.VAlign(VAlign_Top)
+		.HAlign(HAlign_Center)
+		[
+			CreateTabSelectBackground()
+		]
+	+ SOverlay::Slot()
+		.VAlign(VAlign_Top)
+		.HAlign(HAlign_Center)
+		[
+			CreateTabButtons()
+		]
 
-			// ロゴ
-			+ SOverlay::Slot()
-			.Padding(FMargin(0, 105, 0, 0))
-			[
-				SNew(SBorder)
-				.BorderImage(Style->GetBrush(TEXT("PLATEAUEditor.LogoBackground")))
-				.VAlign(VAlign_Center)
-				.HAlign(HAlign_Center)
-				[
-					SNew(SImage)
-					.Image(Style->GetBrush("PLATEAUEditor.LogoImage"))
-				]
-			]
+	// ロゴ
+	+ SOverlay::Slot()
+		.Padding(FMargin(0, 105, 0, 0))
+		[
+			SNew(SBorder)
+			.BorderImage(Style->GetBrush(TEXT("PLATEAUEditor.LogoBackground")))
+		.VAlign(VAlign_Center)
+		.HAlign(HAlign_Center)
+		[
+			SNew(SImage)
+			.Image(Style->GetBrush("PLATEAUEditor.LogoImage"))
+		]
+		]
 		];
 }
 
@@ -63,64 +63,64 @@ TSharedRef<SHorizontalBox> SPLATEAUMainTab::CreateTabButtons() {
 		.FillWidth(1)
 		.Padding(FMargin(0, 0, 0, 0))
 		[SNew(SSpacer)]
-		+ SHorizontalBox::Slot()
+	+ SHorizontalBox::Slot()
 		.AutoWidth()
 		.Padding(FMargin(16.5f, 23.75f, 16.5f, 23.75f))
 		[
 			SNew(SBox)
 			.Padding(FMargin(0, 0, 0, 0))
-			.HAlign(HAlign_Left)
-			.VAlign(VAlign_Top)
-			.WidthOverride(72)
-			.HeightOverride(56)
-			[
-				SNew(SImage)
-				.Image(Style->GetBrush("PLATEAUEditor.TabImportIcon"))
-				.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
-				OnButtonClicked(1);
-				return FReply::Handled();
-				})
-			]
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		.WidthOverride(72)
+		.HeightOverride(56)
+		[
+			SNew(SImage)
+			.Image(Style->GetBrush("PLATEAUEditor.TabImportIcon"))
+		.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
+		OnButtonClicked(1);
+		return FReply::Handled();
+			})
 		]
-		+ SHorizontalBox::Slot()
+		]
+	+ SHorizontalBox::Slot()
 		.AutoWidth()
 		.Padding(FMargin(16.5f, 23.75f, 16.5f, 23.75f))
 		[
 			SNew(SBox)
 			.Padding(FMargin(0, 0, 0, 0))
-			.HAlign(HAlign_Left)
-			.VAlign(VAlign_Top)
-			.WidthOverride(72)
-			.HeightOverride(56)
-			[
-				SNew(SImage)
-				.Image(Style->GetBrush("PLATEAUEditor.TabAdjustIcon"))
-				.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
-					OnButtonClicked(2);
-					return FReply::Handled();
-				})
-			]
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		.WidthOverride(72)
+		.HeightOverride(56)
+		[
+			SNew(SImage)
+			.Image(Style->GetBrush("PLATEAUEditor.TabAdjustIcon"))
+		.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
+		OnButtonClicked(2);
+		return FReply::Handled();
+			})
 		]
-		+ SHorizontalBox::Slot()
+		]
+	+ SHorizontalBox::Slot()
 		.AutoWidth()
 		.Padding(FMargin(16.5f, 23.75f, 16.5f, 23.75f))
 		[
 			SNew(SBox)
 			.Padding(FMargin(0, 0, 0, 0))
-			.HAlign(HAlign_Left)
-			.VAlign(VAlign_Top)
-			.WidthOverride(72)
-			.HeightOverride(56)
-			[
-				SNew(SImage)
-				.Image(Style->GetBrush("PLATEAUEditor.TabExportIcon"))
-				.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
-					OnButtonClicked(3);
-					return FReply::Handled();
-				})
-			]
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		.WidthOverride(72)
+		.HeightOverride(56)
+		[
+			SNew(SImage)
+			.Image(Style->GetBrush("PLATEAUEditor.TabExportIcon"))
+		.OnMouseButtonDown_Lambda([&](const FGeometry&, const FPointerEvent&) {
+		OnButtonClicked(3);
+		return FReply::Handled();
+			})
 		]
-		+ SHorizontalBox::Slot()
+		]
+	+ SHorizontalBox::Slot()
 		.FillWidth(1)
 		.Padding(FMargin(0, 0, 0, 0))
 		[SNew(SSpacer)];
@@ -135,11 +135,11 @@ TSharedRef<SHorizontalBox> SPLATEAUMainTab::CreateTabSelectBackground() {
 		.Padding(FMargin(0, 0, 0, 0))
 		[SNew(SSpacer)]
 	+ SHorizontalBox::Slot()
-	.AutoWidth()
-	.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
-	[
-		SNew(SBox)
-		.Padding(FMargin(0, 0, 0, 0))
+		.AutoWidth()
+		.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
+		[
+			SNew(SBox)
+			.Padding(FMargin(0, 0, 0, 0))
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Top)
 		.WidthOverride(80)
@@ -147,17 +147,17 @@ TSharedRef<SHorizontalBox> SPLATEAUMainTab::CreateTabSelectBackground() {
 		[
 			SNew(SImage)
 			.Image(Style->GetBrush("PLATEAUEditor.TabSelectBack"))
-			.ColorAndOpacity_Lambda([=]() {
-				return GetTabSelectBGColor(1);
+		.ColorAndOpacity_Lambda([=]() {
+		return GetTabSelectBGColor(1);
 			})
 		]
-	]
+		]
 	+ SHorizontalBox::Slot()
-	.AutoWidth()
-	.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
-	[
-		SNew(SBox)
-		.Padding(FMargin(0, 0, 0, 0))
+		.AutoWidth()
+		.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
+		[
+			SNew(SBox)
+			.Padding(FMargin(0, 0, 0, 0))
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Top)
 		.WidthOverride(80)
@@ -165,17 +165,17 @@ TSharedRef<SHorizontalBox> SPLATEAUMainTab::CreateTabSelectBackground() {
 		[
 			SNew(SImage)
 			.Image(Style->GetBrush("PLATEAUEditor.TabSelectBack"))
-				.ColorAndOpacity_Lambda([=]() {
-				return GetTabSelectBGColor(2);
+		.ColorAndOpacity_Lambda([=]() {
+		return GetTabSelectBGColor(2);
 			})
 		]
-	]
+		]
 	+ SHorizontalBox::Slot()
-	.AutoWidth()
-	.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
-	[
-		SNew(SBox)
-		.Padding(FMargin(0, 0, 0, 0))
+		.AutoWidth()
+		.Padding(FMargin(12.5f, 14.75f, 12.5f, 14.75f))
+		[
+			SNew(SBox)
+			.Padding(FMargin(0, 0, 0, 0))
 		.HAlign(HAlign_Left)
 		.VAlign(VAlign_Top)
 		.WidthOverride(80)
@@ -183,19 +183,18 @@ TSharedRef<SHorizontalBox> SPLATEAUMainTab::CreateTabSelectBackground() {
 		[
 			SNew(SImage)
 			.Image(Style->GetBrush("PLATEAUEditor.TabSelectBack"))
-				.ColorAndOpacity_Lambda([=]() {
-				return GetTabSelectBGColor(3);
+		.ColorAndOpacity_Lambda([=]() {
+		return GetTabSelectBGColor(3);
 			})
 		]
-	]
+		]
 	+ SHorizontalBox::Slot()
-	.FillWidth(1)
-	.Padding(FMargin(0, 0, 0, 0))
-	[SNew(SSpacer)];
+		.FillWidth(1)
+		.Padding(FMargin(0, 0, 0, 0))
+		[SNew(SSpacer)];
 }
 
-TSharedRef<SBox> SPLATEAUMainTab::CreateTabBackground()
-{
+TSharedRef<SBox> SPLATEAUMainTab::CreateTabBackground() {
 	return
 		SNew(SBox)
 		.HeightOverride(100)
@@ -204,7 +203,7 @@ TSharedRef<SBox> SPLATEAUMainTab::CreateTabBackground()
 		[
 			SNew(SImage)
 			.Image(Style->GetBrush("PLATEAUEditor.TabBackground"))
-			.ColorAndOpacity(FSlateColor(FColor(0, 0, 0, 100)))
+		.ColorAndOpacity(FSlateColor(FColor(0, 0, 0, 100)))
 		];
 }
 

@@ -26,13 +26,11 @@ namespace {
 	}
 }
 
-FPLATEAUExportFeatureSettingsRow::FPLATEAUExportFeatureSettingsRow()
-{
+FPLATEAUExportFeatureSettingsRow::FPLATEAUExportFeatureSettingsRow() {
 	//必要であれば
 }
 
-void FPLATEAUExportFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeatureSettingsProperty)
-{
+void FPLATEAUExportFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeatureSettingsProperty) {
 	auto ExportTextureProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureExportSettings, bExportTexture));
 	auto ExportCoordinateProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureExportSettings, ExportCoordinate));
 	auto ExportHiddenModelProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureExportSettings, bExportHiddenModel));
@@ -84,8 +82,7 @@ void FPLATEAUExportFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Cat
 		.ValueContent()[ExportHiddenModelProperty->CreatePropertyValueWidget()];
 }
 
-void FPLATEAUFeatureExportSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
-{
+void FPLATEAUFeatureExportSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
 	TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
 	DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
@@ -95,8 +92,7 @@ void FPLATEAUFeatureExportSettingsDetails::CustomizeDetails(IDetailLayoutBuilder
 		DetailBuilder.EditCategory(CategoryName, LocalizedCategoryName);
 	const auto FeatureSettingsProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UPLATEAUExportSettings, ExportSetting));
 	DetailBuilder.HideProperty(FeatureSettingsProperty);
-	if (!bSettingReady)
-	{
+	if (!bSettingReady) {
 		FPLATEAUExportFeatureSettingsRow Setting;
 		Setting.AddToCategory(Category, FeatureSettingsProperty);
 	}
