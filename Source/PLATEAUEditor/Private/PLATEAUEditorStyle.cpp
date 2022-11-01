@@ -39,6 +39,9 @@ FString FPLATEAUEditorStyle::InContent(
 FPLATEAUEditorStyle::FPLATEAUEditorStyle()
     : FSlateStyleSet("PLATEAUEditorStyle") {
     const FVector2D Icon30x30(30.0f, 30.0f);
+    const FVector2D Icon180x141(180.0f, 141.0f);
+    const FVector2D Icon256x256(256.0f, 256.0f);
+    const FVector2D TabBackground(512.0f, 180.0f);
     
     Set("PLATEAUEditor.LogoImage", 
         new IMAGE_BRUSH("logo_for_unreal", FVector2D(270.0f, 67.5f)));
@@ -50,6 +53,16 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
         new IMAGE_BRUSH("dark_icon_2", Icon30x30));
     Set("PLATEAUEditor.Section3IconImage",
         new IMAGE_BRUSH("dark_icon_3", Icon30x30));
+    Set("PLATEAUEditor.TabImportIcon",
+        new IMAGE_BRUSH("dark_icon_import", Icon180x141));
+    Set("PLATEAUEditor.TabAdjustIcon",
+        new IMAGE_BRUSH("dark_icon_adjust", Icon180x141));
+    Set("PLATEAUEditor.TabExportIcon",
+        new IMAGE_BRUSH("dark_icon_export", Icon180x141));
+    Set("PLATEAUEditor.TabSelectBack",
+        new IMAGE_BRUSH("round-button", Icon256x256));
+    Set("PLATEAUEditor.TabBackground",
+        new IMAGE_BRUSH("round-window-wide", TabBackground));
     Set("PLATEAUEditor.LogoBackground",
     new BOX_BRUSH("Old/Menu_Background", 0.0f, FLinearColor::FromSRGBColor(FColor(0xFF676767))));
     Set("PLATEAUEditor.LogoBorder",

@@ -83,18 +83,6 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     
     ChildSlot
         [SNew(SVerticalBox)
-        // ロゴ
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .HAlign(HAlign_Fill)
-        .VAlign(VAlign_Center)
-        [SNew(SBorder)
-        .BorderImage(Style->GetBrush(TEXT("PLATEAUEditor.LogoBackground")))
-        .VAlign(VAlign_Fill)
-        .HAlign(HAlign_Center)
-        [SNew(SImage)
-        .Image(Style->GetBrush("PLATEAUEditor.LogoImage"))
-        ]]
 
     // モデルデータのインポート(ヘッダー)
     + SVerticalBox::Slot()

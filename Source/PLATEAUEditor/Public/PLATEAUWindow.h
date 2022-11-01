@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 /**
  *
  */
@@ -20,6 +19,7 @@ private:
     TWeakPtr<SWindow> RootWindow;
     TWeakPtr<SWindow> MyWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
+    TSharedPtr<class SPLATEAUMainTab> TabReference;
 
     void Show();
 
