@@ -17,7 +17,7 @@ public:
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs, const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
-    bool IsCurrentIndex(int Id);
+    bool IsCurrentIndex(const int ID);
 
 private:
     TWeakPtr<SWindow> OwnerWindow;
@@ -27,6 +27,6 @@ private:
     TSharedRef<SHorizontalBox> CreateTabButtons();
     TSharedRef<SHorizontalBox> CreateTabSelectBackground();
     TSharedRef<SBox> CreateTabBackground();
-    void OnButtonClicked(int Id);
-    const FSlateColor GetTabSelectBGColor(int Id);
+    void OnButtonClicked(const int ID);
+    const FSlateColor GetTabSelectBGColor(const int ID);
 };
