@@ -4,6 +4,8 @@
 
 #include "LevelEditor.h"
 #include "SPLATEAUImportPanel.h"
+#include "SPLATEAUMainTab.h"
+#include "SPLATEAUExportPanel.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -75,13 +77,62 @@ void FPLATEAUWindow::OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNe
 
 void FPLATEAUWindow::Show() {
     if (!MyWindow.IsValid()) {
+        TabReference = SNew(SPLATEAUMainTab, Style.ToSharedRef());
         TSharedPtr<SWindow> Window = SNew(SWindow)
             .Title(LOCTEXT("PLATEAU SDK Window Title", "PLATEAU SDK"))
-            .ClientSize(FVector2D(500.f, 400.f));
+            .ClientSize(FVector2D(500.f, 700.f));
         Window->SetContent(
-            SNew(SScrollBox)
-            + SScrollBox::Slot()[
-                SNew(SPLATEAUImportPanel, Style.ToSharedRef())
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+            .AutoHeight() [
+                TabReference.ToSharedRef()
+            ]
+            + SVerticalBox::Slot()[
+                //インポート、編集、エクスポートそれぞれのスクロール部分
+                //TODO:編集画面のUIが出来次第組み込む
+                SNew(SOverlay)
+                    + SOverlay::Slot()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Top) [
+                        SNew(SScrollBox)
+                        .Visibility_Lambda([=]() {
+                            if (TabReference->IsCurrentIndex(1))
+                                return EVisibility::Visible;
+                            else
+                                return EVisibility::Collapsed;
+                        })
+                        + SScrollBox::Slot()[
+                            SNew(SPLATEAUImportPanel, Style.ToSharedRef())
+                        ]
+                    ]
+                + SOverlay::Slot()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Top) [
+                        SNew(SScrollBox)
+                        .Visibility_Lambda([=]() {
+                            if (TabReference->IsCurrentIndex(2))
+                                return EVisibility::Collapsed;
+                            else
+                                return EVisibility::Collapsed;
+                        })
+                        + SScrollBox::Slot()[
+                            SNew(SPLATEAUImportPanel, Style.ToSharedRef())
+                        ]
+                    ]
+                + SOverlay::Slot()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Top) [
+                        SNew(SScrollBox)
+                        .Visibility_Lambda([=]() {
+                            if (TabReference->IsCurrentIndex(3))
+                                return EVisibility::Visible;
+                            else
+                                return EVisibility::Collapsed;
+                        })
+                   + SScrollBox::Slot()[
+                       SNew(SPLATEAUExportPanel, Style.ToSharedRef())
+                    ]
+                ]
             ]
         );
         MyWindow = TWeakPtr<SWindow>(Window);
