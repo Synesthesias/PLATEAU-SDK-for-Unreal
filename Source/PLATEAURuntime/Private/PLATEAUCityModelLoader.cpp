@@ -82,9 +82,9 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 ParserParams.tesselate = true;
 
                 for (const auto& GmlFile : *GmlFiles) {
-                    const auto Destination = TCHAR_TO_UTF8(*(FPaths::ProjectContentDir() + "PLATEAU"));
+                    const auto Destination = FPaths::ProjectContentDir() + "PLATEAU";
                     try {
-                         UdxFileCollection->fetch(Destination, GmlFileInfo(GmlFile));
+                         UdxFileCollection->fetch(TCHAR_TO_UTF8(*Destination), GmlFileInfo(GmlFile));
                     }
                     catch (...) {
                         //TODO: Error Handling
@@ -95,7 +95,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                     // TODO: libplateauに委譲
                     FString RelativeGmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
-                    // 末尾に/が無いなら追加
+                    // 末尾に/が無いなら追加(MakePathRelativeToで末尾のディレクトリ名を含めるため)
                     FString RootPath = Source;
                     if (RootPath[RootPath.Len() - 1] != *TEXT("/")) {
                         RootPath.AppendChar(*TEXT("/"));
@@ -106,7 +106,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
                         UE_LOG(LogTemp, Error, TEXT("Invalid source: %s"), *Source);
                         continue;
                     }
-                    auto CopiedGmlPath = Source;
+                    auto CopiedGmlPath = Destination;
+                    CopiedGmlPath.PathAppend(*FPaths::GetBaseFilename(Source), FPaths::GetBaseFilename(Source).Len());
                     CopiedGmlPath.PathAppend(*RelativeGmlPath, RelativeGmlPath.Len());
 
                     std::shared_ptr<const citygml::CityModel> CityModel;
@@ -115,13 +116,13 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     }
                     catch (...) {
                         //TODO: Error Handling
-                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), GmlFile.c_str());
+                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *CopiedGmlPath);
                         continue;
                     }
 
                     if (CityModel == nullptr) {
                         //TODO: Error Handling
-                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), GmlFile.c_str());
+                        UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *CopiedGmlPath);
                         continue;
                     }
 
@@ -129,10 +130,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                     USceneComponent* GmlRootComponent;
                     const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-                        [&GmlRootComponent, &ModelActor, &GmlFile] {
+                        [&GmlRootComponent, &ModelActor, &CopiedGmlPath] {
                             GmlRootComponent = NewObject<USceneComponent>(ModelActor, NAME_None);
                             // コンポーネント名設定(拡張子無しgml名)
-                            const auto DesiredName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(GmlFile.c_str()));
+                            const auto DesiredName = FPaths::GetBaseFilename(CopiedGmlPath);
                             FString NewUniqueName = DesiredName;
                             if (!GmlRootComponent->Rename(*NewUniqueName, nullptr, REN_Test)) {
                                 NewUniqueName = MakeUniqueObjectName(ModelActor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
@@ -150,7 +151,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
                     FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
                 }
-                        });
+            });
     }
 }
 

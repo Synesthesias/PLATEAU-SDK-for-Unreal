@@ -20,7 +20,6 @@ private:
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor, USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
-        FString Name,
-        const TArray<UTexture2D*>& SubMeshTextures) const;
-    UTexture2D* LoadTextureFromPath(const FString& Path);
+        FString Name) const;
+    //UTexture2D* LoadTextureFromPath(const FString& Path);
 };

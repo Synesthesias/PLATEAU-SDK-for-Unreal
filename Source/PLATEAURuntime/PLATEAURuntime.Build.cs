@@ -38,7 +38,10 @@ public class PLATEAURuntime : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "MeshDescription",
-                "StaticMeshDescription"
+                "StaticMeshDescription",
+                "RHI",
+                "ImageWrapper",
+                "RenderCore"
                 // ... add private dependencies that you statically link with here ...	
             }
             );

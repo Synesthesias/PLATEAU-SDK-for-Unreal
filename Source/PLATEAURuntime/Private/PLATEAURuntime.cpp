@@ -2,12 +2,12 @@
 
 #define LOCTEXT_NAMESPACE "FPLATEAURuntimeModule"
 
-void FPLATEAURuntimeModule::StartupModule()
-{
+void FPLATEAURuntimeModule::StartupModule() {
+	// TODO: キャッシュディレクトリ作成
+	// IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 }
 
-void FPLATEAURuntimeModule::ShutdownModule()
-{
+void FPLATEAURuntimeModule::ShutdownModule() {
 }
 
 #undef LOCTEXT_NAMESPACE
