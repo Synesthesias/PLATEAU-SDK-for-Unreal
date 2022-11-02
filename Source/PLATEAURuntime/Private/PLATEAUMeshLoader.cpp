@@ -11,6 +11,8 @@
 #include "MeshElementRemappings.h"
 #include "StaticMeshAttributes.h"
 
+#if WITH_EDITOR
+
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Mesh.Build"), STAT_Mesh_Build, STATGROUP_PLATEAUMeshLoader);
 
@@ -254,14 +256,12 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 
                 // StaticMesh作成
                 StaticMesh = CreateStaticMesh(InMesh, Component, FName(Name));
-                Component->SetStaticMesh(StaticMesh);
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
     }
-    FMeshDescription* RawMesh = StaticMesh->CreateMeshDescription(0);
-    FStaticMeshAttributes Attributes(*RawMesh);
+    FMeshDescription* MeshDescription = StaticMesh->CreateMeshDescription(0);
 
-    ConvertMesh(InMesh, *RawMesh);
+    ConvertMesh(InMesh, *MeshDescription);
     StaticMesh->CommitMeshDescription(0);
 
     FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
@@ -269,9 +269,12 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
         {
             SCOPE_CYCLE_COUNTER(STAT_Mesh_Build);
-            StaticMesh->Build();
+            StaticMesh->Build(true);
         }
-        StaticMesh->PostEditChange();
+
+        // TODO: 必要ある？
+        //StaticMesh->PostEditChange();
+
         // TODO: 適切なフラグの設定
         // https://docs.unrealengine.com/4.26/ja/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Creation/
         //StaticMesh->SetFlags();
@@ -304,7 +307,12 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         //StaticMesh->InitResources();
         //StaticMesh->CalculateExtendedBounds();
         //StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
+
+        // Collision情報設定
         StaticMesh->CreateBodySetup();
+
+        // ビルドされていない場合自動的にBuildが走る。
+        Component->SetStaticMesh(StaticMesh);
 
         // 名前設定、ヒエラルキー設定など
         Component->DepthPriorityGroup = SDPG_World;
@@ -324,3 +332,5 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 
     return ComponentRef;
 }
+
+#endif

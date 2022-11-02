@@ -11,7 +11,6 @@ public class PLATEAURuntime : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                Path.Combine(ModuleDirectory, "../libplateau/include"),
             }
             );
 
@@ -56,7 +55,7 @@ public class PLATEAURuntime : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public/../libplateau/include"));
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../libplateau/include"));
 
         string libPath = Path.Combine(ModuleDirectory, "../libplateau/lib");
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));

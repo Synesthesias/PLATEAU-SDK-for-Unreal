@@ -6,6 +6,8 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/SavePackage.h"
 
+#if WITH_EDITOR
+
 DECLARE_STATS_GROUP(TEXT("PLATEAUTextureLoader"), STATGROUP_PLATEAUTextureLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, STATGROUP_PLATEAUTextureLoader);
 
@@ -187,3 +189,5 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
 
     return NewTexture;
 }
+
+#endif

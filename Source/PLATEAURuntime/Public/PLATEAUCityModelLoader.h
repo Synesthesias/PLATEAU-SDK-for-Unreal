@@ -68,7 +68,7 @@ public:
 
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
-    void CreateRootComponent(AActor& Actor);
+    void CreateRootComponent(AActor& Actor) const;
     void LoadAsync();
 };
 

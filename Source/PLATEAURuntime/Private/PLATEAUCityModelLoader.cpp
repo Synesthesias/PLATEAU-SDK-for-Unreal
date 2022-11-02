@@ -34,6 +34,7 @@ void APLATEAUCityModelLoader::Load() {
 }
 
 void APLATEAUCityModelLoader::LoadAsync() {
+#if WITH_EDITOR
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
@@ -153,6 +154,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 }
             });
     }
+#endif
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {
@@ -164,7 +166,8 @@ void APLATEAUCityModelLoader::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 }
 
-void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) {
+void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) const {
+#if WITH_EDITOR
     USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
         USceneComponent::GetDefaultSceneRootVariableName());
 
@@ -177,4 +180,5 @@ void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) {
     Actor.SetFlags(RF_Transactional);
     ActorRootComponent->SetFlags(RF_Transactional);
     GEngine->BroadcastLevelActorListChanged();
+#endif
 }

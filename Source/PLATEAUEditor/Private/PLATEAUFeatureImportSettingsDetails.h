@@ -20,7 +20,7 @@ public:
     FPLATEAUFeatureSettingsRow(const plateau::udx::PredefinedCityModelPackage InPackage)
         : Package(InPackage) {}
     
-    void AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeaturePlacementSettingsProperty);
+    void AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeaturePlacementSettingsProperty) const;
 
 private:
     plateau::udx::PredefinedCityModelPackage Package;
@@ -28,13 +28,16 @@ private:
 
 class FPLATEAUFeatureSettingsDetails : public IDetailCustomization {
 public:
-    static TSharedRef<IDetailCustomization> MakeInstance() {
-        return MakeShareable(new FPLATEAUFeatureSettingsDetails());
+    FPLATEAUFeatureSettingsDetails(const TArray<plateau::udx::PredefinedCityModelPackage>& InPackages);
+
+    static TSharedRef<IDetailCustomization> MakeInstance(const TArray<plateau::udx::PredefinedCityModelPackage>& Packages) {
+        return MakeShareable(new FPLATEAUFeatureSettingsDetails(Packages));
     }
 
     /** IDetailCustomization interface */
     virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
+    TArray<plateau::udx::PredefinedCityModelPackage> Packages;
     TMap<plateau::udx::PredefinedCityModelPackage, FPLATEAUFeatureSettingsRow> FeatureSettingsRowMap;
 };
