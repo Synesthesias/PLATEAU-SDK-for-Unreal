@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "PLATEAUCityModelLoader.h"
@@ -67,12 +67,7 @@ void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
     UE_LOG(LogTemp, Log, TEXT("CityModel ID : %s"), CityModel->getId().c_str());
 
     // ポリゴンメッシュ抽出
-    const MeshExtractOptions MeshExtractOptions(
-        GeoReference.GetData().getReferencePoint(), CoordinateSystem::NWU,
-        MeshGranularity::PerPrimaryFeatureObject,
-        3, 0, true,
-        1, 0.01, GeoReference.ZoneID, Extent.GetNativeData());
-    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions);
+    const auto Model = MeshExtractor::extract(*CityModel, MeshExtractOptions());
     UE_LOG(LogTemp, Log, TEXT("Model RootNode Count : %d"), Model->getRootNodeCount());
 
     //ノード走査開始
@@ -83,7 +78,6 @@ void APLATEAUCityModelLoader::ThreadLoad(AActor* ModelActor) {
 
 void APLATEAUCityModelLoader::BeginPlay() {
     Super::BeginPlay();
-
 }
 
 void APLATEAUCityModelLoader::Tick(float DeltaTime) {

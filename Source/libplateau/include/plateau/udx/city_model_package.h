@@ -68,6 +68,7 @@ namespace plateau::udx {
             case PredefinedCityModelPackage::Unknown:
                 return { true, 0, 3 };
             }
+            return { false, 0, 0 };
         }
 
         bool hasAppearance() const {

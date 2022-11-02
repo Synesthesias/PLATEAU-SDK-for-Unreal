@@ -1,29 +1,17 @@
 ﻿#pragma once
 #include <string>
-#include <fstream>
 
 #include <citygml/citygml.h>
 #include <libplateau_api.h>
-#include <plateau_dll_logger.h>
-
-#include <GLTFSDK/GLTF.h>
-#include <GLTFSDK/BufferBuilder.h>
-#include <GLTFSDK/GLTFResourceWriter.h>
-#include <GLTFSDK/GLBResourceWriter.h>
-#include <GLTFSDK/IStreamWriter.h>
-#include <GLTFSDK/Serialize.h>
-
 #include <plateau/polygon_mesh/mesh_extractor.h>
-#include <plateau/polygon_mesh/polygon_mesh_utils.h>
-
 
 namespace plateau::meshWriter {
     /**
-     * @enum MeshFileFormat
+     * @enum GltfFileFormat
      *
      * 出力ファイルフォーマット
      */
-    enum class MeshFileFormat {
+    enum class GltfFileFormat {
         GLB,
         GLTF
     };
@@ -35,7 +23,7 @@ namespace plateau::meshWriter {
         /**
          * \brief 出力ファイルフォーマットを指定します。
          */
-        MeshFileFormat mesh_file_format;
+        GltfFileFormat mesh_file_format;
 
         /**
          * \brief テクスチャファイル用のディレクトリをgltfファイルからの相対パスで指定します。
@@ -44,32 +32,19 @@ namespace plateau::meshWriter {
         std::string texture_directory_path;
 
         GltfWriteOptions() :
-            mesh_file_format(MeshFileFormat::GLB), texture_directory_path("") {
+            mesh_file_format(GltfFileFormat::GLB), texture_directory_path("") {
         }
     };
 
     class LIBPLATEAU_EXPORT GltfWriter {
     public:
-        GltfWriter() :
-            image_id_num_(0), texture_id_num_(0), node_name_(""), scene_(), mesh_(),
-            material_ids_(), current_material_id_(), default_material_id_(""), required_materials_(), options_() {
-        }
+        GltfWriter();
+        ~GltfWriter();
 
-        bool write(const std::string& destination, const plateau::polygonMesh::Model& model, GltfWriteOptions options);
+        bool write(const std::string& gltf_file_path_utf8, const plateau::polygonMesh::Model& model, GltfWriteOptions options);
 
     private:
-        void precessNodeRecursive(const plateau::polygonMesh::Node& node, Microsoft::glTF::Document& document, Microsoft::glTF::BufferBuilder& bufferBuilder);
-        std::string writeMaterialReference(std::string texUrl, Microsoft::glTF::Document& document);
-        void writeNode(Microsoft::glTF::Document& document);
-        void writeMesh(std::string accessorIdPositions, std::string accessorIdIndices, std::string accessorIdTexCoords, Microsoft::glTF::BufferBuilder& bufferBuilder);
-
-        std::map<std::string, std::string> required_materials_;
-        Microsoft::glTF::Scene scene_;
-        Microsoft::glTF::Mesh mesh_;
-        std::string node_name_;
-        int image_id_num_, texture_id_num_;
-        std::map<std::string, std::string> material_ids_;
-        std::string default_material_id_, current_material_id_;
-        GltfWriteOptions options_;
+        class Impl;
+        std::unique_ptr<Impl> impl;
     };
 }

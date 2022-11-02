@@ -1,4 +1,4 @@
-﻿#include "PLATEAUMeshLoader.h"
+#include "PLATEAUMeshLoader.h"
 
 #include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
@@ -68,7 +68,7 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, pla
         Result->Wait();
         auto Result2 = Async(EAsyncExecution::Thread, [&] {
             UE_LOG(LogTemp, Log, TEXT(" %s"), (const char*)TCHAR_TO_ANSI(*CompName));
-            std::vector<int> Indices = Node->getMesh()->getIndices();
+            auto Indices = Node->getMesh()->getIndices();
             Comp = CreateStaticMeshComponent(Actor, *ParentComponent, Indices, VertArr, CompName, Texture, UVs);
         });
         Result2.Wait();
@@ -81,7 +81,7 @@ void FPLATEAUMeshLoader::LoadNodes_InModel(USceneComponent* ParentComponent, pla
     }
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<int> Indices, TArray<FVector> Vertices, 
+UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, std::vector<unsigned> Indices, TArray<FVector> Vertices, 
     FString Name, UTexture2D* Texture, std::vector<TVec2f> UVs[]) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
 
@@ -134,7 +134,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     return ComponentRef;
 }
 
-TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(const std::vector<int>& InIndicesVector, const TArray<FVector>& VerticesArray, 
+TUniquePtr<FStaticMeshRenderData> FPLATEAUMeshLoader::CreateRenderData(const std::vector<unsigned>& InIndicesVector, const TArray<FVector>& VerticesArray, 
     const std::vector<TVec2f>& UV1, const std::vector<TVec2f>& UV2, const std::vector<TVec2f>& UV3) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateRenderData Start-----"));
     UE_LOG(LogTemp, Log, TEXT("InIndices size : %zu"), InIndicesVector.size());

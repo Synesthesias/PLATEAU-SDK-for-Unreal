@@ -33,6 +33,7 @@ namespace plateau::polygonMesh {
         const std::string& getName() const;
         std::optional<Mesh>& getMesh();
         const std::optional<Mesh>& getMesh() const;
+        void setMesh(Mesh&& mesh);
 
         void addChildNode(Node&& node);
         size_t getChildCount() const;

@@ -10,6 +10,7 @@ namespace plateau::udx {
         explicit GmlFileInfo(const std::string& path);
 
         const std::string& getPath() const;
+        void setPath(const std::string& path);
         MeshCode getMeshCode() const;
         const std::string& getFeatureType() const;
         std::string getAppearanceDirectoryPath() const;

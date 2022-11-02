@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+                  // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
 #include "ExtentEditor/PLATEAUExtentEditorVPClient.h"
@@ -11,8 +11,10 @@
 #include "SlateOptMacros.h"
 
 #include "plateau/udx/udx_file_collection.h"
-#include "plateau/basemap/TileProjection.h"
-#include "plateau/basemap/VectorTileDownloader.h"
+#include "plateau/basemap/tile_projection.h"
+#include "plateau/basemap/vector_tile_downloader.h"
+#include "plateau/geometry/geo_coordinate.h"
+#include "plateau/geometry/geo_reference.h"
 
 #include <filesystem>
 #include <fstream>
@@ -70,6 +72,31 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         GeoReference.ReferencePoint.Y = RawCenterPoint.y;
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
+
+        std::vector<double> latitude, longitude, height;
+        for (auto MeshCode : FileCollection->getMeshCodes()){
+            latitude.push_back(MeshCode.getExtent().min.latitude);
+            latitude.push_back(MeshCode.getExtent().max.latitude);
+
+            longitude.push_back(MeshCode.getExtent().min.longitude);
+            longitude.push_back(MeshCode.getExtent().max.longitude);
+
+            height.push_back(MeshCode.getExtent().min.height);
+            height.push_back(MeshCode.getExtent().max.height);
+        }
+
+        double minLat = *MinElement(begin(latitude), end(latitude));
+        double maxLat = *MaxElement(begin(latitude), end(latitude));
+        double minLong = *MinElement(begin(longitude), end(longitude));
+        double maxLong = *MaxElement(begin(longitude), end(longitude));
+        double minHeight = *MinElement(begin(height), end(height));
+        double maxHeight = *MaxElement(begin(height), end(height));
+
+        plateau::geometry::Extent extent(
+            plateau::geometry::GeoCoordinate(minLat, minLong, minHeight),
+            plateau::geometry::GeoCoordinate(maxLat, maxLong, maxHeight));
+
+        AttachVectorTile(extent, GeoReference);
 
         ViewportClient->Initialize(*FileCollection);
     }
@@ -144,10 +171,9 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 const auto Extent = ViewportClient->GetExtent();
                 ExtentEditorPtr.Pin()->SetExtent(Extent);
                 ExtentEditorPtr.Pin()->HandleClickOK();
-                AttachVectorTile(Extent);
 
-                //if (GetOwnerTab())
-                //    GetOwnerTab()->RequestCloseTab();
+                if (GetOwnerTab())
+                    GetOwnerTab()->RequestCloseTab();
                 return FReply::Handled();
             })
         .Content()
@@ -173,23 +199,21 @@ TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
     return OwnerTab.Pin();
 }
 
-void SPLATEAUExtentEditorViewport::AttachVectorTile(FPLATEAUExtent Extent) {
+void SPLATEAUExtentEditorViewport::AttachVectorTile(FPLATEAUExtent Extent, FPLATEAUGeoReference geoReference) {
     auto Fpath = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\images"));
-    auto str = std::string(TCHAR_TO_UTF8(*Fpath));
 
-    TileProjection tileProjection;
-    VectorTileDownloader Downloader("http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png");
-    const auto Coordinates = tileProjection.getTileCoordinates(Extent.GetNativeData(), 15);
-    for (auto Cooridinate : *Coordinates){
-        auto Tile = Downloader.download(str, Cooridinate);
+    VectorTileDownloader Downloader(TCHAR_TO_UTF8(*Fpath), Extent.GetNativeData());
+
+    for(int i= 0; i< Downloader.getTileCount(); i++){
+        auto Tile = Downloader.download(Downloader.getTileCount()-i-1);
 
         IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(FName("ImageWrapper"));
         TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(EImageFormat::PNG);
         TArray<uint8> RawFileData;
 
-        int i = 0;
-        if (FFileHelper::LoadFileToArray(RawFileData, *Fpath))
-        {
+        FString fImagePath(Tile->image_path.c_str());
+
+        if (FFileHelper::LoadFileToArray(RawFileData, *fImagePath)) {
             // 非圧縮の画像データを取得
             TArray<uint8> UncompressedRawData;
             if (ImageWrapper.IsValid() &&
@@ -238,27 +262,27 @@ void SPLATEAUExtentEditorViewport::AttachVectorTile(FPLATEAUExtent Extent) {
                 Texture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData.GetData());
                 Texture->UpdateResource();
 
+                //mesh component作成，テクスチャを適用
                 FName meshName = MakeUniqueObjectName(Package, UStaticMeshComponent::StaticClass(), FName(*Filename));
                 UStaticMeshComponent* MeshComponent = NewObject<UStaticMeshComponent>(Package, meshName, RF_Public | RF_Standalone);
-                auto m = UMaterialInstanceDynamic::Create(Cast< UMaterial >(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial"))), Package);
-                m->SetTextureParameterValue(TEXT("sample"), Texture);
+                UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
+                UMaterialInstanceDynamic* m = UMaterialInstanceDynamic::Create(Mat, Package);
+                m->SetTextureParameterValue(TEXT("Texture"), Texture);
                 MeshComponent->SetMaterial(0, m);
-                auto mesh = Cast< UStaticMesh >(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, TEXT("/Engine/BasicShapes/Plane")));
-                mesh->SetMaterial(0, m);
+                auto staticMeshName = TEXT("/Engine/BasicShapes/Plane");
+                auto mesh = Cast< UStaticMesh >(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, staticMeshName));
+                mesh->AddMaterial(m);
                 MeshComponent->SetStaticMesh(mesh);
 
-                FAssetData EmptyActorAssetData = FAssetData(MeshComponent);
-                UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
-                auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
+                //各タイルの座標を取得
+                auto extent = TileProjection::unproject(Tile->coordinate);
+                auto vecMax = geoReference.GetData().project(extent.max);
+                auto vecMin = geoReference.GetData().project(extent.min);
 
-
-                ViewportClient->GetPreviewScene()->AddComponent(MeshComponent, FTransform(FVector(i, 0, 0)));
-                i += 1000;
+                ViewportClient->GetPreviewScene()->AddComponent(MeshComponent, FTransform(FRotator(0, -90, 0), FVector((vecMax.x + vecMin.x)/2, (vecMax.y + vecMin.y) / 2, (vecMax.z + vecMin.z) / 2), FVector(10, 10, 10)));
             }
         }
-
     }
 }
-
 
 #undef LOCTEXT_NAMESPACE

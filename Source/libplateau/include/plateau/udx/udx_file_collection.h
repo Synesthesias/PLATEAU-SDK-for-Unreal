@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <map>
 #include <string>
@@ -90,23 +90,22 @@ namespace plateau::udx {
          * \brief CityGMLファイルとその関連ファイル(テクスチャ、コードリスト)をコピーします。コピー先にすでにファイルが存在する場合はスキップします。
          * \param destination_root_path コピー先のフォルダへのパス。このパスの配下に3D都市モデルデータ製品のルートフォルダが配置されます。
          * \param gml_file コピーするCityGMLファイル
-         * \return コピーされたもしくはスキップされたファイルのリスト
          */
-        std::string fetch(const std::string& destination_root_path, const GmlFileInfo& gml_file) const;
+        void fetch(const std::string& destination_root_path, const GmlFileInfo& gml_file) const;
 
         /**
          * \brief 座標範囲で都市モデルデータをフィルタリングします。
          * \param extent 座標範囲
          * \return フィルタリングされた都市モデルデータ
          */
-        std::shared_ptr<UdxFileCollection> filter(geometry::Extent extent);
+        std::shared_ptr<UdxFileCollection> filter(const geometry::Extent& extent) const;
 
         /**
          * \brief 座標範囲で都市モデルデータをフィルタリングします。
          * \param extent 座標範囲
          * \param collection フィルタリングされた都市モデルデータの格納先
          */
-        void filter(geometry::Extent extent, UdxFileCollection& collection);
+        void filter(const geometry::Extent& extent, UdxFileCollection& collection) const;
 
         /**
          * \brief メッシュコードで都市モデルデータをフィルタリングします。

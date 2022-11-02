@@ -4,6 +4,9 @@
 #include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
 
+#include "plateau/geometry/geo_reference.h"
+
+
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
     SLATE_BEGIN_ARGS(SPLATEAUExtentEditorViewport) {}
@@ -26,8 +29,6 @@ protected:
     virtual void BindCommands() override;
 
 private:
-    void AttachVectorTile(FPLATEAUExtent Extent);
-
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
 
@@ -38,5 +39,6 @@ private:
 
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
-};
 
+    void AttachVectorTile(FPLATEAUExtent Extent, FPLATEAUGeoReference GeoReference);
+};

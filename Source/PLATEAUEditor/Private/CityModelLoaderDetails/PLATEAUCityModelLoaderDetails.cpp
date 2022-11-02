@@ -3,7 +3,6 @@
 #include "PLATEAUCityModelLoaderDetails.h"
 
 #include "SlateOptMacros.h"
-#include "PropertyHandle.h"
 #include "DetailLayoutBuilder.h"
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "DetailCategoryBuilder.h"
