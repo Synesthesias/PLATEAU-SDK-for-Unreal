@@ -15,6 +15,17 @@ plateau::geometry::GeoCoordinate FPLATEAUGeoCoordinate::GetNativeData() const {
     return plateau::geometry::GeoCoordinate(Latitude, Longitude, Height);
 }
 
+bool FPLATEAUGeoCoordinate::operator==(const FPLATEAUGeoCoordinate& other) const {
+    return
+        Latitude == other.Latitude &&
+        Longitude == other.Longitude &&
+        Height == other.Height;
+}
+
+bool FPLATEAUGeoCoordinate::operator!=(const FPLATEAUGeoCoordinate& other) const {
+    return !(*this == other);
+}
+
 
 /**** Extent ****/
 
@@ -26,6 +37,14 @@ plateau::geometry::Extent FPLATEAUExtent::GetNativeData() const {
     return plateau::geometry::Extent(
         Min.GetNativeData(),
         Max.GetNativeData());
+}
+
+bool FPLATEAUExtent::operator==(const FPLATEAUExtent& other) const {
+    return Max == other.Max && Min == other.Min;
+}
+
+bool FPLATEAUExtent::operator!=(const FPLATEAUExtent& other) const {
+    return !(*this == other);
 }
 
 

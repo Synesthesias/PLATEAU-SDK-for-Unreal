@@ -68,4 +68,8 @@ void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
     Extent = InExtent;
 }
 
+void FPLATEAUExtentEditor::ResetExtent() {
+    Extent.Reset();
+}
+
 #undef LOCTEXT_NAMESPACE

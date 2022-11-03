@@ -220,8 +220,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     AActor& Actor, USceneComponent& ParentComponent,
     const plateau::polygonMesh::Mesh& InMesh,
     FString Name) {
-    UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
-
     // コンポーネント作成
     UStaticMesh* StaticMesh;
     UStaticMeshComponent* Component;
@@ -285,7 +283,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
         // マテリアル作成
         for (const auto& Texture : SubMeshTextures) {
-            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PlateauSDK/DefaultMaterial")));
+            const auto SourceMaterialPath =
+                Texture != nullptr
+                ? TEXT("/PlateauSDK/DefaultMaterial")
+                : TEXT("/PlateauSDK/DefaultMaterial_No_Texture");
+            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
             UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
             if (Texture != nullptr) {
                 DynMaterial->SetTextureParameterValue("Texture", Texture);
@@ -303,9 +305,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         // Collision情報設定
         StaticMesh->CreateBodySetup();
 
-        // ビルドされていない場合自動的にBuildが走る。
-        //Component->SetStaticMesh(StaticMesh);
-
         // 名前設定、ヒエラルキー設定など
         Component->DepthPriorityGroup = SDPG_World;
         FString NewUniqueName = StaticMesh->GetName();
@@ -318,7 +317,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
         Component->PostEditChange();
         ComponentRef = Component;
-        UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent End-----"));
         }, TStatId(), nullptr, ENamedThreads::GameThread);
     Task->Wait();
 

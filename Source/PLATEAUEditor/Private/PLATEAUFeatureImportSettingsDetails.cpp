@@ -58,8 +58,8 @@ namespace {
 
 
 FPLATEAUFeatureSettingsDetails::FPLATEAUFeatureSettingsDetails(
-    const TArray<plateau::udx::PredefinedCityModelPackage>& InPackages)
-    : Packages(InPackages) {}
+    const plateau::udx::PredefinedCityModelPackage InPackageMask)
+    : PackageMask(InPackageMask) {}
 
 void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
 
@@ -68,8 +68,14 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 
     auto ImportSettings = Cast<UPLATEAUImportSettings>(ObjectsBeingCustomized[0].Get());
 
-    for (const auto& Package : Packages) {
+    for (const auto& Package : GetAllPackages()) {
         const auto PropertyName = GetFeaturePlacementSettingsPropertyName(Package);
+        const auto FeatureSettingsProperty = DetailBuilder.GetProperty(PropertyName);
+        DetailBuilder.HideProperty(FeatureSettingsProperty);
+
+        if ((Package & PackageMask) == PredefinedCityModelPackage::None)
+            continue;
+
         FName CategoryName;
         FText LocalizedCategoryName;
 
@@ -114,10 +120,6 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 
         IDetailCategoryBuilder& Category =
             DetailBuilder.EditCategory(CategoryName, LocalizedCategoryName);
-
-        const auto FeatureSettingsProperty = DetailBuilder.GetProperty(PropertyName);
-
-        DetailBuilder.HideProperty(FeatureSettingsProperty);
 
         if (!FeatureSettingsRowMap.Find(Package)) {
             FeatureSettingsRowMap.Add(Package, FPLATEAUFeatureSettingsRow(Package));
@@ -177,7 +179,7 @@ void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category,
 
     // MeshColliderをセットする
     Category.AddCustomRow(FText::FromString(TEXT("Set Collider")))
-        .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "MeshColliderをセットする"))]
+        .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "コリジョンを有効化する"))]
         .ValueContent()[SetColliderProperty->CreatePropertyValueWidget()];
 
     if (PackageInfo.minLOD() != PackageInfo.maxLOD()) {

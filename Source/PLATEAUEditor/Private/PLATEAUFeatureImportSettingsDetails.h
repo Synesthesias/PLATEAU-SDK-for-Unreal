@@ -28,16 +28,16 @@ private:
 
 class FPLATEAUFeatureSettingsDetails : public IDetailCustomization {
 public:
-    FPLATEAUFeatureSettingsDetails(const TArray<plateau::udx::PredefinedCityModelPackage>& InPackages);
+    FPLATEAUFeatureSettingsDetails(const plateau::udx::PredefinedCityModelPackage InPackageMask);
 
-    static TSharedRef<IDetailCustomization> MakeInstance(const TArray<plateau::udx::PredefinedCityModelPackage> Packages) {
-        return MakeShareable(new FPLATEAUFeatureSettingsDetails(Packages));
+    static TSharedRef<IDetailCustomization> MakeInstance(const plateau::udx::PredefinedCityModelPackage InPackageMask) {
+        return MakeShareable(new FPLATEAUFeatureSettingsDetails(InPackageMask));
     }
 
     /** IDetailCustomization interface */
     virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-    TArray<plateau::udx::PredefinedCityModelPackage> Packages;
+    plateau::udx::PredefinedCityModelPackage PackageMask;
     TMap<plateau::udx::PredefinedCityModelPackage, FPLATEAUFeatureSettingsRow> FeatureSettingsRowMap;
 };

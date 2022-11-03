@@ -79,7 +79,7 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
         FTextBlockStyle()
         .SetColorAndOpacity(FSlateColor::UseForeground())
         .SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 12)));
-
+    
     FSlateStyleRegistry::RegisterSlateStyle(*this);
 }
 

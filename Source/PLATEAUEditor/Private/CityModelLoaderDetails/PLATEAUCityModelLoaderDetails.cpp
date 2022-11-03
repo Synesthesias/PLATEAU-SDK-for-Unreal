@@ -23,31 +23,31 @@ TSharedRef<IDetailCustomization> FPLATEAUCityModelLoaderDetails::MakeInstance() 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
-    auto& CityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
-    DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
+    //auto& CityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
+    //DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
-    TWeakObjectPtr<APLATEAUCityModelLoader> CityModelLoader = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0]);
+    //TWeakObjectPtr<APLATEAUCityModelLoader> CityModelLoader = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0]);
 
-    CityModelCategory.AddCustomRow(FText::FromString("LoadCityModel"))
-        .WholeRowContent()
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda(
-            [CityModelLoader]() {
-                // TODO: SDK画面を開く
-                return FReply::Handled();
-            })
-        .Content()
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("Open SDK Window", "SDK画面を開く"))
-                ]
-        ];
+    //CityModelCategory.AddCustomRow(FText::FromString("LoadCityModel"))
+    //    .WholeRowContent()
+    //    [
+    //        SNew(SButton)
+    //        .VAlign(VAlign_Center)
+    //    .ForegroundColor(FColor::White)
+    //    .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+    //    .OnClicked_Lambda(
+    //        [CityModelLoader]() {
+    //            // TODO: SDK画面を開く
+    //            return FReply::Handled();
+    //        })
+    //    .Content()
+    //            [
+    //                SNew(STextBlock)
+    //                .Justification(ETextJustify::Center)
+    //            .Margin(FMargin(0, 5, 0, 5))
+    //            .Text(LOCTEXT("Open SDK Window", "SDK画面を開く"))
+    //            ]
+    //    ];
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION

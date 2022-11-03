@@ -35,6 +35,8 @@ void APLATEAUCityModelLoader::Load() {
 
 void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
+    //FScopedSlowTask CityModelLoadSlowTask()
+
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
@@ -59,6 +61,13 @@ void APLATEAUCityModelLoader::LoadAsync() {
         ExtractOptions.grid_count_of_side = 10;
         ExtractOptions.unit_scale = 0.01f;
         ExtractOptions.extent = Extent.GetNativeData();
+        if (Package == PredefinedCityModelPackage::Relief || Package == PredefinedCityModelPackage::DisasterRisk) {
+            ExtractOptions.exclude_city_object_outside_extent = false;
+            ExtractOptions.exclude_triangles_outside_extent = true;
+        } else {
+            ExtractOptions.exclude_city_object_outside_extent = true;
+            ExtractOptions.exclude_triangles_outside_extent = false;
+        }
 
         // 都市モデルパース、ポリゴンメッシュ抽出、ノード走査 各ファイルに対して行う
         citygml::ParserParams ParserParams;
@@ -126,7 +135,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                         UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *CopiedGmlPath);
                         continue;
                     }
-
+                    
                     const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
 
                     USceneComponent* GmlRootComponent;
