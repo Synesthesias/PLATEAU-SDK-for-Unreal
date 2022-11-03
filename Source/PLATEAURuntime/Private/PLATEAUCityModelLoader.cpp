@@ -38,6 +38,7 @@ namespace {
                         return;
                     }
                 }
+                UE_LOG(LogTemp, Error, TEXT("CityModelLoader not found"));
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
     }
@@ -55,8 +56,10 @@ namespace {
 
                     if (LoaderActorCast->GetActorNameOrLabel() == LoaderName) {
                         Result = Lambda(LoaderActorCast);
+                        return;
                     }
                 }
+                UE_LOG(LogTemp, Error, TEXT("CityModelLoader not found"));
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
             return Result;
@@ -182,7 +185,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
         [InputData, Destination, UdxFileCollection, &LoadInputDataArray, Source,
             ModelActor, GmlName, OwnerLoaderName] {
                 ExecuteInGameThread(OwnerLoaderName,
-                    [&GmlName](APLATEAUCityModelLoader* Loader) {
+                    [GmlName](APLATEAUCityModelLoader* Loader) {
                         Loader->Status.LoadingGmls.Add(GmlName);
                     });
 
@@ -198,7 +201,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     //TODO: Error Handling
                     UE_LOG(LogTemp, Error, TEXT("Invalid source: %s"), *Source);
                         ExecuteInGameThread(OwnerLoaderName,
-                            [&GmlName](APLATEAUCityModelLoader* Loader) {
+                            [GmlName](APLATEAUCityModelLoader* Loader) {
                                 Loader->Status.LoadedGmlCount++;
                                 Loader->Status.LoadingGmls.Remove(GmlName);
                                 Loader->Status.FailedGmls.Add(GmlName);
@@ -224,7 +227,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     //TODO: Error Handling
                     UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *CopiedGmlPath);
                     ExecuteInGameThread(OwnerLoaderName,
-                        [&GmlName](APLATEAUCityModelLoader* Loader) {
+                        [GmlName](APLATEAUCityModelLoader* Loader) {
                             Loader->Status.LoadedGmlCount++;
                             Loader->Status.LoadingGmls.Remove(GmlName);
                             Loader->Status.FailedGmls.Add(GmlName);
@@ -259,7 +262,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
 
                 ExecuteInGameThread(OwnerLoaderName,
-                    [&GmlName](APLATEAUCityModelLoader* Loader) {
+                    [GmlName](APLATEAUCityModelLoader* Loader) {
                         Loader->Status.LoadedGmlCount++;
                         Loader->Status.LoadingGmls.Remove(GmlName);
                     });
