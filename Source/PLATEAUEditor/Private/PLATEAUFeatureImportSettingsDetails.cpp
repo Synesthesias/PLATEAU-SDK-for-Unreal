@@ -178,9 +178,9 @@ void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category,
     }
 
     // MeshColliderをセットする
-    Category.AddCustomRow(FText::FromString(TEXT("Set Collider")))
-        .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "コリジョンを有効化する"))]
-        .ValueContent()[SetColliderProperty->CreatePropertyValueWidget()];
+    //Category.AddCustomRow(FText::FromString(TEXT("Set Collider")))
+    //    .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "コリジョンを有効化する"))]
+    //    .ValueContent()[SetColliderProperty->CreatePropertyValueWidget()];
 
     if (PackageInfo.minLOD() != PackageInfo.maxLOD()) {
         // 最小LOD

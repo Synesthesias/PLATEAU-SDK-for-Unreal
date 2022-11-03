@@ -285,8 +285,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         for (const auto& Texture : SubMeshTextures) {
             const auto SourceMaterialPath =
                 Texture != nullptr
-                ? TEXT("/PlateauSDK/DefaultMaterial")
-                : TEXT("/PlateauSDK/DefaultMaterial_No_Texture");
+                ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
+                : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
             UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
             if (Texture != nullptr) {
