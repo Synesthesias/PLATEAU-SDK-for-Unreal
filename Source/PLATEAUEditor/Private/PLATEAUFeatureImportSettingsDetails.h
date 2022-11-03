@@ -30,7 +30,7 @@ class FPLATEAUFeatureSettingsDetails : public IDetailCustomization {
 public:
     FPLATEAUFeatureSettingsDetails(const TArray<plateau::udx::PredefinedCityModelPackage>& InPackages);
 
-    static TSharedRef<IDetailCustomization> MakeInstance(const TArray<plateau::udx::PredefinedCityModelPackage>& Packages) {
+    static TSharedRef<IDetailCustomization> MakeInstance(const TArray<plateau::udx::PredefinedCityModelPackage> Packages) {
         return MakeShareable(new FPLATEAUFeatureSettingsDetails(Packages));
     }
 

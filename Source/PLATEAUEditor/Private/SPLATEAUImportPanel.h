@@ -7,6 +7,7 @@
 
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32;
+    class UdxFileCollection;
 }
 
 /**
@@ -31,6 +32,8 @@ private:
 
     TSharedPtr<IDetailsView> BuildingImportSettingsView = nullptr;
     TSharedPtr<IDetailsView> RoadImportSettingsView = nullptr;
+
+    std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
     FReply OnBtnSelectGmlFileClicked();

@@ -146,8 +146,8 @@ namespace {
         ComputeNormals(Attributes);
 
         //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
-        //FElementIDRemappings ElementIDRemappings;
-        //OutRawMesh.Compact(ElementIDRemappings);
+        FElementIDRemappings ElementIDRemappings;
+        OutMeshDescription.Compact(ElementIDRemappings);
         return OutMeshDescription.Polygons().Num() > 0;
     }
 
@@ -181,45 +181,20 @@ namespace {
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
-        Async(EAsyncExecution::Thread,
-            [=] {
-                LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
-            });
+        //Async(EAsyncExecution::Thread,
+        //    [=] {
+        LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
+        //});
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [StaticMeshes = StaticMeshes]() {
+                UStaticMesh::BatchBuild(StaticMeshes);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        StaticMeshes.Reset();
     }
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
-    USceneComponent* Comp = nullptr;
-    if (Node->getMesh() == std::nullopt) {
-        //SceneComponentを付与
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&] {
-                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
-                const auto DesiredName = UTF8_TO_TCHAR(Node->getName().c_str());
-                FString NewUniqueName = DesiredName;
-                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
-                }
-                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-
-                check(Comp != nullptr);
-                Comp->Mobility = EComponentMobility::Static;
-                Actor.AddInstanceComponent(Comp);
-                Comp->RegisterComponent();
-                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
-        Task->Wait();
-    } else {
-        // TODO: 空のMeshが入っている問題
-        if (Node->getMesh()->getVertices().size() == 0)
-            return;
-
-        const FString CompName = UTF8_TO_TCHAR(Node->getName().c_str());
-        Comp = CreateStaticMeshComponent(
-            Actor, *ParentComponent,
-            Node->getMesh().value(),
-            CompName);
-    }
+    USceneComponent* Component = LoadNode(ParentComponent, Node, Actor);
 
     //TArray<TFuture<void>> Results;
     for (int i = 0; i < Node->getChildCount(); i++) {
@@ -228,7 +203,10 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
         // TODO: NodeのLifetimeへの依存解消
         //Results.Add(Async(EAsyncExecution::Thread,
         //    [this, Comp, &TargetNode, &Actor] {
-        LoadNodeRecursive(Comp, &TargetNode, Actor);
+        //const auto ChildComponent = LoadNode(Component, &TargetNode, Actor);
+
+        LoadNodeRecursive(Component, &TargetNode, Actor);
+
         //}));
     }
 
@@ -237,10 +215,11 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
     //}
 }
 
+
 UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     AActor& Actor, USceneComponent& ParentComponent,
     const plateau::polygonMesh::Mesh& InMesh,
-    FString Name) const {
+    FString Name) {
     UE_LOG(LogTemp, Log, TEXT("-----CreateStaticMeshComponent Start-----"));
 
     // コンポーネント作成
@@ -263,13 +242,26 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 
     ConvertMesh(InMesh, *MeshDescription);
     StaticMesh->CommitMeshDescription(0);
+    StaticMeshes.Add(StaticMesh);
+    StaticMesh->OnPostMeshBuild().AddLambda(
+        [Component](UStaticMesh* Mesh) {
+            if (Component == nullptr)
+                return;
+            Async(EAsyncExecution::LargeThreadPool,
+                [Component, Mesh] {
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [Component, Mesh] {
+                            Component->SetStaticMesh(Mesh);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                });
+        });
 
     FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
         //Set the Imported version before calling the build
         StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
         {
             SCOPE_CYCLE_COUNTER(STAT_Mesh_Build);
-            StaticMesh->Build(true);
+            //StaticMesh->Build(true);
         }
 
         // TODO: 必要ある？
@@ -312,7 +304,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         StaticMesh->CreateBodySetup();
 
         // ビルドされていない場合自動的にBuildが走る。
-        Component->SetStaticMesh(StaticMesh);
+        //Component->SetStaticMesh(StaticMesh);
 
         // 名前設定、ヒエラルキー設定など
         Component->DepthPriorityGroup = SDPG_World;
@@ -331,6 +323,41 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     Task->Wait();
 
     return ComponentRef;
+}
+
+USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
+    USceneComponent* Comp = nullptr;
+    if (Node->getMesh() == std::nullopt) {
+        //SceneComponentを付与
+        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&] {
+                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
+                const auto DesiredName = UTF8_TO_TCHAR(Node->getName().c_str());
+                FString NewUniqueName = DesiredName;
+                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                }
+                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
+                check(Comp != nullptr);
+                Comp->Mobility = EComponentMobility::Static;
+                Actor.AddInstanceComponent(Comp);
+                Comp->RegisterComponent();
+                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        Task->Wait();
+        return Comp;
+    }
+
+    // TODO: 空のMeshが入っている問題
+    if (Node->getMesh()->getVertices().size() == 0)
+        return nullptr;
+
+    const FString CompName = UTF8_TO_TCHAR(Node->getName().c_str());
+    return CreateStaticMeshComponent(
+        Actor, *ParentComponent,
+        Node->getMesh().value(),
+        CompName);
 }
 
 #endif

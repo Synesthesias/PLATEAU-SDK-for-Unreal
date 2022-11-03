@@ -4,6 +4,7 @@
 #include "SPLATEAUImportPanel.h"
 
 #include <plateau/udx/city_model_package.h>
+#include <plateau/udx/udx_file_collection.h>
 
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUImportSettings.h"
@@ -69,23 +70,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     OwnerWindow = InArgs._OwnerWindow;
     Style = InStyle;
 
-    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+    TWeakPtr<SVerticalBox> VerticalBox;
 
-    FDetailsViewArgs DetailsViewArgs;
-    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-    DetailsViewArgs.bAllowSearch = false;
-    
-    BuildingImportSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
-    BuildingImportSettingsView->RegisterInstancedCustomPropertyLayout(
-        UPLATEAUImportSettings::StaticClass(),
-        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUFeatureSettingsDetails::MakeInstance));
-    BuildingImportSettingsView->SetObject(GetMutableDefault<UPLATEAUImportSettings>());
-    
     ChildSlot
-        [SNew(SVerticalBox)
-
-    // モデルデータのインポート(ヘッダー)
-    + SVerticalBox::Slot()
+        [SAssignNew(VerticalBox, SVerticalBox)
+        // モデルデータのインポート(ヘッダー)
+        + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))
         .AutoHeight()
         [SNew(SHeader)
@@ -96,7 +86,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Text(LOCTEXT("Import ModelData", "モデルデータのインポートを行います。"))]]
 
     // 都市の追加(ヘッダー)
-    +SVerticalBox::Slot()
+    + SVerticalBox::Slot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         [SNew(SHeader)
@@ -122,7 +112,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         [CreateSourcePathSelectPanel()]
 
     // モデルデータの配置(ヘッダー)
-    +SVerticalBox::Slot()
+    + SVerticalBox::Slot()
         .Padding(FMargin(0, 15, 0, 5))
         [SNew(SHeader)
         .HAlign(HAlign_Center)
@@ -179,18 +169,17 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 return MenuBuilder.MakeWidget();
             })
         .ContentPadding(0.0f)
-                //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
-                //.ForegroundColor(FSlateColor::UseForeground())
                 .VAlign(VAlign_Center)
                 .ButtonContent()
                 [SNew(STextBlock).Text_Lambda(
                     [this]() {
-                        // TODO
+                        // TODO: キャッシュ化
                         return GetZoneIDTexts()[ZoneID];
                     })]]]
+        ];
 
     // マップ範囲選択(ヘッダー)
-    + SVerticalBox::Slot()
+    VerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         .VAlign(VAlign_Center)
@@ -208,10 +197,10 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading2")
-        .Text(LOCTEXT("Edit Map Extent", "マップ範囲選択"))]]]
+        .Text(LOCTEXT("Edit Map Extent", "マップ範囲選択"))]]];
 
     // マップ範囲選択
-    + SVerticalBox::Slot()
+    VerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(84, 0, 86, 10)
         [SNew(SButton)
@@ -239,10 +228,10 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 .Margin(FMargin(80, 14, 80, 14))
                 .Text(LOCTEXT("Edit Extent Button", "範囲選択"))
                 ]
-        ]
+        ];
 
     // 地物別設定(ヘッダー)
-    + SVerticalBox::Slot()
+    VerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         [SNew(SHeader)
@@ -259,16 +248,29 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading2")
-        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))]]]
+        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))]]];
 
     // 地物別設定
-    + SVerticalBox::Slot()
+    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+    FDetailsViewArgs DetailsViewArgs;
+    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+    DetailsViewArgs.bAllowSearch = false;
+
+    BuildingImportSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+    const TArray<plateau::udx::PredefinedCityModelPackage> Packages;
+    BuildingImportSettingsView->RegisterInstancedCustomPropertyLayout(
+        UPLATEAUImportSettings::StaticClass(),
+        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUFeatureSettingsDetails::MakeInstance, Packages));
+    BuildingImportSettingsView->SetObject(GetMutableDefault<UPLATEAUImportSettings>());
+
+    VerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(0, 0, 0, 0)
-        [BuildingImportSettingsView.ToSharedRef()]
+        [BuildingImportSettingsView.ToSharedRef()];
 
     // モデルをインポート
-    + SVerticalBox::Slot()
+    VerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(FMargin(84, 5, 86, 20))
         [SNew(SButton)
@@ -292,9 +294,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 // TODO: 無しでも動くように変更
                 Loader->Extent.Min.Height = -100000;
                 Loader->Extent.Max.Height = 100000;
-
-                //UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
-
+                
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
                 Loader->Load();
@@ -307,8 +307,6 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 .Margin(FMargin(0, 5, 0, 5))
                 .Text(LOCTEXT("Import Button", "モデルをインポート"))
                 ]
-        ]
-
         ];
 }
 
@@ -374,7 +372,7 @@ FReply SPLATEAUImportPanel::OnBtnSelectGmlFileClicked() {
         SourcePath,
         OutFolderName)) {
         SourcePath = OutFolderName;
-        //UpdateWindow(MyWindow);
+        FileCollection = plateau::udx::UdxFileCollection::find(TCHAR_TO_UTF8(*SourcePath));
     }
 
     return FReply::Handled();
