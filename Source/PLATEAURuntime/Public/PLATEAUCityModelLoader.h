@@ -55,6 +55,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         UPLATEAUImportSettings* ImportSettings;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        int TotalGmlCount;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        int LoadedGmlCount;
+
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Load();
     

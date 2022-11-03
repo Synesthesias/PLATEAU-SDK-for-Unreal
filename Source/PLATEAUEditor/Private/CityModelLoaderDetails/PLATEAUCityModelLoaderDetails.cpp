@@ -23,10 +23,37 @@ TSharedRef<IDetailCustomization> FPLATEAUCityModelLoaderDetails::MakeInstance() 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FPLATEAUCityModelLoaderDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
-    //auto& CityModelCategory = DetailBuilder.EditCategory("CityModel", LOCTEXT("CityModel", "都市モデル"));
-    //DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
+    auto& CityModelCategory = DetailBuilder.EditCategory("PLATEAU");
+    DetailBuilder.GetObjectsBeingCustomized(ObjectsBeingCustomized);
 
-    //TWeakObjectPtr<APLATEAUCityModelLoader> CityModelLoader = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0]);
+    TWeakObjectPtr<APLATEAUCityModelLoader> CityModelLoader = Cast<APLATEAUCityModelLoader>(ObjectsBeingCustomized[0]);
+
+    CityModelCategory.AddCustomRow(FText::FromString("LoadCityModel"))
+        .WholeRowContent()
+        [SNew(SVerticalBox) +
+        SVerticalBox::Slot()
+        [SNew(STextBlock)
+        .Text_Lambda(
+            [CityModelLoader]() {
+                auto HasLoadCompleted = CityModelLoader->LoadedGmlCount == CityModelLoader->TotalGmlCount;
+                return HasLoadCompleted
+                    ? LOCTEXT("Load Completed", "都市モデルの読み込みが完了しました。")
+                    : LOCTEXT("Load In Progress", "都市モデルを読み込み中...");
+            })
+        ] +
+        SVerticalBox::Slot()
+                [SNew(SSpinBox<float>)
+                .MinSliderValue(0.0f)
+                .MaxSliderValue(100.0f)
+                .Value_Lambda(
+                    [CityModelLoader]() {
+                        const auto Loaded = static_cast<float>(CityModelLoader->LoadedGmlCount);
+                        const auto Total = static_cast<float>(CityModelLoader->TotalGmlCount);
+                        if (Total == 0)
+                            return 0.0f;
+                        return Loaded / Total * 100.0f;
+                    })
+                ]];
 
     //CityModelCategory.AddCustomRow(FText::FromString("LoadCityModel"))
     //    .WholeRowContent()

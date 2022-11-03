@@ -187,7 +187,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         //});
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [StaticMeshes = StaticMeshes]() {
-                UStaticMesh::BatchBuild(StaticMeshes);
+                UStaticMesh::BatchBuild(StaticMeshes, true);
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         StaticMeshes.Reset();
     }

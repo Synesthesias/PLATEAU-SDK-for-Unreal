@@ -19,6 +19,7 @@
 #include "Widgets/Input/SSlider.h"
 #include "Widgets/Layout/SHeader.h"
 #include "SlateOptMacros.h"
+#include "StatusBarSubsystem.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
