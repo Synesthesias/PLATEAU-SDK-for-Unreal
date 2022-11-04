@@ -9,6 +9,7 @@
 #include "Widgets/Input/SComboButton.h"
 #include "DetailWidgetRow.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Widgets/Input/SNumericEntryBox.h"
 
 #include "PLATEAUImportSettings.h"
 
@@ -55,6 +56,11 @@ namespace {
     }
 }
 
+
+FPLATEAUFeatureSettingsDetails::FPLATEAUFeatureSettingsDetails(
+    const plateau::udx::PredefinedCityModelPackage InPackageMask)
+    : PackageMask(InPackageMask) {}
+
 void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
 
     TArray<TWeakObjectPtr<UObject>> ObjectsBeingCustomized;
@@ -64,6 +70,12 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 
     for (const auto& Package : GetAllPackages()) {
         const auto PropertyName = GetFeaturePlacementSettingsPropertyName(Package);
+        const auto FeatureSettingsProperty = DetailBuilder.GetProperty(PropertyName);
+        DetailBuilder.HideProperty(FeatureSettingsProperty);
+
+        if ((Package & PackageMask) == PredefinedCityModelPackage::None)
+            continue;
+
         FName CategoryName;
         FText LocalizedCategoryName;
 
@@ -109,10 +121,6 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
         IDetailCategoryBuilder& Category =
             DetailBuilder.EditCategory(CategoryName, LocalizedCategoryName);
 
-        const auto FeatureSettingsProperty = DetailBuilder.GetProperty(PropertyName);
-
-        DetailBuilder.HideProperty(FeatureSettingsProperty);
-
         if (!FeatureSettingsRowMap.Find(Package)) {
             FeatureSettingsRowMap.Add(Package, FPLATEAUFeatureSettingsRow(Package));
 
@@ -121,13 +129,41 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
     }
 }
 
-void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeatureSettingsProperty) {
-    auto ImportProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImport));
-    auto ImportTextureProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImportTexture));
-    auto SetColliderProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bSetCollider));
-    auto MinLodProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, MinLod));
-    auto MaxLodProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, MaxLod));
+void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeatureSettingsProperty) const {
+    const auto PackageInfo = plateau::udx::CityModelPackageInfo::getPredefined(Package);
+
+    const auto ImportProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImport));
+    const auto ImportTextureProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImportTexture));
+    const auto SetColliderProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bSetCollider));
+    const auto MinLodProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, MinLod));
+    const auto MaxLodProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, MaxLod));
     auto GranularityProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, MeshGranularity));
+
+    {
+        int MinLodValue;
+        MinLodProperty->GetValue(MinLodValue);
+        if (MinLodValue < PackageInfo.minLOD()) {
+            MinLodValue = PackageInfo.minLOD();
+            MinLodProperty->SetValue(MinLodValue);
+        }
+        if (MinLodValue > PackageInfo.maxLOD()) {
+            MinLodValue = PackageInfo.maxLOD();
+            MinLodProperty->SetValue(MinLodValue);
+        }
+
+        int MaxLodValue;
+        MaxLodProperty->GetValue(MaxLodValue);
+        const int MinimumMaxLodValue = FMath::Max(PackageInfo.minLOD(), MinLodValue);
+        if (MaxLodValue < MinimumMaxLodValue) {
+            MaxLodValue = MinimumMaxLodValue;
+            MaxLodProperty->SetValue(MaxLodValue);
+        }
+        if (MaxLodValue > PackageInfo.maxLOD()) {
+            MaxLodValue = PackageInfo.maxLOD();
+            MaxLodProperty->SetValue(MaxLodValue);
+        }
+    }
+
 
     // インポートする
     Category.AddCustomRow(FText::FromString(TEXT("Import")))
@@ -135,24 +171,68 @@ void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category,
         .ValueContent()[ImportProperty->CreatePropertyValueWidget()];
 
     // テクスチャをインポートする
-    Category.AddCustomRow(FText::FromString(TEXT("Import Texture")))
-        .NameContent()[SNew(STextBlock).Text(LOCTEXT("Import Texture", "テクスチャをインポートする"))]
-        .ValueContent()[ImportTextureProperty->CreatePropertyValueWidget()];
+    if (PackageInfo.hasAppearance()) {
+        Category.AddCustomRow(FText::FromString(TEXT("Import Texture")))
+            .NameContent()[SNew(STextBlock).Text(LOCTEXT("Import Texture", "テクスチャをインポートする"))]
+            .ValueContent()[ImportTextureProperty->CreatePropertyValueWidget()];
+    }
 
     // MeshColliderをセットする
-    Category.AddCustomRow(FText::FromString(TEXT("Set Collider")))
-        .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "MeshColliderをセットする"))]
-        .ValueContent()[SetColliderProperty->CreatePropertyValueWidget()];
+    //Category.AddCustomRow(FText::FromString(TEXT("Set Collider")))
+    //    .NameContent()[SNew(STextBlock).Text(LOCTEXT("Set Collider", "コリジョンを有効化する"))]
+    //    .ValueContent()[SetColliderProperty->CreatePropertyValueWidget()];
 
-    // 最小LOD
-    Category.AddCustomRow(FText::FromString(TEXT("Min LOD")))
-        .NameContent()[MinLodProperty->CreatePropertyNameWidget()]
-        .ValueContent()[MinLodProperty->CreatePropertyValueWidget()];
+    if (PackageInfo.minLOD() != PackageInfo.maxLOD()) {
+        // 最小LOD
+        Category.AddCustomRow(FText::FromString(TEXT("Min LOD")))
+            .NameContent()[SNew(STextBlock).Text(LOCTEXT("Min LOD", "最小LOD"))]
+            .ValueContent()
+            [SNew(SNumericEntryBox<int>)
+            .AllowSpin(true)
+            .MinSliderValue(PackageInfo.minLOD())
+            .MaxSliderValue(PackageInfo.maxLOD())
+            .OnValueChanged_Lambda(
+                [MinLodProperty, MaxLodProperty](const int Value) {
+                    int MaxLod;
+                    MaxLodProperty->GetValue(MaxLod);
+                    if (Value > MaxLod)
+                        return;
 
-    // 最大LOD
-    Category.AddCustomRow(FText::FromString(TEXT("Max LOD")))
-        .NameContent()[MaxLodProperty->CreatePropertyNameWidget()]
-        .ValueContent()[MaxLodProperty->CreatePropertyValueWidget()];
+                    MinLodProperty->SetValue(Value);
+                })
+            .Value_Lambda(
+                [MinLodProperty]() {
+                    int Value;
+                    MinLodProperty->GetValue(Value);
+                    return Value;
+                })
+            ];
+
+        // 最大LOD
+        Category.AddCustomRow(FText::FromString(TEXT("Max LOD")))
+            .NameContent()[SNew(STextBlock).Text(LOCTEXT("Max LOD", "最大LOD"))]
+            .ValueContent()
+            [SNew(SNumericEntryBox<int>)
+            .AllowSpin(true)
+            .MinSliderValue(PackageInfo.minLOD())
+            .MaxSliderValue(PackageInfo.maxLOD())
+            .OnValueChanged_Lambda(
+                [MinLodProperty, MaxLodProperty](const int Value) {
+                    int MinLod;
+                    MinLodProperty->GetValue(MinLod);
+                    if (Value < MinLod)
+                        return;
+
+                    MaxLodProperty->SetValue(Value);
+                })
+            .Value_Lambda(
+                [MaxLodProperty]() {
+                    int Value;
+                    MaxLodProperty->GetValue(Value);
+                    return Value;
+                })
+            ];
+    }
 
     // モデル結合
     Category.AddCustomRow(FText::FromString(TEXT("Granularity")))

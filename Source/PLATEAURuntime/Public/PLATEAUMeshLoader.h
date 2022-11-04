@@ -16,11 +16,12 @@ public:
     void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel);
 
 private:
-    void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
+    TArray<UStaticMesh*> StaticMeshes;
+
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor, USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
-        FString Name,
-        const TArray<UTexture2D*>& SubMeshTextures) const;
-    UTexture2D* LoadTextureFromPath(const FString& Path);
+        FString Name);
+    USceneComponent* LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
+    void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
 };

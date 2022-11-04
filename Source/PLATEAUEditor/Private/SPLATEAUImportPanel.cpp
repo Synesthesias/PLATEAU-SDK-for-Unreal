@@ -4,9 +4,12 @@
 #include "SPLATEAUImportPanel.h"
 
 #include <plateau/udx/city_model_package.h>
+#include <plateau/udx/udx_file_collection.h>
 
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUImportSettings.h"
+#include "Widgets/SPLATEAUExtentEditButton.h"
+#include "Widgets/SPLATEAUFeatureImportSettingsView.h"
 
 #include "AssetSelection.h"
 #include "DesktopPlatformModule.h"
@@ -16,6 +19,7 @@
 #include "Widgets/Input/SSlider.h"
 #include "Widgets/Layout/SHeader.h"
 #include "SlateOptMacros.h"
+#include "StatusBarSubsystem.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
@@ -69,23 +73,13 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     OwnerWindow = InArgs._OwnerWindow;
     Style = InStyle;
 
-    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+    TWeakPtr<SVerticalBox> VerticalBox;
+    TWeakPtr<SVerticalBox> ModelDataPlacementVerticalBox;
 
-    FDetailsViewArgs DetailsViewArgs;
-    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-    DetailsViewArgs.bAllowSearch = false;
-    
-    BuildingImportSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
-    BuildingImportSettingsView->RegisterInstancedCustomPropertyLayout(
-        UPLATEAUImportSettings::StaticClass(),
-        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUFeatureSettingsDetails::MakeInstance));
-    BuildingImportSettingsView->SetObject(GetMutableDefault<UPLATEAUImportSettings>());
-    
     ChildSlot
-        [SNew(SVerticalBox)
-
-    // モデルデータのインポート(ヘッダー)
-    + SVerticalBox::Slot()
+        [SAssignNew(VerticalBox, SVerticalBox)
+        // モデルデータのインポート(ヘッダー)
+        + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))
         .AutoHeight()
         [SNew(SHeader)
@@ -96,7 +90,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Text(LOCTEXT("Import ModelData", "モデルデータのインポートを行います。"))]]
 
     // 都市の追加(ヘッダー)
-    +SVerticalBox::Slot()
+    + SVerticalBox::Slot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         [SNew(SHeader)
@@ -121,18 +115,36 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(0, 0, 0, 15))
         [CreateSourcePathSelectPanel()]
 
+    // モデルデータの配置
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [SAssignNew(ModelDataPlacementVerticalBox, SVerticalBox)
+        .Visibility_Lambda(
+            [this]() {
+                auto IsValidDatasetSet = false;
+                if (FileCollection != nullptr)
+                    IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
+                return IsValidDatasetSet
+                    ? EVisibility::Visible
+                    : EVisibility::Collapsed;
+            })
+        ]
+
+        ];
+
     // モデルデータの配置(ヘッダー)
-    +SVerticalBox::Slot()
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 15, 0, 5))
         [SNew(SHeader)
         .HAlign(HAlign_Center)
         .Content()
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading1")
-        .Text(LOCTEXT("Place ModelData", "モデルデータの配置を行います。"))]]
+        .Text(LOCTEXT("Place ModelData", "モデルデータの配置を行います。"))]];
 
     // 基準座標系の選択(ヘッダー)
-    + SVerticalBox::Slot()
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         [SNew(SHeader)
@@ -149,10 +161,10 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading2")
-        .Text(LOCTEXT("Select ReferenceCoordinate", "基準座標系の選択"))]]]
+        .Text(LOCTEXT("Select ReferenceCoordinate", "基準座標系の選択"))]]];
 
     // 基準座標系の選択
-    + SVerticalBox::Slot()
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(0, 0, 0, 10)
         [SNew(SHorizontalBox) +
@@ -179,18 +191,16 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 return MenuBuilder.MakeWidget();
             })
         .ContentPadding(0.0f)
-                //.ButtonStyle(FEditorStyle::Get(), "ToggleButton")
-                //.ForegroundColor(FSlateColor::UseForeground())
                 .VAlign(VAlign_Center)
                 .ButtonContent()
                 [SNew(STextBlock).Text_Lambda(
                     [this]() {
-                        // TODO
+                        // TODO: キャッシュ化
                         return GetZoneIDTexts()[ZoneID];
-                    })]]]
+                    })]]];
 
     // マップ範囲選択(ヘッダー)
-    + SVerticalBox::Slot()
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         .VAlign(VAlign_Center)
@@ -208,41 +218,36 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading2")
-        .Text(LOCTEXT("Edit Map Extent", "マップ範囲選択"))]]]
+        .Text(LOCTEXT("Edit Map Extent", "マップ範囲選択"))]]];
 
     // マップ範囲選択
-    + SVerticalBox::Slot()
+    TWeakPtr<SPLATEAUExtentEditButton> ExtentEditButton;
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(84, 0, 86, 10)
-        [SNew(SButton)
-        .VAlign(VAlign_Center)
-        .HAlign(HAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda(
+        [SAssignNew(ExtentEditButton, SPLATEAUExtentEditButton)
+        .SourcePath_Lambda(
             [this]() {
-                IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(SourcePath);
-
-                // TODO: ExtentEditorに委譲
-                // ビューポートの操作性向上のため100分の1スケールで設定
-                const plateau::geometry::GeoReference RawGeoReference(ZoneID, {}, 1, plateau::geometry::CoordinateSystem::NWU);
-                IPLATEAUEditorModule::Get().GetExtentEditor()->SetGeoReference(RawGeoReference);
-
-                const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
-                GlobalTabManager->TryInvokeTab(FPLATEAUExtentEditor::TabId);
-
-                return FReply::Handled();
+                return SourcePath;
             })
-        .Content()
-                [SNew(STextBlock)
-                .Justification(ETextJustify::Center)
-                .Margin(FMargin(80, 14, 80, 14))
-                .Text(LOCTEXT("Edit Extent Button", "範囲選択"))
-                ]
-        ]
+        .ZoneID_Lambda(
+            [this]() {
+                return ZoneID;
+            })];
+
+    TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
+    ModelDataPlacementVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        [SAssignNew(PerFeatureSettingsVerticalBox, SVerticalBox)
+        .Visibility_Lambda(
+            [ExtentEditButton] {
+                return ExtentEditButton.Pin()->IsExtentSet()
+                    ? EVisibility::Visible
+                    : EVisibility::Collapsed;
+            })];
 
     // 地物別設定(ヘッダー)
-    + SVerticalBox::Slot()
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
         [SNew(SHeader)
@@ -259,16 +264,24 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Padding(FMargin(7.0f, 0.0f, 0.0f, 0.0f))
         [SNew(STextBlock)
         .TextStyle(Style, "PLATEAUEditor.Heading2")
-        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))]]]
+        .Text(LOCTEXT("PerFeatureSettings", "地物別設定"))]]];
 
     // 地物別設定
-    + SVerticalBox::Slot()
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(0, 0, 0, 0)
-        [BuildingImportSettingsView.ToSharedRef()]
+        [SNew(SPLATEAUFeatureImportSettingsView)
+        .SourcePath_Lambda(
+            [this]() {
+                return SourcePath;
+            })
+        .Extent_Lambda(
+            [ExtentEditButton]() {
+                return ExtentEditButton.Pin()->GetExtent().Get({});
+            })];
 
     // モデルをインポート
-    + SVerticalBox::Slot()
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(FMargin(84, 5, 86, 20))
         [SNew(SButton)
@@ -293,11 +306,9 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 Loader->Extent.Min.Height = -100000;
                 Loader->Extent.Max.Height = 100000;
 
-                //UE_LOG(LogTemp, Log, TEXT("%d"), FeatureSettingsMap[PredefinedCityModelPackage::Building].MaxLod);
-
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
-                Loader->Load();
+                Loader->LoadAsync();
 
                 return FReply::Handled();
             })
@@ -307,54 +318,69 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 .Margin(FMargin(0, 5, 0, 5))
                 .Text(LOCTEXT("Import Button", "モデルをインポート"))
                 ]
-        ]
-
         ];
 }
 
 TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
     return
-        SNew(SVerticalBox)
-        + SVerticalBox::Slot()
+        SNew(SVerticalBox) +
+        SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(0, 0, 0, 15))
-        [SNew(SEditableTextBox)
-        .Padding(FMargin(3, 3, 0, 3))
-        .IsReadOnly(true)
-        .Text(LOCTEXT("SelectSource", "入力元フォルダを選択"))
-        .BackgroundColor(FColor(200, 200, 200, 255))
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(20, 5, 20, 5))
-        [SNew(SButton)
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
         .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Raw(this, &SPLATEAUImportPanel::OnBtnSelectGmlFileClicked)
-        .Content()
+        .Padding(FMargin(0, 0, 5, 0))
+        .AutoWidth()
         [SNew(STextBlock)
-        .Justification(ETextJustify::Center)
-        .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Ref Button", "参照..."))
-        ]
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 10))
-        [
-            SNew(SEditableTextBox)
-            .IsReadOnly(true)
+        .Text(LOCTEXT("SelectSource", "入力フォルダ"))
+        ] +
+        SHorizontalBox::Slot()
+        [SNew(SEditableTextBox)
+        .IsReadOnly(true)
         .Text_Lambda(
-            [this]() {
+            [this] {
                 return FText::FromString(SourcePath);
             })
-        ];
+        ] +
+        SHorizontalBox::Slot()
+                .AutoWidth()
+                .Padding(FMargin(7, 0, 0, 0))
+                [SNew(SButton)
+                .VAlign(VAlign_Center)
+                .HAlign(HAlign_Center)
+                .ForegroundColor(FColor::White)
+                .ButtonColorAndOpacity(FColor(132, 132, 132))
+                .OnClicked_Raw(this, &SPLATEAUImportPanel::OnBtnSelectFolderPathClicked)
+                .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(15, 0, 15, 0))
+                .Text(LOCTEXT("Ref Button", "参照..."))
+                ]]] +
+        SVerticalBox::Slot()
+                .AutoHeight()
+                .Padding(FMargin(0, 0, 0, 10))
+                [SNew(SEditableTextBox)
+                .IsReadOnly(true)
+                .BackgroundColor(FColor(200, 200, 200, 255))
+                .ForegroundColor(FColor(230, 30, 30))
+                .Text(LOCTEXT("Invalid Path", "直下にudxフォルダを持つフォルダを選択してください。"))
+                .Visibility_Lambda(
+                    [this] {
+                        auto IsValidDatasetSet = false;
+                        if (FileCollection != nullptr)
+                            IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
+                        return IsValidDatasetSet
+                            ? EVisibility::Collapsed
+                            : EVisibility::Visible;
+                    })
+                ];
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-FReply SPLATEAUImportPanel::OnBtnSelectGmlFileClicked() {
+FReply SPLATEAUImportPanel::OnBtnSelectFolderPathClicked() {
     const void* WindowHandle = nullptr;
 
     IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
@@ -374,7 +400,13 @@ FReply SPLATEAUImportPanel::OnBtnSelectGmlFileClicked() {
         SourcePath,
         OutFolderName)) {
         SourcePath = OutFolderName;
-        //UpdateWindow(MyWindow);
+        try {
+            FileCollection = UdxFileCollection::find(TCHAR_TO_UTF8(*SourcePath));
+        }
+        catch (...) {
+            FileCollection = nullptr;
+            UE_LOG(LogTemp, Error, TEXT("Invalid source path : %s"), *SourcePath);
+        }
     }
 
     return FReply::Handled();

@@ -11,7 +11,6 @@ public class PLATEAURuntime : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                Path.Combine(ModuleDirectory, "../libplateau/include"),
             }
             );
 
@@ -38,7 +37,10 @@ public class PLATEAURuntime : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "MeshDescription",
-                "StaticMeshDescription"
+                "StaticMeshDescription",
+                "RHI",
+                "ImageWrapper",
+                "RenderCore"
                 // ... add private dependencies that you statically link with here ...	
             }
             );
@@ -53,23 +55,26 @@ public class PLATEAURuntime : ModuleRules
 
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public/../libplateau/include"));
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 
-        string libPath = Path.Combine(ModuleDirectory, "../libplateau/lib");
+        string libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));
         PublicAdditionalLibraries.Add(Path.Combine(libPath, "citygml.lib"));
 
         string dllPath = Path.Combine(libPath, "plateau.dll");
         string dllName = "plateau.dll";
         CopyDll(dllName, dllPath);
-        PublicDelayLoadDLLs.Add(dllName);
-        RuntimeDependencies.Add(dllPath);
 
         dllPath = Path.Combine(libPath, "citygml.dll");
         dllName = "citygml.dll";
         CopyDll(dllName, dllPath);
-        PublicDelayLoadDLLs.Add(dllName);
-        RuntimeDependencies.Add(dllPath);
+
+        RuntimeDependencies.Add("$(TargetOutputDir)/plateau.dll", Path.Combine(ModuleDirectory, "../ThirdParty/lib/plateau.dll"));
+
+        RuntimeDependencies.Add("$(TargetOutputDir)/citygml.dll", Path.Combine(ModuleDirectory, "../ThirdParty/lib/citygml.dll"));
+
+        PublicDelayLoadDLLs.Add("plateau.dll");
+        PublicDelayLoadDLLs.Add("citygml.dll");
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;

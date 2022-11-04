@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <plateau/io/mesh_convert_options.h>
-
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Styling/ISlateStyle.h"

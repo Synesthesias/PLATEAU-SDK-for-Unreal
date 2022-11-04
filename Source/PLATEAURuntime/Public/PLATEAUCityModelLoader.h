@@ -35,6 +35,24 @@ namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32_t;
 }
 
+USTRUCT()
+struct FPLATEAUCityModelLoadStatus {
+    GENERATED_BODY()
+
+public:
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        int TotalGmlCount;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        int LoadedGmlCount;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        TArray<FString> LoadingGmls;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        TArray<FString> FailedGmls;
+};
+
 UCLASS()
 class PLATEAURUNTIME_API APLATEAUCityModelLoader : public AActor {
     GENERATED_BODY()
@@ -55,9 +73,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         UPLATEAUImportSettings* ImportSettings;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        FPLATEAUCityModelLoadStatus Status;
+
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-        void Load();
-    
+        void LoadAsync();
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -68,8 +89,8 @@ public:
 
 private:
     TMap<int, FPLATEAUCityModel> CityModelCache;
-    void CreateRootComponent(AActor& Actor);
-    void LoadAsync();
+
+    void CreateRootComponent(AActor& Actor) const;
 };
 
 #undef LOCTEXT_NAMESPACE

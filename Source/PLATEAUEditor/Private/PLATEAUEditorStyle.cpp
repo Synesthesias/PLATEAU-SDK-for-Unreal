@@ -31,7 +31,7 @@ FString FPLATEAUEditorStyle::InContent(
     const FString& RelativePath,
     const ANSICHAR* Extension) {
     static FString ContentDir = IPluginManager::Get()
-        .FindPlugin(TEXT("PlateauSDK"))
+        .FindPlugin(TEXT("PLATEAU-SDK-for-Unreal"))
         ->GetContentDir();
     return (ContentDir / RelativePath) + Extension;
 }
@@ -79,7 +79,7 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
         FTextBlockStyle()
         .SetColorAndOpacity(FSlateColor::UseForeground())
         .SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 12)));
-
+    
     FSlateStyleRegistry::RegisterSlateStyle(*this);
 }
 

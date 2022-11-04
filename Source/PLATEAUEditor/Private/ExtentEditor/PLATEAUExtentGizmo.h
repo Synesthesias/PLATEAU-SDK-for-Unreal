@@ -16,12 +16,17 @@ public:
     void DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const;
 
     FVector GetHandlePosition(int Index);
-    void SetHandlePosition(int Index, FVector Position);
+    void SetHandlePosition(const int Index, const FVector& Position);
 
     /**
      * @brief Extentを入力として内部状態を更新します。
      */
     void SetExtent(const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference);
+
+    void SetMinX(const double Value);
+    void SetMinY(const double Value);
+    void SetMaxX(const double Value);
+    void SetMaxY(const double Value);
 
     /**
      * @brief 内部状態からExtentを取得します。

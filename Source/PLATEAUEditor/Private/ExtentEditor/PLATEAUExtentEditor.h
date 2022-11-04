@@ -34,6 +34,7 @@ public:
 
     const TOptional<FPLATEAUExtent>& GetExtent() const;
     void SetExtent(const FPLATEAUExtent& InExtent);
+    void ResetExtent();
 
 private:
     FString SourcePath;

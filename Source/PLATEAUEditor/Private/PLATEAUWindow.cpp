@@ -92,7 +92,7 @@ void FPLATEAUWindow::Show() {
                 //TODO:編集画面のUIが出来次第組み込む
                 SNew(SOverlay)
                     + SOverlay::Slot()
-                    .HAlign(HAlign_Center)
+                    .HAlign(HAlign_Fill)
                     .VAlign(VAlign_Top) [
                         SNew(SScrollBox)
                         .Visibility_Lambda([=]() {

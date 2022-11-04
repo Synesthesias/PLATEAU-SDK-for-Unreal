@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "PLATEAU SDK for Unreal",
+	"Description": "",
+	"Category": "Geospatial",
+	"CreatedBy": "Synesthesias, Inc.",
+	"CreatedByURL": "https://github.com/Synesthesias/Plateau-SDK-for-Unreal.git",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "PLATEAURuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "PLATEAUEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

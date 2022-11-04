@@ -25,6 +25,10 @@ public:
     FPLATEAUGeoCoordinate(const plateau::geometry::GeoCoordinate& InGeoCoordinate);
 
     plateau::geometry::GeoCoordinate GetNativeData() const;
+
+    bool operator==(const FPLATEAUGeoCoordinate& other) const;
+    bool operator!=(const FPLATEAUGeoCoordinate& other) const;
+
 };
 
 USTRUCT(BlueprintType)
@@ -41,6 +45,8 @@ public:
     FPLATEAUExtent(plateau::geometry::Extent InExtent);
 
     plateau::geometry::Extent GetNativeData() const;
+    bool operator==(const FPLATEAUExtent& other) const;
+    bool operator!=(const FPLATEAUExtent& other) const;
 };
 
 USTRUCT(BlueprintType)
@@ -49,7 +55,7 @@ struct PLATEAURUNTIME_API FPLATEAUGeoReference {
 
 public:
     UPROPERTY(EditAnywhere)
-        double ZoneID;
+        int ZoneID;
     UPROPERTY(EditAnywhere)
         FVector ReferencePoint;
 
@@ -57,7 +63,7 @@ public:
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);
 
     plateau::geometry::GeoReference& GetData();
-    
+
 private:
     friend class UPLATEAUGeoReferenceBlueprintLibrary;
 

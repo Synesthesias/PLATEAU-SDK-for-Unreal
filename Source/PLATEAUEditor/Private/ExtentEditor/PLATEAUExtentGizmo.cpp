@@ -41,22 +41,22 @@ FVector FPLATEAUExtentGizmo::GetHandlePosition(int Index) {
     return {};
 }
 
-void FPLATEAUExtentGizmo::SetHandlePosition(int Index, FVector Position) {
+void FPLATEAUExtentGizmo::SetHandlePosition(const int Index, const FVector& Position) {
     if (Index == 0) {
-        MinX = Position.X;
-        MinY = Position.Y;
+        SetMinX(Position.X);
+        SetMinY(Position.Y);
     }
     if (Index == 1) {
-        MinX = Position.X;
-        MaxY = Position.Y;
+        SetMinX(Position.X);
+        SetMaxY(Position.Y);
     }
     if (Index == 2) {
-        MaxX = Position.X;
-        MinY = Position.Y;
+        SetMaxX(Position.X);
+        SetMinY(Position.Y);
     }
     if (Index == 3) {
-        MaxX = Position.X;
-        MaxY = Position.Y;
+        SetMaxX(Position.X);
+        SetMaxY(Position.Y);
     }
 }
 
@@ -65,14 +65,30 @@ void FPLATEAUExtentGizmo::SetExtent(const FPLATEAUExtent& Extent, FPLATEAUGeoRef
     auto RawMax = GeoReference.GetData().project(Extent.Max.GetNativeData());
 
     // 座標系変換時にxの大小が逆転するので再設定を行う。
-    const auto Tmp = RawMin.x;
-    RawMin.x = FMath::Min(RawMin.x, RawMax.x);
-    RawMax.x = FMath::Max(Tmp, RawMax.x);
+    const auto Tmp = RawMin.y;
+    RawMin.y = FMath::Min(RawMin.y, RawMax.y);
+    RawMax.y = FMath::Max(Tmp, RawMax.y);
 
     MinX = RawMin.x;
     MinY = RawMin.y;
     MaxX = RawMax.x;
     MaxY = RawMax.y;
+}
+
+void FPLATEAUExtentGizmo::SetMinX(double Value) {
+    MinX = FMath::Min(Value, MaxX);
+}
+
+void FPLATEAUExtentGizmo::SetMinY(const double Value) {
+    MinY = FMath::Min(Value, MaxY);
+}
+
+void FPLATEAUExtentGizmo::SetMaxX(const double Value) {
+    MaxX = FMath::Max(Value, MinX);
+}
+
+void FPLATEAUExtentGizmo::SetMaxY(const double Value) {
+    MaxY = FMath::Max(Value, MinY);
 }
 
 FPLATEAUExtent FPLATEAUExtentGizmo::GetExtent(FPLATEAUGeoReference& GeoReference) const {
