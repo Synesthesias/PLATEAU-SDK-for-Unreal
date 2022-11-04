@@ -79,18 +79,18 @@
             <article class="content wrap" id="_content" data-uid="">
 <h1 id="都市モデルのインポート">都市モデルのインポート</h1>
 
-<p>このページでは、都市データをUnityプロジェクトにインポートする手順を説明します。</p>
+<p>このページでは、都市データをUE5のプロジェクトにインポートする手順を説明します。</p>
 <h2 id="準備">準備</h2>
 <ul>
-<li>PlateauSDK を導入したUnityプロジェクトを用意します。<br>SDKの導入方法は <a href="Installation.html">インストール</a> を参照してください。</li>
+<li>PLATEAU SDK for Unreal を導入したUE5プロジェクトを用意します。<br>SDKの導入方法は <a href="Installation.html">インストール</a> を参照してください。</li>
 </ul>
 <h2 id="インポート手順">インポート手順</h2>
 <h3 id="インポート元の選択">インポート元の選択</h3>
 <ul>
-<li>Unityのメニューバーから <code>PLATEAU → PLATEAU SDK</code> を選択します。<br>表示されるウィンドウの上部に3つのタブ「インポート、モデル調整、エクスポート」があります。<br>このうちインポートを選択します。
+<li>Unreal Engineのメニューバーから <code>PLATEAU → PLATEAU SDK</code> を選択します。<br>表示されるウィンドウの上部に3つのタブ「インポート、モデル調整、エクスポート」があります。<br>このうちインポートを選択します。
 <img src="../resources/manual/importCityModels/plateauWindowImport.png" alt=""></li>
 <li>インポート先がローカルかサーバーかを選択します。<ul>
-<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。<br>なお、都市データは国交省のPLATEAU Webサイトからダウンロードできます。<ul>
+<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。  3D都市モデルはG空間情報センターのPLATEAUポータルサイトからダウンロードできます。<ul>
 <li><code>参照</code>ボタンを押します。都市データのフォルダの選択画面が表示されます。</li>
 <li>都市データのフォルダの中には、<code>udx</code>,<code>codelists</code>という名前のフォルダがあるはずです。<br><code>udx</code>の<strong>1つ上</strong>のフォルダを選択します。</li>
 </ul>
@@ -108,15 +108,9 @@
 <ul>
 <li><code>範囲選択</code>ボタンを押します。</li>
 <li>利用可能な範囲の一覧が緑色の線で表示されます。
-<img src="../resources/manual/importCityModels/areaSelectWindow.png" alt=""><br>地図の全体像がうまく表示されない場合は次の操作を試してください:  <ul>
-<li>マウスホイールを上下に回してズームアウト、ズームイン</li>
-<li>マウスホイールを押し込んだままドラッグしてカメラ移動</li>
-<li>右マウスボタンを押したままドラッグで向き変更</li>
-</ul>
-</li>
-<li>青色の球体をドラッグして範囲を選択します。</li>
-<li>シーンビュー左上の<code>決定</code>ボタンを押します。
-<img src="../resources/manual/importCityModels/areaSelected.png" alt=""></li>
+<img src="../resources/manual/importCityModels/areaSelectWindow.png" alt="">  </li>
+<li>青色のハンドルをドラッグして範囲を選択します。</li>
+<li>シーンビュー左上の<code>決定</code>ボタンを押します。</li>
 <li><strong>補足</strong>:<br>地域の区分を確認したい時は、ローカルにダウンロードしたフォルダに付属している <code>indexmap</code> という名前のpdfファイルをご覧ください。<br>下図のように地図上に区分が記載されています。
 <img src="../resources/manual/importCityModels/idmap.png" alt=""></li>
 </ul>
@@ -127,16 +121,12 @@
 <li>チェックが付いている地物タイプのみインポートします。</li>
 </ul>
 </li>
-<li><code>Mesh Collider をセットする</code><ul>
-<li>チェックが付いている場合、各モデルの Collider が有効になります。</li>
-</ul>
-</li>
 <li><code>テクスチャを含める</code><ul>
 <li>テクスチャが存在する地物タイプで表示される設定項目です。<br>チェックが付いていて、かつテクスチャがある場合はそれを含めてインポートします。<br>都市データによってはテクスチャがない場合があり、<br>その場合はチェックを外した時と同様に真っ白な3Dモデルが出力されます。</li>
 </ul>
 </li>
-<li><code>LOD描画設定</code><ul>
-<li>複数のLODを利用可能な地物タイプで表示される設定項目です。<br>バーの左端と右端をドラッグして、インポートするLODの範囲を指定できます。</li>
+<li><code>最小LOD</code>, <code>最大LOD</code><ul>
+<li>複数のLODを利用可能な地物タイプで表示される設定項目です。</li>
 </ul>
 </li>
 </ul>
@@ -169,6 +159,9 @@
 <li><code>モデルをインポート</code>ボタンを押します。</li>
 <li>処理が進むと、都市のオブジェクトが順次シーンに配置されていきます。<br>進捗表示がすべて「完了」になったらインポート終了です。<br><img src="../resources/manual/importCityModels/importComplete.png" alt=""></li>
 </ul>
+<h3 id="読み込み状況の確認">読み込み状況の確認</h3>
+<p>PLATEAUCityModelLoaderアクタの詳細パネルから読み込み状況の確認ができます。
+<img src="../resources/manual/importCityModels/progress.png" alt=""></p>
 </article>
           </div>
           
@@ -177,7 +170,7 @@
               <div class="contribution">
                 <ul class="nav">
                   <li>
-                    <a href="https://github.com/Synesthesias/PlateauUESDK/blob/main/Documentation/manual/ImportCityModels.md/#L1" class="contribution-link">Improve this Doc</a>
+                    <a href="https://github.com/Synesthesias/PLATEAU-SDK-for-Unreal/blob/main/Documentation/manual/ImportCityModels.md/#L1" class="contribution-link">Improve this Doc</a>
                   </li>
                 </ul>
               </div>

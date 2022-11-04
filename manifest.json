@@ -9,7 +9,7 @@
     "changefreq": "weekly"
   },
   "homepages": [],
-  "source_base_path": "D:/a/PlateauUESDK/PlateauUESDK/Documentation",
+  "source_base_path": "D:/a/PLATEAU-SDK-for-Unreal/PLATEAU-SDK-for-Unreal/Documentation",
   "xrefmap": "xrefmap.yml",
   "files": [
     {
@@ -27,7 +27,7 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "gzpJdo0NpXw49UbY7YZlVuBLj58K10N04cpRsxZxbmQ="
+          "hash": "sU5AZAQSC9bIEL8MnuksFjCtW6dcJGGnLqxGImyJFU4="
         }
       },
       "is_incremental": false,
@@ -39,22 +39,19 @@
       "output": {
         ".html": {
           "relative_path": "manual/AccessCityObject.html",
-          "hash": "3jJ7fJeXWd4j9PKAsVCgXM4a77D+DgB6YLSZPvBM1FA="
+          "hash": "L+K7GoqQJ89uoElKD26XuvwSAVzD6Z3seP4zXmh8P9E="
         }
       },
       "is_incremental": false,
       "version": ""
     },
     {
-      "log_codes": [
-        "InvalidFileLink"
-      ],
       "type": "Conceptual",
       "source_relative_path": "manual/ImportCityModels.md",
       "output": {
         ".html": {
           "relative_path": "manual/ImportCityModels.html",
-          "hash": "CIdbrP9bp6WCcvxFpJIsJGX3WWubJBKICGgaM3yeXxg="
+          "hash": "NHQRuXmj4FqcvaXRx2PUAmKG6CNtmQn6cG2q/C2ueo4="
         }
       },
       "is_incremental": false,
@@ -66,7 +63,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/Installation.html",
-          "hash": "sQbNWVZr/VWliC0dfhFHc3/5xdf/jCy9mxSQOWpvsX4="
+          "hash": "/0jdGx4cOhkumFshCHCXXuUGfIgJp40fJwKw8WbPugw="
         }
       },
       "is_incremental": false,
@@ -78,7 +75,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/Tutorial.html",
-          "hash": "HuWGGyEB+9UO/3zSE2opvG1JUugzu9JsIDV2U69nQVY="
+          "hash": "DTWYixyAb6ePP+w38XOKyv23JL048loV6n2OR6aBj68="
         }
       },
       "is_incremental": false,
@@ -90,7 +87,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/toc.html",
-          "hash": "M02SjXYbrPmYwLK+mZfPf7l6ClDalIAQKwarWK/pJJA="
+          "hash": "ADBxaC8ZRJgKNb0bxXnA4NWXZtj+jdfbXN3iMx2kAp8="
         }
       },
       "is_incremental": false,
@@ -186,6 +183,28 @@
     },
     {
       "type": "Resource",
+      "source_relative_path": "resources/manual/importCityModels/progress.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/importCityModels/progress.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/installation/distanceScaled.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/installation/distanceScaled.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
       "source_relative_path": "resources/manual/installation/downloadFromGit.png",
       "output": {
         "resource": {
@@ -223,6 +242,17 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual/installation/epicGameLauncherSelectVersion.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/installation/excludeFromReimportTarget.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/installation/excludeFromReimportTarget.png"
         }
       },
       "is_incremental": false,

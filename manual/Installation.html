@@ -81,12 +81,8 @@
 
 <h2 id="対応unrealバージョンのインストール">対応Unrealバージョンのインストール</h2>
 <ul>
-<li>PLATEAU UE SDK は、Unrealバージョン <code>4.27</code> を想定しています。<br>そのバージョンがインストールされていない場合は、次の手順でインストールしてください。<ul>
+<li>PLATEAU SDK for UnrealはUE5での動作を想定しています。<br>UE5がインストールされていない場合は、以下URLからインストールしてください。<ul>
 <li><a href="https://www.unrealengine.com/ja/download">Epic Games Launcher をこちらからインストールします</a>。</li>
-<li>Epic Games Launcherを起動し、左のサイドバーから<code>Unreal Engine</code> → 上のメニューから<code>ライブラリ</code> をクリックします。
-<img src="../resources/manual/installation/epicGameLauncher.png" alt=""></li>
-<li><code>Engineバージョン</code>の隣のプラスボタンをクリックしてバージョンを追加し、数字を選択して4.27 で始まるバージョンを選択し、<code>インストール</code>を押します。
-<img src="../resources/manual/installation/epicGameLauncherSelectVersion.png" alt=""></li>
 </ul>
 </li>
 </ul>
@@ -94,22 +90,33 @@
 <ul>
 <li>先ほどインストールしたバージョンを起動します。
 <img src="../resources/manual/installation/epicGameLauncherLaunchUnrealEngine.png" alt=""></li>
-<li>新規プロジェクトの欄から<code>ゲーム</code>を選択し、<code>次へ</code>を押します。
+<li>適宜設定を行い<code>作成</code>を押します。
 <img src="../resources/manual/installation/unrealEngineNewProjectCategory.png" alt=""></li>
-<li>テンプレート選択で<code>blank</code>を選択し、<code>次へ</code>を押します。
-<img src="../resources/manual/installation/unrealEngineNewProjectTemplate.png" alt=""></li>
-<li>プロジェクト名と保存先を入力し<code>プロジェクト作成</code>を押します。
-<img src="../resources/manual/installation/unrealEngineNewProject.png" alt=""></li>
 </ul>
-<h2 id="plateau-ue-sdk-の導入">PLATEAU UE SDK の導入</h2>
+<h2 id="plateau-sdk-for-unreal-の導入">PLATEAU SDK for Unreal の導入</h2>
 <ul>
-<li><a href="https://github.com/Synesthesias/PlateauUESDK">PLATEAU UE SDK をこちらからダウンロードします</a>。
-<img src="../resources/manual/installation/downloadFromGit.png" alt=""></li>
-<li>作成したプロジェクトのフォルダに<code>Plugins</code>という名前のフォルダを作成し、先程ダウンロードしたSDKをコピーします。
-<img src="../resources/manual/installation/pluginInstall.png" alt=""></li>
+<li>提供されているPLATEAU SDK for Unrealをダウンロードします。</li>
+<li>作成したプロジェクトのフォルダに<code>Plugins</code>という名前のフォルダを作成し、先程ダウンロードしたSDKを解凍しコピーします。</li>
+<li><code>Plugins/PLATEAU-SDK-for-Unreal/PLATEAU-SDK-for-Unreal.uproject</code>が存在することを確認します。</li>
+<li>プロジェクトを開きます。既にプロジェクトを開いている場合は一度閉じてから再度プロジェクトを開いてください。</li>
 <li>プロジェクトを開く際に以下の画面が表示されるので<code>はい</code>を押して完了です。
 <img src="../resources/manual/installation/pluginBuild.png" alt=""></li>
 </ul>
+<h1 id="エディタ設定の変更推奨">エディタ設定の変更(推奨)</h1>
+<h2 id="自動再インポート対象の除外">自動再インポート対象の除外</h2>
+<ol>
+<li><code>エディタの環境設定</code>から<code>ロード＆保存中</code>→<code>監査するディレクトリ</code>→<code>インデックス[0]</code>を選択します。</li>
+<li>除外対象として<code>PLATEAU/Datasets/*</code>を追加します。
+<img src="../resources/manual/installation/excludeFromReimportTarget.png" alt="">
+この操作を行わない場合、取得されたgmlファイル等の生データを手動でインポート対象から除外する必要があります。</li>
+</ol>
+<h2 id="距離スケーリング済みのカメラ速度を使用">距離スケーリング済みのカメラ速度を使用</h2>
+<ol>
+<li><code>エディタの環境設定</code>から<code>距離スケーリング</code>で検索します。</li>
+<li><code>距離スケーリング済みのカメラ速度を使用</code>にチェックを入れます。
+<img src="../resources/manual/installation/distanceScaled.png" alt="">
+この操作を行うことで広域なマップでの操作性が向上します。</li>
+</ol>
 </article>
           </div>
           
@@ -118,7 +125,7 @@
               <div class="contribution">
                 <ul class="nav">
                   <li>
-                    <a href="https://github.com/Synesthesias/PlateauUESDK/blob/main/Documentation/manual/Installation.md/#L1" class="contribution-link">Improve this Doc</a>
+                    <a href="https://github.com/Synesthesias/PLATEAU-SDK-for-Unreal/blob/main/Documentation/manual/Installation.md/#L1" class="contribution-link">Improve this Doc</a>
                   </li>
                 </ul>
               </div>
