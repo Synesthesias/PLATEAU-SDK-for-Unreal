@@ -32,5 +32,15 @@ namespace plateau::polygonMesh {
          * 生ポインタのdeleteはDLLの利用者の責任です。
          */
         static void extract(Model& out_model, const citygml::CityModel& city_model, const MeshExtractOptions& options);
+
+        /**
+         * 引数で与えられた LOD の主要地物について、次を判定して bool で返します。
+         * GMLファイルからメッシュを作るとき、主要地物と [子の最小地物を結合したもの] のメッシュが同じなので、
+         * 両方のメッシュを含めると重複してしまう、したがって主要地物のメッシュは含めるべきではない、という時に false を返します。
+         * 主要地物のメッシュを含むべきときに true を返します。
+         * 例えば、LOD2以上である建物は、主要地物の子である最小地物に必要なメッシュすべてが入ります。
+         * そのため主要地物のメッシュを含めるとダブるため含めません。
+         */
+        static bool shouldContainPrimaryMesh(unsigned lod, const citygml::CityObject& primary_obj);
     };
 }

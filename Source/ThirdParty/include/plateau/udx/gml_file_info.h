@@ -14,10 +14,14 @@ namespace plateau::udx {
         MeshCode getMeshCode() const;
         const std::string& getFeatureType() const;
         std::string getAppearanceDirectoryPath() const;
+        bool isValid() const;
 
     private:
         std::string path_;
         std::string code_;
         std::string feature_type_;
+        bool is_valid_;
+
+        void applyPath();
     };
 }
