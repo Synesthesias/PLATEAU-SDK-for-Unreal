@@ -33,9 +33,9 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     plateau::meshWriter::ObjWriter Writer;
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
-        if (ModelDataArray[i].getRootNodeCount() != 0) {
+        if (ModelDataArray[i]->getRootNodeCount() != 0) {
             //writeでコケる
-            //Writer.write(TCHAR_TO_UTF8(*ExportPath), ModelDataArray[i]);
+            Writer.write(TCHAR_TO_UTF8(*ExportPath), *ModelDataArray[i]);
         }
     }
 }
@@ -45,11 +45,10 @@ void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstanc
     UE_LOG(LogTemp, Warning, TEXT("Export as FBX is temporarily unavailable"));
 }
 
-void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
-}
+void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {}
 
-TArray<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
-    TArray<plateau::polygonMesh::Model> ModelArray;
+TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
+    TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
     const auto RootComponent = ModelActor->GetRootComponent();
     const auto Components = RootComponent->GetAttachChildren();
     UE_LOG(LogTemp, Log, TEXT("Children Num : %d"), Components.Num());
@@ -64,18 +63,18 @@ TArray<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromActor(A
     return ModelArray;
 }
 
-plateau::polygonMesh::Model FPLATEAUMeshExporter::CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option) {
-    plateau::polygonMesh::Model ModelData;
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option) {
+    auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
     UE_LOG(LogTemp, Log, TEXT("Children Num : %d"), Components.Num());
     for (int i = 0; i < Components.Num(); i++) {
-        ModelData.addNode(CreateNode(Components[i], Option));
+        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*RemoveSuffix(Components[i]->GetName())));
+        CreateNode(Node, Components[i], Option);
     }
-    return ModelData;
+    return OutModel;
 }
 
-plateau::polygonMesh::Node FPLATEAUMeshExporter::CreateNode(USceneComponent* NodeRootComponent, const MeshExportOptions Option) {
-    plateau::polygonMesh::Node NodeData(TCHAR_TO_UTF8(*RemoveSuffix(NodeRootComponent->GetName())));
+void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option) {
     UE_LOG(LogTemp, Log, TEXT("Node Name : %s"), *FString(RemoveSuffix(NodeRootComponent->GetName())));
     const auto Components = NodeRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
@@ -84,15 +83,13 @@ plateau::polygonMesh::Node FPLATEAUMeshExporter::CreateNode(USceneComponent* Nod
                 continue;
             }
         }
-        NodeData.setMesh(CreateMesh(Components[i], Option));
+        auto& Mesh = OutNode.getMesh();
+        Mesh.emplace();
+        CreateMesh(Mesh.value(), Components[i], Option);
     }
-    return NodeData;
 }
 
-plateau::polygonMesh::Mesh FPLATEAUMeshExporter::CreateMesh(USceneComponent* MeshComponent, const MeshExportOptions Option) {
-    plateau::polygonMesh::Mesh MeshData(TCHAR_TO_UTF8(*RemoveSuffix(MeshComponent->GetName())));
-    UE_LOG(LogTemp, Log, TEXT("Mesh Name : %s"), *FString(RemoveSuffix(MeshComponent->GetName())));
-
+void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
     //StaticMeshComponentにキャスト
     UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
     FStaticMeshAttributes Attributes(*StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0));
@@ -103,7 +100,6 @@ plateau::polygonMesh::Mesh FPLATEAUMeshExporter::CreateMesh(USceneComponent* Mes
     plateau::polygonMesh::UV UV1;
     plateau::polygonMesh::UV UV2;
     plateau::polygonMesh::UV UV3;
-    TArray<plateau::polygonMesh::SubMesh> SubMeshArray;
     const auto VertexPositions = Attributes.GetVertexPositions();
     const auto UVs = Attributes.GetVertexInstanceUVs();
     const auto Indices = Attributes.GetVertexInstanceVertexIndices();
@@ -113,8 +109,11 @@ plateau::polygonMesh::Mesh FPLATEAUMeshExporter::CreateMesh(USceneComponent* Mes
         const auto VertexPosition = VertexPositions.Get(i, 0);
         const TVec3d Vertex(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
         Vertices.push_back(Vertex);
-        OutIndices.push_back(i);
     }
+    for (int i = 0; i < Indices.GetNumElements(); i++) {
+        OutIndices.push_back(Indices[i]);
+    }
+
     for (int j = 0; j < UVs.GetNumElements(); j++) {
         //TODO: UV2、UV3対応
         UV1.push_back(TVec2f(UVs.Get(j, 0).X, UVs.Get(j, 0).Y));
@@ -127,32 +126,32 @@ plateau::polygonMesh::Mesh FPLATEAUMeshExporter::CreateMesh(USceneComponent* Mes
         const int SubMeshEndIndex = FMath::Min(SubMeshIndex - 1 + ((int)(SubMeshPolygonNum * 3)), (int)Vertices.size() - 1);
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
+        FString PathName;
         if (Option.bExportTexture) {
-            FString PathName;
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
             if (MaterialInstance->TextureParameterValues.Num() > 0) {
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
-                PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + MetaData.Value.Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
-                UE_LOG(LogTemp, Log, TEXT("Texture Name : %s"), *PathName);
+                if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+                    UE_LOG(LogTemp, Log, TEXT("Texture Name : %s"), *PathName);
+                }
             }
         }
 
         //SubMeshDataにテクスチャパスを渡すとコケる
-        //plateau::polygonMesh::SubMesh SubMeshData(SubMeshIndex, SubMeshEndIndex, TCHAR_TO_UTF8(*PathName));
+        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
         UE_LOG(LogTemp, Log, TEXT("SubMesh Start : %d, SubMesh End : %d"), SubMeshIndex, SubMeshEndIndex);
 
         SubMeshIndex = SubMeshEndIndex + 1;
     }
 
-    MeshData.addVerticesList(Vertices);
+    OutMesh.addVerticesList(Vertices);
 
     //addIndicesListで止まる
-    //MeshData.addIndicesList(OutIndices, 0, false);
-    MeshData.addUV1(UV1, 0);
+    OutMesh.addIndicesList(OutIndices, 0, false);
+    OutMesh.addUV1(UV1, 0);
     UE_LOG(LogTemp, Log, TEXT("Vertices Num : %d, Indices Num : %d, UVs Num : %d"), Vertices.size(), OutIndices.size(), UV1.size());
-
-    return MeshData;
 }
 
 FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
@@ -160,11 +159,9 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     if (ComponentName.FindLastChar('_', Index)) {
         if (ComponentName.RightChop(Index).Contains("-")) {
             return ComponentName;
-        }
-        else {
+        } else {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
         }
-    }
-    else
+    } else
         return ComponentName;
 }
