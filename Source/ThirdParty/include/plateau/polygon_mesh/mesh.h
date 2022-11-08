@@ -30,8 +30,8 @@ namespace plateau::polygonMesh {
         //      今後は座標の集合の表現として独自の型を使うことになるかもしれません。
         
     public:
-        explicit Mesh(const std::string& id);
-        Mesh(const std::string& id, std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1, std::vector<SubMesh>&& sub_meshes);
+        Mesh();
+        Mesh(std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1, std::vector<SubMesh>&& sub_meshes);
 
         /// コピーを禁止します。
         Mesh(const Mesh& mesh) = delete;
@@ -78,6 +78,8 @@ namespace plateau::polygonMesh {
          */
         void extendLastSubMesh(size_t sub_mesh_end_index);
 
+        /// メッシュとサブメッシュに関する情報を stringstream に書き込みます。
+        void debugString(std::stringstream& ss, int indent) const;
     private:
         std::vector<TVec3d> vertices_;
         std::vector<unsigned> indices_;

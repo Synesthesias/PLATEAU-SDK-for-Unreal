@@ -29,13 +29,23 @@ namespace plateau::polygonMesh {
         Model(Model&& model) = default;
         Model& operator=(Model&& model) = default;
 
+        static std::shared_ptr<Model> createModel();
+
         /// 作った Node は move で渡すことを想定しています。
         void addNode(Node&& node);
+
+        Node& addEmptyNode(const std::string& name);
 
         size_t getRootNodeCount() const;
 
         Node& getRootNodeAt(size_t index);
         const Node& getRootNodeAt(size_t index) const;
+
+        /// 子もメッシュもないノードを削除します。
+        void eraseEmptyNodes();
+
+        // Model以下の階層構造を読みやすい文字列にします。
+        std::string debugString() const;
     private:
         std::vector<Node> root_nodes_;
     };

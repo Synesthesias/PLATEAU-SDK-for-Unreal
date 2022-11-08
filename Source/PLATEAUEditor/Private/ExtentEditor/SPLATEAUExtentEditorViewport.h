@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
+
 
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
@@ -35,4 +37,6 @@ private:
 
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
+
+    void AttachVectorTile(FPLATEAUExtent Extent, FPLATEAUGeoReference GeoReference);
 };
