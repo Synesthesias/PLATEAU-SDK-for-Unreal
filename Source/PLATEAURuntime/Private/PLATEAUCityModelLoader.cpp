@@ -143,6 +143,24 @@ namespace {
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
     }
+
+
+    void CreateRootComponent(AActor& Actor) {
+#if WITH_EDITOR
+        USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
+            USceneComponent::GetDefaultSceneRootVariableName());
+
+        check(ActorRootComponent != nullptr);
+        ActorRootComponent->Mobility = EComponentMobility::Static;
+        ActorRootComponent->bVisualizeComponent = true;
+        Actor.SetRootComponent(ActorRootComponent);
+        Actor.AddInstanceComponent(ActorRootComponent);
+        ActorRootComponent->RegisterComponent();
+        Actor.SetFlags(RF_Transactional);
+        ActorRootComponent->SetFlags(RF_Transactional);
+        GEngine->BroadcastLevelActorListChanged();
+#endif
+    }
 }
 
 void APLATEAUCityModelLoader::LoadAsync() {

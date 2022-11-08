@@ -85,10 +85,6 @@ protected:
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
-
-private:
-
-    void CreateRootComponent(AActor& Actor) const;
 };
 
 #undef LOCTEXT_NAMESPACE
