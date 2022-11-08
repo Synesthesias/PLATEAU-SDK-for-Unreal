@@ -11,43 +11,142 @@
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
 
-#include <atomic>
-
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"
 
 using namespace plateau::udx;
 using namespace plateau::polygonMesh;
+
+
+struct FLoadInputData {
+    plateau::polygonMesh::MeshExtractOptions ExtractOptions;
+    FString GmlPath;
+};
+
+class FCityModelLoaderImpl {
+public:
+    static TArray<FLoadInputData> PrepareInputData(
+        const UPLATEAUImportSettings* ImportSettings, const FString& Source,
+        const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference) {
+        // ファイル検索
+        const auto FileCollection = plateau::udx::UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
+            ->filter(Extent.GetNativeData());
+
+        TArray<FLoadInputData> LoadInputDataArray;
+
+        for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
+            const auto Settings = ImportSettings->GetFeatureSettings(Package);
+            if (!Settings.bImport)
+                continue;
+
+            const auto GmlFiles = FileCollection->getGmlFiles(Package);
+
+            for (const auto& GmlFile : *GmlFiles) {
+                auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
+                LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
+                auto& ExtractOptions = LoadInputData.ExtractOptions;
+                ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
+                ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::NWU;
+                ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
+                ExtractOptions.mesh_granularity = UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity);
+                ExtractOptions.max_lod = Settings.MaxLod;
+                ExtractOptions.min_lod = Settings.MinLod;
+                ExtractOptions.export_appearance = Settings.bImportTexture;
+                ExtractOptions.grid_count_of_side = 10;
+                ExtractOptions.unit_scale = 0.01f;
+                ExtractOptions.extent = Extent.GetNativeData();
+                if (Package == plateau::udx::PredefinedCityModelPackage::Relief || Package == plateau::udx::PredefinedCityModelPackage::DisasterRisk) {
+                    ExtractOptions.exclude_city_object_outside_extent = false;
+                    ExtractOptions.exclude_triangles_outside_extent = true;
+                } else {
+                    ExtractOptions.exclude_city_object_outside_extent = true;
+                    ExtractOptions.exclude_triangles_outside_extent = false;
+                }
+            }
+        }
+        return LoadInputDataArray;
+    }
+
+    static FString CopyGmlFile(const FString& Source, const FString& GmlPath) {
+        const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
+
+        // ファイルコピー
+        try {
+            const auto CopiedGml = plateau::udx::UdxFileCollection::fetch(TCHAR_TO_UTF8(*Destination), plateau::udx::GmlFileInfo(TCHAR_TO_UTF8(*GmlPath)));
+            return UTF8_TO_TCHAR(CopiedGml->getPath().c_str());
+        }
+        catch (...) {
+            UE_LOG(LogTemp, Error, TEXT("Failed to copy %s"), *GmlPath);
+            return TEXT("");
+        }
+    }
+
+    static std::shared_ptr<const citygml::CityModel> ParseCityGml(const FString& GmlPath) {
+        std::shared_ptr<const citygml::CityModel> CityModel = nullptr;
+        try {
+            citygml::ParserParams ParserParams;
+            ParserParams.tesselate = true;
+            CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams);
+        }
+        catch (...) {
+            CityModel = nullptr;
+        }
+        if (CityModel == nullptr)
+            UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *GmlPath);
+
+        return CityModel;
+    }
+
+    static USceneComponent* CreateComponentInGameThread(
+        AActor* Actor, const FString& Name) {
+        USceneComponent* Component;
+        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&Component, &Actor, &Name] {
+                Component = NewObject<USceneComponent>(Actor, NAME_None);
+                // コンポーネント名設定(拡張子無しgml名)
+                FString NewUniqueName = Name;
+                if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                    NewUniqueName = MakeUniqueObjectName(Actor, USceneComponent::StaticClass(), FName(Name)).ToString();
+                }
+                Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
+                check(Component != nullptr);
+                Component->Mobility = EComponentMobility::Static;
+                Actor->AddInstanceComponent(Component);
+                Component->RegisterComponent();
+                Component->AttachToComponent(Actor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        Task->Wait();
+
+        return Component;
+    }
+
+private:
+    FCriticalSection SynchronizationObject;
+
+};
+
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
 }
 
 namespace {
-    void ExecuteInGameThread(APLATEAUCityModelLoader* Loader, TFunctionRef<void(APLATEAUCityModelLoader*)> Lambda) {
+    void ExecuteInGameThread(TWeakObjectPtr<APLATEAUCityModelLoader> Loader, TFunctionRef<void(TWeakObjectPtr<APLATEAUCityModelLoader>)> Lambda) {
+        if (!Loader.IsValid())
+            return;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [Loader, &Lambda] {
+                if (!Loader.IsValid())
+                    return;
                 Lambda(Loader);
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
-    }
-
-    int ExecuteInGameThreadWithReturn(APLATEAUCityModelLoader* Loader, TFunctionRef<int(APLATEAUCityModelLoader*)> Lambda) {
-        int Result;
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [Loader, &Lambda, &Result] {
-                Result = Lambda(Loader);
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
-            return Result;
     }
 }
 
 void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
-    struct FLoadInputData {
-        MeshExtractOptions ExtractOptions;
-        FString GmlPath;
-    };
 
     // GeoReferenceを選択範囲の中心に更新
     const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
@@ -67,183 +166,103 @@ void APLATEAUCityModelLoader::LoadAsync() {
         [
             ModelActor,
             Source = Source,
-            ExtentData = Extent.GetNativeData(),
-            GeoReferenceData = GeoReference.GetData(),
+            Extent = Extent,
+            GeoReference = GeoReference,
             ImportSettings = ImportSettings,
-            OwnerLoader = this
-        ]{
-            // ファイル検索
-            const auto UdxFileCollection =
-            UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
-            ->filter(ExtentData);
+            OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
+        ]() mutable {
 
-
-    TArray<FLoadInputData> LoadInputDataArray;
-
-    for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
-        const auto Settings = ImportSettings->GetFeatureSettings(Package);
-        if (!Settings.bImport)
-            continue;
-
-        const auto GmlFiles = UdxFileCollection->getGmlFiles(Package);
-
-        for (const auto& GmlFile : *GmlFiles) {
-            auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
-            LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
-            auto& ExtractOptions = LoadInputData.ExtractOptions;
-            ExtractOptions.reference_point = GeoReferenceData.getReferencePoint();
-            ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::NWU;
-            ExtractOptions.coordinate_zone_id = GeoReferenceData.getZoneID();
-            ExtractOptions.mesh_granularity = UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity);
-            ExtractOptions.max_lod = Settings.MaxLod;
-            ExtractOptions.min_lod = Settings.MinLod;
-            ExtractOptions.export_appearance = Settings.bImportTexture;
-            ExtractOptions.grid_count_of_side = 10;
-            ExtractOptions.unit_scale = 0.01f;
-            ExtractOptions.extent = ExtentData;
-            if (Package == PredefinedCityModelPackage::Relief || Package == PredefinedCityModelPackage::DisasterRisk) {
-                ExtractOptions.exclude_city_object_outside_extent = false;
-                ExtractOptions.exclude_triangles_outside_extent = true;
-            } else {
-                ExtractOptions.exclude_city_object_outside_extent = true;
-                ExtractOptions.exclude_triangles_outside_extent = false;
-            }
-        }
-    }
-
-    ExecuteInGameThread(OwnerLoader,
-        [GmlCount = LoadInputDataArray.Num()](APLATEAUCityModelLoader* Loader){
-        Loader->Status.TotalGmlCount = GmlCount;
-    });
-
-    for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
-        const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
-
-        FLoadInputData InputData = LoadInputDataArray[Index];
-
-        // ファイルコピー
-        auto FetchResult = true;
-        try {
-            // TODO: staticメソッド化
-            UdxFileCollection->fetch(TCHAR_TO_UTF8(*Destination), GmlFileInfo(TCHAR_TO_UTF8(*InputData.GmlPath)));
-        }
-        catch (...) {
-            //TODO: Error Handling
-            FetchResult = false;
-            UE_LOG(LogTemp, Error, TEXT("Failed to copy %s"), *InputData.GmlPath);
-        }
-
-        FGenericPlatformProcess::ConditionalSleep(
-            [OwnerLoader]() {
-                const auto RunningTaskCount = ExecuteInGameThreadWithReturn(OwnerLoader,
-                    [](APLATEAUCityModelLoader* Loader) {
-                        return Loader->Status.LoadingGmls.Num();
-                    });
-                return RunningTaskCount < 2;
-            }
-        , 2);
-
-        const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
+        auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
+            ImportSettings, Source, Extent, GeoReference);
 
         ExecuteInGameThread(OwnerLoader,
-            [GmlName](APLATEAUCityModelLoader* Loader) {
-                Loader->Status.LoadingGmls.Add(GmlName);
-            });
+            [GmlCount = LoadInputDataArray.Num()](auto Loader){
+            Loader->Status.TotalGmlCount = GmlCount;
+        });
 
-        if (!FetchResult) {
-            ExecuteInGameThread(OwnerLoader,
-                [&GmlName](APLATEAUCityModelLoader* Loader) {
-                    Loader->Status.LoadedGmlCount++;
-                    Loader->Status.LoadingGmls.Remove(GmlName);
-                    Loader->Status.FailedGmls.Add(GmlName);
-                });
+        FCriticalSection LoadMeshSection;
 
-            continue;
-        }
+        TArray<TFuture<bool>> Futures;
+        TArray<FString> GmlNames;
 
-        Async(EAsyncExecution::Thread,
-        [InputData, Destination, UdxFileCollection, &LoadInputDataArray, Source,
-            ModelActor, GmlName, OwnerLoader] {
-                // TODO: libplateauに委譲
-                FString RelativeGmlPath = InputData.GmlPath;
-                // 末尾に/が無いなら追加(MakePathRelativeToで末尾のディレクトリ名を含めるため)
-                FString RootPath = Source;
-                if (RootPath[RootPath.Len() - 1] != *TEXT("/")) {
-                    RootPath.AppendChar(*TEXT("/"));
-                }
+        for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
+            FGenericPlatformProcess::ConditionalSleep(
+                [&Futures, &GmlNames, OwnerLoader]() {
+                    TArray<FString> CurrentLoadingGmls;
+                    int LoadCompletedCount = 0;
+                    for (int i = 0; i < Futures.Num(); ++i) {
+                        if (!Futures[i].IsReady())
+                            CurrentLoadingGmls.Add(GmlNames[i]);
+                        else
+                            ++LoadCompletedCount;
 
-                if (!FPaths::MakePathRelativeTo(RelativeGmlPath, *RootPath)) {
-                    //TODO: Error Handling
-                    UE_LOG(LogTemp, Error, TEXT("Invalid source: %s"), *Source);
                         ExecuteInGameThread(OwnerLoader,
-                            [GmlName](APLATEAUCityModelLoader* Loader) {
-                                Loader->Status.LoadedGmlCount++;
+                            [&CurrentLoadingGmls, &LoadCompletedCount](TWeakObjectPtr<APLATEAUCityModelLoader> Loader){
+                            Loader->Status.LoadedGmlCount = LoadCompletedCount;
+                            Loader->Status.LoadingGmls = CurrentLoadingGmls;
+                        });
+                    }
+                    return CurrentLoadingGmls.Num() < 4;
+                }, 3);
+
+            FLoadInputData InputData = LoadInputDataArray[Index];
+
+            const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath);
+            const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
+
+            // TODO: fldでgml名被る
+
+            GmlNames.Add(GmlName);
+            Futures.Add(Async(EAsyncExecution::Thread,
+                [InputData, &LoadInputDataArray, Source,
+                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection]() {
+                    const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
+
+                    if (CityModel == nullptr) {
+                        ExecuteInGameThread(OwnerLoader,
+                            [GmlName](auto Loader) {
+                                ++Loader->Status.LoadedGmlCount;
                                 Loader->Status.LoadingGmls.Remove(GmlName);
                                 Loader->Status.FailedGmls.Add(GmlName);
                             });
-                    return;
-                }
-                auto CopiedGmlPath = Destination;
-                CopiedGmlPath.PathAppend(*FPaths::GetBaseFilename(Source), FPaths::GetBaseFilename(Source).Len());
-                CopiedGmlPath.PathAppend(*RelativeGmlPath, RelativeGmlPath.Len());
+                        return false;
+                    }
 
-                std::shared_ptr<const citygml::CityModel> CityModel;
-                bool ParseResult = true;
-                try {
-                    citygml::ParserParams ParserParams;
-                    ParserParams.tesselate = true;
-                    CityModel = citygml::load(TCHAR_TO_UTF8(*CopiedGmlPath), ParserParams);
-                }
-                catch (...) {
-                    ParseResult = false;
-                }
+                    const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
 
-                if (CityModel == nullptr || !ParseResult) {
-                    //TODO: Error Handling
-                    UE_LOG(LogTemp, Error, TEXT("Failed to parse %s"), *CopiedGmlPath);
+                    // 各GMLについて親Componentを作成
+                    // コンポーネントは拡張子無しgml名に設定
+                    const auto GmlRootComponentName = FPaths::GetBaseFilename(CopiedGmlPath);
+                    const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
+
+                    {
+                        FScopeLock Lock(&LoadMeshSection);
+
+                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
+                    }
+                    return true;
+                }));
+        }
+
+        FGenericPlatformProcess::ConditionalSleep(
+            [&Futures, &GmlNames, OwnerLoader]() {
+                TArray<FString> CurrentLoadingGmls;
+                int LoadCompletedCount = 0;
+                for (int i = 0; i < Futures.Num(); ++i) {
+                    if (!Futures[i].IsReady())
+                        CurrentLoadingGmls.Add(GmlNames[i]);
+                    else
+                        ++LoadCompletedCount;
+
                     ExecuteInGameThread(OwnerLoader,
-                        [GmlName](APLATEAUCityModelLoader* Loader) {
-                            Loader->Status.LoadedGmlCount++;
-                            Loader->Status.LoadingGmls.Remove(GmlName);
-                            Loader->Status.FailedGmls.Add(GmlName);
+                        [&CurrentLoadingGmls, &LoadCompletedCount](TWeakObjectPtr<APLATEAUCityModelLoader> Loader) {
+                            Loader->Status.LoadedGmlCount = LoadCompletedCount;
+                            Loader->Status.LoadingGmls = CurrentLoadingGmls;
                         });
-                    return;
                 }
-
-                const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
-
-                // 各GMLについて親Componentを作成
-                USceneComponent* GmlRootComponent;
-                const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-                    [&GmlRootComponent, &ModelActor, &CopiedGmlPath] {
-                        GmlRootComponent = NewObject<USceneComponent>(ModelActor, NAME_None);
-                        // コンポーネント名設定(拡張子無しgml名)
-                        const auto DesiredName = FPaths::GetBaseFilename(CopiedGmlPath);
-                        FString NewUniqueName = DesiredName;
-                        if (!GmlRootComponent->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                            NewUniqueName = MakeUniqueObjectName(ModelActor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
-                        }
-                        GmlRootComponent->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-
-                        check(GmlRootComponent != nullptr);
-                        GmlRootComponent->Mobility = EComponentMobility::Static;
-                        ModelActor->AddInstanceComponent(GmlRootComponent);
-                        GmlRootComponent->RegisterComponent();
-                        GmlRootComponent->AttachToComponent(ModelActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-
-                    }, TStatId(), nullptr, ENamedThreads::GameThread);
-                Task->Wait();
-
-                FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
-
-                ExecuteInGameThread(OwnerLoader,
-                    [GmlName](APLATEAUCityModelLoader* Loader) {
-                        Loader->Status.LoadedGmlCount++;
-                        Loader->Status.LoadingGmls.Remove(GmlName);
-                    });
-            });
-    }
-        });
+                return CurrentLoadingGmls.Num() == 0;
+            }, 3);
+    });
 #endif
 }
 
@@ -253,23 +272,6 @@ void APLATEAUCityModelLoader::BeginPlay() {
 
 void APLATEAUCityModelLoader::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
-}
-
-void APLATEAUCityModelLoader::CreateRootComponent(AActor& Actor) const {
-#if WITH_EDITOR
-    USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
-        USceneComponent::GetDefaultSceneRootVariableName());
-
-    check(ActorRootComponent != nullptr);
-    ActorRootComponent->Mobility = EComponentMobility::Static;
-    ActorRootComponent->bVisualizeComponent = true;
-    Actor.SetRootComponent(ActorRootComponent);
-    Actor.AddInstanceComponent(ActorRootComponent);
-    ActorRootComponent->RegisterComponent();
-    Actor.SetFlags(RF_Transactional);
-    ActorRootComponent->SetFlags(RF_Transactional);
-    GEngine->BroadcastLevelActorListChanged();
-#endif
 }
 
 #undef LOCTEXT_NAMESPACE

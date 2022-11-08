@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "CityGML/PLATEAUCityModel.h"
 #include "PLATEAUGeometry.h"
 #include "PLATEAUImportSettings.h"
 
@@ -88,7 +87,6 @@ public:
     virtual void Tick(float DeltaTime) override;
 
 private:
-    TMap<int, FPLATEAUCityModel> CityModelCache;
 
     void CreateRootComponent(AActor& Actor) const;
 };

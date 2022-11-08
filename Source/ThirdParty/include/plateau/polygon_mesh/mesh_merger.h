@@ -30,7 +30,7 @@ namespace plateau::polygonMesh {
         /**
          * Mesh に Polygon をマージする代わりに Mesh をマージする版です。
          */
-        static void mergeMesh(Mesh& mesh, const Mesh& other_mesh, plateau::geometry::CoordinateSystem mesh_axes, bool include_textures,
+        static void mergeMesh(Mesh& mesh, const Mesh& other_mesh, bool invert_mesh_front_back, bool include_textures,
                               const TVec2f& uv_2_element, const TVec2f& uv_3_element);
 
         /**
@@ -38,7 +38,8 @@ namespace plateau::polygonMesh {
          */
         static void mergeMeshInfo(Mesh& mesh,
                                   std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1, std::vector<SubMesh>&& sub_meshes,
-                                  plateau::geometry::CoordinateSystem mesh_axes, bool include_texture);
+                                  plateau::geometry::CoordinateSystem mesh_axis_convert_from,
+                                  plateau::geometry::CoordinateSystem mesh_axis_convert_to, bool include_texture);
 
         /**
          * merge関数を 引数 city_object_ の各 Polygon に対して実行します。
@@ -61,5 +62,11 @@ namespace plateau::polygonMesh {
          * 子の Geometry は再帰的に検索します。
          */
         static std::list<const citygml::Polygon*> findAllPolygons(const citygml::CityObject& city_obj, unsigned lod);
+
+        /**
+         * PLATEAUからメッシュを読み込んで座標軸を変換をするとき、このままだとメッシュが裏返ることがあります（座標軸が反転したりするので）。
+         * 裏返りを補正する必要があるかどうかを bool で返します。
+         */
+        static bool shouldInvertIndicesOnMeshConvert(plateau::geometry::CoordinateSystem sys);
     };
 }

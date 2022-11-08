@@ -41,7 +41,7 @@ namespace plateau::meshWriter {
         GltfWriter();
         ~GltfWriter();
 
-        bool write(const std::string& destination, const plateau::polygonMesh::Model& model, GltfWriteOptions options);
+        bool write(const std::string& gltf_file_path_utf8, const plateau::polygonMesh::Model& model, GltfWriteOptions options);
 
     private:
         class Impl;
