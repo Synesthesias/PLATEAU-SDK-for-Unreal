@@ -10,15 +10,26 @@
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "AssetSelection.h"
 #include "DesktopPlatformModule.h"
+#include "Engine/Selection.h"
+#include "plateau/mesh_writer/gltf_writer.h"
+#include "PLATEAUInstancedCityModel.h"
+#include "PLATEAUMeshExporter.h"
 
 #define LOCTEXT_NAMESPACE "SPLATEAUExportPanel"
 
 namespace {
-    static FText GetDisplayName(EExportFileFormat ModelType) {
+    static FText GetDisplayName(EMeshFileFormat ModelType) {
         switch (ModelType) {
-        case EExportFileFormat::OBJ: return LOCTEXT("OBJ", "OBJ");
-        case EExportFileFormat::FBX: return LOCTEXT("FBX", "FBX");
-        case EExportFileFormat::GLTF: return LOCTEXT("GLTF", "GLTF");
+        case EMeshFileFormat::OBJ: return LOCTEXT("OBJ", "OBJ");
+        case EMeshFileFormat::FBX: return LOCTEXT("FBX", "FBX");
+        case EMeshFileFormat::GLTF: return LOCTEXT("GLTF", "GLTF");
+        default: return LOCTEXT("Others", "その他");
+        }
+    }
+    static FText GetDisplayFormatName(int Index) {
+        switch (Index) {
+        case 0: return LOCTEXT("Binary", "バイナリ");
+        case 1: return LOCTEXT("ASCII", "ASCII");
         default: return LOCTEXT("Others", "その他");
         }
     }
@@ -33,12 +44,13 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
     FDetailsViewArgs DetailsViewArgs;
     DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
     DetailsViewArgs.bAllowSearch = false;
+    Settings = NewObject<UPLATEAUExportSettings>();
 
     ExportSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
     ExportSettingsView->RegisterInstancedCustomPropertyLayout(
         UPLATEAUExportSettings::StaticClass(),
         FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUFeatureExportSettingsDetails::MakeInstance));
-    ExportSettingsView->SetObject(GetMutableDefault<UPLATEAUExportSettings>());
+    ExportSettingsView->SetObject(Settings);
 
     ChildSlot
         [
@@ -84,10 +96,21 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
     +SVerticalBox::Slot()
         .AutoHeight()
         .HAlign(HAlign_Fill)
-        .Padding(FMargin(0, 15, 0, 15))
+        .Padding(FMargin(19, 15, 0, 15))
         [
             SNew(STextBlock)
             .Text(LOCTEXT("Object Name Here", "Object Name Here"))
+        .Text_Lambda(
+            [this]() {
+                AActor* TargetActor = GEditor->GetSelectedActors()->GetTop<AActor>();
+                if (TargetActor == nullptr) {
+                    return (LOCTEXT("Please select Actor from Outliner", "アウトライナーからアクターを選択してください"));
+                }
+                else {
+                    SelectingActor = TargetActor;
+                    return FText::FromString(TargetActor->GetActorLabel());
+                }
+            })
         ]
 
     //選択オブジェクト表示ヘッダー
@@ -110,7 +133,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
         ]
         ]
 
-    // 基準座標系の選択
+    // 出力形式選択
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(0, 0, 0, 10)
@@ -127,12 +150,12 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             SNew(SComboButton)
             .OnGetMenuContent_Lambda([this]() {
         FMenuBuilder MenuBuilder(true, nullptr);
-        for (int i = 0; i < (int)EExportFileFormat::EExportFileFormat_MAX; i++) {
-            const auto ItemText = GetDisplayName((EExportFileFormat)i);
+        for (int i = 0; i < (int)EMeshFileFormat::EMeshFileFormat_MAX; i++) {
+            const auto ItemText = GetDisplayName((EMeshFileFormat)i);
             const auto ID = i;
             FUIAction ItemAction(FExecuteAction::CreateLambda([this, ID]() {
                 //TODO;拡張子選択時のコールバック
-                CurrentModelType = (EExportFileFormat)ID;
+                CurrentModelType = (EMeshFileFormat)ID;
                 }));
             MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
         }
@@ -147,6 +170,73 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
                             })
                     ]
         ]
+        ]
+
+    //フォーマット(GLTF時に表示するもの)
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(0, 0, 0, 10)
+        [
+            SNew(SHorizontalBox) +
+            SHorizontalBox::Slot()
+        .Padding(19, 0, 0, 0)
+        [
+            SNew(STextBlock)
+            .Visibility_Lambda([this]() {
+        if (CurrentModelType == EMeshFileFormat::GLTF) {
+            return EVisibility::Visible;
+        }
+        else {
+            return EVisibility::Collapsed;
+        }
+                })
+        .Text(LOCTEXT("Format Type", "フォーマット"))] +
+        SHorizontalBox::Slot()
+                    .Padding(0, 0, 19, 0)
+                    [
+                        SNew(SComboButton)
+                        .Visibility_Lambda([this]() {
+                    if (CurrentModelType == EMeshFileFormat::GLTF) {
+                        return EVisibility::Visible;
+                    }
+                    else {
+                        return EVisibility::Collapsed;
+                    }
+                            })
+                    .OnGetMenuContent_Lambda([this]() {
+                                FMenuBuilder MenuBuilder(true, nullptr);
+                                for (int i = 0; i < 2; i++) {
+                                    const auto ItemText = GetDisplayFormatName(i);
+                                    const auto ID = i;
+                                    FUIAction ItemAction(FExecuteAction::CreateLambda([this, ID]() {
+                                        bExportAsBinary = ID == 0;
+                                        }));
+                                    MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
+                                }
+                                return MenuBuilder.MakeWidget();
+                        })
+                                .ContentPadding(0.0f)
+                            .VAlign(VAlign_Center)
+                            .ButtonContent()
+                            [
+                                SNew(STextBlock).Text_Lambda([this]() {
+                            if (bExportAsBinary) {
+                                return GetDisplayFormatName(0);
+                            }
+                            else {
+                                return GetDisplayFormatName(1);
+                            }
+                                    })
+                            .Visibility_Lambda([this]() {
+                                        if (CurrentModelType == EMeshFileFormat::GLTF) {
+                                            return EVisibility::Visible;
+                                        }
+                                        else {
+                                            return EVisibility::Collapsed;
+                                        }
+                                })
+                            ]
+                    ]
         ]
     // 各種設定
     + SVerticalBox::Slot()
@@ -170,9 +260,26 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
         .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda([this]() {
+        .OnClicked_Lambda([&]() {
         //TODO:エクスポート処理
-        return FReply::Handled();
+        APLATEAUInstancedCityModel* Target = Cast<APLATEAUInstancedCityModel>(SelectingActor);
+        if (Target != nullptr) {
+            //TODO 設定の反映
+            FPLATEAUMeshExporter MeshExporter;
+            MeshExportOptions Options;
+            plateau::meshWriter::GltfWriteOptions GltfOptions;
+            GltfOptions.mesh_file_format = bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLB : plateau::meshWriter::GltfFileFormat::GLTF;
+            Options.GltfWriteOptions = GltfOptions;
+            Options.bExportHiddenObjects = Settings->ExportSetting.bExportHiddenModel;
+            Options.bExportTexture = Settings->ExportSetting.bExportTexture;
+            Options.FileFormat = CurrentModelType;
+            Options.TransformType = Settings->ExportSetting.ExportCoordinate;
+            MeshExporter.Export(ExportPath, Target, Options);
+            return FReply::Handled();
+        }
+        else {
+            return FReply::Handled();
+        }
             })
         .Content()
                 [

@@ -18,10 +18,10 @@
 #define LOCTEXT_NAMESPACE "PLATEAUFeatureExportSettings"
 
 namespace {
-    TMap<EPLATEAUExportCoordinate, FText> GetCoordinateText() {
-        TMap<EPLATEAUExportCoordinate, FText> Items;
-        Items.Add(EPLATEAUExportCoordinate::Local, LOCTEXT("Local", "ローカル座標"));
-        Items.Add(EPLATEAUExportCoordinate::PlaneRect, LOCTEXT("PlaneRect", "平面直角座標"));
+    TMap<EMeshTransformType, FText> GetCoordinateText() {
+        TMap<EMeshTransformType, FText> Items;
+        Items.Add(EMeshTransformType::Local, LOCTEXT("Local", "ローカル座標"));
+        Items.Add(EMeshTransformType::PlaneRect, LOCTEXT("PlaneRect", "平面直角座標"));
         return Items;
     }
 }
@@ -69,11 +69,11 @@ void FPLATEAUExportFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Cat
                         const auto Texts = GetCoordinateText();
 
                         if (!ExportCoordinateProperty.IsValid())
-                            return Texts[EPLATEAUExportCoordinate::Local];
+                            return Texts[EMeshTransformType::Local];
 
                         uint8 Out;
                         ExportCoordinateProperty->GetValue(Out);
-                        return Texts[static_cast<EPLATEAUExportCoordinate>(Out)];
+                        return Texts[static_cast<EMeshTransformType>(Out)];
                     })]];
 
     // 非表示モデルを出力する
