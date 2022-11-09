@@ -28,7 +28,7 @@ private:
     TSharedRef<SVerticalBox> CreateExportPathSelectPanel();
     FReply OnBtnSelectGmlFileClicked();
 
-    FString ExportPath;
+    FString ExportPath = FPaths::ProjectContentDir();
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
     EMeshFileFormat CurrentModelType = EMeshFileFormat::OBJ;

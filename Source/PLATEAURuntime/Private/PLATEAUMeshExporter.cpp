@@ -13,6 +13,7 @@
 #include "UObject/UObjectBaseUtility.h"
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
+    ModelNames.Empty();
     switch (Option.FileFormat) {
     case EMeshFileFormat::OBJ:
         ExportAsOBJ(ExportPath, ModelActor, Option);
@@ -31,11 +32,17 @@ void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCit
 void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     UE_LOG(LogTemp, Log, TEXT("Export as OBJ"));
     plateau::meshWriter::ObjWriter Writer;
+    if (Option.TransformType == EMeshTransformType::PlaneRect) {
+        ReferencePoint = ModelActor->GeoReference.ReferencePoint;
+    }
+    else {
+        ReferencePoint = FVector::ZeroVector;
+    }
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
-            //writeでコケる
-            Writer.write(TCHAR_TO_UTF8(*ExportPath), *ModelDataArray[i]);
+            const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".obj";
+            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i]);
         }
     }
 }
@@ -45,7 +52,17 @@ void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstanc
     UE_LOG(LogTemp, Warning, TEXT("Export as FBX is temporarily unavailable"));
 }
 
-void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {}
+void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
+    UE_LOG(LogTemp, Log, TEXT("Export as GLTF"));
+    plateau::meshWriter::GltfWriter Writer;
+    const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
+    for (int i = 0; i < ModelDataArray.Num(); i++) {
+        if (ModelDataArray[i]->getRootNodeCount() != 0) {
+            const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".obj";
+            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i], Option.GltfWriteOptions);
+        }
+    }
+}
 
 TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
@@ -58,6 +75,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
         //BillboardComponentなるコンポーネントがついていることがあるので無視
         if (!Components[i]->GetName().Contains("BillboardComponent")) {
             ModelArray.Add(CreateModel(Components[i], Option));
+            ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
         }
     }
     return ModelArray;
@@ -83,7 +101,8 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
                 continue;
             }
         }
-        auto& Mesh = OutNode.getMesh();
+        auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Components[i]->GetName()));
+        auto& Mesh = Node.getMesh();
         Mesh.emplace();
         CreateMesh(Mesh.value(), Components[i], Option);
     }
@@ -107,11 +126,11 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     for (int i = 0; i < VertexPositions.GetNumElements(); i++) {
         const auto VertexPosition = VertexPositions.Get(i, 0);
-        const TVec3d Vertex(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
+        const TVec3d Vertex(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
         Vertices.push_back(Vertex);
     }
     for (int i = 0; i < Indices.GetNumElements(); i++) {
-        OutIndices.push_back(Indices[i]);
+        OutIndices.push_back(Indices.Get(i));
     }
 
     for (int j = 0; j < UVs.GetNumElements(); j++) {
@@ -150,18 +169,22 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     //addIndicesListで止まる
     OutMesh.addIndicesList(OutIndices, 0, false);
-    OutMesh.addUV1(UV1, 0);
+    OutMesh.addUV1(UV1, Vertices.size());
+    OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
+    OutMesh.addUV3WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
     UE_LOG(LogTemp, Log, TEXT("Vertices Num : %d, Indices Num : %d, UVs Num : %d"), Vertices.size(), OutIndices.size(), UV1.size());
 }
 
 FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     int Index = 0;
     if (ComponentName.FindLastChar('_', Index)) {
-        if (ComponentName.RightChop(Index).Contains("-")) {
-            return ComponentName;
-        } else {
+        if (ComponentName.RightChop(Index).IsNumeric()) {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
         }
-    } else
+        else {
+            return ComponentName;
+        }
+    }
+    else
         return ComponentName;
 }
