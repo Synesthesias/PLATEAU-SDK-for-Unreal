@@ -11,6 +11,7 @@
 #include "MeshDescription.h"
 #include "StaticMeshAttributes.h"
 #include "UObject/UObjectBaseUtility.h"
+#include "filesystem"
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
@@ -59,6 +60,9 @@ void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstan
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".obj";
+            const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
+
+            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder.Replace(TEXT("/"), TEXT("\\"))));
             Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i], Option.GltfWriteOptions);
         }
     }
@@ -68,10 +72,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
     const auto RootComponent = ModelActor->GetRootComponent();
     const auto Components = RootComponent->GetAttachChildren();
-    UE_LOG(LogTemp, Log, TEXT("Children Num : %d"), Components.Num());
     for (int i = 0; i < Components.Num(); i++) {
-        UE_LOG(LogTemp, Log, TEXT("Children Name : %s"), *Components[i]->GetName());
-
         //BillboardComponentなるコンポーネントがついていることがあるので無視
         if (!Components[i]->GetName().Contains("BillboardComponent")) {
             ModelArray.Add(CreateModel(Components[i], Option));
@@ -84,7 +85,6 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option) {
     auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
-    UE_LOG(LogTemp, Log, TEXT("Children Num : %d"), Components.Num());
     for (int i = 0; i < Components.Num(); i++) {
         auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*RemoveSuffix(Components[i]->GetName())));
         CreateNode(Node, Components[i], Option);
@@ -93,7 +93,6 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
 }
 
 void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option) {
-    UE_LOG(LogTemp, Log, TEXT("Node Name : %s"), *FString(RemoveSuffix(NodeRootComponent->GetName())));
     const auto Components = NodeRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
         if (!Option.bExportHiddenObjects) {
@@ -153,15 +152,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
                     PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
-                    UE_LOG(LogTemp, Log, TEXT("Texture Name : %s"), *PathName);
                 }
             }
         }
 
         //SubMeshDataにテクスチャパスを渡すとコケる
         OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
-        UE_LOG(LogTemp, Log, TEXT("SubMesh Start : %d, SubMesh End : %d"), SubMeshIndex, SubMeshEndIndex);
-
         SubMeshIndex = SubMeshEndIndex + 1;
     }
 
@@ -172,7 +168,6 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     OutMesh.addUV1(UV1, Vertices.size());
     OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
     OutMesh.addUV3WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
-    UE_LOG(LogTemp, Log, TEXT("Vertices Num : %d, Indices Num : %d, UVs Num : %d"), Vertices.size(), OutIndices.size(), UV1.size());
 }
 
 FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {

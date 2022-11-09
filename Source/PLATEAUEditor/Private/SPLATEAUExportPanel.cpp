@@ -268,7 +268,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             FPLATEAUMeshExporter MeshExporter;
             MeshExportOptions Options;
             plateau::meshWriter::GltfWriteOptions GltfOptions;
-            GltfOptions.mesh_file_format = bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLB : plateau::meshWriter::GltfFileFormat::GLTF;
+            GltfOptions.mesh_file_format = bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLTF : plateau::meshWriter::GltfFileFormat::GLB;
             Options.GltfWriteOptions = GltfOptions;
             Options.bExportHiddenObjects = Settings->ExportSetting.bExportHiddenModel;
             Options.bExportTexture = Settings->ExportSetting.bExportTexture;
