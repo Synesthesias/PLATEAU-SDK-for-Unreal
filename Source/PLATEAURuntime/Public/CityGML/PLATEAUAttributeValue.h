@@ -24,7 +24,7 @@ enum class EPLATEAUAttributeType : uint8 {
 };
 
 /*
- * �s�s�I�u�W�F�N�g�����l��Blueprint�������b�p�[�ł��B
+ * 都市オブジェクト属性値のBlueprint向けラッパーです。
  */
 USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAUAttributeValue {
@@ -50,17 +50,17 @@ class PLATEAURUNTIME_API UPLATEAUAttributeValueBlueprintLibrary : public UBluepr
 
 public:
     /*
-     * �����l�̌^���擾���܂��B
+     * 属性値の型を取得します。
      */
     UFUNCTION(
         BlueprintCallable,
         BlueprintPure,
         Category = "PLATEAU|CityGML")
-        static EPLATEAUAttributeType GetType(
+        static TEnumAsByte<EPLATEAUAttributeType> GetType(
             UPARAM(ref) const FPLATEAUAttributeValue& Value);
 
     /*
-     * �����l�𕶎���Ƃ��Ď擾���܂��B
+     * 属性値を文字列として取得します。
      */
     UFUNCTION(
         BlueprintCallable,
@@ -70,7 +70,7 @@ public:
             const FPLATEAUAttributeValue& Value);
 
     /*
-     * �����̑������ċA�I�Ɋ܂ޑ����l���擾���܂��B
+     * 複数の属性を再帰的に含む属性値を取得します。
      */
     UFUNCTION(
         BlueprintCallable,

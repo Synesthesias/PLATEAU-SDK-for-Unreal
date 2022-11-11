@@ -151,12 +151,11 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/Datasets/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
                 }
             }
         }
 
-        //SubMeshDataにテクスチャパスを渡すとコケる
         OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
         SubMeshIndex = SubMeshEndIndex + 1;
     }
@@ -173,7 +172,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     int Index = 0;
     if (ComponentName.FindLastChar('_', Index)) {
-        if (ComponentName.RightChop(Index).IsNumeric()) {
+        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
         }
         else {

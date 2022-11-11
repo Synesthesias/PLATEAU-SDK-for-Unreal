@@ -10,6 +10,7 @@
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
 #include "StaticMeshAttributes.h"
+#include "Misc/DefaultValueHelper.h"
 
 #if WITH_EDITOR
 
@@ -181,16 +182,61 @@ namespace {
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
-        //Async(EAsyncExecution::Thread,
-        //    [=] {
         LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
-        //});
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [StaticMeshes = StaticMeshes]() {
                 UStaticMesh::BatchBuild(StaticMeshes, true);
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         StaticMeshes.Reset();
     }
+
+    TMap<int, TSet<FString>> NameMap;
+    for (int i = 0; i < InModel->getRootNodeCount(); i++) {
+        const auto& RootNode = InModel->getRootNodeAt(i);
+        FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
+        int Key;
+        FDefaultValueHelper::ParseInt(KeyString.RightChop(3), Key);
+        auto& Value = NameMap.Add(Key);
+        for (int j = 0; j < RootNode.getChildCount(); ++j) {
+            const auto& Node = RootNode.getChildAt(j);
+            Value.Add(UTF8_TO_TCHAR(Node.getName().c_str()));
+        }
+    }
+
+    FFunctionGraphTask::CreateAndDispatchWhenReady(
+        [ParentComponent, &NameMap]() {
+            TArray<USceneComponent*> LodComponents;
+            ParentComponent->GetChildrenComponents(false, LodComponents);
+
+            for (const auto& LodComponent : LodComponents) {
+                auto LodComponentName = LodComponent->GetName();
+                int Lod;
+                FString LodString = LodComponentName.RightChop(3);
+                LodString = LodString.LeftChop(LodString.Len() - 1);
+                FDefaultValueHelper::ParseInt(LodString, Lod);
+
+                TArray<USceneComponent*> Components;
+                LodComponent->GetChildrenComponents(true, Components);
+                for (const auto& Component : Components) {
+                    auto ComponentName = Component->GetName();
+                    int Index = 0;
+                    if (ComponentName.FindLastChar('_', Index)) {
+                        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+                            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
+                        }
+                    }
+                    TArray<int> Keys;
+                    NameMap.GetKeys(Keys);
+                    for (const auto Key : Keys) {
+                        if (Key <= Lod)
+                            continue;
+                        if (NameMap[Key].Contains(ComponentName))
+                            Component->SetVisibility(false);
+                    }
+                }
+            }
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
@@ -250,6 +296,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
                     FFunctionGraphTask::CreateAndDispatchWhenReady(
                         [Component, Mesh] {
                             Component->SetStaticMesh(Mesh);
+
+                            // Collision情報設定
+                            Mesh->CreateBodySetup();
+                            Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+
                         }, TStatId(), nullptr, ENamedThreads::GameThread);
                 });
         });
@@ -297,13 +348,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         }
 
         // StaticMeshセットアップ
-        StaticMesh->NeverStream = true;
+        // StaticMesh->NeverStream = true;
         //StaticMesh->InitResources();
         //StaticMesh->CalculateExtendedBounds();
         //StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
-
-        // Collision情報設定
-        StaticMesh->CreateBodySetup();
 
         // 名前設定、ヒエラルキー設定など
         Component->DepthPriorityGroup = SDPG_World;

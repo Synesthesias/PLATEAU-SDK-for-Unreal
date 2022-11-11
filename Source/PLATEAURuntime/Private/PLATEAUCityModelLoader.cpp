@@ -177,8 +177,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
+
     ModelActor->SetActorLabel(FPaths::GetCleanFilename(Source));
     ModelActor->GeoReference = GeoReference;
+    ModelActor->DatasetName = FPaths::GetCleanFilename(Source);
 
     Async(EAsyncExecution::Thread,
         [

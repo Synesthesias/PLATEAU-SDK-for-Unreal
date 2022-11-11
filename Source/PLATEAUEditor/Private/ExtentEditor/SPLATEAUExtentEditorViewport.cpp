@@ -74,32 +74,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         GeoReference.ReferencePoint.Y = RawCenterPoint.y;
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
-
-        /*Basemap = MakeShared<FPLATEAUBasemap>(GeoReference, ViewportClient);*/
-
-        //std::vector<double> latitude, longitude, height;
-        //for (auto MeshCode : FileCollection->getMeshCodes()) {
-        //    latitude.push_back(MeshCode.getExtent().min.latitude);
-        //    latitude.push_back(MeshCode.getExtent().max.latitude);
-
-        //    longitude.push_back(MeshCode.getExtent().min.longitude);
-        //    longitude.push_back(MeshCode.getExtent().max.longitude);
-
-        //    height.push_back(MeshCode.getExtent().min.height);
-        //    height.push_back(MeshCode.getExtent().max.height);
-        //}
-
-        //double minLat = *MinElement(begin(latitude), end(latitude));
-        //double maxLat = *MaxElement(begin(latitude), end(latitude));
-        //double minLong = *MinElement(begin(longitude), end(longitude));
-        //double maxLong = *MaxElement(begin(longitude), end(longitude));
-        //double minHeight = *MinElement(begin(height), end(height));
-        //double maxHeight = *MaxElement(begin(height), end(height));
-
-        //plateau::geometry::Extent extent(
-        //    plateau::geometry::GeoCoordinate(minLat, minLong, minHeight),
-        //    plateau::geometry::GeoCoordinate(maxLat, maxLong, maxHeight));
-        //
+        
         ViewportClient->Initialize(*FileCollection);
     }
 }
