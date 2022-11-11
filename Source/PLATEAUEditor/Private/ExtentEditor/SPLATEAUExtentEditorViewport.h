@@ -1,7 +1,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUBasemap.h"
+#include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
+
 
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
@@ -27,12 +30,9 @@ protected:
 private:
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
-
     // ViewportClientに渡すScene
     TSharedPtr<class FAdvancedPreviewScene> PreviewScene;
-
     TSharedPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
-
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
 };

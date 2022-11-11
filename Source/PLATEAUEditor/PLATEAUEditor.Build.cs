@@ -52,7 +52,10 @@ public class PLATEAUEditor : ModuleRules
                 "EditorStyle",
                 "PropertyEditor",
                 "AdvancedPreviewScene",
-                "WorkspaceMenuStructure"
+                "WorkspaceMenuStructure",
+                "MeshDescription",
+                "StaticMeshDescription",
+                "RHI"
                 // ... add private dependencies that you statically link with here ...	
             }
             );

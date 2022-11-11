@@ -40,7 +40,7 @@ void SPLATEAUExtentEditButton::Construct(const FArguments& InArgs) {
 
         // TODO: ExtentEditorに委譲
         // ビューポートの操作性向上のため100分の1スケールで設定
-        const plateau::geometry::GeoReference RawGeoReference(ZoneID.Get(), {}, 1, plateau::geometry::CoordinateSystem::NWU);
+        const plateau::geometry::GeoReference RawGeoReference(ZoneID.Get(), {}, 1, plateau::geometry::CoordinateSystem::ESU);
         ExtentEditor->SetGeoReference(RawGeoReference);
 
         const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
