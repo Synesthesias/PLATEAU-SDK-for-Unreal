@@ -39,7 +39,19 @@
       "output": {
         ".html": {
           "relative_path": "manual/AccessCityObject.html",
-          "hash": "L+K7GoqQJ89uoElKD26XuvwSAVzD6Z3seP4zXmh8P9E="
+          "hash": "2JKkxej8m5wJecTqDktuq8rGq/A4QLlNSzqYC34I9dc="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/ExportCityModels.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/ExportCityModels.html",
+          "hash": "kY4e/L8QANX5hFWvqQY39PAaJ7SCQpdOf6/B6GAZZ8Y="
         }
       },
       "is_incremental": false,
@@ -87,7 +99,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/toc.html",
-          "hash": "ADBxaC8ZRJgKNb0bxXnA4NWXZtj+jdfbXN3iMx2kAp8="
+          "hash": "pPnTEbd4xfXKHqsyiQDc58C5r8+/+pyqvW9x3Qo5uPo="
         }
       },
       "is_incremental": false,
@@ -110,6 +122,72 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual.meta"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/blueprint.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/blueprint.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/blueprintSection1.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/blueprintSection1.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/blueprintSection2.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/blueprintSection2.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/blueprintSection3.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/blueprintSection3.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/sample.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/sample.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/exportCityModels/exportWindow.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/exportCityModels/exportWindow.png"
         }
       },
       "is_incremental": false,
@@ -340,7 +418,7 @@
         "ConceptualDocumentProcessor": {
           "can_incremental": false,
           "incrementalPhase": "build",
-          "total_file_count": 5,
+          "total_file_count": 6,
           "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
