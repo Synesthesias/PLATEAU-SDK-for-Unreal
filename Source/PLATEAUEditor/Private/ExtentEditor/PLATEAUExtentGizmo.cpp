@@ -64,7 +64,7 @@ void FPLATEAUExtentGizmo::SetExtent(const FPLATEAUExtent& Extent, FPLATEAUGeoRef
     auto RawMin = GeoReference.GetData().project(Extent.Min.GetNativeData());
     auto RawMax = GeoReference.GetData().project(Extent.Max.GetNativeData());
 
-    // 座標系変換時にxの大小が逆転するので再設定を行う。
+    // 座標系変換時にyの大小が逆転するので再設定を行う。
     const auto Tmp = RawMin.y;
     RawMin.y = FMath::Min(RawMin.y, RawMax.y);
     RawMax.y = FMath::Max(Tmp, RawMax.y);
@@ -98,10 +98,10 @@ FPLATEAUExtent FPLATEAUExtentGizmo::GetExtent(FPLATEAUGeoReference& GeoReference
     auto RawMin = GeoReference.GetData().unproject(Min);
     auto RawMax = GeoReference.GetData().unproject(Max);
 
-    // 座標系変換時に経度の大小が逆転するので再設定を行う。
-    const auto Tmp = RawMin.longitude;
-    RawMin.longitude = FMath::Min(RawMin.longitude, RawMax.longitude);
-    RawMax.longitude = FMath::Max(Tmp, RawMax.longitude);
+    // 座標系変換時に緯度の大小が逆転するので再設定を行う。
+    const auto Tmp = RawMin.latitude;
+    RawMin.latitude = FMath::Min(RawMin.latitude, RawMax.latitude);
+    RawMax.latitude = FMath::Max(Tmp, RawMax.latitude);
 
     return FPLATEAUExtent(plateau::geometry::Extent(RawMin, RawMax));
 }

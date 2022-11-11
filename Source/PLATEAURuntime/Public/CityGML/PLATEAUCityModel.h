@@ -51,6 +51,9 @@ public:
         Category = "PLATEAU|CityGML")
         static int
         GetRootCityObjectCount(UPARAM(ref) const FPLATEAUCityModel& CityModel) {
+        if (CityModel.Data == nullptr)
+            return 0;
+
         return static_cast<int>(CityModel.Data->getNumRootCityObjects());
     }
 
@@ -62,4 +65,14 @@ public:
         GetRootCityObject(UPARAM(ref) const FPLATEAUCityModel& CityModel, int Index) {
         return FPLATEAUCityObject(&CityModel.Data->getRootCityObject(Index));
     }
+
+    UFUNCTION(
+        BlueprintCallable,
+        BlueprintPure,
+        Category = "PLATEAU|CityGML")
+        static FPLATEAUCityObject
+        getCityObjectByID(UPARAM(ref) const FPLATEAUCityModel& CityModel, const FString& FeatureID) {
+        return FPLATEAUCityObject(CityModel.Data->getCityObjectById(TCHAR_TO_UTF8(*FeatureID)));
+    }
+
 };

@@ -5,7 +5,7 @@
 #include "PLATEAUExportSettings.generated.h"
 
 UENUM(BlueprintType)
-enum class EPLATEAUExportCoordinate : uint8 {
+enum class EMeshTransformType : uint8 {
     //! ローカル座標
     Local,
     //! 平面直角座標系
@@ -21,7 +21,7 @@ public:
         bool bExportTexture = true;
 
     UPROPERTY(EditAnywhere, Category = "Export Settings")
-        EPLATEAUExportCoordinate ExportCoordinate = EPLATEAUExportCoordinate::Local;
+        EMeshTransformType ExportCoordinate = EMeshTransformType::Local;
 
     UPROPERTY(EditAnywhere, Category = "Export Settings")
         bool bExportHiddenModel = true;

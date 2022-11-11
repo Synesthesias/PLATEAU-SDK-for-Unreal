@@ -6,12 +6,12 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Styling/ISlateStyle.h"
 
-enum class EExportFileFormat : uint8_t {
+enum class EMeshFileFormat : uint8_t {
     OBJ = 0,
     FBX,
     GLTF,
 
-    EExportFileFormat_MAX,
+    EMeshFileFormat_MAX,
 };
 
 class SPLATEAUExportPanel : public SCompoundWidget {
@@ -28,9 +28,12 @@ private:
     TSharedRef<SVerticalBox> CreateExportPathSelectPanel();
     FReply OnBtnSelectGmlFileClicked();
 
-    FString ExportPath;
+    FString ExportPath = FPaths::ProjectContentDir();
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
-    EExportFileFormat CurrentModelType = EExportFileFormat::OBJ;
+    EMeshFileFormat CurrentModelType = EMeshFileFormat::OBJ;
     TSharedPtr<IDetailsView> ExportSettingsView = nullptr;
+    AActor* SelectingActor;
+    bool bExportAsBinary = true;
+    UPLATEAUExportSettings* Settings;
 };

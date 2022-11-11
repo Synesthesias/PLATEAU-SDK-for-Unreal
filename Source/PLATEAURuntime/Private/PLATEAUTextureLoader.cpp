@@ -72,10 +72,16 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
 
                 NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
+                //20221108 テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
+                FString TextureReativePath;
+                FString TextureRerativePathPrefix;
+                TexturePath.Split(TEXT("PLATEAU\\"), &TextureRerativePathPrefix, &TextureReativePath);
+                DesiredTextureName = TextureReativePath;
                 FString NewUniqueName = DesiredTextureName;
                 if (!NewTexture->Rename(*NewUniqueName, nullptr, REN_Test)) {
                     NewUniqueName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(DesiredTextureName)).ToString();
                 }
+
                 NewTexture->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
                 // TODO: Streaming有効化

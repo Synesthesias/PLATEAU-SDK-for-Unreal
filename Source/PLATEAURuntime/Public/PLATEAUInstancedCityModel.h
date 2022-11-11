@@ -8,6 +8,23 @@
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FPLATEAUCityObjectInfo {
+    GENERATED_USTRUCT_BODY()
+
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+        FString DatasetName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+        FString GmlName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+        FString ID;
+};
+
+
+
 UCLASS()
 class PLATEAURUNTIME_API APLATEAUInstancedCityModel : public AActor {
     GENERATED_BODY()
@@ -18,6 +35,13 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUGeoReference GeoReference;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        FString DatasetName;
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+        FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
+
 
 protected:
     // Called when the game starts or when spawned
