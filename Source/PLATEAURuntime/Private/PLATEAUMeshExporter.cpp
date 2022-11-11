@@ -151,7 +151,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/Datasets/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
                 }
             }
         }

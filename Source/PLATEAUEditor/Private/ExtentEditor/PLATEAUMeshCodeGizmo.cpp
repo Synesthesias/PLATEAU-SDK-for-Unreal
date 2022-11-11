@@ -48,7 +48,7 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::udx::MeshCode& InMeshCode, const
     if (InMeshCode.get().size() == 6)
         LineThickness = 3.0f;
     else
-        LineThickness = 1.0f;
+        LineThickness = 2.0f;
 }
 
 bool FPLATEAUMeshCodeGizmo::IntersectsWith(FVector2D InMin, FVector2D InMax) const {
