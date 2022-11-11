@@ -5,7 +5,6 @@
 #include <plateau/basemap/vector_tile_downloader.h>
 #include <plateau/geometry/geo_coordinate.h>
 
-
 class LIBPLATEAU_EXPORT TileProjection {
 public:
     /**

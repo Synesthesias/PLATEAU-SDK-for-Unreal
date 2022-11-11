@@ -16,7 +16,7 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
 
     const auto Color = IsSelected
         ? FColor(220, 220, 20)
-        : FColor(0, 125, 0);
+        : FColor(10, 10, 10);
     const auto DepthPriority = IsSelected
         ? 1
         : 0;
