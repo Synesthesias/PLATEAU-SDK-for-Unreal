@@ -2,7 +2,9 @@
 ## 対応Unrealバージョンのインストール
 - PLATEAU SDK for UnrealはUE5での動作を想定しています。  
   UE5がインストールされていない場合は、以下URLからインストールしてください。
-  - [Epic Games Launcher をこちらからインストールします](https://www.unrealengine.com/ja/download)。
+  - [Epic Games Launcher をこちらからインストールします。](https://www.unrealengine.com/ja/download)。
+- Visual Studio 2019または2022
+  - [こちらの手順に従ってください。](https://docs.unrealengine.com/5.0/ja/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/)
 
 ## Unrealプロジェクトの作成
 - 先ほどインストールしたバージョンを起動します。
