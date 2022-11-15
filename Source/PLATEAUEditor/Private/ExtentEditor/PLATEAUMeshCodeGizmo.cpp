@@ -14,9 +14,9 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
 
-    const auto Color = IsSelected
-        ? FColor(220, 220, 20)
-        : FColor(10, 10, 10);
+    const auto Color = MeshCodeLevel == 2
+        ? FColor(10, 10, 10)
+        : FColor(10, 10, 130);
     const auto DepthPriority = IsSelected
         ? 1
         : 0;
@@ -27,6 +27,23 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         Color,
         DepthPriority, LineThickness, 0, true
     );
+
+    if (!bShowLevel5Mesh)
+        return;
+
+    for (int i = 1; i < 4; ++i) {
+        FVector	P, Q;
+
+        P.X = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
+        Q.X = P.X;
+        P.Y = Box.Min.Y; Q.Y = Box.Max.Y;
+        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+
+        P.Y = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
+        Q.Y = P.Y;
+        P.X = Box.Min.X; Q.X = Box.Max.X;
+        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+    }
 }
 
 FVector2D FPLATEAUMeshCodeGizmo::GetMin() const {
@@ -45,10 +62,13 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::udx::MeshCode& InMeshCode, const
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
     MaxY = FGenericPlatformMath::Max(RawMin.y, RawMax.y);
-    if (InMeshCode.get().size() == 6)
+    if (InMeshCode.get().size() == 6) {
         LineThickness = 3.0f;
-    else
+        MeshCodeLevel = 2;
+    } else {
         LineThickness = 2.0f;
+        MeshCodeLevel = 3;
+    }
 }
 
 bool FPLATEAUMeshCodeGizmo::IntersectsWith(FVector2D InMin, FVector2D InMax) const {
@@ -58,4 +78,8 @@ bool FPLATEAUMeshCodeGizmo::IntersectsWith(FVector2D InMin, FVector2D InMax) con
 
 void FPLATEAUMeshCodeGizmo::SetSelected(const bool Value) {
     IsSelected = Value;
+}
+
+void FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(const bool bValue) {
+    bShowLevel5Mesh = bValue;
 }

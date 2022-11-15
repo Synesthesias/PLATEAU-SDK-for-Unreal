@@ -9,6 +9,18 @@ FPLATEAUExtentGizmo::FPLATEAUExtentGizmo()
     : MinX(-500), MaxX(500), MinY(-500), MaxY(500) {}
 
 void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI) {
+    
+    //auto MaterialInstance = new FColoredMaterialRenderProxy(
+    //    GEngine->ShadedLevelColorationUnlitMaterial->GetRenderProxy(),
+    //    FColor(255, 127, 80, 100)
+    //);
+
+    //DrawPlane10x10(PDI,
+    //    FMatrix()
+    //    0,
+    //    FVector2D::Zero(), FVector2D::One(),
+    //    MaterialInstance, 0);
+
     DrawWireSphere(
         PDI,
         GetHandlePosition(Index),
@@ -23,7 +35,7 @@ void FPLATEAUExtentGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInter
     DrawWireBox(
         PDI,
         Box,
-        FColor::White,
+        FColor(255, 127, 80),
         9, 2, 0, true
     );
 }

@@ -331,7 +331,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         SubMeshTextures.Add(Texture);
     }
 
-    Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+    const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+        [&, SubMeshTextures] {
         // マテリアル作成
         for (const auto& Texture : SubMeshTextures) {
             const auto SourceMaterialPath =
@@ -366,7 +367,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         Component->PostEditChange();
         ComponentRef = Component;
         }, TStatId(), nullptr, ENamedThreads::GameThread);
-    Task->Wait();
+    ComponentSetupTask->Wait();
 
     return ComponentRef;
 }
