@@ -95,6 +95,8 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
         Gizmo.SetSelected(Gizmo.IntersectsWith(ExtentMin, ExtentMax));
     }
 
+    FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(GetViewTransform().GetLocation().Z < 10000);
+
     // ベースマップ
     const auto ExtentEditor = ExtentEditorPtr.Pin();
     auto GeoReference = ExtentEditor->GetGeoReference();
@@ -153,7 +155,7 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
     FEditorViewportClient::Draw(View, PDI);
 
     constexpr FColor SelectedColor(225, 225, 110);
-    constexpr FColor UnselectedColor(20, 20, 220);
+    constexpr FColor UnselectedColor(255, 127, 80);
 
     for (int i = 0; i < 4; ++i) {
         const auto HitProxy = new HPLATEAUExtentHandleProxy(i);

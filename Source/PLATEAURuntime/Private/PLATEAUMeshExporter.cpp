@@ -35,8 +35,7 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
-    }
-    else {
+    } else {
         ReferencePoint = FVector::ZeroVector;
     }
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
@@ -118,30 +117,35 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     plateau::polygonMesh::UV UV1;
     plateau::polygonMesh::UV UV2;
     plateau::polygonMesh::UV UV3;
-    const auto VertexPositions = Attributes.GetVertexPositions();
-    const auto UVs = Attributes.GetVertexInstanceUVs();
-    const auto Indices = Attributes.GetVertexInstanceVertexIndices();
-    const auto SubMeshCount = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->PolygonGroups().Num();
 
-    for (int i = 0; i < VertexPositions.GetNumElements(); i++) {
-        const auto VertexPosition = VertexPositions.Get(i, 0);
-        const TVec3d Vertex(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
+    const auto& RenderMesh = StaticMeshComponent->GetStaticMesh()->GetLODForExport(0);
+
+    for (uint32 i = 0; i < RenderMesh.VertexBuffers.StaticMeshVertexBuffer.GetNumVertices(); ++i) {
+        const FVector2f& UV = RenderMesh.VertexBuffers.StaticMeshVertexBuffer.GetVertexUV(i, 0);
+        UV1.push_back(TVec2f(UV.X, 1.0f - UV.Y));
+    }
+
+    for (uint32 i = 0; i < RenderMesh.VertexBuffers.PositionVertexBuffer.GetNumVertices(); i++) {
+        const auto VertexPosition = RenderMesh.VertexBuffers.PositionVertexBuffer.VertexPosition(i);
+        TVec3d Vertex;
+        if (Option.TransformType == EMeshTransformType::PlaneRect)
+            Vertex = TVec3d(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
+        else
+            Vertex = TVec3d(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
         Vertices.push_back(Vertex);
     }
-    for (int i = 0; i < Indices.GetNumElements(); i++) {
-        OutIndices.push_back(Indices.Get(i));
-    }
 
-    for (int j = 0; j < UVs.GetNumElements(); j++) {
-        //TODO: UV2、UV3対応
-        UV1.push_back(TVec2f(UVs.Get(j, 0).X, UVs.Get(j, 0).Y));
+    for (int32 TriangleIndex = 0; TriangleIndex < RenderMesh.IndexBuffer.GetNumIndices() / 3; ++TriangleIndex) {
+        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
+        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
     }
-
-    int SubMeshIndex = 0;
-    for (int k = 0; k < SubMeshCount; k++) {
+    
+    for (int k = 0; k < RenderMesh.Sections.Num(); k++) {
+        const auto& Section = RenderMesh.Sections[k];
         //サブメッシュの開始・終了インデックス計算
-        const auto SubMeshPolygonNum = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->GetPolygonGroupPolygons(FPolygonGroupID(k)).Num();
-        const int SubMeshEndIndex = FMath::Min(SubMeshIndex - 1 + ((int)(SubMeshPolygonNum * 3)), (int)Vertices.size() - 1);
+        const int FirstIndex = Section.FirstIndex;
+        const int EndIndex = Section.FirstIndex + Section.NumTriangles * 3;
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString PathName;
@@ -156,13 +160,55 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
 
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
-        SubMeshIndex = SubMeshEndIndex + 1;
+        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
     }
+
+    // TODO: MeshDescription使用する方法だと何故かUV取得できない
+    //const auto VertexPositions = Attributes.GetVertexPositions();
+    //const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
+    //const auto Indices = Attributes.GetVertexInstanceVertexIndices();
+    //const auto SubMeshCount = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->PolygonGroups().Num();
+
+    //for (const FVertexInstanceID InstanceID : StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->VertexInstances().GetElementIDs()) {
+    //    auto UV = VertexInstanceUVs.Get(InstanceID, 0);
+    //    UV1.push_back(TVec2f(UV.X, UV.Y));
+    //}
+
+
+    //for (int i = 0; i < VertexPositions.GetNumElements(); i++) {
+    //    const auto VertexPosition = VertexPositions.Get(i, 0);
+    //    const TVec3d Vertex(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
+    //    Vertices.push_back(Vertex);
+    //}
+    //for (int i = 0; i < Indices.GetNumElements(); i++) {
+    //    OutIndices.push_back(Indices.Get(i));
+    //}
+
+    //int SubMeshIndex = 0;
+    //for (int k = 0; k < SubMeshCount; k++) {
+    //    //サブメッシュの開始・終了インデックス計算
+    //    const auto SubMeshPolygonNum = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->GetPolygonGroupPolygons(FPolygonGroupID(k)).Num();
+    //    const int SubMeshEndIndex = FMath::Min(SubMeshIndex - 1 + ((int)(SubMeshPolygonNum * 3)), (int)Vertices.size() - 1);
+
+    //    //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
+    //    FString PathName;
+    //    if (Option.bExportTexture) {
+    //        const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
+    //        if (MaterialInstance->TextureParameterValues.Num() > 0) {
+    //            FMaterialParameterMetadata MetaData;
+    //            MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
+    //            if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+    //                PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+    //            }
+    //        }
+    //    }
+
+    //    OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
+    //    SubMeshIndex = SubMeshEndIndex + 1;
+    //}
 
     OutMesh.addVerticesList(Vertices);
 
-    //addIndicesListで止まる
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
     OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
@@ -174,11 +220,9 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     if (ComponentName.FindLastChar('_', Index)) {
         if (ComponentName.RightChop(Index + 1).IsNumeric()) {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
-        }
-        else {
+        } else {
             return ComponentName;
         }
-    }
-    else
+    } else
         return ComponentName;
 }

@@ -2,7 +2,6 @@
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
-#include "PLATEAUCityModelLoader.h"
 
 #include "Misc/ScopedSlowTask.h"
 
