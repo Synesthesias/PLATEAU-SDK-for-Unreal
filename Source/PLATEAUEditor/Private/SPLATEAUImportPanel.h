@@ -35,11 +35,11 @@ private:
     TSharedPtr<class FPLATEAUEditorStyle> Style;
 
     TSharedPtr<IDetailsView> ImportSettingsView = nullptr;
+    TSharedPtr<class SPLATEAUServerDatasetSelectPanel> ServerPanelRef = nullptr;
 
     std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
-    TSharedRef<SVerticalBox> CreateServerPrefectureSelectPanel();
     TSharedRef<SHorizontalBox> CreateFileSourceSelectButton();
     FReply OnBtnSelectFolderPathClicked();
 };
