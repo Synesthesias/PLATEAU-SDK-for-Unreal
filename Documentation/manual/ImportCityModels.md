@@ -85,3 +85,8 @@
 ### 読み込み状況の確認
 PLATEAUCityModelLoaderアクタの詳細パネルから読み込み状況の確認ができます。
 ![](../resources/manual/importCityModels/progress.png)
+
+### 原点情報の確認
+インポートした都市モデルは原点付近に位置するようにオフセットがかけられます。  
+原点情報はPLATEAUInstancedCityModelアクタの詳細パネルから確認が可能です。
+![](../resources/manual/importCityModels/coordinate.png)

@@ -44,8 +44,10 @@ private:
 
     // 内部状態
     int SelectedHandleIndex = -1;
+    bool IsCameraMoving = false;
     FVector TrackingStartedPosition;
     FVector TrackingStartedGizmoPosition;
+    FVector TrackingStartedCameraPosition;
 
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
