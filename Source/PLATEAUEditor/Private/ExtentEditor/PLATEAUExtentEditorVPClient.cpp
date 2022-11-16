@@ -14,6 +14,7 @@
 #include "SEditorViewport.h"
 #include "AdvancedPreviewScene.h"
 #include "SPLATEAUExtentEditorViewport.h"
+#include "MouseDeltaTracker.h"
 
 #include "AssetViewerSettings.h"
 #include "CameraController.h"
@@ -138,7 +139,16 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {
-        FEditorViewportClient::Tick(DeltaSeconds);
+        if (IsCameraMoving) {
+            SetViewLocation(TrackingStartedCameraPosition);
+            FVector CurrentCursorPosition;
+            if (!TryGetWorldPositionOfCursor(CurrentCursorPosition))
+                return;
+
+            const auto Offset = CurrentCursorPosition - TrackingStartedPosition;
+
+            SetViewLocation(TrackingStartedCameraPosition - Offset);
+        }
         return;
     }
 
@@ -173,12 +183,15 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
 
 void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState& InInputState, bool bIsDragging,
     bool bNudge) {
-    const auto HitProxy = static_cast<HPLATEAUExtentHandleProxy*>(Viewport->GetHitProxy(CachedMouseX, CachedMouseY));
-    if (!HitProxy)
-        return;
-
     if (!TryGetWorldPositionOfCursor(TrackingStartedPosition))
         return;
+
+    const auto HitProxy = static_cast<HPLATEAUExtentHandleProxy*>(Viewport->GetHitProxy(CachedMouseX, CachedMouseY));
+    if (!HitProxy) {
+        TrackingStartedCameraPosition = GetViewLocation();
+        IsCameraMoving = true;
+        return;
+    }
 
     TrackingStartedGizmoPosition = ExtentGizmo->GetHandlePosition(HitProxy->Index);
     SelectedHandleIndex = HitProxy->Index;
@@ -186,6 +199,7 @@ void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState&
 
 void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
     SelectedHandleIndex = -1;
+    IsCameraMoving = false;
 }
 
 bool FPLATEAUExtentEditorViewportClient::ShouldScaleCameraSpeedByDistance() const {
