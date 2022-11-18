@@ -13,13 +13,13 @@ namespace plateau::polygonMesh {
      */
     class LIBPLATEAU_EXPORT SubMesh {
     public:
-        SubMesh(size_t start_index, size_t end_index, std::string texture_path);
+        SubMesh(size_t start_index, size_t end_index, const std::string& texture_path);
 
         /**
          * 引数で与えられた SubMesh の vector に SubMesh を追加します。
          */
         static void addSubMesh(size_t start_index, size_t end_index,
-                               std::string texture_path, std::vector<SubMesh>& vector);
+                               const std::string& texture_path, std::vector<SubMesh>& vector);
 
         size_t getStartIndex() const;
         size_t getEndIndex() const;
@@ -28,6 +28,9 @@ namespace plateau::polygonMesh {
         const std::string& getTexturePath() const;
 
         void setEndIndex(int end_index);
+
+        /// SubMesh の情報を stringstream に書き込みます。
+        void debugString(std::stringstream& ss, int indent) const;
 
     private:
         /**

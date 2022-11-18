@@ -45,7 +45,7 @@ public:
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
                 auto& ExtractOptions = LoadInputData.ExtractOptions;
                 ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
-                ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::NWU;
+                ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
                 ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
                 ExtractOptions.mesh_granularity = UPLATEAUImportSettings::ConvertGranularity(Settings.MeshGranularity);
                 ExtractOptions.max_lod = Settings.MaxLod;
@@ -177,8 +177,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
+
     ModelActor->SetActorLabel(FPaths::GetCleanFilename(Source));
     ModelActor->GeoReference = GeoReference;
+    ModelActor->DatasetName = FPaths::GetCleanFilename(Source);
 
     Async(EAsyncExecution::Thread,
         [

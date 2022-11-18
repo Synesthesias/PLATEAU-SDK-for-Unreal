@@ -4,7 +4,7 @@
 #include "CityGML/PLATEAUAttributeValue.h"
 #include "citygml/attributesmap.h"
 
-EPLATEAUAttributeType UPLATEAUAttributeValueBlueprintLibrary::GetType(const FPLATEAUAttributeValue& Value) {
+TEnumAsByte<EPLATEAUAttributeType> UPLATEAUAttributeValueBlueprintLibrary::GetType(const FPLATEAUAttributeValue& Value) {
     if (Value.Data == nullptr)
         return EPLATEAUAttributeType::String;
 

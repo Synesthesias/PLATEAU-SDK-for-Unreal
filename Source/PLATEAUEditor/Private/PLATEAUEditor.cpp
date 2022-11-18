@@ -2,7 +2,9 @@
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUCityModelLoader.h"
+#include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditorStyle.h"
+#include "PLATEAUInstancedCityModelDetails.h"
 #include "PLATEAUWindow.h"
 #include "CityModelLoaderDetails/PLATEAUCityModelLoaderDetails.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
@@ -30,6 +32,10 @@ public:
         PropertyModule.RegisterCustomClassLayout(
             APLATEAUCityModelLoader::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUCityModelLoaderDetails::MakeInstance)
+        );
+        PropertyModule.RegisterCustomClassLayout(
+            APLATEAUInstancedCityModel::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUInstancedCityModelDetails::MakeInstance)
         );
 
         RegisterExtentEditorTabSpawner();

@@ -3,6 +3,8 @@
 #include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
 #include "ExtentEditor/PLATEAUExtentEditorVPClient.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
+#include "PLATEAUBasemap.h"
+#include "PLATEAUTextureLoader.h"
 
 #include "AdvancedPreviewScene.h"
 #include "SSubobjectEditor.h"
@@ -11,6 +13,23 @@
 #include "SlateOptMacros.h"
 
 #include "plateau/udx/udx_file_collection.h"
+#include "plateau/basemap/tile_projection.h"
+#include "plateau/basemap/vector_tile_downloader.h"
+#include "plateau/geometry/geo_coordinate.h"
+#include "plateau/geometry/geo_reference.h"
+
+#include <filesystem>
+#include <fstream>
+#include "Engine/Texture2D.h"
+#include "Misc/Paths.h"
+#include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
+#include "AssetRegistryModule.h"
+#include "IImageWrapperModule.h"
+#include "IImageWrapper.h"
+#include "Async/Async.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 
 #define LOCTEXT_NAMESPACE "SPLATEAUExtentEditorViewport"
@@ -55,7 +74,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         GeoReference.ReferencePoint.Y = RawCenterPoint.y;
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
-
+        
         ViewportClient->Initialize(*FileCollection);
     }
 }

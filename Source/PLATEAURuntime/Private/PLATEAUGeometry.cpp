@@ -53,7 +53,7 @@ bool FPLATEAUExtent::operator!=(const FPLATEAUExtent& other) const {
 namespace {
     plateau::geometry::GeoReference GetDefaultNativeData() {
         return plateau::geometry::GeoReference(
-            9, TVec3d(0, 0, 0), 0.01, plateau::geometry::CoordinateSystem::NWU);
+            9, TVec3d(0, 0, 0), 0.01, plateau::geometry::CoordinateSystem::ESU);
     }
 }
 

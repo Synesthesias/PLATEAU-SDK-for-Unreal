@@ -18,7 +18,7 @@ namespace plateau::polygonMesh {
      */
     class LIBPLATEAU_EXPORT Node {
     public:
-        explicit Node(std::string name);
+        explicit Node(const std::string& name);
 
         /// メッシュは move で渡すことを想定しています。
         Node(std::string name, Mesh&& mesh);
@@ -36,10 +36,22 @@ namespace plateau::polygonMesh {
         void setMesh(Mesh&& mesh);
 
         void addChildNode(Node&& node);
+        Node& addEmptyChildNode(const std::string& name);
         size_t getChildCount() const;
 
         Node& getChildAt(unsigned int index);
         const Node& getChildAt(unsigned int index) const;
+
+        /**
+         * 子のうち、子もなくメッシュもないノードを削除します。再帰的に行われます。
+         */
+        void eraseEmptyChildren();
+
+        /// このノードがメッシュを持ち、かつそのメッシュがポリゴンを持つときに true を返します。
+        bool polygonExists();
+
+        /// Node 以下の階層構造を stringstream に書き込みます。
+        void debugString(std::stringstream& ss, int indent) const;
     private:
         std::string name_;
         std::vector<Node> child_nodes_;
