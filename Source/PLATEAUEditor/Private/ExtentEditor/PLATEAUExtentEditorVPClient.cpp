@@ -7,6 +7,7 @@
 
 #include "PLATEAUExtentGizmo.h"
 #include "PLATEAUMeshCodeGizmo.h"
+#include "PLATEAUFeatureInfoDisplay.h"
 
 #include "EditorModeManager.h"
 #include "CanvasTypes.h"
@@ -54,7 +55,9 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
     UAssetViewerSettings::Get()->OnAssetViewerSettingsChanged().RemoveAll(this);
 }
 
-void FPLATEAUExtentEditorViewportClient::Initialize(plateau::udx::UdxFileCollection& FileCollection) {
+void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::udx::UdxFileCollection> InFileCollection) {
+    FileCollection = InFileCollection;
+
     InitCamera();
 
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -63,7 +66,7 @@ void FPLATEAUExtentEditorViewportClient::Initialize(plateau::udx::UdxFileCollect
         ExtentGizmo->SetExtent(ExtentEditor->GetExtent().GetValue(), GeoReference);
 
     MeshCodeGizmos.Reset();
-    for (const auto& MeshCode : FileCollection.getMeshCodes()) {
+    for (const auto& MeshCode : FileCollection->getMeshCodes()) {
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
     }
@@ -105,6 +108,11 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
         Basemap = MakeUnique<FPLATEAUBasemap>(GeoReference, SharedThis(this));
     }
 
+    // 地物表示
+    if (FeatureInfoDisplay == nullptr) {
+        FeatureInfoDisplay = MakeUnique<FPLATEAUFeatureInfoDisplay>(GeoReference, SharedThis(this));
+    }
+
     TArray<FVector> CornerWorldPositions;
     CornerWorldPositions.Add(GetWorldPosition(0, 0));
     CornerWorldPositions.Add(GetWorldPosition(0, Viewport->GetSizeXY().Y));
@@ -136,6 +144,7 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
     FPLATEAUExtent Extent(plateau::geometry::Extent(MinCoordinate, MaxCoordinate));
 
     Basemap->UpdateAsync(Extent);
+    FeatureInfoDisplay->UpdateAsync(Extent, *FileCollection, GetViewTransform().GetLocation().Z < 2000);
 
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {

@@ -2,16 +2,16 @@
 
 #include <list>
 #include <citygml/vecs.hpp>
+#include <libplateau_api.h>
 
-namespace citygml{
+namespace citygml {
     class CityModel;
     class CityObject;
     class Polygon;
 }
 
 namespace plateau::polygonMesh {
-
-    class PolygonMeshUtils {
+    class LIBPLATEAU_EXPORT PolygonMeshUtils {
     public:
         /// 仕様上存在しうる最大LODです。 LODは0から始まるので、LODのパターン数は (この数 +1)です。
         static constexpr int max_lod_in_specification_ = 3;

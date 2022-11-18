@@ -75,7 +75,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
         
-        ViewportClient->Initialize(*FileCollection);
+        ViewportClient->Initialize(FileCollection);
     }
 }
 

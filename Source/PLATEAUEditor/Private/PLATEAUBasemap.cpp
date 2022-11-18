@@ -165,13 +165,3 @@ void FPLATEAUAsyncLoadedVectorTile::LoadAsync(const FPLATEAUTileCoordinate& InTi
             }
         });
 }
-
-bool FPLATEAUAsyncLoadedVectorTile::operator==(const FPLATEAUAsyncLoadedVectorTile& Other) const
-{
-    return false;
-}
-
-bool FPLATEAUAsyncLoadedVectorTile::operator!=(const FPLATEAUAsyncLoadedVectorTile& Other) const
-{
-    return false;
-}

@@ -22,7 +22,7 @@ public:
     /**
      * @brief ViewportのConstructから呼び出される初期化処理です。
      */
-    void Initialize(plateau::udx::UdxFileCollection& FileCollection);
+    void Initialize(std::shared_ptr<plateau::udx::UdxFileCollection> InFileCollection);
     
     FPLATEAUExtent GetExtent() const;
 
@@ -41,6 +41,8 @@ private:
     TUniquePtr<class FPLATEAUExtentGizmo> ExtentGizmo;
     TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
     TUniquePtr<class FPLATEAUBasemap> Basemap;
+    TUniquePtr<class FPLATEAUFeatureInfoDisplay> FeatureInfoDisplay;
+    std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
 
     // 内部状態
     int SelectedHandleIndex = -1;
