@@ -32,7 +32,7 @@ void SPLATEAUExtentEditButton::Construct(const FArguments& InArgs) {
         .VAlign(VAlign_Center)
         .HAlign(HAlign_Center)
         .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .ButtonColorAndOpacity(FColor(0, 255, 255, 255))
         .OnClicked_Lambda(
             [this, ZoneID = InArgs._ZoneID,
             SourcePath = InArgs._SourcePath]() {

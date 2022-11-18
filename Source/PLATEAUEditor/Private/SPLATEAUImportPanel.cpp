@@ -22,8 +22,11 @@
 #include "StatusBarSubsystem.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+#include "Widgets/Input/SMultiLineEditableTextBox.h"
+#include "Widgets/SPLATEAUServerDatasetSelectPanel.h"
 
 #define LOCTEXT_NAMESPACE "SPLATEAUImportPanel"
+#define BUTTON_COLOR FSlateColor(FColor(0, 255, 255))
 
 using namespace plateau::udx;
 
@@ -75,9 +78,11 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
     TWeakPtr<SVerticalBox> VerticalBox;
     TWeakPtr<SVerticalBox> ModelDataPlacementVerticalBox;
+    ServerPanelRef = SNew(SPLATEAUServerDatasetSelectPanel);
 
     ChildSlot
-        [SAssignNew(VerticalBox, SVerticalBox)
+        [
+        SAssignNew(VerticalBox, SVerticalBox)
         // モデルデータのインポート(ヘッダー)
         + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))
@@ -109,11 +114,43 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .TextStyle(Style, "PLATEAUEditor.Heading2")
         .Text(LOCTEXT("Add City", "都市の追加"))]]]
 
-    // 都市の追加
+    //インポート元
+    + SVerticalBox::Slot()
+        .Padding(FMargin(0, 10, 0, 10))
+        .AutoHeight()
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .FillWidth(1)
+        .VAlign(VAlign_Center) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
+        [
+            SNew(STextBlock)
+            .Text(LOCTEXT("Import From", "インポート元"))
+        ] +
+        SHorizontalBox::Slot()
+        .FillWidth(1)
+        .VAlign(VAlign_Center)
+        ]
+
+    //インポート先選択ボタン
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [CreateFileSourceSelectButton()]
+
+    // 都市の追加(ローカルファイル)
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(0, 0, 0, 15))
         [CreateSourcePathSelectPanel()]
+
+    // データセット選択(サーバーからのファイル)
+    + SVerticalBox::Slot()
+        .AutoHeight()
+        .Padding(FMargin(0, 0, 0, 15))
+        [ServerPanelRef.ToSharedRef()]
 
     // モデルデータの配置
     + SVerticalBox::Slot()
@@ -287,7 +324,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         [SNew(SButton)
         .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .ButtonColorAndOpacity(BUTTON_COLOR)
         .OnClicked_Lambda(
             [this]() {
                 const FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
@@ -323,59 +360,129 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
 TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
     return
-        SNew(SVerticalBox) +
-        SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [SNew(SHorizontalBox) +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(FMargin(0, 0, 5, 0))
-        .AutoWidth()
-        [SNew(STextBlock)
-        .Text(LOCTEXT("SelectSource", "入力フォルダ"))
-        ] +
-        SHorizontalBox::Slot()
-        [SNew(SEditableTextBox)
-        .IsReadOnly(true)
-        .Text_Lambda(
-            [this] {
-                return FText::FromString(SourcePath);
-            })
-        ] +
-        SHorizontalBox::Slot()
-                .AutoWidth()
-                .Padding(FMargin(7, 0, 0, 0))
-                [SNew(SButton)
-                .VAlign(VAlign_Center)
-                .HAlign(HAlign_Center)
-                .ForegroundColor(FColor::White)
-                .ButtonColorAndOpacity(FColor(132, 132, 132))
-                .OnClicked_Raw(this, &SPLATEAUImportPanel::OnBtnSelectFolderPathClicked)
-                .Content()
-                [SNew(STextBlock)
-                .Justification(ETextJustify::Center)
-                .Margin(FMargin(15, 0, 15, 0))
-                .Text(LOCTEXT("Ref Button", "参照..."))
-                ]]] +
+        SNew(SVerticalBox)
+        .Visibility_Lambda([this]() {
+        return bImportFromServer ? EVisibility::Collapsed : EVisibility::Visible;
+            }) +
         SVerticalBox::Slot()
                 .AutoHeight()
-                .Padding(FMargin(0, 0, 0, 10))
+                .Padding(FMargin(0, 0, 0, 15))
+                [SNew(SHorizontalBox) +
+                SHorizontalBox::Slot()
+                .VAlign(VAlign_Center)
+                .Padding(FMargin(0, 0, 5, 0))
+                .AutoWidth()
+                [SNew(STextBlock)
+                .Text(LOCTEXT("SelectSource", "入力フォルダ"))
+                ] +
+                SHorizontalBox::Slot()
                 [SNew(SEditableTextBox)
                 .IsReadOnly(true)
-                .BackgroundColor(FColor(200, 200, 200, 255))
-                .ForegroundColor(FColor(230, 30, 30))
-                .Text(LOCTEXT("Invalid Path", "直下にudxフォルダを持つフォルダを選択してください。"))
-                .Visibility_Lambda(
+                .Text_Lambda(
                     [this] {
-                        auto IsValidDatasetSet = false;
-                        if (FileCollection != nullptr)
-                            IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
-                        return IsValidDatasetSet
-                            ? EVisibility::Collapsed
-                            : EVisibility::Visible;
+                        return FText::FromString(SourcePath);
                     })
-                ];
+                ] +
+                SHorizontalBox::Slot()
+                        .AutoWidth()
+                        .Padding(FMargin(7, 0, 0, 0))
+                        [SNew(SButton)
+                        .VAlign(VAlign_Center)
+                        .HAlign(HAlign_Center)
+                        .ForegroundColor(FColor::White)
+                        .ButtonColorAndOpacity(FColor(132, 132, 132))
+                        .OnClicked_Raw(this, &SPLATEAUImportPanel::OnBtnSelectFolderPathClicked)
+                        .Content()
+                        [SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Margin(FMargin(15, 0, 15, 0))
+                        .Text(LOCTEXT("Ref Button", "参照..."))
+                        ]]] +
+                SVerticalBox::Slot()
+                        .AutoHeight()
+                        .Padding(FMargin(0, 0, 0, 10))
+                        [SNew(SEditableTextBox)
+                        .IsReadOnly(true)
+                        .BackgroundColor(FColor(200, 200, 200, 255))
+                        .ForegroundColor(FColor(230, 30, 30))
+                        .Text(LOCTEXT("Invalid Path", "直下にudxフォルダを持つフォルダを選択してください。"))
+                        .Visibility_Lambda(
+                            [this] {
+                                auto IsValidDatasetSet = false;
+                                if (FileCollection != nullptr)
+                                    IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
+                                return IsValidDatasetSet
+                                    ? EVisibility::Collapsed
+                                    : EVisibility::Visible;
+                            })
+                        ];
+}
+
+TSharedRef<SHorizontalBox> SPLATEAUImportPanel::CreateFileSourceSelectButton() {
+
+    return
+        SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .FillWidth(0.5f) +
+        SHorizontalBox::Slot()
+        [
+            SNew(SBox)
+            .WidthOverride(120)
+        .HeightOverride(30)
+        .Padding(FMargin(0, 0, 5, 0))
+        [
+            SNew(SButton)
+            .VAlign(VAlign_Center)
+        .HAlign(HAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity_Lambda([this]() {
+        return !bImportFromServer ? BUTTON_COLOR : FColor(132, 132, 132);
+            })
+        .OnClicked_Lambda([this]() {
+                bImportFromServer = false;
+                ServerPanelRef->SetPanelVisibility(bImportFromServer);
+                return FReply::Handled();
+            })
+                .Content()
+                [
+                    SNew(STextBlock)
+                    .Justification(ETextJustify::Center)
+                .Margin(FMargin(15, 0, 15, 0))
+                .Text(LOCTEXT("Local", "ローカル"))
+                ]
+        ]
+
+        ] +
+        SHorizontalBox::Slot()
+            [
+                SNew(SBox)
+                .WidthOverride(120)
+            .HeightOverride(30)
+            .Padding(FMargin(5, 0, 0, 0))
+            [
+                SNew(SButton)
+                .VAlign(VAlign_Center)
+            .HAlign(HAlign_Center)
+            .ForegroundColor(FColor::White)
+            .ButtonColorAndOpacity_Lambda([this]() {
+            return bImportFromServer ? BUTTON_COLOR : FColor(132, 132, 132);
+                })
+            .OnClicked_Lambda([this]() {
+                    bImportFromServer = true;
+                    ServerPanelRef->SetPanelVisibility(bImportFromServer);
+                    return FReply::Handled();
+                })
+                    .Content()
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                    .Margin(FMargin(15, 0, 15, 0))
+                    .Text(LOCTEXT("Server", "サーバー"))
+                    ]
+            ]
+            ] +
+            SHorizontalBox::Slot()
+                .FillWidth(0.5f);
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -413,3 +520,4 @@ FReply SPLATEAUImportPanel::OnBtnSelectFolderPathClicked() {
 }
 
 #undef LOCTEXT_NAMESPACE
+#undef BUTTON_COLOR

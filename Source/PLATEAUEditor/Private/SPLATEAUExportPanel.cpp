@@ -259,8 +259,8 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             SNew(SButton)
             .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda([&]() {
+        .ButtonColorAndOpacity(FColor(0, 255, 255, 255))
+        .OnClicked_Lambda([this]() {
         //TODO:エクスポート処理
         APLATEAUInstancedCityModel* Target = Cast<APLATEAUInstancedCityModel>(SelectingActor);
         if (Target != nullptr) {
@@ -312,7 +312,7 @@ TSharedRef<SVerticalBox> SPLATEAUExportPanel::CreateExportPathSelectPanel() {
             SNew(SButton)
             .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+        .ButtonColorAndOpacity(FColor(0, 255, 255, 255))
         .OnClicked_Raw(this, &SPLATEAUExportPanel::OnBtnSelectGmlFileClicked)
         .Content()
         [

@@ -13,6 +13,8 @@
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
 
+const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
+
 FPLATEAUWindow::FPLATEAUWindow(const TSharedRef<FPLATEAUEditorStyle>& InStyle)
     : Style(InStyle) {}
 
@@ -51,6 +53,32 @@ void FPLATEAUWindow::Shutdown() {
             FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
         MainFrameModule.OnMainFrameCreationFinished().RemoveAll(this);
     }
+    TSharedRef<class FGlobalTabmanager> TabManager = FGlobalTabmanager::Get();
+    TabManager->UnregisterNomadTabSpawner(TabID);
+}
+
+TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs) {
+    const auto Window = Show();
+    TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
+        .ShouldAutosize(false)
+        .TabRole(ETabRole::NomadTab)[
+            SNew(SBox)
+            .WidthOverride(500)
+            .HeightOverride(700)
+            [
+                Window.ToSharedRef()
+            ]
+        ];
+    return SpawnedTab;
+}
+
+void FPLATEAUWindow::ConstructTab() {
+    const auto Window = Show();
+    TSharedRef<class FGlobalTabmanager> TabManager = FGlobalTabmanager::Get();
+    TabManager->RegisterDefaultTabWindowSize(TabID, FVector2D(500, 700));
+    TabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
+        .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
+    TabManager->TryInvokeTab(TabID);
 }
 
 void FPLATEAUWindow::OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder) {
@@ -66,7 +94,7 @@ void FPLATEAUWindow::OnPulldownMenuExtension(FMenuBuilder& MenuBuilder) {
         LOCTEXT("MenuTitle", "PLATEAU SDK"),
         LOCTEXT("PulldownMenuToolTip", "PLATEAU SDK画面を開く."),
         FSlateIcon(),
-        FUIAction(FExecuteAction::CreateRaw(this, &FPLATEAUWindow::Show)));
+        FUIAction(FExecuteAction::CreateRaw(this, &FPLATEAUWindow::ConstructTab)));
 }
 
 void FPLATEAUWindow::OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow) {
@@ -75,14 +103,9 @@ void FPLATEAUWindow::OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNe
     }
 }
 
-void FPLATEAUWindow::Show() {
-    if (!MyWindow.IsValid()) {
+TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
         TabReference = SNew(SPLATEAUMainTab, Style.ToSharedRef());
-        TSharedPtr<SWindow> Window = SNew(SWindow)
-            .Title(LOCTEXT("PLATEAU SDK Window Title", "PLATEAU SDK"))
-            .ClientSize(FVector2D(500.f, 700.f));
-        Window->SetContent(
-            SNew(SVerticalBox)
+            return SNew(SVerticalBox)
             + SVerticalBox::Slot()
             .AutoHeight() [
                 TabReference.ToSharedRef()
@@ -133,18 +156,7 @@ void FPLATEAUWindow::Show() {
                        SNew(SPLATEAUExportPanel, Style.ToSharedRef())
                     ]
                 ]
-            ]
-        );
-        MyWindow = TWeakPtr<SWindow>(Window);
-
-        if (RootWindow.IsValid()) {
-            FSlateApplication::Get().AddWindowAsNativeChild(
-                Window.ToSharedRef(), RootWindow.Pin().ToSharedRef());
-        }
-
-        //CityModelAddPanel->UpdateWindow(MyWindow);
-    }
-    MyWindow.Pin()->BringToFront();
+            ];
 }
 
 #undef LEVEL_EDITOR_NAME

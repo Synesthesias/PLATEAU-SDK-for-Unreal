@@ -214,3 +214,5 @@ void SPLATEAUMainTab::OnButtonClicked(const int ID) {
 const FSlateColor SPLATEAUMainTab::GetTabSelectBGColor(const int ID) {
     return SelectingID == ID ? FSlateColor(COLOR_TABSELECT_BG) : FSlateColor(FColor(0, 0, 0, 0));
 }
+
+#undef LOCTEXT_NAMESPACE

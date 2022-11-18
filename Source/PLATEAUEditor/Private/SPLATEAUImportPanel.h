@@ -26,14 +26,20 @@ public:
 private:
     FString SourcePath;
     int ZoneID = 9;
+    bool bImportFromServer = false;
+    bool bIsSeletedServerPrefecture = false;
+    int PrefectureID = 1;
+    int MunicipalityID = 1;
 
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
 
     TSharedPtr<IDetailsView> ImportSettingsView = nullptr;
+    TSharedPtr<class SPLATEAUServerDatasetSelectPanel> ServerPanelRef = nullptr;
 
     std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
+    TSharedRef<SHorizontalBox> CreateFileSourceSelectButton();
     FReply OnBtnSelectFolderPathClicked();
 };
