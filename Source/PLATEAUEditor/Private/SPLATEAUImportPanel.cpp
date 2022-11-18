@@ -114,7 +114,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .TextStyle(Style, "PLATEAUEditor.Heading2")
         .Text(LOCTEXT("Add City", "都市の追加"))]]]
 
-    //インポート先
+    //インポート元
     + SVerticalBox::Slot()
         .Padding(FMargin(0, 10, 0, 10))
         .AutoHeight()
