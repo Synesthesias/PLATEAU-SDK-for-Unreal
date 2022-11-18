@@ -77,7 +77,7 @@ void FPLATEAUWindow::ConstructTab() {
     TSharedRef<class FGlobalTabmanager> TabManager = FGlobalTabmanager::Get();
     TabManager->RegisterDefaultTabWindowSize(TabID, FVector2D(500, 700));
     TabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
-        .SetDisplayName(FText::FromString(TEXT("PLATEAU Editor")));
+        .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
     TabManager->TryInvokeTab(TabID);
 }
 
