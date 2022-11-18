@@ -81,7 +81,8 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     ServerPanelRef = SNew(SPLATEAUServerDatasetSelectPanel);
 
     ChildSlot
-        [SAssignNew(VerticalBox, SVerticalBox)
+        [
+        SAssignNew(VerticalBox, SVerticalBox)
         // モデルデータのインポート(ヘッダー)
         + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))

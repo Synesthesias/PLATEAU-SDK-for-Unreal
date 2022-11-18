@@ -21,9 +21,13 @@ private:
     TSharedPtr<class FPLATEAUEditorStyle> Style;
     TSharedPtr<class SPLATEAUMainTab> TabReference;
 
-    void Show();
+    static const FName TabID;
+
+    TSharedPtr<SVerticalBox> Show();
 
     void OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder);
     void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
     void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
+    TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& TabSpawnArgs);
+    void ConstructTab();
 };
