@@ -347,6 +347,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
                 Loader->LoadAsync();
 
+                // 建築物情報表示用Actor配置
+                UObject* obj = LoadObject<UObject>(NULL, TEXT("/PLATEAU-SDK-for-Unreal/GetObjectInfo"), TEXT("getObjInfo"), LOAD_None, NULL);
+                const auto act = FActorFactoryAssetProxy::AddActorForAsset(obj, false);
+                act->AutoReceiveInput = EAutoReceiveInput::Player0;
+                
+
                 return FReply::Handled();
             })
         .Content()
