@@ -42,7 +42,7 @@
 
 - `全て/デフォルト/Plateau Instance`に配置した都市オブジェクトを指定します。
 
-![](../resources/manual/accessCityObject/getObjectInfosettings.png)
+![](../resources/manual/accessCityObject/getObjectInfoSettings.png)
 
 - `その他/入力/Auto Receive Input`を`Player 0`に指定します。 
 
