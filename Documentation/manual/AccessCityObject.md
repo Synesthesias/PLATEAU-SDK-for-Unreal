@@ -40,9 +40,11 @@
 
 ![](../resources/manual/accessCityObject/assignInstance.png)
 
+- `全て/デフォルト/Plateau Instance`に配置した都市オブジェクトを指定します。
+
 ![](../resources/manual/accessCityObject/getObjectInfosettings.png)
 
-- `Plateau Instance`に配置した都市オブジェクトを指定し，`全て/入力/Auto Receive Input`を`Player 0`に指定します。 
+- `その他/入力/Auto Receive Input`を`Player 0`に指定します。 
 
 ![](../resources/manual/accessCityObject/overrideGameMode.png)
 
