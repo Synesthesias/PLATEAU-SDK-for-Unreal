@@ -29,16 +29,27 @@ public:
         return IsFullyLoaded;
     }
 
-    USceneComponent* GetComponent() {
+    USceneComponent* GetPanelComponent(int Index) {
         FScopeLock Lock(&CriticalSection);
-        return PanelComponent;
+        return PanelComponents[Index];
+    }
+
+    USceneComponent* GetDetailedPanelComponent(int Index) {
+        FScopeLock Lock(&CriticalSection);
+        return DetailedPanelComponents[Index];
     }
 
     void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
 private:
+    UStaticMeshComponent* CreatePanelMesh();
+    void SetupMesh(FMeshDescription& MeshDescription);
+    const FString MakeTexturePath(const plateau::udx::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
+
+private:
     FCriticalSection CriticalSection;
     bool IsFullyLoaded;
-    USceneComponent* PanelComponent;
+    TArray<USceneComponent*> PanelComponents;
+    TArray<USceneComponent*> DetailedPanelComponents;
 };
 
 /**
@@ -49,7 +60,7 @@ public:
     FPLATEAUFeatureInfoDisplay(const FPLATEAUGeoReference& InGeoReference, const TSharedPtr<class FPLATEAUExtentEditorViewportClient> InViewportClient);
     ~FPLATEAUFeatureInfoDisplay();
 
-    void UpdateAsync(const FPLATEAUExtent& InExtent, const plateau::udx::UdxFileCollection& InFileCollection, const bool bShow);
+    void UpdateAsync(const FPLATEAUExtent& InExtent, const plateau::udx::UdxFileCollection& InFileCollection, const bool bShow, const bool bDetailed);
 
 private:
     FPLATEAUGeoReference GeoReference;

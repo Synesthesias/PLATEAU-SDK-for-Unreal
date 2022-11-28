@@ -144,7 +144,7 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
     FPLATEAUExtent Extent(plateau::geometry::Extent(MinCoordinate, MaxCoordinate));
 
     Basemap->UpdateAsync(Extent);
-    FeatureInfoDisplay->UpdateAsync(Extent, *FileCollection, GetViewTransform().GetLocation().Z < 2000);
+    FeatureInfoDisplay->UpdateAsync(Extent, *FileCollection, GetViewTransform().GetLocation().Z < 2000, GetViewTransform().GetLocation().Z < 1000);
 
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {
