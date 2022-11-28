@@ -79,6 +79,34 @@ namespace {
 
             return PanelComponent;
     }
+
+    UStaticMeshComponent* CreateBackPanelComponent(UTexture* Texture) {
+        UStaticMeshComponent* PanelComponent;
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&] {
+                //mesh component作成，テクスチャを適用
+                const FName MeshName = MakeUniqueObjectName(
+                    GetTransientPackage(),
+                    UStaticMeshComponent::StaticClass(),
+                    TEXT("Panel"));
+
+                PanelComponent =
+                    NewObject<UStaticMeshComponent>(
+                        GetTransientPackage(),
+                        MeshName, RF_Transient);
+                const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_BackPanel")));
+                const auto DynMat = UMaterialInstanceDynamic::Create(Mat, GetTransientPackage());
+                DynMat->SetTextureParameterValue(TEXT("Texture"), Texture);
+                PanelComponent->SetMaterial(0, DynMat);
+                const auto StaticMeshName = TEXT("/Engine/BasicShapes/Plane");
+                const auto Mesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, StaticMeshName));
+                Mesh->AddMaterial(DynMat);
+                PanelComponent->SetStaticMesh(Mesh);
+            }, TStatId(), nullptr, ENamedThreads::GameThread)
+            ->Wait();
+
+            return PanelComponent;
+    }
 }
 
 FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
@@ -122,13 +150,11 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, con
             const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
             FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
                 FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
-
-            // TODO: Panel表示位置の調整
             ViewportClient.Pin()->GetPreviewScene()->AddComponent(
                 PanelComponent,
                 FTransform(FRotator(0, 0, 0),
-                    Box.GetCenter() + FVector::UpVector + FVector((100 * i) - 150, 0, 0),
-                    FVector3d(1, 1, 1)
+                    Box.GetCenter() + FVector::UpVector * 2 + FVector((80 * i) - 120, 0, 0),
+                    FVector3d(0.8, 0.8, 0.8)
                 ));
             PanelsInScene.Add(PanelComponent);
 
@@ -136,13 +162,32 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, con
             ViewportClient.Pin()->GetPreviewScene()->AddComponent(
                 DetailedPanelComponent,
                 FTransform(FRotator(0, 0, 0),
-                    Box.GetCenter() + FVector::UpVector + FVector((100 * i) - 150, 0, 0),
-                    FVector3d(1, 1, 1)
+                    Box.GetCenter() + FVector::UpVector * 2 + FVector((80 * i) - 120, 0, 0),
+                    FVector3d(0.8, 0.8, 0.8)
                 ));
             PanelsInScene.Add(DetailedPanelComponent);
         }
-    }
+        const auto BackPanelComponent = Entry.Value->GetBackPanelComponent();
 
+        //パネル背景表示の制御
+        if (BackPanelComponent == nullptr)
+            continue;
+        BackPanelComponent->SetVisibility(false);
+        if (PanelsInScene.Contains(BackPanelComponent))
+            continue;
+        auto TileExtent = plateau::udx::MeshCode(TCHAR_TO_UTF8(*Entry.Key)).getExtent();
+        const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
+        const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
+        FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
+            FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
+        ViewportClient.Pin()->GetPreviewScene()->AddComponent(
+            BackPanelComponent,
+            FTransform(FRotator(0, 0, 0),
+                Box.GetCenter() + FVector::UpVector,
+                FVector3d(4, 1.3, 1)
+            ));
+        PanelsInScene.Add(BackPanelComponent);
+    }
     // もし広範囲を表示しすぎていたら全て非表示のまま(この後の処理は行わない)
     if (!bShow)
         return;
@@ -186,6 +231,8 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, con
                     PanelComponent->SetVisibility(true);
                 }
             }
+            const auto BackPanelComponent = AsyncLoadedPanel->GetBackPanelComponent();
+            BackPanelComponent->SetVisibility(true);
         }
     }
 }
@@ -248,13 +295,16 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUMeshCodeFeatur
             TempDetailedBldgPanelComponent = CreatePanelMeshComponent(DetailedBldgTexture, !BldgExists);
             USceneComponent* TempDetailedCityPanelComponent = nullptr;
             const auto DetailedCityTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathCity);
-            TempDetailedCityPanelComponent = CreatePanelMeshComponent(DetailedCityTexture, CityExists);
+            TempDetailedCityPanelComponent = CreatePanelMeshComponent(DetailedCityTexture, !CityExists);
             USceneComponent* TempDetailedRoadPanelComponent = nullptr;
             const auto DetailedRoadTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathRoad);
             TempDetailedRoadPanelComponent = CreatePanelMeshComponent(DetailedRoadTexture, !RoadExists);
             USceneComponent* TempDetailedVegPanelComponent = nullptr;
             const auto DetailedVegTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathVeg);
             TempDetailedVegPanelComponent = CreatePanelMeshComponent(DetailedVegTexture, !VegExists);
+
+            const auto Texture = FPLATEAUTextureLoader::LoadTransient(FPaths::ProjectPluginsDir() + "PLATEAU-SDK-for-Unreal/Content/round-button.png");
+            USceneComponent* TempBackPanelComponent = CreateBackPanelComponent(Texture);
             {
                 FScopeLock Lock(&CriticalSection);
                 PanelComponents.Add(TempBldgPanelComponent);
@@ -266,122 +316,11 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUMeshCodeFeatur
                 DetailedPanelComponents.Add(TempDetailedCityPanelComponent);
                 DetailedPanelComponents.Add(TempDetailedRoadPanelComponent);
                 DetailedPanelComponents.Add(TempDetailedVegPanelComponent);
+
+                BackPanelComponent = TempBackPanelComponent;
                 IsFullyLoaded = true;
             }
         });
-}
-
-UStaticMeshComponent* FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelMesh() {
-    UStaticMeshComponent* MeshComponent;
-    UStaticMesh* StaticMesh;
-    FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&]() {
-            MeshComponent = NewObject<UStaticMeshComponent>(nullptr, NAME_None);
-            MeshComponent->Mobility = EComponentMobility::Static;
-            MeshComponent->bVisualizeComponent = true;
-
-            //StaticMesh作成
-            StaticMesh = NewObject<UStaticMesh>(MeshComponent, "Panel");
-            StaticMesh->InitResources();
-            StaticMesh->SetLightingGuid();
-            StaticMesh->SetLightMapResolution(64);
-            StaticMesh->SetLightMapCoordinateIndex(1);
-
-            //ソースモデルのセットアップ
-            FStaticMeshSourceModel& SrcModel = StaticMesh->AddSourceModel();
-            SrcModel.BuildSettings.bRecomputeNormals = false;
-            SrcModel.BuildSettings.bRecomputeTangents = false;
-            SrcModel.BuildSettings.bRemoveDegenerates = false;
-            SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
-            SrcModel.BuildSettings.bUseFullPrecisionUVs = false;
-            SrcModel.BuildSettings.bBuildReversedIndexBuffer = false;
-
-            FMeshDescription* MeshDescription = StaticMesh->CreateMeshDescription(0);
-            SetupMesh(*MeshDescription);
-            StaticMesh->CommitMeshDescription(0);
-        }, TStatId(), nullptr, ENamedThreads::GameThread)
-        ->Wait();
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-            //Set the Imported version before calling the build
-            StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
-            {
-                SCOPE_CYCLE_COUNTER(STAT_Mesh_Build);
-            }
-            MeshComponent->RegisterComponent();
-            //MeshComponent->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            MeshComponent->PostEditChange();
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
-        Task->Wait();
-        return MeshComponent;
-}
-
-void FPLATEAUAsyncLoadedFeatureInfoPanel::SetupMesh(FMeshDescription& MeshDescription) {
-    //四角形のメッシュを作る
-    FStaticMeshAttributes Attributes(MeshDescription);
-    MeshDescription.ReserveNewVertices(6);
-    MeshDescription.ReserveNewPolygons(2);
-    MeshDescription.ReserveNewVertexInstances(6);
-    MeshDescription.ReserveNewEdges(6);
-
-    const auto VertexPositions = Attributes.GetVertexPositions();
-    for (int i = 0; i < 6; i++) {
-        const auto VertexID = MeshDescription.CreateVertex();
-        switch (i) {
-        case 5:
-            VertexPositions[VertexID] = FVector3f(50000, 50000, 0);
-            break;
-        case 4:
-            VertexPositions[VertexID] = FVector3f(-50000, 50000, 0);
-            break;
-        case 3:
-            VertexPositions[VertexID] = FVector3f(-50000, -50000, 0);
-            break;
-        case 2:
-            VertexPositions[VertexID] = FVector3f(50000, 50000, 0);
-            break;
-        case 1:
-            VertexPositions[VertexID] = FVector3f(-50000, 50000, 0);
-            break;
-        case 0:
-            VertexPositions[VertexID] = FVector3f(50000, -50000, 0);
-            break;
-        default:
-            break;
-        }
-    }
-
-    // 3頂点毎にPolygonを生成
-    TArray<FVertexInstanceID> VertexInstanceIDsCache;
-    VertexInstanceIDsCache.SetNumUninitialized(3);
-    TArray<FVector3f> TriangleVerticesCache;
-    TriangleVerticesCache.SetNumUninitialized(3);
-    TArray<FVertexInstanceID> VertexInstanceIDs;
-    int StartIndex = 0;
-    int EndIndex = 5;
-    const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
-    if (VertexInstanceUVs.GetNumChannels() < 3) {
-        VertexInstanceUVs.SetNumChannels(3);
-    }
-    const auto PolygonGroupID = MeshDescription.CreatePolygonGroup();
-    for (int InIndexIndex = StartIndex; InIndexIndex <= EndIndex; ++InIndexIndex) {
-        auto VertexID = InIndexIndex;
-
-        const auto NewVertexInstanceID = MeshDescription.CreateVertexInstance(VertexID);
-        VertexInstanceIDs.Add(NewVertexInstanceID);
-
-        const auto UV1 = FVector2f(0, 1);
-        VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
-    }
-    for (int32 TriangleIndex = 0; TriangleIndex < (EndIndex - StartIndex + 1) / 3; ++TriangleIndex) {
-        FMemory::Memcpy(VertexInstanceIDsCache.GetData(), VertexInstanceIDs.GetData() + TriangleIndex * 3, sizeof(FVertexInstanceID) * 3);
-
-        // Invert winding order for triangles
-        VertexInstanceIDsCache.Swap(0, 2);
-
-        const FPolygonID NewPolygonID = MeshDescription.CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
-        // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
-        MeshDescription.ComputePolygonTriangulation(NewPolygonID);
-    }
 }
 
 const FString FPLATEAUAsyncLoadedFeatureInfoPanel::MakeTexturePath(const plateau::udx::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText) {

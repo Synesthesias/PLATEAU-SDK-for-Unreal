@@ -39,10 +39,14 @@ public:
         return DetailedPanelComponents[Index];
     }
 
+    USceneComponent* GetBackPanelComponent() {
+        FScopeLock Lock(&CriticalSection);
+        return BackPanelComponent;
+    }
+
     void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
+
 private:
-    UStaticMeshComponent* CreatePanelMesh();
-    void SetupMesh(FMeshDescription& MeshDescription);
     const FString MakeTexturePath(const plateau::udx::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
 
 private:
@@ -50,6 +54,7 @@ private:
     bool IsFullyLoaded;
     TArray<USceneComponent*> PanelComponents;
     TArray<USceneComponent*> DetailedPanelComponents;
+    USceneComponent* BackPanelComponent;
 };
 
 /**
