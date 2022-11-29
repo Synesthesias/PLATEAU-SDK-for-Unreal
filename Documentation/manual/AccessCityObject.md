@@ -32,7 +32,7 @@
 
 - `GetAttributeMap`ノードは`CityObject`インスタンスを受け取り、都市オブジェクトが持つ属性情報を`AttributeMap`インスタンスとして出力します。
 
-##　属性情報の取得方法
+## 属性情報の取得方法
 
 ![](../resources/manual/accessCityObject/placeGetObjectInfo.png)
 
