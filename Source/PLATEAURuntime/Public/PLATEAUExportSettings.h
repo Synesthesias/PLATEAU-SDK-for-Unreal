@@ -12,6 +12,17 @@ enum class EMeshTransformType : uint8 {
     PlaneRect
 };
 
+UENUM(BlueprintType)
+enum class ECoordinateSystem : uint8 {
+    //! PLATEAUでの座標系
+    ENU = 0,
+    WUN = 1,
+    //! Unreal Engineでの座標系
+    ESU = 2,
+    //! Unityでの座標系
+    EUN = 3
+};
+
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureExportSettings {
     GENERATED_BODY()
@@ -25,6 +36,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Export Settings")
         bool bExportHiddenModel = true;
+
+    UPROPERTY(EditAnywhere, Category = "Export Settings")
+        ECoordinateSystem CoorinateSystem = ECoordinateSystem::ENU;
 };
 
 UCLASS()
