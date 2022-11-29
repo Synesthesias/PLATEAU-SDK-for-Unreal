@@ -40,10 +40,7 @@ public:
     }
 
     void LoadAsync(const FPLATEAUTileCoordinate& InTileCoordinate);
-
-    bool operator==(const FPLATEAUAsyncLoadedVectorTile& Other) const;
-    bool operator!=(const FPLATEAUAsyncLoadedVectorTile& Other) const;
-
+    
 private:
     FCriticalSection CriticalSection;
     bool IsFullyLoaded;

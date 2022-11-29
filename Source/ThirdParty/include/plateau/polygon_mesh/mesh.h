@@ -1,7 +1,6 @@
 #pragma once
 
 #include "citygml/polygon.h"
-#include "plateau_dll_logger.h"
 #include "sub_mesh.h"
 #include "mesh_extract_options.h"
 #include "citygml/cityobject.h"

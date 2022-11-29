@@ -62,7 +62,7 @@ public:
     * \param index tiles_のインデックス
     */
     std::shared_ptr<VectorTile> download(int index) const;
-    void download(int index, VectorTile& out_vector_tile) const;
+    bool download(int index, VectorTile& out_vector_tile) const;
 
     /// TileCoordinateの地図タイルをダウンロードしたとき、その画像ファイルがどこに配置されるべきかを返します。
     static std::filesystem::path calcDestinationPath(const TileCoordinate& coord, const std::string& destination);
@@ -72,7 +72,7 @@ public:
     void setUrl(const std::string& value);
     void setExtent(const plateau::geometry::Extent& extent);
     int getTileCount() const;
-    TileCoordinate getTile(int index) const;
+    TileCoordinate getTile(int index);
     static const std::string& getDefaultUrl();
 
 private:

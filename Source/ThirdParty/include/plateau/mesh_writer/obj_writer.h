@@ -1,11 +1,9 @@
 ﻿#pragma once
 
 #include <string>
-#include <fstream>
 
 #include <citygml/citygml.h>
 #include <libplateau_api.h>
-#include <plateau_dll_logger.h>
 
 #include <plateau/polygon_mesh/mesh_extractor.h>
 
@@ -20,7 +18,7 @@ namespace plateau::meshWriter {
 
     private:
         // OBJ書き出し
-        void writeObj(const std::string& obj_file_path_utf8, const plateau::polygonMesh::Model& model);
+        void writeObj(const std::string& obj_file_path_utf8, const plateau::polygonMesh::Node& node);
         void writeCityObjectRecursive(std::ofstream& ofs, const plateau::polygonMesh::Node& node);
         void writeCityObject(std::ofstream& ofs, const plateau::polygonMesh::Node& node);
         static void writeVertices(std::ofstream& ofs, const std::vector<TVec3d>& vertices);

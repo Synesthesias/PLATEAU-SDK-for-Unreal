@@ -16,6 +16,7 @@ namespace plateau::udx {
         std::string get() const;
         geometry::Extent getExtent() const;
         static MeshCode getThirdMesh(const geometry::GeoCoordinate& coordinate);
+        static std::shared_ptr<std::vector<MeshCode>> getThirdMeshes(const geometry::Extent& extent);
         static void getThirdMeshes(const geometry::Extent& extent, std::vector<MeshCode>& mesh_codes);
         bool isWithin(const MeshCode& other) const;
         MeshCode asSecond() const;
