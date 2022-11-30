@@ -32,7 +32,23 @@
 
 - `GetAttributeMap`ノードは`CityObject`インスタンスを受け取り、都市オブジェクトが持つ属性情報を`AttributeMap`インスタンスとして出力します。
 
+## 属性情報の取得方法
 
+![](../resources/manual/accessCityObject/placeGetObjectInfo.png)
+
+- コンテンツブラウザから`Plugin/PLATEAU SDK for Unrealコンテンツ`の`GetObjectInfo`をレベル上に配置します。
+
+![](../resources/manual/accessCityObject/assignInstance.png)
+
+- `全て/デフォルト/Plateau Instance`に配置した都市オブジェクトを指定します。
+
+![](../resources/manual/accessCityObject/getObjectInfoSettings.png)
+
+- `その他/入力/Auto Receive Input`を`Player 0`に指定します。 
+
+![](../resources/manual/accessCityObject/overrideGameMode.png)
+
+- `ウィンドウ/ワールドセッティング`の`GameMode/ゲームモードオーバーライド`を`ClickEventGameMode`に指定します。
 
 ## 属性とは
 

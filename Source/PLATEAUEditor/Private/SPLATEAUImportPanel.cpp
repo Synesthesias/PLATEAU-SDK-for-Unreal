@@ -345,7 +345,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
-                Loader->LoadAsync();
+                Loader->LoadAsync();                
 
                 return FReply::Handled();
             })
