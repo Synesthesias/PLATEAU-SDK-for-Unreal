@@ -27,10 +27,10 @@ namespace {
 
     TMap<ECoordinateSystem, FText> GetCoordinateSystemText() {
         TMap<ECoordinateSystem, FText> Items;
-        Items.Add(ECoordinateSystem::ENU, LOCTEXT("ENU", "PLATEAUに準拠した座標系"));
+        Items.Add(ECoordinateSystem::ENU, LOCTEXT("ENU", "ENU(PLATEAUに準拠した座標系)"));
         Items.Add(ECoordinateSystem::WUN, LOCTEXT("WUN", "WUN"));
-        Items.Add(ECoordinateSystem::ESU, LOCTEXT("ESU", "UnrealEngineに準拠した座標系"));
-        Items.Add(ECoordinateSystem::EUN, LOCTEXT("EUN", "Unityに準拠した座標系"));
+        Items.Add(ECoordinateSystem::ESU, LOCTEXT("ESU", "ESU(UnrealEngineに準拠した座標系)"));
+        Items.Add(ECoordinateSystem::EUN, LOCTEXT("EUN", "EUN(Unityに準拠した座標系)"));
         return Items;
     }
 }

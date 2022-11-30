@@ -272,6 +272,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             Options.GltfWriteOptions = GltfOptions;
             Options.bExportHiddenObjects = Settings->ExportSetting.bExportHiddenModel;
             Options.bExportTexture = Settings->ExportSetting.bExportTexture;
+            Options.CoordinateSystem = Settings->ExportSetting.CoorinateSystem;
             Options.FileFormat = CurrentModelType;
             Options.TransformType = Settings->ExportSetting.ExportCoordinate;
             MeshExporter.Export(ExportPath, Target, Options);
