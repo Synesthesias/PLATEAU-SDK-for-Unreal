@@ -72,6 +72,10 @@ public:
         Category = "PLATEAU|CityGML")
         static FPLATEAUCityObject
         getCityObjectByID(UPARAM(ref) const FPLATEAUCityModel& CityModel, const FString& FeatureID) {
+        if(CityModel.Data == std::shared_ptr<citygml::CityModel>()){
+            UE_LOG(LogTemp, Warning, TEXT("インスタンスが存在しません"));
+            return FPLATEAUCityObject();
+        }
         return FPLATEAUCityObject(CityModel.Data->getCityObjectById(TCHAR_TO_UTF8(*FeatureID)));
     }
 
