@@ -15,6 +15,7 @@
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
+    TargetActor = ModelActor;
     switch (Option.FileFormat) {
     case EMeshFileFormat::OBJ:
         ExportAsOBJ(ExportPath, ModelActor, Option);
@@ -35,7 +36,8 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
-    } else {
+    }
+    else {
         ReferencePoint = FVector::ZeroVector;
     }
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
@@ -125,6 +127,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         UV1.push_back(TVec2f(UV.X, 1.0f - UV.Y));
     }
 
+    auto GeoRef = TargetActor->GeoReference.GetData();
     for (uint32 i = 0; i < RenderMesh.VertexBuffers.PositionVertexBuffer.GetNumVertices(); i++) {
         const auto VertexPosition = RenderMesh.VertexBuffers.PositionVertexBuffer.VertexPosition(i);
         TVec3d Vertex;
@@ -132,6 +135,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             Vertex = TVec3d(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
         else
             Vertex = TVec3d(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
+        Vertex = GeoRef.convertAxisToENU(plateau::geometry::CoordinateSystem::ESU, Vertex);
+        Vertex = GeoRef.convertAxisFromENUTo(StaticCast<plateau::geometry::CoordinateSystem>(Option.CoordinateSystem), Vertex);
         Vertices.push_back(Vertex);
     }
 
@@ -140,7 +145,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
         OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
     }
-    
+
     for (int k = 0; k < RenderMesh.Sections.Num(); k++) {
         const auto& Section = RenderMesh.Sections[k];
         //サブメッシュの開始・終了インデックス計算
@@ -220,9 +225,11 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     if (ComponentName.FindLastChar('_', Index)) {
         if (ComponentName.RightChop(Index + 1).IsNumeric()) {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
-        } else {
+        }
+        else {
             return ComponentName;
         }
-    } else
+    }
+    else
         return ComponentName;
 }

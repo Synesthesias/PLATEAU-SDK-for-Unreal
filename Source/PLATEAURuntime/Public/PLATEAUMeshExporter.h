@@ -6,6 +6,7 @@
 
 enum class EMeshTransformType : uint8_t;
 enum class EMeshFileFormat : uint8_t;
+enum class ECoordinateSystem : uint8;
 
 class APLATEAUInstancedCityModel;
 
@@ -13,6 +14,7 @@ struct MeshExportOptions {
     EMeshTransformType TransformType;
     bool bExportHiddenObjects;
     bool bExportTexture;
+    ECoordinateSystem CoordinateSystem;
     EMeshFileFormat FileFormat;
     plateau::meshWriter::GltfWriteOptions GltfWriteOptions;
 };
@@ -39,4 +41,5 @@ private:
 
     TArray<FString> ModelNames;
     FVector ReferencePoint;
+    APLATEAUInstancedCityModel* TargetActor = nullptr;
 };
