@@ -106,6 +106,23 @@
 <ul>
 <li><code>GetAttributeMap</code>ノードは<code>CityObject</code>インスタンスを受け取り、都市オブジェクトが持つ属性情報を<code>AttributeMap</code>インスタンスとして出力します。</li>
 </ul>
+<h2 id="属性情報の取得方法">属性情報の取得方法</h2>
+<p><img src="../resources/manual/accessCityObject/placeGetObjectInfo.png" alt=""></p>
+<ul>
+<li>コンテンツブラウザから<code>Plugin/PLATEAU SDK for Unrealコンテンツ</code>の<code>GetObjectInfo</code>をレベル上に配置します。</li>
+</ul>
+<p><img src="../resources/manual/accessCityObject/assignInstance.png" alt=""></p>
+<ul>
+<li><code>全て/デフォルト/Plateau Instance</code>に配置した都市オブジェクトを指定します。</li>
+</ul>
+<p><img src="../resources/manual/accessCityObject/getObjectInfoSettings.png" alt=""></p>
+<ul>
+<li><code>その他/入力/Auto Receive Input</code>を<code>Player 0</code>に指定します。 </li>
+</ul>
+<p><img src="../resources/manual/accessCityObject/overrideGameMode.png" alt=""></p>
+<ul>
+<li><code>ウィンドウ/ワールドセッティング</code>の<code>GameMode/ゲームモードオーバーライド</code>を<code>ClickEventGameMode</code>に指定します。</li>
+</ul>
 <h2 id="属性とは">属性とは</h2>
 <p>都市オブジェクトの情報は「属性」として取得できます。<br>属性は例えば  </p>
 <pre><code class="lang-text">(String) 大字・町コード =&gt; 42,

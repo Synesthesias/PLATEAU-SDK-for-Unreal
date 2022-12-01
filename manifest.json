@@ -39,7 +39,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/AccessCityObject.html",
-          "hash": "2JKkxej8m5wJecTqDktuq8rGq/A4QLlNSzqYC34I9dc="
+          "hash": "VKxqdRsQO+1/p/VCnN6OQngoBqmnnRh78YKzWXi9YVw="
         }
       },
       "is_incremental": false,
@@ -129,6 +129,17 @@
     },
     {
       "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/assignInstance.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/assignInstance.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
       "source_relative_path": "resources/manual/accessCityObject/blueprint.png",
       "output": {
         "resource": {
@@ -166,6 +177,39 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual/accessCityObject/blueprintSection3.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/getObjectInfoSettings.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/getObjectInfoSettings.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/overrideGameMode.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/overrideGameMode.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/placeGetObjectInfo.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/placeGetObjectInfo.png"
         }
       },
       "is_incremental": false,
