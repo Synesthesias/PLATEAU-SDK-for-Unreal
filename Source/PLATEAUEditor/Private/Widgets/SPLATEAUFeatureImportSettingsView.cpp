@@ -1,8 +1,9 @@
 #include "SPLATEAUFeatureImportSettingsView.h"
 
 #include "SPLATEAUExtentEditButton.h"
-#include <plateau/udx/city_model_package.h>
-#include <plateau/udx/udx_file_collection.h>
+#include <plateau/dataset/city_model_package.h>
+#include <plateau/dataset/i_dataset_accessor.h>
+#include <plateau/dataset/dataset_source.h>
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUFeatureImportSettingsDetails.h"
@@ -12,7 +13,7 @@
 #include "SlateOptMacros.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 
-using namespace plateau::udx;
+using namespace plateau::dataset;
 
 SPLATEAUFeatureImportSettingsView::SPLATEAUFeatureImportSettingsView() {}
 
@@ -35,22 +36,20 @@ void SPLATEAUFeatureImportSettingsView::Construct(const FArguments& InArgs) {
         [SNew(SBox)
         .Visibility_Lambda(
             [this, Extent = InArgs._Extent,
-            SourcePath = InArgs._SourcePath]() {
-        if (ExtentCache == Extent.Get() && SourcePathCache == SourcePath.Get())
+            InDatasetAccessor = InArgs._DatasetAccessor]() {
+        if (ExtentCache == Extent.Get() && DatasetAccessor == InDatasetAccessor.Get())
             return EVisibility::Collapsed;
 
         ExtentCache = Extent.Get();
-        SourcePathCache = SourcePath.Get();
+        DatasetAccessor = InDatasetAccessor.Get();
 
         auto PackageMask = PredefinedCityModelPackage::None;
 
         if (Extent.Get() != FPLATEAUExtent()) {
-            // TODO: 多重呼び出し解消
-            const auto FileCollection =
-                plateau::udx::UdxFileCollection::find(TCHAR_TO_UTF8(*SourcePath.Get()))
-                ->filter(Extent.Get().GetNativeData());
+            const auto FilteredDatasetAccessor =
+                DatasetAccessor->filter(Extent.Get().GetNativeData());
 
-            PackageMask = FileCollection->getPackages();
+            PackageMask = FilteredDatasetAccessor->getPackages();
         }
 
         ImportSettingsView->UnregisterInstancedCustomPropertyLayout(UPLATEAUImportSettings::StaticClass());

@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 
-#include <plateau/udx/city_model_package.h>
+#include <plateau/dataset/city_model_package.h>
 
 #include "PLATEAUImportSettings.generated.h"
 
 namespace plateau {
-    namespace udx {
+    namespace dataset {
         enum class PredefinedCityModelPackage : uint32;
     }
 }
@@ -72,32 +72,32 @@ public:
     UPROPERTY(EditAnywhere)
         FPLATEAUFeatureImportSettings Unknown;
 
-    FPLATEAUFeatureImportSettings GetFeatureSettings(plateau::udx::PredefinedCityModelPackage Package) const {
+    FPLATEAUFeatureImportSettings GetFeatureSettings(plateau::dataset::PredefinedCityModelPackage Package) const {
         switch (Package) {
-        case plateau::udx::PredefinedCityModelPackage::Building: return Building;
-        case plateau::udx::PredefinedCityModelPackage::Road: return Road;
-        case plateau::udx::PredefinedCityModelPackage::Vegetation: Vegetation;
-        case plateau::udx::PredefinedCityModelPackage::CityFurniture: return CityFurniture;
-        case plateau::udx::PredefinedCityModelPackage::Relief: return Relief;
-        case plateau::udx::PredefinedCityModelPackage::DisasterRisk: return DisasterRisk;
-        case plateau::udx::PredefinedCityModelPackage::LandUse: return LandUse;
-        case plateau::udx::PredefinedCityModelPackage::UrbanPlanningDecision: return UrbanPlanningDecision;
-        case plateau::udx::PredefinedCityModelPackage::Unknown: return Unknown;
+        case plateau::dataset::PredefinedCityModelPackage::Building: return Building;
+        case plateau::dataset::PredefinedCityModelPackage::Road: return Road;
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: Vegetation;
+        case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return CityFurniture;
+        case plateau::dataset::PredefinedCityModelPackage::Relief: return Relief;
+        case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return DisasterRisk;
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return LandUse;
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return UrbanPlanningDecision;
+        case plateau::dataset::PredefinedCityModelPackage::Unknown: return Unknown;
         default: return Unknown;
         }
     }
 
-    static TArray<plateau::udx::PredefinedCityModelPackage> GetAllPackages() {
+    static TArray<plateau::dataset::PredefinedCityModelPackage> GetAllPackages() {
         return {
-            plateau::udx::PredefinedCityModelPackage::Building,
-            plateau::udx::PredefinedCityModelPackage::Road,
-            plateau::udx::PredefinedCityModelPackage::Vegetation,
-            plateau::udx::PredefinedCityModelPackage::CityFurniture,
-            plateau::udx::PredefinedCityModelPackage::Relief,
-            plateau::udx::PredefinedCityModelPackage::DisasterRisk,
-            plateau::udx::PredefinedCityModelPackage::LandUse,
-            plateau::udx::PredefinedCityModelPackage::UrbanPlanningDecision,
-            plateau::udx::PredefinedCityModelPackage::Unknown,
+            plateau::dataset::PredefinedCityModelPackage::Building,
+            plateau::dataset::PredefinedCityModelPackage::Road,
+            plateau::dataset::PredefinedCityModelPackage::Vegetation,
+            plateau::dataset::PredefinedCityModelPackage::CityFurniture,
+            plateau::dataset::PredefinedCityModelPackage::Relief,
+            plateau::dataset::PredefinedCityModelPackage::DisasterRisk,
+            plateau::dataset::PredefinedCityModelPackage::LandUse,
+            plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision,
+            plateau::dataset::PredefinedCityModelPackage::Unknown,
         };
     }
 

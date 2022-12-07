@@ -6,8 +6,8 @@
 #include "EditorViewportClient.h"
 #include "PLATEAUGeometry.h"
 
-namespace plateau::udx {
-    class UdxFileCollection;
+namespace plateau::dataset {
+    class IDatasetAccessor;
 }
 
 /** Viewport Client for the preview viewport */
@@ -22,7 +22,7 @@ public:
     /**
      * @brief ViewportのConstructから呼び出される初期化処理です。
      */
-    void Initialize(std::shared_ptr<plateau::udx::UdxFileCollection> InFileCollection);
+    void Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InFileCollection);
     
     FPLATEAUExtent GetExtent() const;
 
@@ -42,7 +42,7 @@ private:
     TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
     TUniquePtr<class FPLATEAUBasemap> Basemap;
     TUniquePtr<class FPLATEAUFeatureInfoDisplay> FeatureInfoDisplay;
-    std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
 
     // 内部状態
     int SelectedHandleIndex = -1;

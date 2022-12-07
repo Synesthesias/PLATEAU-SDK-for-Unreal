@@ -6,17 +6,22 @@
 
 struct FPLATEAUExtent;
 
-namespace plateau::udx {
+namespace plateau::dataset {
     class MeshCode;
-    class GmlFileInfo;
-    class UdxFileCollection;
+    class GmlFile;
+    class IDatasetAccessor;
+    enum class PredefinedCityModelPackage : uint32;
 }
 
 struct FPLATEAUMeshCodeFeatureInfoInput {
-    FString BldgGmlFile;
-    FString RoadGmlFile;
-    FString UrfGmlFile;
-    FString VegGmlFile;
+    FString BldgGmlPath;
+    int BldgMaxLod;
+    FString RoadGmlPath;
+    int RoadMaxLod;
+    FString FrnGmlPath;
+    int FrnMaxLod;
+    FString VegGmlPath;
+    int VegMaxLod;
 };
 
 /**
@@ -47,7 +52,7 @@ public:
     void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
 
 private:
-    const FString MakeTexturePath(const plateau::udx::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
+    const FString MakeTexturePath(const plateau::dataset::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
 
 private:
     FCriticalSection CriticalSection;
@@ -65,7 +70,7 @@ public:
     FPLATEAUFeatureInfoDisplay(const FPLATEAUGeoReference& InGeoReference, const TSharedPtr<class FPLATEAUExtentEditorViewportClient> InViewportClient);
     ~FPLATEAUFeatureInfoDisplay();
 
-    void UpdateAsync(const FPLATEAUExtent& InExtent, const plateau::udx::UdxFileCollection& InFileCollection, const bool bShow, const bool bDetailed);
+    void UpdateAsync(const FPLATEAUExtent& InExtent, plateau::dataset::IDatasetAccessor& InDatasetAccessor, const bool bShow, const bool bDetailed);
 
 private:
     FPLATEAUGeoReference GeoReference;

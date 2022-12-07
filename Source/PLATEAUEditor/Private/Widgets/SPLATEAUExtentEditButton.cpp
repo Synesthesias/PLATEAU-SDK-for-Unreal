@@ -1,18 +1,15 @@
-#include "SPLATEAUExtentEditButton.h"
-#include <plateau/udx/udx_file_collection.h>
-
 #include "AssetSelection.h"
-#include "PLATEAUEditor.h"
-#include "PLATEAUEditorStyle.h"
-#include "PLATEAUFeatureImportSettingsDetails.h"
 #include "Widgets/Input/SSlider.h"
 #include "Widgets/Layout/SHeader.h"
 #include "SlateOptMacros.h"
+
+#include "SPLATEAUExtentEditButton.h"
+#include "PLATEAUEditor.h"
+#include "PLATEAUEditorStyle.h"
+#include "PLATEAUFeatureImportSettingsDetails.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 
 #define LOCTEXT_NAMESPACE "SPLATEAUExtentEditButton"
-
-using namespace plateau::udx;
 
 SPLATEAUExtentEditButton::SPLATEAUExtentEditButton() {
     ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
