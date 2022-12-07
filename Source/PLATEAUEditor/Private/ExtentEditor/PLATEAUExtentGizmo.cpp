@@ -49,6 +49,8 @@ FVector FPLATEAUExtentGizmo::GetHandlePosition(int Index) {
         return { MaxX, MinY, 0 };
     if (Index == 3)
         return { MaxX, MaxY, 0 };
+    if (Index == 4)
+        return { MinX + (MaxX - MinX) / 2, MinY + (MaxY - MinY) / 2, 0 };
 
     return {};
 }
@@ -69,6 +71,14 @@ void FPLATEAUExtentGizmo::SetHandlePosition(const int Index, const FVector& Posi
     if (Index == 3) {
         SetMaxX(Position.X);
         SetMaxY(Position.Y);
+    }
+    if (Index == 4) {
+        double DiffX = MaxX - MinX;
+        double DiffY = MaxY - MinY;
+        SetMinX(Position.X - DiffX / 2);
+        SetMinY(Position.Y - DiffY / 2);
+        SetMaxX(Position.X + DiffX / 2);
+        SetMaxY(Position.Y + DiffY / 2);
     }
 }
 
