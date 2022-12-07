@@ -176,7 +176,7 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
     constexpr FColor SelectedColor(225, 225, 110);
     constexpr FColor UnselectedColor(255, 127, 80);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 5; ++i) {
         const auto HitProxy = new HPLATEAUExtentHandleProxy(i);
         PDI->SetHitProxy(HitProxy);
         const FColor Color = i == SelectedHandleIndex ? SelectedColor : UnselectedColor;
