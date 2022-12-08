@@ -50,6 +50,7 @@ public:
     }
 
     void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
+    void LoadMaterial();
 
 private:
     const FString MakeTexturePath(const plateau::dataset::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
@@ -60,6 +61,7 @@ private:
     TArray<USceneComponent*> PanelComponents;
     TArray<USceneComponent*> DetailedPanelComponents;
     USceneComponent* BackPanelComponent;
+    UMaterial* BaseMat;
 };
 
 /**

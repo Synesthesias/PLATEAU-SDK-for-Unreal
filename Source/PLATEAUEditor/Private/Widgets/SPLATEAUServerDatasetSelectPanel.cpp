@@ -1,6 +1,11 @@
 #include "SPLATEAUServerDatasetSelectPanel.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 
+#include <plateau/dataset/city_model_package.h>
+#include <plateau/dataset/i_dataset_accessor.h>
+#include <plateau/dataset/dataset_source.h>
+#include <plateau/network/client.h>
+
 #define LOCTEXT_NAMESPACE "SPLATEAUServerDatasetSelectPanel"
 
 namespace {
@@ -75,6 +80,15 @@ namespace {
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
     OwnerWindow = InArgs._OwnerWindow;
+
+    auto ClientRef = plateau::network::Client();
+    std::vector<plateau::network::DatasetMetadataGroup> DataSets;
+    ClientRef.getMetadata(DataSets);
+    TMap<int, FText> PrefectureTexts;
+    TMap<int, FText> MunicipalityTexts;
+    for (int i = 0; i < DataSets.size(); i++) {
+        PrefectureTexts.Add(i + 1, FText::FromString(DataSets[i].title.c_str()));
+    }
 
     ChildSlot[
         SNew(SVerticalBox)

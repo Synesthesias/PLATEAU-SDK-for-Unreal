@@ -14,6 +14,8 @@ private:
     int PrefectureID = 1;
     int MunicipalityID = 1;
     bool bIsVisible = false;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
+
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs);

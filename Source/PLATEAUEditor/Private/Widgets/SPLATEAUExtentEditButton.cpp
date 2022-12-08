@@ -1,9 +1,10 @@
+#include "SPLATEAUExtentEditButton.h"
+
 #include "AssetSelection.h"
 #include "Widgets/Input/SSlider.h"
 #include "Widgets/Layout/SHeader.h"
 #include "SlateOptMacros.h"
 
-#include "SPLATEAUExtentEditButton.h"
 #include "PLATEAUEditor.h"
 #include "PLATEAUEditorStyle.h"
 #include "PLATEAUFeatureImportSettingsDetails.h"

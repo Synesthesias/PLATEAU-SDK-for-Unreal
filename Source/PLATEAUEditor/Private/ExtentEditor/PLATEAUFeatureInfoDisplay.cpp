@@ -55,7 +55,7 @@ namespace {
         return plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlFile)).getMaxLod();
     }
 
-    UStaticMeshComponent* CreatePanelMeshComponent(UTexture* Texture, bool bGrayOut, bool bUseAsBackPanel) {
+    UStaticMeshComponent* CreatePanelMeshComponent(UTexture* Texture, bool bGrayOut, bool bUseAsBackPanel, UMaterial* BaseMat) {
         UStaticMeshComponent* PanelComponent;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&] {
@@ -70,16 +70,17 @@ namespace {
                         GetTransientPackage(),
                         MeshName, RF_Transient);
 
-                const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
-                const auto DynMat = UMaterialInstanceDynamic::Create(Mat, GetTransientPackage());
+                const auto DynMat = UMaterialInstanceDynamic::Create(BaseMat, GetTransientPackage());
                 DynMat->SetTextureParameterValue(TEXT("Texture"), Texture);
                 if (bUseAsBackPanel) {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.01f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.6f);
-                } else if (bGrayOut) {
+                }
+                else if (bGrayOut) {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.7f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.3f);
-                } else {
+                }
+                else {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.7f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
                 }
@@ -99,7 +100,8 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {}
+    , ViewportClient(InViewportClient) {
+}
 
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
@@ -224,6 +226,7 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, pla
                 Input.VegMaxLod
             );
 
+            AsyncLoadedTile->LoadMaterial();
             AsyncLoadedTile->LoadAsync(Input);
             continue;
         }
@@ -235,7 +238,8 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, pla
                 if (bDetailed) {
                     const auto PanelComponent = AsyncLoadedPanel->GetDetailedPanelComponent(i);
                     PanelComponent->SetVisibility(true);
-                } else {
+                }
+                else {
                     const auto PanelComponent = AsyncLoadedPanel->GetPanelComponent(i);
                     PanelComponent->SetVisibility(true);
                 }
@@ -292,32 +296,32 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUMeshCodeFeatur
 
             USceneComponent* TempBldgPanelComponent = nullptr;
             const auto BldgTexture = FPLATEAUTextureLoader::LoadTransient(FilePathBldg);
-            TempBldgPanelComponent = CreatePanelMeshComponent(BldgTexture, !BldgExists, false);
+            TempBldgPanelComponent = CreatePanelMeshComponent(BldgTexture, !BldgExists, false, BaseMat);
             USceneComponent* TempCityPanelComponent = nullptr;
             const auto CityTexture = FPLATEAUTextureLoader::LoadTransient(FilePathCity);
-            TempCityPanelComponent = CreatePanelMeshComponent(CityTexture, !CityExists, false);
+            TempCityPanelComponent = CreatePanelMeshComponent(CityTexture, !CityExists, false, BaseMat);
             USceneComponent* TempRoadPanelComponent = nullptr;
             const auto RoadTexture = FPLATEAUTextureLoader::LoadTransient(FilePathRoad);
-            TempRoadPanelComponent = CreatePanelMeshComponent(RoadTexture, !RoadExists, false);
+            TempRoadPanelComponent = CreatePanelMeshComponent(RoadTexture, !RoadExists, false, BaseMat);
             USceneComponent* TempVegPanelComponent = nullptr;
             const auto VegTexture = FPLATEAUTextureLoader::LoadTransient(FilePathVeg);
-            TempVegPanelComponent = CreatePanelMeshComponent(VegTexture, !VegExists, false);
+            TempVegPanelComponent = CreatePanelMeshComponent(VegTexture, !VegExists, false, BaseMat);
 
             USceneComponent* TempDetailedBldgPanelComponent = nullptr;
             const auto DetailedBldgTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathBldg);
-            TempDetailedBldgPanelComponent = CreatePanelMeshComponent(DetailedBldgTexture, !BldgExists, false);
+            TempDetailedBldgPanelComponent = CreatePanelMeshComponent(DetailedBldgTexture, !BldgExists, false, BaseMat);
             USceneComponent* TempDetailedCityPanelComponent = nullptr;
             const auto DetailedCityTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathCity);
-            TempDetailedCityPanelComponent = CreatePanelMeshComponent(DetailedCityTexture, !CityExists, false);
+            TempDetailedCityPanelComponent = CreatePanelMeshComponent(DetailedCityTexture, !CityExists, false, BaseMat);
             USceneComponent* TempDetailedRoadPanelComponent = nullptr;
             const auto DetailedRoadTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathRoad);
-            TempDetailedRoadPanelComponent = CreatePanelMeshComponent(DetailedRoadTexture, !RoadExists, false);
+            TempDetailedRoadPanelComponent = CreatePanelMeshComponent(DetailedRoadTexture, !RoadExists, false, BaseMat);
             USceneComponent* TempDetailedVegPanelComponent = nullptr;
             const auto DetailedVegTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathVeg);
-            TempDetailedVegPanelComponent = CreatePanelMeshComponent(DetailedVegTexture, !VegExists, false);
+            TempDetailedVegPanelComponent = CreatePanelMeshComponent(DetailedVegTexture, !VegExists, false, BaseMat);
 
             const auto Texture = FPLATEAUTextureLoader::LoadTransient(FPaths::ProjectPluginsDir() + "PLATEAU-SDK-for-Unreal/Content/round-button.png");
-            USceneComponent* TempBackPanelComponent = CreatePanelMeshComponent(Texture, true, true);
+            USceneComponent* TempBackPanelComponent = CreatePanelMeshComponent(Texture, true, true, BaseMat);
             {
                 FScopeLock Lock(&CriticalSection);
                 PanelComponents.Add(TempBldgPanelComponent);
@@ -340,7 +344,8 @@ const FString FPLATEAUAsyncLoadedFeatureInfoPanel::MakeTexturePath(const plateau
     FString Path = "";
     if (bEnableText) {
         Path += PANEL_PATH_WITHTEXT;
-    } else {
+    }
+    else {
         Path += PANEL_PATH_NOTEXT;
     }
 
@@ -377,4 +382,8 @@ const FString FPLATEAUAsyncLoadedFeatureInfoPanel::MakeTexturePath(const plateau
         break;
     }
     return Path;
+}
+
+void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaterial() {
+    BaseMat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
 }
