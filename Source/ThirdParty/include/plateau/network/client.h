@@ -46,7 +46,7 @@ namespace plateau::network {
      */
     class LIBPLATEAU_EXPORT Client {
     public:
-        explicit Client(const std::string& server_url = default_server_url);
+        explicit Client(const std::string& server_url = "");
 
         std::string getApiServerUrl() const;
         void setApiServerUrl(const std::string& url);
@@ -55,7 +55,8 @@ namespace plateau::network {
         DatasetFiles getFiles(const std::string& id) const;
         std::string download(const std::string& destination_directory_utf8, const std::string& url_utf8) const;
 
-        inline static std::string default_server_url = "https://plateau-api-mock-v2.deta.dev";
+        static std::string getDefaultServerUrl();
+
     private:
         std::string server_url_;
     };
