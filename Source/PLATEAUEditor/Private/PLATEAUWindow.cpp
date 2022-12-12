@@ -17,7 +17,8 @@
 const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
 
 FPLATEAUWindow::FPLATEAUWindow(const TSharedRef<FPLATEAUEditorStyle>& InStyle)
-    : Style(InStyle) {}
+    : Style(InStyle) {
+}
 
 void FPLATEAUWindow::Startup() {
     FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(LEVEL_EDITOR_NAME);
@@ -98,8 +99,6 @@ void FPLATEAUWindow::ConstructTab() {
         ? pLevelEditorModule->GetLevelEditorTabManager()
         : FGlobalTabmanager::Get();
     pTabManager->TryInvokeTab(TabID);
-
-    //TabManager->TryInvokeTab(TabID);
 }
 
 void FPLATEAUWindow::OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder) {
@@ -141,7 +140,7 @@ TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
                     SNew(SScrollBox)
                         .Visibility_Lambda([=]() {
                         if (TabReference->IsCurrentIndex(1))
-                            return EVisibility::Visible;
+                        return EVisibility::Visible;
                         else
                             return EVisibility::Collapsed;
                             })
@@ -155,7 +154,7 @@ TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
                                     SNew(SScrollBox)
                                         .Visibility_Lambda([=]() {
                                         if (TabReference->IsCurrentIndex(2))
-                                            return EVisibility::Collapsed;
+                                        return EVisibility::Collapsed;
                                         else
                                             return EVisibility::Collapsed;
                                             })
@@ -169,7 +168,7 @@ TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
                                                     SNew(SScrollBox)
                                                         .Visibility_Lambda([=]() {
                                                         if (TabReference->IsCurrentIndex(3))
-                                                            return EVisibility::Visible;
+                                                        return EVisibility::Visible;
                                                         else
                                                             return EVisibility::Collapsed;
                                                             })
