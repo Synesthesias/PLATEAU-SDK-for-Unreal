@@ -27,9 +27,9 @@ class FCityModelLoaderImpl {
 public:
     static TArray<FLoadInputData> PrepareInputData(
         const UPLATEAUImportSettings* ImportSettings, const FString& Source,
-        const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference) {
+        const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference, const bool bImportFromServer, const plateau::network::Client ClientRef) {
         // ファイル検索
-        const auto DatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*Source));
+        const auto DatasetSource = LoadDataset(bImportFromServer, Source, ClientRef);
 
         TArray<FLoadInputData> LoadInputDataArray;
 
@@ -67,6 +67,15 @@ public:
             }
         }
         return LoadInputDataArray;
+    }
+
+    static plateau::dataset::DatasetSource LoadDataset(bool bImportFromServer, FString Source, plateau::network::Client ClientRef) {
+        if (bImportFromServer) {
+            return plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*Source), ClientRef);
+        }
+        else {
+            return plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*Source));
+        }
     }
 
     static FString CopyGmlFile(const FString& Source, const FString& GmlPath) {
@@ -192,11 +201,13 @@ void APLATEAUCityModelLoader::LoadAsync() {
             Extent = Extent,
             GeoReference = GeoReference,
             ImportSettings = ImportSettings,
+            bImportFromServer = bImportFromServer,
+            ClientRef = ClientRef,
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference);
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, ClientRef);
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){

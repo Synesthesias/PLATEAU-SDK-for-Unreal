@@ -80,11 +80,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     TWeakPtr<SVerticalBox> VerticalBox;
     TWeakPtr<SVerticalBox> ModelDataPlacementVerticalBox;
     ServerPanelRef = SNew(SPLATEAUServerDatasetSelectPanel);
+    ServerPanelRef->InitServerData();
 
     ChildSlot
         [
-        SAssignNew(VerticalBox, SVerticalBox)
-        // モデルデータのインポート(ヘッダー)
+            SAssignNew(VerticalBox, SVerticalBox)
+            // モデルデータのインポート(ヘッダー)
         + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))
         .AutoHeight()
@@ -161,8 +162,15 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Visibility_Lambda(
             [this]() {
                 auto IsValidDatasetSet = false;
-                if (DatasetAccessor != nullptr)
-                    IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
+                if (bImportFromServer) {
+                    if (ServerPanelRef->GetDatasetAccessor() != nullptr)
+                        IsValidDatasetSet = ServerPanelRef->GetDatasetAccessor()->getPackages() != PredefinedCityModelPackage::None;
+                }
+                else {
+                    if (DatasetAccessor != nullptr)
+                        IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
+                }
+
                 return IsValidDatasetSet
                     ? EVisibility::Visible
                     : EVisibility::Collapsed;
@@ -271,6 +279,18 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .ZoneID_Lambda(
             [this]() {
                 return ZoneID;
+            })
+        .bImportFromServer_Lambda(
+            [this]() {
+                return bImportFromServer;
+            })
+        .ClientRef_Lambda(
+            [this]() {
+                return ServerPanelRef->GetClientRef();
+            })
+        .ServerDatasetID_Lambda(
+            [this]() {
+                return ServerPanelRef->GetServerDatasetID();
             })];
 
     TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
@@ -311,7 +331,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         [SNew(SPLATEAUFeatureImportSettingsView)
         .DatasetAccessor_Lambda(
             [this]() {
-                return DatasetAccessor;
+                if (bImportFromServer) {
+                    return ServerPanelRef->GetDatasetAccessor();
+                }
+                else {
+                    return DatasetAccessor;
+                }
             })
         .Extent_Lambda(
             [ExtentEditButton]() {
@@ -332,7 +357,14 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
                 const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
                 const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
-                Loader->Source = SourcePath;
+                Loader->bImportFromServer = bImportFromServer;
+                Loader->ClientRef = ServerPanelRef->GetClientRef();
+                if (bImportFromServer) {
+                    Loader->Source = ServerPanelRef->GetServerDatasetID().c_str();
+                }
+                else {
+                    Loader->Source = SourcePath;
+                }
                 const auto& ExtentOpt = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
                 if (!ExtentOpt.IsSet()) {
                     // TODO: UI表示
@@ -346,7 +378,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
-                Loader->LoadAsync();                
+                Loader->LoadAsync();
 
                 return FReply::Handled();
             })

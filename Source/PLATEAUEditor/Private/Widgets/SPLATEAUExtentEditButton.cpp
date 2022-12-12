@@ -33,8 +33,14 @@ void SPLATEAUExtentEditButton::Construct(const FArguments& InArgs) {
         .ButtonColorAndOpacity(FColor(0, 255, 255, 255))
         .OnClicked_Lambda(
             [this, ZoneID = InArgs._ZoneID,
-            SourcePath = InArgs._SourcePath]() {
+            SourcePath = InArgs._SourcePath,
+            bImportFromServer = InArgs._bImportFromServer,
+            ClientRef = InArgs._ClientRef,
+            ServerDatasetID = InArgs._ServerDatasetID]() {
         IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(SourcePath.Get());
+        IPLATEAUEditorModule::Get().GetExtentEditor()->SetImportFromServer(bImportFromServer.Get());
+        IPLATEAUEditorModule::Get().GetExtentEditor()->SetClientRef(ClientRef.Get());
+        IPLATEAUEditorModule::Get().GetExtentEditor()->SetServerDatasetID(ServerDatasetID.Get());
 
         // TODO: ExtentEditorに委譲
         // ビューポートの操作性向上のため100分の1スケールで設定

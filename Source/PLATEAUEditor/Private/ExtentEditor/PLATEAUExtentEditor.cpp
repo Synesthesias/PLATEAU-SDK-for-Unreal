@@ -71,4 +71,28 @@ void FPLATEAUExtentEditor::ResetExtent() {
     Extent.Reset();
 }
 
+const bool FPLATEAUExtentEditor::IsImportFromServer() const {
+    return bImportFromServer;
+}
+
+void FPLATEAUExtentEditor::SetImportFromServer(bool InBool) {
+    bImportFromServer = InBool;
+}
+
+plateau::network::Client FPLATEAUExtentEditor::GetClientRef() const {
+    return ClientRef;
+}
+
+void FPLATEAUExtentEditor::SetClientRef(plateau::network::Client InClientRef) {
+    ClientRef = InClientRef;
+}
+
+const std::string FPLATEAUExtentEditor::GetServerDatasetID() const {
+    return ServerDatasetID;
+}
+
+void FPLATEAUExtentEditor::SetServerDatasetID(std::string InID) {
+    ServerDatasetID = InID;
+}
+
 #undef LOCTEXT_NAMESPACE

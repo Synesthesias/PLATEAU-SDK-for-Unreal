@@ -55,13 +55,27 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
             World->ChangeFeatureLevel(GWorld->FeatureLevel);
         }
         const auto& SourcePath = ExtentEditorPtr.Pin()->GetSourcePath();
+        const auto ClientRef = ExtentEditorPtr.Pin()->GetClientRef();
+        const auto ID = ExtentEditorPtr.Pin()->GetServerDatasetID();
+        const auto bImportFromServer = ExtentEditorPtr.Pin()->IsImportFromServer();
         std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
-        try {
-            const auto DatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
-            DatasetAccessor = DatasetSource.getAccessor();
+        if (bImportFromServer) {
+            try {
+                const auto DatasetSource = plateau::dataset::DatasetSource::createServer(ID, ClientRef);
+                DatasetAccessor = DatasetSource.getAccessor();
+            }
+            catch (...) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to open source ID: %s"), *ID.c_str());
+            }
         }
-        catch (...) {
-            UE_LOG(LogTemp, Error, TEXT("Failed to open udx source path: %s"), *SourcePath);
+        else {
+            try {
+                const auto DatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
+                DatasetAccessor = DatasetSource.getAccessor();
+            }
+            catch (...) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to open udx source path: %s"), *SourcePath);
+            }
         }
 
         if (DatasetAccessor == nullptr)
