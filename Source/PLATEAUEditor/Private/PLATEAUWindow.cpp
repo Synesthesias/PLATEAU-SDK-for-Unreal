@@ -76,16 +76,15 @@ TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs)
 
 void FPLATEAUWindow::ConstructTab() {
     const auto Window = Show();
-    TSharedRef<class FGlobalTabmanager> TabManager = FGlobalTabmanager::Get();
-    //TabManager->RegisterDefaultTabWindowSize(TabID, FVector2D(500, 700));
-    TabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
+    TSharedRef<class FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
+    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
         .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
 
-    FLevelEditorModule* pLevelEditorModule =
+    FLevelEditorModule* LevelEditorModule =
         FModuleManager::GetModulePtr<FLevelEditorModule>(
             FName(TEXT("LevelEditor")));
-    if (pLevelEditorModule) {
-        pLevelEditorModule->OnRegisterLayoutExtensions().AddLambda(
+    if (LevelEditorModule) {
+        LevelEditorModule->OnRegisterLayoutExtensions().AddLambda(
             [](FLayoutExtender& extender) {
                 extender.ExtendLayout(
                     FTabId("PlacementBrowser"),
@@ -94,11 +93,11 @@ void FPLATEAUWindow::ConstructTab() {
             });
     }
 
-    TSharedPtr<FTabManager> pTabManager =
-        pLevelEditorModule
-        ? pLevelEditorModule->GetLevelEditorTabManager()
+    TSharedPtr<FTabManager> TabManager =
+        LevelEditorModule
+        ? LevelEditorModule->GetLevelEditorTabManager()
         : FGlobalTabmanager::Get();
-    pTabManager->TryInvokeTab(TabID);
+    TabManager->TryInvokeTab(TabID);
 }
 
 void FPLATEAUWindow::OnWindowMenuBarExtension(FMenuBarBuilder& MenuBarBuilder) {
