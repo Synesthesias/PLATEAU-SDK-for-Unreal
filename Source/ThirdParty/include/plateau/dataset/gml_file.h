@@ -3,6 +3,7 @@
 #include <libplateau_api.h>
 #include <plateau/dataset/mesh_code.h>
 #include <set>
+#include "plateau/network/client.h"
 
 namespace plateau::dataset {
 
@@ -38,7 +39,8 @@ namespace plateau::dataset {
         std::shared_ptr<GmlFile> fetch(const std::string& destination_root_path) const;
 
         /**
-         * \brief CityGMLファイルとその関連ファイル(テクスチャ、コードリスト)をコピーします。コピー先にすでにファイルが存在する場合はスキップします。
+         * \brief GmlFileのパスがローカルマシンを指す場合、CityGMLファイルとその関連ファイル(テクスチャ、コードリスト)をコピーします。コピー先にすでにファイルが存在する場合はスキップします。
+         * パスが http で始まる場合、GMLファイルとその関連ファイルをダウンロードします。
          * \param destination_root_path コピー先のフォルダへのパス。このパスの配下に3D都市モデルデータ製品のルートフォルダが配置されます。
          * \param copied_gml_file コピーされたCityGMLファイル
          */

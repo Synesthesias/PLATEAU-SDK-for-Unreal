@@ -1,7 +1,6 @@
 #pragma once
 
 #include <libplateau_api.h>
-#include <filesystem>
 #include <plateau/dataset/i_dataset_accessor.h>
 
 namespace plateau::network {

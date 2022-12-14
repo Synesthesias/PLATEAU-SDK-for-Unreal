@@ -110,6 +110,10 @@ namespace plateau::dataset {
         /// 含まれるパッケージ種をフラグで返します。
         virtual PredefinedCityModelPackage getPackages() = 0;
 
+        /// 仮想コンストラクタのイディオムです。
+        virtual IDatasetAccessor* create() const = 0;
+        virtual IDatasetAccessor* clone() const = 0;
+
         virtual ~IDatasetAccessor() = default;
     };
 }

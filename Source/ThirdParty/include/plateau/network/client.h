@@ -53,7 +53,7 @@ namespace plateau::network {
         std::shared_ptr<std::vector<DatasetMetadataGroup>> getMetadata() const;
         void getMetadata(std::vector<DatasetMetadataGroup>& out_metadata_groups) const;
         DatasetFiles getFiles(const std::string& id) const;
-        std::string download(const std::string& destination_directory_utf8, const std::string& url_utf8) const;
+        std::string download(const std::string& destination_directory_path, const std::string& url) const;
 
         static std::string getDefaultServerUrl();
 
