@@ -16,6 +16,7 @@ private:
     int PrefectureID = 0;
     int MunicipalityID = 0;
     bool bIsVisible = false;
+
     plateau::network::Client ClientRef;
     std::shared_ptr<std::vector<plateau::network::DatasetMetadataGroup>> DataSets;
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
@@ -23,11 +24,13 @@ private:
     TMap<int, FText> MunicipalityTexts;
     TSharedPtr<SComboButton> MunicipalityComboButton;
     TSharedPtr<SEditableTextBox> ServerURL;
+    const std::string DefaultServerURL = plateau::network::Client::getDefaultServerUrl();
+
     bool bLoadedClientData = false;
+    bool bServerInitialized = false;
     FText MaxLODText;
     FText DescriptionText;
-    const std::string DefaultServerURL = plateau::network::Client::getDefaultServerUrl();
-    void LoadServerDataWithURL(const std::string InServerURL);
+    FCriticalSection Mutex;
 
 public:
     /** Constructs this widget with InArgs */
@@ -45,4 +48,5 @@ public:
 
 private:
     void LoadClientData(std::string InServerURL = "");
+    void LoadServerDataWithURL(const std::string InServerURL);
 };
