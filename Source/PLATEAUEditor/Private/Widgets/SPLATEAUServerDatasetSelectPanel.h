@@ -22,19 +22,27 @@ private:
     TMap<int, FText> PrefectureTexts;
     TMap<int, FText> MunicipalityTexts;
     TSharedPtr<SComboButton> MunicipalityComboButton;
+    TSharedPtr<SEditableTextBox> ServerURL;
     bool bLoadedClientData = false;
     FText MaxLODText;
     FText DescriptionText;
+    const std::string DefaultServerURL = plateau::network::Client::getDefaultServerUrl();
+    void LoadServerDataWithURL(const std::string InServerURL);
 
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs);
     void SetPanelVisibility(bool bVisible) { bIsVisible = bVisible; }
     void InitServerData();
-    inline std::shared_ptr<plateau::dataset::IDatasetAccessor> GetDatasetAccessor() { return DatasetAccessor; }
+    inline std::shared_ptr<plateau::dataset::IDatasetAccessor> GetDatasetAccessor() {
+        if (bLoadedClientData)
+            return DatasetAccessor;
+        else
+            return nullptr;
+    }
     inline plateau::network::Client GetClientRef() { return ClientRef; }
     inline std::string GetServerDatasetID() { return DataSets->at(PrefectureID).datasets[MunicipalityID].id; }
 
 private:
-    void LoadClientData();
+    void LoadClientData(std::string InServerURL = "");
 };

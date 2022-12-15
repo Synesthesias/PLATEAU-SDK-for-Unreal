@@ -77,25 +77,13 @@ namespace {
     }
 }
 
-void SPLATEAUServerDatasetSelectPanel::LoadClientData() {
+void SPLATEAUServerDatasetSelectPanel::LoadClientData(std::string InServerURL) {
     if (!bLoadedClientData) {
-        PrefectureTexts.Empty();
-        MunicipalityTexts.Empty();
-        ClientRef = plateau::network::Client();
-        DataSets = ClientRef.getMetadata();
-        for (int i = 0; i < DataSets->size(); i++) {
-            std::string TmpStr = DataSets->at(i).title;
-            PrefectureTexts.Add(i, FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str())));
-        }
-        for (int j = 0; j < DataSets->at(0).datasets.size(); j++) {
-            std::string TmpStr2 = DataSets->at(0).datasets[j].title;
-            MunicipalityTexts.Add(j, FText::FromString(UTF8_TO_TCHAR(TmpStr2.c_str())));
-        }
-        std::string TmpStr3 = DataSets->at(0).datasets[0].description;
-        DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr3.c_str()));
-        std::string TmpStr4 = std::to_string(DataSets->at(0).datasets[0].max_lod);
-        MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr4.c_str()));
-
+        const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+            ClientRef = plateau::network::Client(InServerURL);
+            DataSets = ClientRef.getMetadata();
+            }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
+        ServerLoadTask->Wait();
         try {
             const auto InDatasetSource = DatasetSource::createServer(DataSets->at(PrefectureID).datasets[MunicipalityID].id, ClientRef);
             DatasetAccessor = InDatasetSource.getAccessor();
@@ -104,13 +92,37 @@ void SPLATEAUServerDatasetSelectPanel::LoadClientData() {
             DatasetAccessor = nullptr;
             UE_LOG(LogTemp, Error, TEXT("Invalid Server Dataset ID"));
         }
-
+        PrefectureTexts.Empty();
+        MunicipalityTexts.Empty();
+        if (DataSets->size() > 0) {
+            for (int i = 0; i < DataSets->size(); i++) {
+                std::string TmpStr = DataSets->at(i).title;
+                PrefectureTexts.Add(i, FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str())));
+            }
+            if (DataSets->at(0).datasets.size()) {
+                for (int j = 0; j < DataSets->at(0).datasets.size(); j++) {
+                    std::string TmpStr2 = DataSets->at(0).datasets[j].title;
+                    MunicipalityTexts.Add(j, FText::FromString(UTF8_TO_TCHAR(TmpStr2.c_str())));
+                }
+                std::string TmpStr3 = DataSets->at(0).datasets[0].description;
+                DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr3.c_str()));
+                std::string TmpStr4 = std::to_string(DataSets->at(0).datasets[0].max_lod);
+                MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr4.c_str()));
+            }
+        }
+       
         bLoadedClientData = true;
     }
 }
 void SPLATEAUServerDatasetSelectPanel::InitServerData() {
     const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
         LoadClientData();
+        }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
+}
+
+void SPLATEAUServerDatasetSelectPanel::LoadServerDataWithURL(const std::string InServerURL) {
+    const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        LoadClientData(InServerURL.c_str());
         }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
 }
 
@@ -136,7 +148,44 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                     .VAlign(VAlign_Center)
                     .HAlign(HAlign_Right)
                     .Padding(FMargin(0, 0, 0, 5))
-                    .AutoWidth()
+                    .FillWidth(0.25f)
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Right)
+                    .Text(LOCTEXT("Server URL", "サーバーURL"))
+                    ] +
+                    SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .Padding(0, 0, 0, 5)
+                    .FillWidth(0.1f) +
+                    SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .Padding(0, 0, 0, 5)
+                    .FillWidth(1)
+                    [
+                        SAssignNew(ServerURL, SEditableTextBox)
+                        .Justification(ETextJustify::Left)
+                        .Text(FText::FromString(DefaultServerURL.c_str()))
+                    ]
+                + SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .Padding(0, 0, 0, 15)
+                    .FillWidth(0.1f)]
+
+        + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(FMargin(0, 0, 0, 15))
+                    [
+                        SNew(SHorizontalBox) +
+                        SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .Padding(0, 0, 0, 5)
+                    .FillWidth(0.1f) +
+                    SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .HAlign(HAlign_Right)
+                    .Padding(FMargin(0, 0, 0, 5))
+                    .FillWidth(0.25f)
                     [
                         SNew(STextBlock)
                         .Justification(ETextJustify::Right)
@@ -155,7 +204,13 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                         .OnGetMenuContent_Lambda(
                             [&]() {
                                 FMenuBuilder MenuBuilder(true, nullptr);
-                                const auto Items = PrefectureTexts;
+                                TMap<int, FText> Items;
+                                if (bLoadedClientData) {
+                                    Items = PrefectureTexts;
+                                }
+                                else {
+                                    Items.Add(0, FText::FromString("Loading..."));
+                                }
                                 for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
                                     const auto ItemText = ItemIter->Value;
                                     const auto ID = ItemIter->Key;
@@ -178,7 +233,7 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                                                 DatasetAccessor = nullptr;
                                                 UE_LOG(LogTemp, Error, TEXT("Invalid Server Dataset ID"));
                                             }
-                                            
+
                                         }));
                                     MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
                                 }
@@ -190,7 +245,7 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                                 [
                                     SNew(STextBlock).Text_Lambda(
                                         [this]() {
-                                            if (bLoadedClientData)
+                                            if (bLoadedClientData && PrefectureTexts.Num() > PrefectureID)
                                                 return PrefectureTexts[PrefectureID];
                                             else
                                                 return FText::FromString("Loading...");
@@ -198,13 +253,11 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                                 .Justification(ETextJustify::Left)
                                 ]
                     ]
-
-                //市町村
-                //TODO : サーバーから受け取ったデータの反映
-                +SHorizontalBox::Slot()
+                + SHorizontalBox::Slot()
                     .VAlign(VAlign_Center)
                     .Padding(0, 0, 0, 15)
                     .FillWidth(0.1f)]
+                //データセット
                 + SVerticalBox::Slot()
                     .AutoHeight()
                     .Padding(FMargin(0, 0, 0, 5))
@@ -218,7 +271,7 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                     .VAlign(VAlign_Center)
                     .HAlign(HAlign_Right)
                     .Padding(FMargin(0, 0, 0, 5))
-                    .AutoWidth()
+                    .FillWidth(0.25f)
                     [
                         SNew(STextBlock)
                         .Text(LOCTEXT("Select DataSet", "データセット"))
@@ -237,7 +290,13 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                         .OnGetMenuContent_Lambda(
                             [&]() {
                                 FMenuBuilder MenuBuilder(true, nullptr);
-                                const auto Items = MunicipalityTexts;
+                                TMap<int, FText> Items;
+                                if (bLoadedClientData) {
+                                    Items = MunicipalityTexts;
+                                }
+                                else {
+                                    Items.Add(0, FText::FromString("Loading..."));
+                                }
                                 for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
                                     const auto ItemText = ItemIter->Value;
                                     const auto ID = ItemIter->Key;
@@ -267,7 +326,7 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                                 [
                                     SNew(STextBlock).Text_Lambda(
                                         [this]() {
-                                            if (bLoadedClientData)
+                                            if (bLoadedClientData && MunicipalityTexts.Num() > MunicipalityID)
                                                 return MunicipalityTexts[MunicipalityID];
                                             else
                                                 return FText::FromString("Loading...");
@@ -294,7 +353,10 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
                             .OnClicked_Lambda([&]() {
                             if (bLoadedClientData) {
                                 bLoadedClientData = false;
-                                InitServerData();
+                                PrefectureID = 0;
+                                MunicipalityID = 0;
+                                const std::string TmpString = TCHAR_TO_UTF8(*ServerURL->GetText().ToString());
+                                LoadServerDataWithURL(TmpString);
                             }
                             return FReply::Handled();
                                 })
