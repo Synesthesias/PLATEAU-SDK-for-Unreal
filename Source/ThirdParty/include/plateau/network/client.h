@@ -55,7 +55,7 @@ namespace plateau::network {
         DatasetFiles getFiles(const std::string& id) const;
         std::string download(const std::string& destination_directory_path, const std::string& url) const;
 
-        static std::string getDefaultServerUrl();
+        static const std::string& getDefaultServerUrl();
 
     private:
         std::string server_url_;
