@@ -8,6 +8,7 @@
 #include "PLATEAUWindow.h"
 #include "CityModelLoaderDetails/PLATEAUCityModelLoaderDetails.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
+#include "Settings/EditorLoadingSavingSettings.h"
 
 #include "Styling/ISlateStyle.h"
 
@@ -25,6 +26,42 @@ public:
         Style = MakeShareable(new FPLATEAUEditorStyle());
         Window = MakeShareable(new FPLATEAUWindow(Style.ToSharedRef()));
         ExtentEditor = MakeShareable(new FPLATEAUExtentEditor());
+
+        FAutoReimportWildcard WildcardToInject1;
+        WildcardToInject1.Wildcard = TEXT("PLATEAU/Datasets/*");
+        WildcardToInject1.bInclude = false;
+
+        FAutoReimportWildcard WildcardToInject2;
+        WildcardToInject2.Wildcard = TEXT("PLATEAU/Basemap/*");
+        WildcardToInject2.bInclude = false;
+
+        auto Default = GetMutableDefault<UEditorLoadingSavingSettings>();
+        bool HasChanged = false;
+        for (auto& Setting : Default->AutoReimportDirectorySettings) {
+            bool Found1 = false;
+            bool Found2 = false;
+            for (const auto& Wildcard : Setting.Wildcards) {
+                if (Wildcard.Wildcard == WildcardToInject1.Wildcard) {
+                    Found1 = true;
+                }
+                else if (Wildcard.Wildcard == WildcardToInject2.Wildcard) {
+                    Found2 = true;
+                }
+            }
+            if (!Found1) {
+                Setting.Wildcards.Add(WildcardToInject1);
+                HasChanged = true;
+                Found1 = false;
+            }
+            if (!Found2) {
+                Setting.Wildcards.Add(WildcardToInject2);
+                HasChanged = true;
+                Found2 = false;
+            }
+        }
+        if (HasChanged) {
+            Default->PostEditChange();
+        }
 
         Window->Startup();
 
