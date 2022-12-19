@@ -12,6 +12,7 @@
 #include "DesktopPlatformModule.h"
 #include "Engine/Selection.h"
 #include "plateau/mesh_writer/gltf_writer.h"
+#include "plateau/mesh_writer/fbx_writer.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshExporter.h"
 
@@ -172,7 +173,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
         ]
         ]
 
-    //フォーマット(GLTF時に表示するもの)
+    //フォーマット(FBX/GLTF時に表示するもの)
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(0, 0, 0, 10)
@@ -183,7 +184,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
         [
             SNew(STextBlock)
             .Visibility_Lambda([this]() {
-        if (CurrentModelType == EMeshFileFormat::GLTF) {
+        if (CurrentModelType != EMeshFileFormat::OBJ) {
             return EVisibility::Visible;
         }
         else {
@@ -196,7 +197,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
                     [
                         SNew(SComboButton)
                         .Visibility_Lambda([this]() {
-                    if (CurrentModelType == EMeshFileFormat::GLTF) {
+                    if (CurrentModelType != EMeshFileFormat::OBJ) {
                         return EVisibility::Visible;
                     }
                     else {
@@ -228,7 +229,7 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
                             }
                                     })
                             .Visibility_Lambda([this]() {
-                                        if (CurrentModelType == EMeshFileFormat::GLTF) {
+                                        if (CurrentModelType != EMeshFileFormat::OBJ) {
                                             return EVisibility::Visible;
                                         }
                                         else {
@@ -269,7 +270,10 @@ void SPLATEAUExportPanel::Construct(const FArguments& InArgs, const TSharedRef<c
             MeshExportOptions Options;
             plateau::meshWriter::GltfWriteOptions GltfOptions;
             GltfOptions.mesh_file_format = bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLTF : plateau::meshWriter::GltfFileFormat::GLB;
+            plateau::meshWriter::FbxWriteOptions FbxOptions;
+            FbxOptions.file_format = bExportAsBinary ? plateau::meshWriter::FbxFileFormat::Binary : plateau::meshWriter::FbxFileFormat::ASCII;
             Options.GltfWriteOptions = GltfOptions;
+            Options.FbxWriteOptions = FbxOptions;
             Options.bExportHiddenObjects = Settings->ExportSetting.bExportHiddenModel;
             Options.bExportTexture = Settings->ExportSetting.bExportTexture;
             Options.CoordinateSystem = Settings->ExportSetting.CoorinateSystem;
