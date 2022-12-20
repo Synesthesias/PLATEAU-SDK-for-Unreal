@@ -49,4 +49,10 @@ public:
 private:
     void LoadClientData(std::string InServerURL = "");
     void LoadServerDataWithURL(const std::string InServerURL);
+    void SetDatasetAccessor();
+    void InitUITexts();
+    TSharedPtr<SVerticalBox> ConstructServerDataPanel();
+    TSharedPtr<SVerticalBox> ConstructPrefectureSelectPanel();
+    TSharedPtr<SVerticalBox> ConstructDatasetSelectPanel();
+    TSharedPtr<SVerticalBox> ConstructDescriptionPanel();
 };
