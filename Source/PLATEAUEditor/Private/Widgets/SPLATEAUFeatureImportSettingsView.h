@@ -5,9 +5,8 @@
 #include "PLATEAUGeometry.h"
 #include "Widgets/SCompoundWidget.h"
 
-namespace plateau::udx {
-    enum class PredefinedCityModelPackage : uint32;
-    class UdxFileCollection;
+namespace plateau::dataset {
+    class IDatasetAccessor;
 }
 
 /**
@@ -16,10 +15,10 @@ namespace plateau::udx {
 class SPLATEAUFeatureImportSettingsView : public SCompoundWidget {
 public:
     SLATE_BEGIN_ARGS(SPLATEAUFeatureImportSettingsView)
-        : _SourcePath("")
+        : _DatasetAccessor(nullptr)
         , _Extent() {}
 
-        SLATE_ATTRIBUTE(FString, SourcePath)
+        SLATE_ATTRIBUTE(std::shared_ptr<plateau::dataset::IDatasetAccessor>, DatasetAccessor)
         SLATE_ATTRIBUTE(FPLATEAUExtent, Extent)
 
         SLATE_END_ARGS()
@@ -32,7 +31,7 @@ public:
     
 private:
     FPLATEAUExtent ExtentCache;
-    FString SourcePathCache;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
 
     TSharedPtr<IDetailsView> ImportSettingsView = nullptr;
 };

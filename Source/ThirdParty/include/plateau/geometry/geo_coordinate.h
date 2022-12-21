@@ -27,9 +27,9 @@ namespace plateau::geometry {
         GeoCoordinate() = default;
 
         GeoCoordinate(double lat, double lon, double height) :
-            latitude(lat),
-            longitude(lon),
-            height(height) {
+                latitude(lat),
+                longitude(lon),
+                height(height) {
         }
     };
 
@@ -75,8 +75,21 @@ namespace plateau::geometry {
         bool contains(const citygml::CityObject& city_obj) const;
 
         /**
+         * other と交わる箇所があるかどうかを返します。
+         * ただし other の高さは無視して緯度と経度の2次元のみで判定します。
+         */
+        bool intersects2D(const Extent& other) const;
+
+        /**
          * min と max の中点を GeoCoordinate で返します。
          */
         GeoCoordinate centerPoint() const;
+
+        static Extent all() {
+            return {
+                    GeoCoordinate(-90, -180, -9999),
+                    GeoCoordinate(90, 180, 9999)
+            };
+        }
     };
 }

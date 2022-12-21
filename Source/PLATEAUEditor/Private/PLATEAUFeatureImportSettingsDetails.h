@@ -11,26 +11,26 @@ class SWidget;
 class SEditableTextBox;
 class SSequenceRecorder;
 
-namespace plateau::udx {
+namespace plateau::dataset {
     enum class PredefinedCityModelPackage : uint32;
 }
 
 class FPLATEAUFeatureSettingsRow {
 public:
-    FPLATEAUFeatureSettingsRow(const plateau::udx::PredefinedCityModelPackage InPackage)
+    FPLATEAUFeatureSettingsRow(const plateau::dataset::PredefinedCityModelPackage InPackage)
         : Package(InPackage) {}
     
     void AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeaturePlacementSettingsProperty) const;
 
 private:
-    plateau::udx::PredefinedCityModelPackage Package;
+    plateau::dataset::PredefinedCityModelPackage Package;
 };
 
 class FPLATEAUFeatureSettingsDetails : public IDetailCustomization {
 public:
-    FPLATEAUFeatureSettingsDetails(const plateau::udx::PredefinedCityModelPackage InPackageMask);
+    FPLATEAUFeatureSettingsDetails(const plateau::dataset::PredefinedCityModelPackage InPackageMask);
 
-    static TSharedRef<IDetailCustomization> MakeInstance(const plateau::udx::PredefinedCityModelPackage InPackageMask) {
+    static TSharedRef<IDetailCustomization> MakeInstance(const plateau::dataset::PredefinedCityModelPackage InPackageMask) {
         return MakeShareable(new FPLATEAUFeatureSettingsDetails(InPackageMask));
     }
 
@@ -38,6 +38,6 @@ public:
     virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-    plateau::udx::PredefinedCityModelPackage PackageMask;
-    TMap<plateau::udx::PredefinedCityModelPackage, FPLATEAUFeatureSettingsRow> FeatureSettingsRowMap;
+    plateau::dataset::PredefinedCityModelPackage PackageMask;
+    TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUFeatureSettingsRow> FeatureSettingsRowMap;
 };

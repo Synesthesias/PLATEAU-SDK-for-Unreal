@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
-namespace plateau::udx {
+namespace plateau::dataset {
     enum class PredefinedCityModelPackage : uint32;
-    class UdxFileCollection;
+    class IDatasetAccessor;
 }
 
 /**
@@ -37,7 +37,7 @@ private:
     TSharedPtr<IDetailsView> ImportSettingsView = nullptr;
     TSharedPtr<class SPLATEAUServerDatasetSelectPanel> ServerPanelRef = nullptr;
 
-    std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
     TSharedRef<SHorizontalBox> CreateFileSourceSelectButton();

@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 
 namespace plateau {
-    namespace udx {
+    namespace dataset {
         class MeshCode;
     }
     namespace geometry {
@@ -35,7 +35,7 @@ public:
     /**
      * @brief インスタンスを初期化します。
      */
-    void Init(const plateau::udx::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference);
+    void Init(const plateau::dataset::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference);
 
     /**
      * @brief 範囲が交差するかどうかを判断します。

@@ -5,7 +5,7 @@
 
 #include "SceneManagement.h"
 
-#include <plateau/udx/mesh_code.h>
+#include <plateau/dataset/mesh_code.h>
 #include <plateau/geometry/geo_reference.h>
 
 FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
@@ -54,7 +54,7 @@ FVector2D FPLATEAUMeshCodeGizmo::GetMax() const {
     return FVector2D(MaxX, MaxY);
 }
 
-void FPLATEAUMeshCodeGizmo::Init(const plateau::udx::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference) {
+void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference) {
     const auto Extent = InMeshCode.getExtent();
     const auto RawMin = InGeoReference.project(Extent.min);
     const auto RawMax = InGeoReference.project(Extent.max);

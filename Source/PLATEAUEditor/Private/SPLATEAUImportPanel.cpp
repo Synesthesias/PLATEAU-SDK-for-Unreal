@@ -3,8 +3,9 @@
 
 #include "SPLATEAUImportPanel.h"
 
-#include <plateau/udx/city_model_package.h>
-#include <plateau/udx/udx_file_collection.h>
+#include <plateau/dataset/city_model_package.h>
+#include <plateau/dataset/i_dataset_accessor.h>
+#include <plateau/dataset/dataset_source.h>
 
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUImportSettings.h"
@@ -28,7 +29,7 @@
 #define LOCTEXT_NAMESPACE "SPLATEAUImportPanel"
 #define BUTTON_COLOR FSlateColor(FColor(0, 255, 255))
 
-using namespace plateau::udx;
+using namespace plateau::dataset;
 
 namespace {
     TMap<int, FText> GetZoneIDTexts() {
@@ -79,11 +80,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     TWeakPtr<SVerticalBox> VerticalBox;
     TWeakPtr<SVerticalBox> ModelDataPlacementVerticalBox;
     ServerPanelRef = SNew(SPLATEAUServerDatasetSelectPanel);
+    ServerPanelRef->InitServerData();
 
     ChildSlot
         [
-        SAssignNew(VerticalBox, SVerticalBox)
-        // モデルデータのインポート(ヘッダー)
+            SAssignNew(VerticalBox, SVerticalBox)
+            // モデルデータのインポート(ヘッダー)
         + SVerticalBox::Slot()
         .Padding(FMargin(0, 20.5, 0, 5))
         .AutoHeight()
@@ -160,8 +162,15 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Visibility_Lambda(
             [this]() {
                 auto IsValidDatasetSet = false;
-                if (FileCollection != nullptr)
-                    IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
+                if (bImportFromServer) {
+                    if (ServerPanelRef->GetDatasetAccessor() != nullptr)
+                        IsValidDatasetSet = ServerPanelRef->GetDatasetAccessor()->getPackages() != PredefinedCityModelPackage::None;
+                }
+                else {
+                    if (DatasetAccessor != nullptr)
+                        IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
+                }
+
                 return IsValidDatasetSet
                     ? EVisibility::Visible
                     : EVisibility::Collapsed;
@@ -270,6 +279,18 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .ZoneID_Lambda(
             [this]() {
                 return ZoneID;
+            })
+        .bImportFromServer_Lambda(
+            [this]() {
+                return bImportFromServer;
+            })
+        .ClientRef_Lambda(
+            [this]() {
+                return ServerPanelRef->GetClientRef();
+            })
+        .ServerDatasetID_Lambda(
+            [this]() {
+                return ServerPanelRef->GetServerDatasetID();
             })];
 
     TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
@@ -308,9 +329,14 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .AutoHeight()
         .Padding(0, 0, 0, 0)
         [SNew(SPLATEAUFeatureImportSettingsView)
-        .SourcePath_Lambda(
+        .DatasetAccessor_Lambda(
             [this]() {
-                return SourcePath;
+                if (bImportFromServer) {
+                    return ServerPanelRef->GetDatasetAccessor();
+                }
+                else {
+                    return DatasetAccessor;
+                }
             })
         .Extent_Lambda(
             [ExtentEditButton]() {
@@ -331,8 +357,15 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
                 const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
                 const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
-                Loader->Source = SourcePath;
-                const auto ExtentOpt = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
+                Loader->bImportFromServer = bImportFromServer;
+                Loader->ClientRef = ServerPanelRef->GetClientRef();
+                if (bImportFromServer) {
+                    Loader->Source = ServerPanelRef->GetServerDatasetID().c_str();
+                }
+                else {
+                    Loader->Source = SourcePath;
+                }
+                const auto& ExtentOpt = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
                 if (!ExtentOpt.IsSet()) {
                     // TODO: UI表示
                     return FReply::Handled();
@@ -345,7 +378,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
 
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
-                Loader->LoadAsync();                
+                Loader->LoadAsync();
 
                 return FReply::Handled();
             })
@@ -409,8 +442,8 @@ TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
                         .Visibility_Lambda(
                             [this] {
                                 auto IsValidDatasetSet = false;
-                                if (FileCollection != nullptr)
-                                    IsValidDatasetSet = FileCollection->getPackages() != PredefinedCityModelPackage::None;
+                                if (DatasetAccessor != nullptr)
+                                    IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
                                 return IsValidDatasetSet
                                     ? EVisibility::Collapsed
                                     : EVisibility::Visible;
@@ -508,10 +541,11 @@ FReply SPLATEAUImportPanel::OnBtnSelectFolderPathClicked() {
         OutFolderName)) {
         SourcePath = OutFolderName;
         try {
-            FileCollection = UdxFileCollection::find(TCHAR_TO_UTF8(*SourcePath));
+            const auto InDatasetSource = DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
+            DatasetAccessor = InDatasetSource.getAccessor();
         }
         catch (...) {
-            FileCollection = nullptr;
+            DatasetAccessor = nullptr;
             UE_LOG(LogTemp, Error, TEXT("Invalid source path : %s"), *SourcePath);
         }
     }

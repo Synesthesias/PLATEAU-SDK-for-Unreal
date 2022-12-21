@@ -12,7 +12,8 @@
 #include "BlueprintEditorSettings.h"
 #include "SlateOptMacros.h"
 
-#include "plateau/udx/udx_file_collection.h"
+#include "plateau/dataset/dataset_source.h"
+#include "plateau/dataset/i_dataset_accessor.h"
 #include "plateau/basemap/tile_projection.h"
 #include "plateau/basemap/vector_tile_downloader.h"
 #include "plateau/geometry/geo_coordinate.h"
@@ -53,29 +54,44 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         if (World != nullptr) {
             World->ChangeFeatureLevel(GWorld->FeatureLevel);
         }
-        std::shared_ptr<plateau::udx::UdxFileCollection> FileCollection;
         const auto& SourcePath = ExtentEditorPtr.Pin()->GetSourcePath();
-        try {
-            FileCollection = plateau::udx::UdxFileCollection::find(TCHAR_TO_UTF8(*SourcePath));
+        const auto ClientRef = ExtentEditorPtr.Pin()->GetClientRef();
+        const auto ID = ExtentEditorPtr.Pin()->GetServerDatasetID();
+        const auto bImportFromServer = ExtentEditorPtr.Pin()->IsImportFromServer();
+        std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
+        if (bImportFromServer) {
+            try {
+                const auto DatasetSource = plateau::dataset::DatasetSource::createServer(ID, ClientRef);
+                DatasetAccessor = DatasetSource.getAccessor();
+            }
+            catch (...) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to open source ID: %s"), *ID.c_str());
+            }
         }
-        catch (...) {
-            UE_LOG(LogTemp, Error, TEXT("Failed to open udx source path: %s"), *SourcePath);
+        else {
+            try {
+                const auto DatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
+                DatasetAccessor = DatasetSource.getAccessor();
+            }
+            catch (...) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to open udx source path: %s"), *SourcePath);
+            }
         }
 
-        if (FileCollection == nullptr)
+        if (DatasetAccessor == nullptr)
             return;
 
-        if (FileCollection->getMeshCodes().size() == 0)
+        if (DatasetAccessor->getMeshCodes().size() == 0)
             return;
 
         auto GeoReference = ExtentEditorPtr.Pin()->GetGeoReference();
-        const auto RawCenterPoint = FileCollection->calculateCenterPoint(GeoReference.GetData());
+        const auto RawCenterPoint = DatasetAccessor->calculateCenterPoint(GeoReference.GetData());
         GeoReference.ReferencePoint.X = RawCenterPoint.x;
         GeoReference.ReferencePoint.Y = RawCenterPoint.y;
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditorPtr.Pin()->SetGeoReference(GeoReference);
         
-        ViewportClient->Initialize(FileCollection);
+        ViewportClient->Initialize(DatasetAccessor);
     }
 }
 

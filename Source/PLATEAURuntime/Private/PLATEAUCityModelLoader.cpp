@@ -4,7 +4,8 @@
 #include "PLATEAUCityModelLoader.h"
 
 #include "PLATEAUInstancedCityModel.h"
-#include "plateau/udx/udx_file_collection.h"
+#include "plateau/dataset/dataset_source.h"
+#include "plateau/dataset/city_model_package.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "plateau/polygon_mesh/mesh_extract_options.h"
 #include "PLATEAUMeshLoader.h"
@@ -26,10 +27,9 @@ class FCityModelLoaderImpl {
 public:
     static TArray<FLoadInputData> PrepareInputData(
         const UPLATEAUImportSettings* ImportSettings, const FString& Source,
-        const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference) {
+        const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference, const bool bImportFromServer, const plateau::network::Client ClientRef) {
         // ファイル検索
-        const auto FileCollection = plateau::udx::UdxFileCollection::find(TCHAR_TO_UTF8(*Source))
-            ->filter(Extent.GetNativeData());
+        const auto DatasetSource = LoadDataset(bImportFromServer, Source, ClientRef);
 
         TArray<FLoadInputData> LoadInputDataArray;
 
@@ -38,11 +38,14 @@ public:
             if (!Settings.bImport)
                 continue;
 
-            const auto GmlFiles = FileCollection->getGmlFiles(Package);
+            const auto GmlFiles =
+                DatasetSource.getAccessor()
+                ->filter(Extent.GetNativeData())
+                ->getGmlFiles(Package);
 
             for (const auto& GmlFile : *GmlFiles) {
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
-                LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.c_str());
+                LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
                 auto& ExtractOptions = LoadInputData.ExtractOptions;
                 ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
                 ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
@@ -54,7 +57,7 @@ public:
                 ExtractOptions.grid_count_of_side = 10;
                 ExtractOptions.unit_scale = 0.01f;
                 ExtractOptions.extent = Extent.GetNativeData();
-                if (Package == plateau::udx::PredefinedCityModelPackage::Relief || Package == plateau::udx::PredefinedCityModelPackage::DisasterRisk) {
+                if (Package == plateau::dataset::PredefinedCityModelPackage::Relief || Package == plateau::dataset::PredefinedCityModelPackage::DisasterRisk) {
                     ExtractOptions.exclude_city_object_outside_extent = false;
                     ExtractOptions.exclude_triangles_outside_extent = true;
                 } else {
@@ -66,12 +69,21 @@ public:
         return LoadInputDataArray;
     }
 
+    static plateau::dataset::DatasetSource LoadDataset(bool bImportFromServer, FString Source, plateau::network::Client ClientRef) {
+        if (bImportFromServer) {
+            return plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*Source), ClientRef);
+        }
+        else {
+            return plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*Source));
+        }
+    }
+
     static FString CopyGmlFile(const FString& Source, const FString& GmlPath) {
         const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
 
         // ファイルコピー
         try {
-            const auto CopiedGml = plateau::udx::UdxFileCollection::fetch(TCHAR_TO_UTF8(*Destination), plateau::udx::GmlFileInfo(TCHAR_TO_UTF8(*GmlPath)));
+            const auto CopiedGml = plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath)).fetch(TCHAR_TO_UTF8(*Destination));
             return UTF8_TO_TCHAR(CopiedGml->getPath().c_str());
         }
         catch (...) {
@@ -189,11 +201,13 @@ void APLATEAUCityModelLoader::LoadAsync() {
             Extent = Extent,
             GeoReference = GeoReference,
             ImportSettings = ImportSettings,
+            bImportFromServer = bImportFromServer,
+            ClientRef = ClientRef,
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference);
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, ClientRef);
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
@@ -217,10 +231,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
                             ++LoadCompletedCount;
 
                         ExecuteInGameThread(OwnerLoader,
-                            [&CurrentLoadingGmls, &LoadCompletedCount](TWeakObjectPtr<APLATEAUCityModelLoader> Loader){
-                            Loader->Status.LoadedGmlCount = LoadCompletedCount;
-                            Loader->Status.LoadingGmls = CurrentLoadingGmls;
-                        });
+                            [&CurrentLoadingGmls, &LoadCompletedCount](TWeakObjectPtr<APLATEAUCityModelLoader> Loader) {
+                                Loader->Status.LoadedGmlCount = LoadCompletedCount;
+                                Loader->Status.LoadingGmls = CurrentLoadingGmls;
+                            });
                     }
                     return CurrentLoadingGmls.Num() < 4;
                 }, 3);

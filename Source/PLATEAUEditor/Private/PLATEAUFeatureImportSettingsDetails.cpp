@@ -2,7 +2,7 @@
 
 #include "PLATEAUFeatureImportSettingsDetails.h"
 
-#include <plateau/udx/city_model_package.h>
+#include <plateau/dataset/city_model_package.h>
 
 #include "DetailLayoutBuilder.h"
 #include "DetailCategoryBuilder.h"
@@ -15,7 +15,7 @@
 
 #define LOCTEXT_NAMESPACE "PLATEAUFeatureImportSettings"
 
-using namespace plateau::udx;
+using namespace plateau::dataset;
 
 namespace {
     TMap<EPLATEAUMeshGranularity, FText> GetGranularityTexts() {
@@ -58,7 +58,7 @@ namespace {
 
 
 FPLATEAUFeatureSettingsDetails::FPLATEAUFeatureSettingsDetails(
-    const plateau::udx::PredefinedCityModelPackage InPackageMask)
+    const plateau::dataset::PredefinedCityModelPackage InPackageMask)
     : PackageMask(InPackageMask) {}
 
 void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) {
@@ -130,7 +130,7 @@ void FPLATEAUFeatureSettingsDetails::CustomizeDetails(IDetailLayoutBuilder& Deta
 }
 
 void FPLATEAUFeatureSettingsRow::AddToCategory(IDetailCategoryBuilder& Category, TSharedPtr<IPropertyHandle> FeatureSettingsProperty) const {
-    const auto PackageInfo = plateau::udx::CityModelPackageInfo::getPredefined(Package);
+    const auto PackageInfo = plateau::dataset::CityModelPackageInfo::getPredefined(Package);
 
     const auto ImportProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImport));
     const auto ImportTextureProperty = FeatureSettingsProperty->GetChildHandle(GET_MEMBER_NAME_CHECKED(FPLATEAUFeatureImportSettings, bImportTexture));

@@ -1,7 +1,6 @@
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUTextureLoader.h"
 
-#include "plateau/udx/udx_file_collection.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
 

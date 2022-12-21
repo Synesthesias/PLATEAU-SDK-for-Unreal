@@ -33,7 +33,7 @@ namespace plateau::polygonMesh {
                 coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
                 exclude_city_object_outside_extent(true),
                 exclude_triangles_outside_extent(false),
-                extent(geometry::Extent(geometry::GeoCoordinate(-90, -180, -99999), geometry::GeoCoordinate(90, 180, 99999))) // 全範囲をデフォルトとします。
+                extent(geometry::Extent::all()) // 全範囲をデフォルトとします。
                 {}
 
     public:
