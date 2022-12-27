@@ -10,6 +10,7 @@
 #include "Dialogs/DlgPickPath.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Framework/Docking/LayoutExtender.h"
+#include "Widgets/SPLATEAUFilteringPanel.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
@@ -153,12 +154,12 @@ TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
                                     SNew(SScrollBox)
                                         .Visibility_Lambda([=]() {
                                         if (TabReference->IsCurrentIndex(2))
-                                        return EVisibility::Collapsed;
+                                        return EVisibility::Visible;
                                         else
                                             return EVisibility::Collapsed;
                                             })
                                         + SScrollBox::Slot()[
-                                            SNew(SPLATEAUImportPanel, Style.ToSharedRef())
+                                            SNew(SPLATEAUFilteringPanel, Style.ToSharedRef())
                                         ]
                                 ]
                                 + SOverlay::Slot()

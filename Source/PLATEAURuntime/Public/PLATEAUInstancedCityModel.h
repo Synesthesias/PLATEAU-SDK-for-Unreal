@@ -5,7 +5,12 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
+
+#include <plateau/dataset/city_model_package.h>
+
 #include "PLATEAUInstancedCityModel.generated.h"
+
+struct PLATEAUPackageLOD;
 
 
 USTRUCT(BlueprintType)
@@ -42,6 +47,12 @@ public:
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
 
+    plateau::dataset::PredefinedCityModelPackage GetExistPackage();
+
+
+    APLATEAUInstancedCityModel* FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bSingleLOD);
+    APLATEAUInstancedCityModel* FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType);
+    TArray<PLATEAUPackageLOD> GetPackageLODs();
 
 protected:
     // Called when the game starts or when spawned
@@ -50,5 +61,9 @@ protected:
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
+
+private:
+    TArray<USceneComponent*> MeshComponents;
+
 
 };

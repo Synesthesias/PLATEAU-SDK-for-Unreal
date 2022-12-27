@@ -1,5 +1,6 @@
 #include "SPLATEAUServerDatasetSelectPanel.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
+#include "SlateOptMacros.h"
 
 #include <plateau/dataset/city_model_package.h>
 #include <plateau/dataset/i_dataset_accessor.h>
