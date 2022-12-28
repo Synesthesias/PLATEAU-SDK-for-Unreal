@@ -31,6 +31,9 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     if (!bShowLevel5Mesh)
         return;
 
+    if (MeshCodeLevel == 2)
+        return;
+
     for (int i = 1; i < 4; ++i) {
         FVector	P, Q;
 

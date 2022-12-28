@@ -34,7 +34,8 @@ namespace {
 
         HPLATEAUExtentHandleProxy(int index) :
             HHitProxy(HPP_UI),
-            Index(index) {}
+            Index(index) {
+        }
     };
     IMPLEMENT_HIT_PROXY(HPLATEAUExtentHandleProxy, HHitProxy);
 
@@ -177,11 +178,12 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
     constexpr FColor SelectedColor(225, 225, 110);
     constexpr FColor UnselectedColor(255, 127, 80);
 
+    double CameraDistance = GetViewTransform().GetLocation().Z;
     for (int i = 0; i < 5; ++i) {
         const auto HitProxy = new HPLATEAUExtentHandleProxy(i);
         PDI->SetHitProxy(HitProxy);
         const FColor Color = i == SelectedHandleIndex ? SelectedColor : UnselectedColor;
-        ExtentGizmo->DrawHandle(i, Color, View, PDI);
+        ExtentGizmo->DrawHandle(i, Color, View, PDI, CameraDistance);
         PDI->SetHitProxy(nullptr);
     }
     ExtentGizmo->DrawExtent(View, PDI);

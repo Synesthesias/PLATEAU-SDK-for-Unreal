@@ -12,7 +12,7 @@ class FPLATEAUExtentGizmo {
 public:
     FPLATEAUExtentGizmo();
 
-    void DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI);
+    void DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI, double CameraDistance);
     void DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const;
 
     FVector GetHandlePosition(int Index);
@@ -49,4 +49,7 @@ private:
     double MaxX;
     double MinY;
     double MaxY;
+
+    TObjectPtr<class UMaterialInstanceDynamic> SphereMaterial;
+    TObjectPtr<class UMaterialInstanceDynamic> AreaMaterial;
 };
