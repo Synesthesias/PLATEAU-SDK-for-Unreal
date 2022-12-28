@@ -34,8 +34,7 @@ namespace {
 
         HPLATEAUExtentHandleProxy(int index) :
             HHitProxy(HPP_UI),
-            Index(index) {
-        }
+            Index(index) {}
     };
     IMPLEMENT_HIT_PROXY(HPLATEAUExtentHandleProxy, HHitProxy);
 
