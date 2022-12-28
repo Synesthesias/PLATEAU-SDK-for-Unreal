@@ -12,22 +12,6 @@
 
 using namespace plateau::dataset;
 
-namespace {
-    FString RemoveSuffix(const FString ComponentName) {
-        int Index = 0;
-        if (ComponentName.FindLastChar('_', Index)) {
-            if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                return ComponentName.LeftChop(ComponentName.Len() - Index);
-            }
-            else {
-                return ComponentName;
-            }
-        }
-        else
-            return ComponentName;
-    }
-}
-
 // Sets default values
 APLATEAUInstancedCityModel::APLATEAUInstancedCityModel() {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -185,9 +169,18 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plate
                 for (int k = 0; k < TargetComponents.Num(); k++) {
                     //各LODについて子供になっているメッシュコンポーネントをすべて保持
                     TArray<USceneComponent*> ChildMeshComponents;
-                    TargetComponents[k]->GetChildrenComponents(true, ChildMeshComponents);
+                    TargetComponents[k]->GetChildrenComponents(false, ChildMeshComponents);
                     for (int ChildrenIndex = 0; ChildrenIndex < ChildMeshComponents.Num(); ChildrenIndex++) {
-                        MeshComponents.Add(ChildMeshComponents[ChildrenIndex]);
+                        if (ChildMeshComponents[ChildrenIndex]->GetNumChildrenComponents() > 0) {
+                            TArray<USceneComponent*> TmpArr;
+                            ChildMeshComponents[ChildrenIndex]->GetChildrenComponents(false, TmpArr);
+                            for (int TmpIndex = 0; TmpIndex < TmpArr.Num(); TmpIndex++) {
+                                MeshComponents.Add(TmpArr[TmpIndex]);
+                            }
+                        }
+                        else {
+                            MeshComponents.Add(ChildMeshComponents[ChildrenIndex]);
+                        }
                     }
 
                     //指定されたLODとその子供を可視状態に
@@ -213,59 +206,65 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plate
 }
 
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType) {
-    for (int i = 0; i < MeshComponents.Num(); i++) {
-        //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
-        if (MeshComponents[i]->IsVisible() == false)
-            continue;
+    const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([this, InCityObjectType] {
+            for (int i = 0; i < MeshComponents.Num(); i++) {
+                //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
+                if (MeshComponents[i]->IsVisible() == false)
+                    continue;
 
-        //メッシュコンポーネントの親の親がGMLのファイル名を握っている
-        FString SubFolderName;
-        auto GMLName = MeshComponents[i]->GetAttachParent()->GetAttachParent()->GetFName().ToString();
-        auto ID = MeshComponents[i]->GetFName().ToString();
-        ID = RemoveSuffix(ID);
+                //メッシュコンポーネントの親の親がGMLのファイル名を握っている
+                FString SubFolderName;
+                auto GMLName = MeshComponents[i]->GetAttachParent()->GetAttachParent()->GetFName().ToString();
+                auto ID = MeshComponents[i]->GetFName().ToString();
+                if (GMLName.Contains("LOD")) {
+                    //最小地物単位の場合は親の親の親となる
+                    GMLName = GMLName = MeshComponents[i]->GetAttachParent()->GetAttachParent()->GetAttachParent()->GetFName().ToString();
+                }
 
-        //BillboardComponentも混ざってるので無視
-        if (ID.Contains("BillboardComponent"))
-            continue;
+                //BillboardComponentも混ざってるので無視
+                if (ID.Contains("BillboardComponent"))
+                    continue;
 
-        //フォルダの名前などを取得
-        int Index = 0;
-        if (GMLName.FindChar('_', Index))
-            SubFolderName = GMLName.RightChop(Index + 1);
-        if (SubFolderName.FindChar('_', Index))
-            SubFolderName = SubFolderName.LeftChop(SubFolderName.Len() - Index);
+                //フォルダの名前などを取得
+                int Index = 0;
+                if (GMLName.FindChar('_', Index))
+                    SubFolderName = GMLName.RightChop(Index + 1);
+                if (SubFolderName.FindChar('_', Index))
+                    SubFolderName = SubFolderName.LeftChop(SubFolderName.Len() - Index);
 
-        const auto FullGmlPath =
-            FPaths::ProjectContentDir() +
-            "PLATEAU/Datasets/" +
-            DatasetName +
-            "/udx/" +
-            SubFolderName + "/" +
-            GMLName +
-            ".gml";
+                const auto FullGmlPath =
+                    FPaths::ProjectContentDir() +
+                    "PLATEAU/Datasets/" +
+                    DatasetName +
+                    "/udx/" +
+                    SubFolderName + "/" +
+                    GMLName +
+                    ".gml";
 
-        std::shared_ptr<const citygml::CityModel> CityModel = nullptr;
-        try {
-            citygml::ParserParams ParserParams;
-            ParserParams.tesselate = true;
-            CityModel = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), ParserParams);
-        }
-        catch (...) {
-            CityModel = nullptr;
-            UE_LOG(LogTemp, Error, TEXT("Invalid cache path : %s"), *FullGmlPath);
+                std::shared_ptr<const citygml::CityModel> CityModel = nullptr;
+                try {
+                    citygml::ParserParams ParserParams;
+                    ParserParams.tesselate = true;
+                    CityModel = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), ParserParams);
+                }
+                catch (...) {
+                    CityModel = nullptr;
+                    UE_LOG(LogTemp, Error, TEXT("Invalid cache path : %s"), *FullGmlPath);
+                    return this;
+                }
+                auto CityObject = CityModel->getCityObjectById(TCHAR_TO_UTF8(*ID));
+                if (CityObject == nullptr) {
+                    UE_LOG(LogTemp, Error, TEXT("Invalid ID : %s"), *ID);
+                    return this;
+                }
+                auto CityObjectType = CityObject->getType();
+                if (!((uint64_t)InCityObjectType & (uint64_t)CityObjectType)) {
+                    //マッチしていないので不可視に
+                    MeshComponents[i]->SetVisibility(false);
+                }
+            }
             return this;
-        }
-        auto CityObject = CityModel->getCityObjectById(TCHAR_TO_UTF8(*ID));
-        if (CityObject == nullptr) {
-            UE_LOG(LogTemp, Error, TEXT("Invalid ID : %s"), *ID);
-            return this;
-        }
-        auto CityObjectType = CityObject->getType();
-        if (!((uint64_t)InCityObjectType & (uint64_t)CityObjectType)) {
-            //マッチしていないので不可視に
-            MeshComponents[i]->SetVisibility(false);
-        }
-    }
+        }, TStatId(), nullptr, ENamedThreads::AnyBackgroundHiPriTask);
     return this;
 }
 

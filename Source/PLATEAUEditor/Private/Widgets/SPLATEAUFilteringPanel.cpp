@@ -334,7 +334,7 @@ TSharedPtr<SVerticalBox> SPLATEAUFilteringPanel::ConstructHeader() {
 TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructBuilldingPanel() {
     return SNew(SBox)
         .Visibility_Lambda([this]() {
-        if ((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Building)
+        if (((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Building))
             return EVisibility::Visible;
         else
             return EVisibility::Collapsed;
@@ -388,7 +388,7 @@ TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructBuilldingPanel() {
 TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructReliefPanel() {
     return SNew(SBox)
         .Visibility_Lambda([this]() {
-        if ((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Relief)
+        if (((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Relief))
             return EVisibility::Visible;
         else
             return EVisibility::Collapsed;
@@ -443,7 +443,7 @@ TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructReliefPanel() {
 TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructVegetationPanel() {
     return SNew(SBox)
         .Visibility_Lambda([this]() {
-        if ((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Relief)
+        if (((uint32_t)AvailablePackage & (uint32_t)PredefinedCityModelPackage::Vegetation))
             return EVisibility::Visible;
         else
             return EVisibility::Collapsed;
@@ -497,7 +497,7 @@ TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructVegetationPanel() {
 TSharedPtr<SBox> SPLATEAUFilteringPanel::ConstructGenericPanel(const plateau::dataset::PredefinedCityModelPackage TargetPackage, const FText PanelTitle) {
     return SNew(SBox)
         .Visibility_Lambda([this,TargetPackage]() {
-            return (uint32_t)AvailablePackage & (uint32_t)TargetPackage ? EVisibility::Visible : EVisibility::Collapsed;
+            return ((uint32_t)AvailablePackage & (uint32_t)TargetPackage) ? EVisibility::Visible : EVisibility::Collapsed;
             })
         [
             SNew(SVerticalBox)
