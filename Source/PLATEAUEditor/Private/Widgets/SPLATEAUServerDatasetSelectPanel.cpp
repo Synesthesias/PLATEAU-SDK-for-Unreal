@@ -12,9 +12,13 @@ void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServe
     const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
         ClientRef = plateau::network::Client(InServerURL);
         const auto tempDatasets = ClientRef.getMetadata();
+        static FCriticalSection CriticalSection;
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
-            DataSets = tempDatasets;
+            {
+                FScopeLock Lock(&CriticalSection);
+                DataSets = tempDatasets;
+            }
             InitUITexts();
             bLoadedClientData = true;
             }, TStatId(), nullptr, ENamedThreads::GameThread);

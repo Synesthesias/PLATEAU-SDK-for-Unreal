@@ -9,14 +9,16 @@
 
 FPLATEAUExtentGizmo::FPLATEAUExtentGizmo()
     : MinX(-500), MaxX(500), MinY(-500), MaxY(500) {
-    SphereMaterial = GEngine->ConstraintLimitMaterialPrismatic;
+    SphereMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, NULL);
+    SphereMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaMaterial = DuplicateObject(SphereMaterial, NULL);
-    }
+    AreaMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
+}
 
 void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI, double CameraDistance) {
     SphereMaterial.Get()->SetVectorParameterValue(FName("Color"), Color);
 
-    double radius = CameraDistance /15;
+    double radius = CameraDistance / 20;
     DrawSphere(
         PDI,
         GetHandlePosition(Index),

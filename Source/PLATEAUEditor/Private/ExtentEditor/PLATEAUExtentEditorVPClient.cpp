@@ -94,6 +94,9 @@ void FPLATEAUExtentEditorViewportClient::InitCamera() {
 }
 
 void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
+    if (DatasetAccessor == nullptr)
+        return;
+
     const auto ExtentMin = ExtentGizmo->GetMin();
     const auto ExtentMax = ExtentGizmo->GetMax();
     for (auto& Gizmo : MeshCodeGizmos) {
