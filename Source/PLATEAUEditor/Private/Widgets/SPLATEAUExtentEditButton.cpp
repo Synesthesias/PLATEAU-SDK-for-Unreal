@@ -39,8 +39,10 @@ void SPLATEAUExtentEditButton::Construct(const FArguments& InArgs) {
             ServerDatasetID = InArgs._ServerDatasetID]() {
         IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(SourcePath.Get());
         IPLATEAUEditorModule::Get().GetExtentEditor()->SetImportFromServer(bImportFromServer.Get());
-        IPLATEAUEditorModule::Get().GetExtentEditor()->SetClientRef(ClientRef.Get());
-        IPLATEAUEditorModule::Get().GetExtentEditor()->SetServerDatasetID(ServerDatasetID.Get());
+        if (bImportFromServer.Get()) {
+            IPLATEAUEditorModule::Get().GetExtentEditor()->SetClientRef(ClientRef.Get());
+            IPLATEAUEditorModule::Get().GetExtentEditor()->SetServerDatasetID(ServerDatasetID.Get());
+        }
 
         // TODO: ExtentEditorに委譲
         // ビューポートの操作性向上のため100分の1スケールで設定

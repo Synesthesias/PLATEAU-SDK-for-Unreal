@@ -13,40 +13,11 @@ void UPLATEAUCityGmlProxy::Activate() {
     FFunctionGraphTask::CreateAndDispatchWhenReady([this]() {
         {
             FScopeLock Lock(&CriticalSection);
-            if (CityModelCache.Contains(GmlInfo.GmlName)) {
-                Completed.Broadcast(CityModelCache[GmlInfo.GmlName]);
-                return;
-            }
 
-            citygml::ParserParams params;
-            params.tesselate = false;
+            const auto CityModelData = Load(GmlInfo);
 
-            FString SubFolderName;
-            int Index = 0;
-            if (GmlInfo.GmlName.FindChar('_', Index))
-                SubFolderName = GmlInfo.GmlName.RightChop(Index + 1);
-            if (SubFolderName.FindChar('_', Index))
-                SubFolderName = SubFolderName.LeftChop(SubFolderName.Len() - Index);
-
-            const auto FullGmlPath =
-                FPaths::ProjectContentDir() +
-                "PLATEAU/Datasets/" +
-                GmlInfo.DatasetName +
-                "/udx/" +
-                SubFolderName + "/" +
-                GmlInfo.GmlName;
-            std::shared_ptr<const citygml::CityModel> CityModelData;
-            try {
-                CityModelData = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), params);
-            }
-            catch (...) {
-            }
-            if (CityModelData == nullptr) {
+            if (CityModelData == nullptr)
                 Failed.Broadcast();
-                return;
-            }
-
-            CityModelCache.Add(GmlInfo.GmlName, FPLATEAUCityModel(CityModelData));
 
             Completed.Broadcast(CityModelCache[GmlInfo.GmlName]);
         }
@@ -59,4 +30,41 @@ UPLATEAUCityGmlProxy* UPLATEAUCityGmlProxy::LoadAsync(UObject* WorldContextObjec
     Node->WorldContextObject = WorldContextObject;
     Node->GmlInfo = GmlInfo;
     return Node;
+}
+
+std::shared_ptr<const citygml::CityModel> UPLATEAUCityGmlProxy::Load(const FPLATEAUCityObjectInfo& GmlInfo) {
+    if (CityModelCache.Find(GmlInfo.GmlName))
+        return CityModelCache[GmlInfo.GmlName].GetData();
+
+    citygml::ParserParams params;
+    params.tesselate = false;
+    params.ignoreGeometries = true;
+
+    FString SubFolderName;
+    int Index = 0;
+    if (GmlInfo.GmlName.FindChar('_', Index))
+        SubFolderName = GmlInfo.GmlName.RightChop(Index + 1);
+    if (SubFolderName.FindChar('_', Index))
+        SubFolderName = SubFolderName.LeftChop(SubFolderName.Len() - Index);
+
+    const auto FullGmlPath =
+        FPaths::ProjectContentDir() +
+        "PLATEAU/Datasets/" +
+        GmlInfo.DatasetName +
+        "/udx/" +
+        SubFolderName + "/" +
+        GmlInfo.GmlName;
+    std::shared_ptr<const citygml::CityModel> CityModelData;
+    try {
+        CityModelData = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), params);
+    }
+    catch (...) {
+    }
+
+    if (CityModelData == nullptr) {
+        return nullptr;
+    }
+
+    CityModelCache.Add(GmlInfo.GmlName, FPLATEAUCityModel(CityModelData));
+    return CityModelCache[GmlInfo.GmlName].GetData();
 }

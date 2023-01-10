@@ -189,6 +189,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         StaticMeshes.Reset();
     }
 
+    // TODO: フィルタリング機能に委譲
     TMap<int, TSet<FString>> NameMap;
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
         const auto& RootNode = InModel->getRootNodeAt(i);
