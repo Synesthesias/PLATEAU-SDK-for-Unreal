@@ -24,6 +24,14 @@ void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* 
         FVector(radius),
         24, 6, SphereMaterial->GetRenderProxy(), 9
     );
+
+    DrawSphere(
+        PDI,
+        GetHandlePosition(Index),
+        FRotator(),
+        FVector(radius),
+        24, 6, SphereMaterial->GetRenderProxy(), 9
+    );
 }
 
 void FPLATEAUExtentGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
