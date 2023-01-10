@@ -9,19 +9,17 @@
 #define LOCTEXT_NAMESPACE "SPLATEAUServerDatasetSelectPanel"
 
 void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL) {
-    if (!bLoadedClientData) {
-        const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
-            ClientRef = plateau::network::Client(InServerURL);
-            const auto tempDatasets = ClientRef.getMetadata();
+    const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
+        ClientRef = plateau::network::Client(InServerURL);
+        const auto tempDatasets = ClientRef.getMetadata();
 
-            FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
-                DataSets = tempDatasets;
-                bLoadedClientData = true;
-                InitUITexts();
-                }, TStatId(), nullptr, ENamedThreads::GameThread_Local);
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
+            DataSets = tempDatasets;
+            InitUITexts();
+            bLoadedClientData = true;
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
 
-            }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
-    }
+        }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
 }
 
 void SPLATEAUServerDatasetSelectPanel::InitServerData() {
