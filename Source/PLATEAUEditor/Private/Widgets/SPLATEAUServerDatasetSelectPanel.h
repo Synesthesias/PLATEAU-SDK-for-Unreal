@@ -19,7 +19,10 @@ private:
 
     plateau::network::Client ClientRef;
     std::shared_ptr<std::vector<plateau::network::DatasetMetadataGroup>> DataSets;
+
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
+    std::string datasetID;
+
     TMap<int, FText> PrefectureTexts;
     TMap<int, FText> MunicipalityTexts;
     TSharedPtr<SComboButton> MunicipalityComboButton;
@@ -35,21 +38,39 @@ private:
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs);
-    void SetPanelVisibility(bool bVisible) { bIsVisible = bVisible; }
+    void SetPanelVisibility(bool bVisible) {
+        bIsVisible = bVisible;
+    }
     void InitServerData();
     inline std::shared_ptr<plateau::dataset::IDatasetAccessor> GetDatasetAccessor() {
-        if (bLoadedClientData)
+        if (bLoadedClientData) {
+            const auto& newDatasetID = DataSets->at(PrefectureID).datasets[MunicipalityID].id;
+            if (newDatasetID != datasetID) {
+                datasetID = newDatasetID;
+                try {
+                    const auto InDatasetSource = DatasetSource::createServer(newDatasetID, ClientRef);
+                    DatasetAccessor = InDatasetSource.getAccessor();
+                }
+                catch (...) {
+                    DatasetAccessor = nullptr;
+                    UE_LOG(LogTemp, Error, TEXT("Invalid Server Dataset ID"));
+                }
+            }
             return DatasetAccessor;
-        else
+        } else {
             return nullptr;
+        }
     }
-    inline plateau::network::Client GetClientRef() { return ClientRef; }
-    inline std::string GetServerDatasetID() { return DataSets->at(PrefectureID).datasets[MunicipalityID].id; }
+    inline plateau::network::Client GetClientRef() {
+        return ClientRef;
+    }
+    inline std::string GetServerDatasetID() {
+        return DataSets->at(PrefectureID).datasets[MunicipalityID].id;
+    }
 
 private:
-    void LoadClientData(std::string InServerURL = "");
-    void LoadServerDataWithURL(const std::string InServerURL);
-    void SetDatasetAccessor();
+    void LoadClientData(const std::string& InServerURL);
+    void LoadServerDataWithURL(const std::string& InServerURL);
     void InitUITexts();
     TSharedPtr<SVerticalBox> ConstructServerDataPanel();
     TSharedPtr<SVerticalBox> ConstructPrefectureSelectPanel();

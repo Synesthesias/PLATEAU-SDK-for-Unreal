@@ -31,6 +31,8 @@ public:
     UPROPERTY(BlueprintAssignable)
         FOnLoadGmlFailed Failed;
 
+    static std::shared_ptr<const citygml::CityModel> Load(const FPLATEAUCityObjectInfo& GmlInfo);
+
 private:
     const UObject* WorldContextObject;
     FPLATEAUCityObjectInfo GmlInfo;

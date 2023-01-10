@@ -20,6 +20,10 @@ public:
     FPLATEAUCityModel(const std::shared_ptr<const citygml::CityModel> Data)
         : Data(Data) {}
 
+    std::shared_ptr<const citygml::CityModel> GetData() {
+        return Data;
+    }
+
 private:
     friend class UPLATEAUCityModelBlueprintLibrary;
 
@@ -72,7 +76,7 @@ public:
         Category = "PLATEAU|CityGML")
         static FPLATEAUCityObject
         getCityObjectByID(UPARAM(ref) const FPLATEAUCityModel& CityModel, const FString& FeatureID) {
-        if(CityModel.Data == std::shared_ptr<citygml::CityModel>()){
+        if (CityModel.Data == std::shared_ptr<citygml::CityModel>()) {
             UE_LOG(LogTemp, Warning, TEXT("インスタンスが存在しません"));
             return FPLATEAUCityObject();
         }

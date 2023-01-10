@@ -54,16 +54,19 @@ public:
     APLATEAUInstancedCityModel* FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType);
     TArray<PLATEAUPackageLOD> GetPackageLODs();
 
+    bool IsFiltering();
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+    void SetIsFiltering(bool InValue);
 
 public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
 private:
-    TArray<USceneComponent*> MeshComponents;
-
-
+    FCriticalSection FilterSection;
+    bool bIsFiltering;
 };

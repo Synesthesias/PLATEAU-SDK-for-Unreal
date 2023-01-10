@@ -6,49 +6,33 @@
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/dataset/dataset_source.h>
 
-
 #define LOCTEXT_NAMESPACE "SPLATEAUServerDatasetSelectPanel"
 
-void SPLATEAUServerDatasetSelectPanel::LoadClientData(std::string InServerURL) {
+void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL) {
     if (!bLoadedClientData) {
-        const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
             ClientRef = plateau::network::Client(InServerURL);
-            DataSets = ClientRef.getMetadata();
+            const auto tempDatasets = ClientRef.getMetadata();
+
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
+                DataSets = tempDatasets;
+                bLoadedClientData = true;
+                InitUITexts();
+                }, TStatId(), nullptr, ENamedThreads::GameThread_Local);
+
             }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
-        ServerLoadTask->Wait();
-        SetDatasetAccessor();
-        InitUITexts();
-        bLoadedClientData = true;
     }
 }
+
 void SPLATEAUServerDatasetSelectPanel::InitServerData() {
     if (!bLoadedClientData && !bServerInitialized) {
         bServerInitialized = true;
-        const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-            LoadClientData();
-            }, TStatId(), nullptr, ENamedThreads::AnyBackgroundHiPriTask);
+        LoadClientData(DefaultServerURL);
     }
 }
 
-void SPLATEAUServerDatasetSelectPanel::LoadServerDataWithURL(const std::string InServerURL) {
-    const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-        LoadClientData(InServerURL.c_str());
-        }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
-}
-
-void SPLATEAUServerDatasetSelectPanel::SetDatasetAccessor() {
-    Mutex.TryLock();
-
-    try {
-        const auto InDatasetSource = DatasetSource::createServer(DataSets->at(PrefectureID).datasets[MunicipalityID].id, ClientRef);
-        DatasetAccessor = InDatasetSource.getAccessor();
-    }
-    catch (...) {
-        DatasetAccessor = nullptr;
-        UE_LOG(LogTemp, Error, TEXT("Invalid Server Dataset ID"));
-    }
-
-    Mutex.Unlock();
+void SPLATEAUServerDatasetSelectPanel::LoadServerDataWithURL(const std::string& InServerURL) {
+    LoadClientData(InServerURL.c_str());
 }
 
 void SPLATEAUServerDatasetSelectPanel::InitUITexts() {
@@ -209,8 +193,7 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructPrefectureSe
                     TMap<int, FText> Items;
                     if (bLoadedClientData) {
                         Items = PrefectureTexts;
-                    }
-                    else {
+                    } else {
                         Items.Add(0, FText::FromString("Loading..."));
                     }
                     for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
@@ -218,7 +201,6 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructPrefectureSe
                         const auto ID = ItemIter->Key;
                         FUIAction ItemAction(FExecuteAction::CreateLambda(
                             [this, ID]() {
-                                Mutex.Lock();
                                 PrefectureID = ID;
                                 MunicipalityID = 0;
                                 MunicipalityTexts.Empty();
@@ -226,8 +208,6 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructPrefectureSe
                                     std::string TmpStr = DataSets->at(ID).datasets[i].title;
                                     MunicipalityTexts.Add(i, FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str())));
                                 }
-                                SetDatasetAccessor();
-                                //SetDatasetAccessor内でUnlockを行っているのでここには書いていない
                             }));
                         MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
                     }
@@ -286,14 +266,14 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
             SAssignNew(MunicipalityComboButton, SComboButton)
             .OnGetMenuContent_Lambda(
                 [&]() {
-                    Mutex.Lock();
                     FMenuBuilder MenuBuilder(true, nullptr);
                     TMap<int, FText> Items;
-                    if (bLoadedClientData) {
-                        Items = MunicipalityTexts;
-                    }
-                    else {
-                        Items.Add(0, FText::FromString("Loading..."));
+                    {
+                        if (bLoadedClientData) {
+                            Items = TMap(MunicipalityTexts);
+                        } else {
+                            Items.Add(0, FText::FromString("Loading..."));
+                        }
                     }
                     for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
                         const auto ItemText = ItemIter->Value;
@@ -306,16 +286,13 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str()));
                                     std::string TmpStr2 = std::to_string(DataSets->at(PrefectureID).datasets[MunicipalityID].max_lod);
                                     MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr2.c_str()));
-                                }
-                                else {
+                                } else {
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
                                     MaxLODText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
                                 }
-                                SetDatasetAccessor();
                             }));
                         MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
                     }
-                    Mutex.Unlock();
                     return MenuBuilder.MakeWidget();
                 })
         .ContentPadding(0.0f)

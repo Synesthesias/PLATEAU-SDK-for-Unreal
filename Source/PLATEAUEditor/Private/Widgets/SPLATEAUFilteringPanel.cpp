@@ -41,7 +41,6 @@ void SPLATEAUFilteringPanel::SetAllBuildingSettingFlag(const bool InBool) {
         EnableCityObjects = EnableCityObjects & ~tmp;
     }
 }
-
 void SPLATEAUFilteringPanel::SetAllReliefSettingFlag(const bool InBool) {
     CityObject::CityObjectsType tmp = CityObject::CityObjectsType::COT_TINRelief | CityObject::CityObjectsType::COT_MassPointRelief;
     if (InBool) {
@@ -83,7 +82,7 @@ bool SPLATEAUFilteringPanel::GetEnableStatFromGenericPanel(const plateau::datase
 }
 
 void SPLATEAUFilteringPanel::SetMaxBuildingLOD(const int InLOD) {
-    if ((TargetLODs[0].MinLOD <= InLOD) && (InLOD <= TargetLODs[0].MaxLOD)) {
+    if (TargetLODs[0].MinLOD <= InLOD && InLOD <= TargetLODs[0].MaxLOD) {
         if (InLOD < TargetMinLOD) {
             TargetMaxLOD = TargetMinLOD = InLOD;
         }
@@ -205,12 +204,41 @@ void SPLATEAUFilteringPanel::Construct(const FArguments& InArgs, const TSharedRe
                 .Text(LOCTEXT("FilteringButton", "フィルタリング実行"))
                 ]
                 .OnClicked_Lambda([this]() {
+                    // オプションにない地物タイプは全て含める
+                    const auto HiddenFeatureTypes = ~(CityObject::CityObjectsType::COT_BuildingInstallation | CityObject::CityObjectsType::COT_Door |
+                        CityObject::CityObjectsType::COT_Window | CityObject::CityObjectsType::COT_BuildingPart |
+                        CityObject::CityObjectsType::COT_WallSurface | CityObject::CityObjectsType::COT_RoofSurface |
+                        CityObject::CityObjectsType::COT_GroundSurface | CityObject::CityObjectsType::COT_ClosureSurface |
+                        CityObject::CityObjectsType::COT_OuterCeilingSurface | CityObject::CityObjectsType::COT_OuterFloorSurface |
+                        CityObject::CityObjectsType::COT_TINRelief | CityObject::CityObjectsType::COT_MassPointRelief |
+                        CityObject::CityObjectsType::COT_SolitaryVegetationObject | CityObject::CityObjectsType::COT_PlantCover);
+                    EnableCityObjects = EnableCityObjects | HiddenFeatureTypes;
+
                     SelectingActor->FilterByLODs(EnablePackage, TargetMinLOD, TargetMaxLOD, bShowMultiLOD)->FilterByFeatureTypes(EnableCityObjects);
                     return FReply::Handled();
                     })
                 .ButtonColorAndOpacity(FSlateColor(FColor(0, 255, 255)))
                 .Visibility_Lambda([this](){
-                        return SelectingActor != nullptr ? EVisibility::Visible : EVisibility::Collapsed;
+                        bool IsVisible = SelectingActor != nullptr && !SelectingActor->IsFiltering();
+                        return IsVisible ? EVisibility::Visible : EVisibility::Collapsed;
+                    })
+            ]
+
+        + SHorizontalBox::Slot()
+            .FillWidth(0.8f)
+            [
+                SNew(SButton)
+                .Content()
+            [SNew(STextBlock)
+            .Justification(ETextJustify::Center)
+            .Margin(FMargin(0, 5, 0, 5))
+            .Text(LOCTEXT("Filtering", "フィルタリング実行中..."))
+            ]
+        .IsEnabled(false)
+            .ButtonColorAndOpacity(FSlateColor(FColor(100, 100, 100)))
+                .Visibility_Lambda([this]() {
+                bool IsVisible = SelectingActor != nullptr && SelectingActor->IsFiltering();
+                return IsVisible ? EVisibility::Visible : EVisibility::Collapsed;
                     })
             ]
             

@@ -8,6 +8,8 @@
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
 
+#include "CityGML/PLATEAUCityGmlProxy.h"
+#include "Misc/DefaultValueHelper.h"
 #include "PLATEAUEditor/Private/Widgets/SPLATEAUFilteringPanel.h"
 
 using namespace plateau::dataset;
@@ -88,7 +90,7 @@ plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetExis
 }
 
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bSingleLOD) {
-    MeshComponents.Empty();
+    SetIsFiltering(true);
 
     const auto LocalCachePath = FPaths::ProjectContentDir() + "PLATEAU/Datasets/" + DatasetName;
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
@@ -101,169 +103,160 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plate
         UE_LOG(LogTemp, Error, TEXT("Invalid source path : %s"), *LocalCachePath);
         return this;
     }
-    const auto PackageData = DatasetAccessor->getPackages();
-    const auto GMLRootComponent = this->GetRootComponent();
-    TArray<USceneComponent*> GMLComponents;
     TMap<FString, USceneComponent*> GMLMaps;
-    GMLRootComponent->GetChildrenComponents(false, GMLComponents);
-    for (int index = 0; index < GMLComponents.Num(); index++) {
+
+    for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
         //一度全てのメッシュを不可視にする
-        GMLMaps.Add(GMLComponents[index]->GetFName().ToString(), GMLComponents[index]);
-        GMLComponents[index]->SetVisibility(false, true);
-    }
+        GMLMaps.Add(GmlComponent->GetFName().ToString(), GmlComponent);
+        GmlComponent->SetVisibility(false, true);
 
-    for (int i = 0; i < 9; i++) {
-        TArray<USceneComponent*> TargetComponents;
-        std::shared_ptr<std::vector<plateau::dataset::GmlFile>> GMLFile;
-        bool bContinueLoop = false;
-        switch (i) {
-        case 0:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::Building);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::Building);
-            break;
-        case 1:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::Road);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::Road);
-            break;
-        case 2:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision);
-            break;
-        case 3:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::LandUse);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::LandUse);
-            break;
-        case 4:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::CityFurniture);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::CityFurniture);
-            break;
-        case 5:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::Vegetation);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::Vegetation);
-            break;
-        case 6:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::Relief);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::Relief);
-            break;
-        case 7:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::DisasterRisk);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::DisasterRisk);
-            break;
-        case 8:
-            GMLFile = DatasetAccessor->getGmlFiles(plateau::dataset::PredefinedCityModelPackage::Unknown);
-            bContinueLoop = !((uint32_t)InPackage & (uint32_t)plateau::dataset::PredefinedCityModelPackage::Unknown);
-            break;
-        default:
-            break;
-        }
-        if (bContinueLoop)
+        const auto GmlFileName = GmlComponent->GetName() + ".gml";
+        const auto Package = UdxSubFolder::getPackage(GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
+
+        // 選択されていないパッケージを除外
+        bool IsPackageIncluded = static_cast<uint32_t>(InPackage) & static_cast<uint32_t>(Package);
+        if (!IsPackageIncluded)
             continue;
-        for (int j = 0; j < GMLFile->size(); j++) {
-            const auto GMLName = FPaths::GetCleanFilename(GMLFile->at(j).getPath().c_str()).LeftChop(4);
-            const auto GMLMaxLOD = GMLFile->at(j).getMaxLod();
-            if (!GMLMaps.Contains(GMLName))
-                continue;
-            auto GMLComponent = *GMLMaps.Find(GMLName);
-            if (GMLComponent != nullptr) {
-                GMLComponent->GetChildrenComponents(false, TargetComponents);
-                for (int k = 0; k < TargetComponents.Num(); k++) {
-                    //各LODについて子供になっているメッシュコンポーネントをすべて保持
-                    TArray<USceneComponent*> ChildMeshComponents;
-                    TargetComponents[k]->GetChildrenComponents(false, ChildMeshComponents);
-                    for (int ChildrenIndex = 0; ChildrenIndex < ChildMeshComponents.Num(); ChildrenIndex++) {
-                        if (ChildMeshComponents[ChildrenIndex]->GetNumChildrenComponents() > 0) {
-                            TArray<USceneComponent*> TmpArr;
-                            ChildMeshComponents[ChildrenIndex]->GetChildrenComponents(false, TmpArr);
-                            for (int TmpIndex = 0; TmpIndex < TmpArr.Num(); TmpIndex++) {
-                                MeshComponents.Add(TmpArr[TmpIndex]);
-                            }
-                        }
-                        else {
-                            MeshComponents.Add(ChildMeshComponents[ChildrenIndex]);
-                        }
-                    }
 
-                    //指定されたLODとその子供を可視状態に
-                    //設定によっては最大のLODだけ可視状態に
-                    if (bSingleLOD) {
-                        auto TargetLOD = FMath::Min(GMLMaxLOD, MaxLOD);
-                        if (TargetComponents[k]->GetFName().ToString() == ("LOD" + std::to_string(TargetLOD)).c_str()) {
-                            TargetComponents[k]->SetVisibility(true, true);
-                        }
-                    }
-                    else {
-                        FString LODLevelStr = TargetComponents[k]->GetFName().ToString().RightChop(3);
-                        auto LODLevel = FCString::Atoi(*LODLevelStr);
-                        if (MinLOD <= LODLevel && LODLevel <= MaxLOD) {
-                            TargetComponents[k]->SetVisibility(true, true);
-                        }
+        TMap<int, TSet<FString>> LodToFeatureIDMap;
+        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            auto LodComponentName = LodComponent->GetName();
+            int Lod;
+            FString LodString = LodComponentName.RightChop(3);
+            LodString = LodString.LeftChop(LodString.Len() - 1);
+            FDefaultValueHelper::ParseInt(LodString, Lod);
+
+            if (Lod < MinLOD || Lod > MaxLOD)
+                continue;
+
+            auto& FeatureIDs = LodToFeatureIDMap.Add(Lod);
+            for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {
+                auto ComponentName = FeatureComponent->GetName();
+                int Index = 0;
+                if (ComponentName.FindLastChar('_', Index)) {
+                    if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+                        ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
                     }
                 }
+
+                FeatureIDs.Add(ComponentName);
+            }
+        }
+
+        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            auto LodComponentName = LodComponent->GetName();
+            int Lod;
+            FString LodString = LodComponentName.RightChop(3);
+            LodString = LodString.LeftChop(LodString.Len() - 1);
+            FDefaultValueHelper::ParseInt(LodString, Lod);
+
+            if (Lod < MinLOD || Lod > MaxLOD)
+                continue;
+
+            // 全てのLODを描画する場合は単純
+            if (!bSingleLOD) {
+                LodComponent->SetVisibility(true, true);
+                continue;
+            }
+
+            TArray<USceneComponent*> Components;
+            LodComponent->GetChildrenComponents(true, Components);
+            for (const auto& Component : Components) {
+                auto ComponentName = Component->GetName();
+                int Index = 0;
+                if (ComponentName.FindLastChar('_', Index)) {
+                    if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+                        ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
+                    }
+                }
+
+                // 最大LOD取得
+                TArray<int> Keys;
+                LodToFeatureIDMap.GetKeys(Keys);
+                int MaxLod = Lod;
+                for (const auto Key : Keys) {
+                    if (!LodToFeatureIDMap[Key].Contains(ComponentName))
+                        continue;
+                    MaxLod = FMath::Max(MaxLod, Key);
+                }
+                if (Lod == MaxLod)
+                    Component->SetVisibility(true, true);
             }
         }
     }
+
+    SetIsFiltering(false);
     return this;
 }
 
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType) {
+    SetIsFiltering(true);
+
     const auto Task = FFunctionGraphTask::CreateAndDispatchWhenReady([this, InCityObjectType] {
-            for (int i = 0; i < MeshComponents.Num(); i++) {
-                //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
-                if (MeshComponents[i]->IsVisible() == false)
-                    continue;
+        for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+            const auto GmlName = GmlComponent->GetName();
+            FPLATEAUCityObjectInfo GmlInfo;
+            GmlInfo.DatasetName = DatasetName;
+            GmlInfo.GmlName = GmlName + ".gml";
+            const auto CityModel = UPLATEAUCityGmlProxy::Load(GmlInfo);
+        }
 
-                //メッシュコンポーネントの親の親がGMLのファイル名を握っている
-                FString SubFolderName;
-                auto GMLName = MeshComponents[i]->GetAttachParent()->GetAttachParent()->GetFName().ToString();
-                auto ID = MeshComponents[i]->GetFName().ToString();
-                if (GMLName.Contains("LOD")) {
-                    //最小地物単位の場合は親の親の親となる
-                    GMLName = GMLName = MeshComponents[i]->GetAttachParent()->GetAttachParent()->GetAttachParent()->GetFName().ToString();
-                }
+        const auto GameThreadTask =
+            FFunctionGraphTask::CreateAndDispatchWhenReady([this, InCityObjectType] {
 
-                //BillboardComponentも混ざってるので無視
-                if (ID.Contains("BillboardComponent"))
-                    continue;
+            for (const auto GmlComponent : GetRootComponent()->GetAttachChildren()) {
+                for (const auto LodComponent : GmlComponent->GetAttachChildren()) {
+                    TArray<USceneComponent*> AllComponents;
+                    LodComponent->GetChildrenComponents(true, AllComponents);
+                    for (const auto& Component : AllComponents) {
+                        //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
+                        if (Component->IsVisible() == false)
+                            continue;
 
-                //フォルダの名前などを取得
-                int Index = 0;
-                if (GMLName.FindChar('_', Index))
-                    SubFolderName = GMLName.RightChop(Index + 1);
-                if (SubFolderName.FindChar('_', Index))
-                    SubFolderName = SubFolderName.LeftChop(SubFolderName.Len() - Index);
+                        auto ID = Component->GetName();
 
-                const auto FullGmlPath =
-                    FPaths::ProjectContentDir() +
-                    "PLATEAU/Datasets/" +
-                    DatasetName +
-                    "/udx/" +
-                    SubFolderName + "/" +
-                    GMLName +
-                    ".gml";
+                        // TODO: よりロバストな手法?末尾に_{数字}が付いた地物IDが存在するため、
+                        // 主要な地物の場合のみ
+                        if (Component->GetAttachParent() == LodComponent) {
+                            int Index = 0;
+                            if (ID.FindLastChar('_', Index)) {
+                                if (ID.RightChop(Index + 1).IsNumeric()) {
+                                    ID = ID.LeftChop(ID.Len() - Index);
+                                }
+                            }
+                        }
 
-                std::shared_ptr<const citygml::CityModel> CityModel = nullptr;
-                try {
-                    citygml::ParserParams ParserParams;
-                    ParserParams.tesselate = true;
-                    CityModel = citygml::load(TCHAR_TO_UTF8(*FullGmlPath), ParserParams);
-                }
-                catch (...) {
-                    CityModel = nullptr;
-                    UE_LOG(LogTemp, Error, TEXT("Invalid cache path : %s"), *FullGmlPath);
-                    return this;
-                }
-                auto CityObject = CityModel->getCityObjectById(TCHAR_TO_UTF8(*ID));
-                if (CityObject == nullptr) {
-                    UE_LOG(LogTemp, Error, TEXT("Invalid ID : %s"), *ID);
-                    return this;
-                }
-                auto CityObjectType = CityObject->getType();
-                if (!((uint64_t)InCityObjectType & (uint64_t)CityObjectType)) {
-                    //マッチしていないので不可視に
-                    MeshComponents[i]->SetVisibility(false);
+                        //BillboardComponentも混ざってるので無視
+                        if (ID.Contains("BillboardComponent"))
+                            continue;
+
+                        FPLATEAUCityObjectInfo GmlInfo;
+                        GmlInfo.DatasetName = DatasetName;
+                        GmlInfo.GmlName = GmlComponent->GetName() + ".gml";
+                        const auto CityModel = UPLATEAUCityGmlProxy::Load(GmlInfo);
+
+                        if (CityModel == nullptr) {
+                            UE_LOG(LogTemp, Error, TEXT("Invalid Dataset or Gml : %s, %s"), *GmlInfo.DatasetName, *GmlInfo.GmlName);
+                            continue;
+                        }
+
+                        auto CityObject = CityModel->getCityObjectById(TCHAR_TO_UTF8(*ID));
+                        if (CityObject == nullptr) {
+                            UE_LOG(LogTemp, Error, TEXT("Invalid ID : %s"), *ID);
+                            continue;
+                        }
+                        auto CityObjectType = CityObject->getType();
+                        if (!((uint64_t)InCityObjectType & (uint64_t)CityObjectType)) {
+                            //マッチしていないので不可視に
+                            Component->SetVisibility(false);
+                        }
+                    }
                 }
             }
-            return this;
+
+            SetIsFiltering(false);
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
+        GameThreadTask->Wait();
         }, TStatId(), nullptr, ENamedThreads::AnyBackgroundHiPriTask);
     return this;
 }
@@ -326,7 +319,7 @@ TArray<PLATEAUPackageLOD> APLATEAUInstancedCityModel::GetPackageLODs() {
             break;
         }
         for (int j = 0; j < GMLFile->size(); j++) {
-            if(GMLFile->at(j).getMaxLod() > MaxLOD)
+            if (GMLFile->at(j).getMaxLod() > MaxLOD)
                 MaxLOD = GMLFile->at(j).getMaxLod();
         }
         PLATEAUPackageLOD PackageLOD;
@@ -336,4 +329,14 @@ TArray<PLATEAUPackageLOD> APLATEAUInstancedCityModel::GetPackageLODs() {
     }
 
     return ReturnLODs;
+}
+
+bool APLATEAUInstancedCityModel::IsFiltering() {
+    FScopeLock Lock(&FilterSection);
+    return bIsFiltering;
+}
+
+void APLATEAUInstancedCityModel::SetIsFiltering(const bool InValue) {
+    FScopeLock Lock(&FilterSection);
+    bIsFiltering = InValue;
 }
