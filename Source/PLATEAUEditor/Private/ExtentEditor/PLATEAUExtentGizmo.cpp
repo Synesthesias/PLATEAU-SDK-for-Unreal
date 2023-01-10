@@ -4,28 +4,33 @@
 #include "PLATEAUExtentGizmo.h"
 
 #include "SceneManagement.h"
+#include "Materials/MaterialInstanceDynamic.h"
+
 
 FPLATEAUExtentGizmo::FPLATEAUExtentGizmo()
-    : MinX(-500), MaxX(500), MinY(-500), MaxY(500) {}
+    : MinX(-500), MaxX(500), MinY(-500), MaxY(500) {
+    SphereMaterial = GEngine->ConstraintLimitMaterialPrismatic;
+    AreaMaterial = DuplicateObject(SphereMaterial, NULL);
+    }
 
-void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI) {
-    
-    //auto MaterialInstance = new FColoredMaterialRenderProxy(
-    //    GEngine->ShadedLevelColorationUnlitMaterial->GetRenderProxy(),
-    //    FColor(255, 127, 80, 100)
-    //);
+void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI, double CameraDistance) {
+    SphereMaterial.Get()->SetVectorParameterValue(FName("Color"), Color);
 
-    //DrawPlane10x10(PDI,
-    //    FMatrix()
-    //    0,
-    //    FVector2D::Zero(), FVector2D::One(),
-    //    MaterialInstance, 0);
-
-    DrawWireSphere(
+    double radius = CameraDistance /15;
+    DrawSphere(
         PDI,
         GetHandlePosition(Index),
-        Color,
-        10, 10, 10, 5, 0, true
+        FRotator(),
+        FVector(radius),
+        24, 6, SphereMaterial->GetRenderProxy(), 9
+    );
+
+    DrawSphere(
+        PDI,
+        GetHandlePosition(Index),
+        FRotator(),
+        FVector(radius),
+        24, 6, SphereMaterial->GetRenderProxy(), 9
     );
 }
 
@@ -38,6 +43,18 @@ void FPLATEAUExtentGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInter
         FColor(255, 127, 80),
         9, 2, 0, true
     );
+
+    FMatrix ObjectToWorld = FMatrix::Identity;
+    ObjectToWorld.SetAxis(0, FVector((MaxX-MinX)/2, 0, 0));
+    ObjectToWorld.SetAxis(1, FVector(0, (MaxY-MinY)/2, 0));
+    ObjectToWorld.SetOrigin(FVector((MinX + MaxX)/2, (MinY + MaxY) / 2, 0));
+    AreaMaterial.Get()->SetVectorParameterValue(FName("Color"), FColor(255, 204, 153,100));
+
+    DrawPlane10x10(PDI,
+        ObjectToWorld,
+        1.0f,
+        FVector2D::Zero(), FVector2D::One(),
+        AreaMaterial->GetRenderProxy(), 0);
 }
 
 FVector FPLATEAUExtentGizmo::GetHandlePosition(int Index) {
