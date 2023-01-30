@@ -30,7 +30,6 @@ private:
     bool bIsSeletedServerPrefecture = false;
     int PrefectureID = 1;
     int MunicipalityID = 1;
-    FVector ReferencePoint;
     APLATEAUCityModelLoader* Loader;
 
     TWeakPtr<SWindow> OwnerWindow;

@@ -384,19 +384,16 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .OnXChanged_Lambda(
             [this](double value) {
                 Loader->GeoReference.ReferencePoint.X = value;
-                ReferencePoint.X = value;
                 FReply::Handled();
             })
         .OnYChanged_Lambda(
             [this](double value) {
                 Loader->GeoReference.ReferencePoint.Y = value;
-                ReferencePoint.Y = value;
                 FReply::Handled();
             })
         .OnZChanged_Lambda(
             [this](double value) {
                 Loader->GeoReference.ReferencePoint.Z = value;
-                ReferencePoint.Z = value;
                 FReply::Handled();
             })
         ];
