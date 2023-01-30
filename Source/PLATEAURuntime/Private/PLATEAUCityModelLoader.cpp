@@ -178,14 +178,6 @@ namespace {
 void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
 
-    // GeoReferenceを選択範囲の中心に更新
-    const auto MinPoint = GeoReference.GetData().project(Extent.GetNativeData().min);
-    const auto MaxPoint = GeoReference.GetData().project(Extent.GetNativeData().max);
-    const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
-    GeoReference.ReferencePoint.X += NativeReferencePoint.x;
-    GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
-    GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
-
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
