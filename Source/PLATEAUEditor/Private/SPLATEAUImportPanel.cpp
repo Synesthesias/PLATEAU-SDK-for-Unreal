@@ -341,12 +341,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
             })
         .Extent_Lambda(
             [this, ExtentEditButton]() {
-                const auto MinPoint = Loader->GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().min);
-                const auto MaxPoint = Loader->GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().max);
+                const auto MinPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().min);
+                const auto MaxPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().max);
                 const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
-                Loader->GeoReference.ReferencePoint.X += NativeReferencePoint.x;
-                Loader->GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
-                Loader->GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
+                GeoReference.ReferencePoint.X += NativeReferencePoint.x;
+                GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
+                GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
                 return ExtentEditButton.Pin()->GetExtent().Get({});
             })];
 
@@ -358,11 +358,6 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .Text(LOCTEXT("Offset Vector", "オフセット値を設定"))
         ];
 
-    const FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
-    UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
-    const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
-    Loader = Cast<APLATEAUCityModelLoader>(Actor);
-
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
         .Padding(FMargin(10, 5, 10, 20))
@@ -371,29 +366,29 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .AllowSpin(true)
         .X_Lambda(
             [this]() {
-                return Loader->GeoReference.ReferencePoint.X;
+                return GeoReference.ReferencePoint.X;
             })
         .Y_Lambda(
             [this]() {
-                return Loader->GeoReference.ReferencePoint.Y;
+                return GeoReference.ReferencePoint.Y;
             })
         .Z_Lambda(
             [this]() {
-                return Loader->GeoReference.ReferencePoint.Z;
+                return GeoReference.ReferencePoint.Z;
             })
         .OnXChanged_Lambda(
             [this](double value) {
-                Loader->GeoReference.ReferencePoint.X = value;
+                GeoReference.ReferencePoint.X = value;
                 FReply::Handled();
             })
         .OnYChanged_Lambda(
             [this](double value) {
-                Loader->GeoReference.ReferencePoint.Y = value;
+                GeoReference.ReferencePoint.Y = value;
                 FReply::Handled();
             })
         .OnZChanged_Lambda(
             [this](double value) {
-                Loader->GeoReference.ReferencePoint.Z = value;
+                GeoReference.ReferencePoint.Z = value;
                 FReply::Handled();
             })
         ];
@@ -408,6 +403,10 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .ButtonColorAndOpacity(BUTTON_COLOR)
         .OnClicked_Lambda(
             [this]() {
+                const FAssetData EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
+                UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
+                const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
+                const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
                 Loader->bImportFromServer = bImportFromServer;
                 Loader->ClientRef = ServerPanelRef->GetClientRef();
                 if (bImportFromServer) {
