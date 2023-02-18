@@ -24,6 +24,7 @@
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
+#include "Widgets/Input/SVectorInputBox.h"
 #include "Widgets/SPLATEAUServerDatasetSelectPanel.h"
 
 #define LOCTEXT_NAMESPACE "SPLATEAUImportPanel"
@@ -339,9 +340,58 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 }
             })
         .Extent_Lambda(
-            [ExtentEditButton]() {
+            [this, ExtentEditButton]() {
+                const auto MinPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().min);
+                const auto MaxPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().max);
+                const auto NativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
+                GeoReference.ReferencePoint.X += NativeReferencePoint.x;
+                GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
+                GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
                 return ExtentEditButton.Pin()->GetExtent().Get({});
             })];
+
+    //オフセット値を設定
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        .Padding(FMargin(10, 5, 10, 5))
+        [SNew(STextBlock)
+        .Text(LOCTEXT("Offset Vector", "オフセット値を設定"))
+        ];
+
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        .Padding(FMargin(10, 5, 10, 20))
+        [SNew(SVectorInputBox)
+        .bColorAxisLabels(true)
+        .AllowSpin(true)
+        .X_Lambda(
+            [this]() {
+                return GeoReference.ReferencePoint.X;
+            })
+        .Y_Lambda(
+            [this]() {
+                return GeoReference.ReferencePoint.Y;
+            })
+        .Z_Lambda(
+            [this]() {
+                return GeoReference.ReferencePoint.Z;
+            })
+        .OnXChanged_Lambda(
+            [this](double value) {
+                GeoReference.ReferencePoint.X = value;
+                FReply::Handled();
+            })
+        .OnYChanged_Lambda(
+            [this](double value) {
+                GeoReference.ReferencePoint.Y = value;
+                FReply::Handled();
+            })
+        .OnZChanged_Lambda(
+            [this](double value) {
+                GeoReference.ReferencePoint.Z = value;
+                FReply::Handled();
+            })
+        ];
 
     // モデルをインポート
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
