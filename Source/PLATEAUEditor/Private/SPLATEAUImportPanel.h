@@ -30,6 +30,7 @@ private:
     bool bIsSeletedServerPrefecture = false;
     int PrefectureID = 1;
     int MunicipalityID = 1;
+    TVec3d NativeReferencePoint;
     FPLATEAUGeoReference GeoReference;
 
     TWeakPtr<SWindow> OwnerWindow;
