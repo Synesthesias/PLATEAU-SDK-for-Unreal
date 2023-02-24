@@ -10,10 +10,13 @@ namespace plateau::network {
 namespace plateau::dataset {
     /**
      * PLATEAUデータ一式を表現したクラスです。
-     * 保持している IDatasetAccessor によってGMLファイルの検索ができます。
+     * 保持している IDatasetAccessor によってGMLファイルの検索・取得ができます。
      * データの場所が ローカルPCか APIサーバーかは DatasetSource の作成時にはっきりさせたいので、
      * デフォルトコンストラクタの代わりに createLocal または createServer を利用してください。
      * 表記例: new DatasetSource(DatasetSource::createServer("23ku"));
+     *
+     * 他クラスとの関係:
+     * DatasetSource -> (保持) -> IDatasetAccessor (すなわち ServerDatasetAccessor または LocalDatasetAccessor)
      */
     class LIBPLATEAU_EXPORT DatasetSource {
     public:

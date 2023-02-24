@@ -10,8 +10,8 @@
 
 void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL) {
     const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
-        ClientRef = plateau::network::Client(InServerURL);
-        const auto tempDatasets = ClientRef.getMetadata();
+        ClientPtr = std::make_shared<plateau::network::Client>("https://api.plateau.dev.reearth.io", "secret-56c66bcac0ab4724b86fc48309fe517a");
+        const auto tempDatasets = ClientPtr->getMetadata();
         static FCriticalSection CriticalSection;
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
@@ -29,7 +29,7 @@ void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServe
 void SPLATEAUServerDatasetSelectPanel::InitServerData() {
     if (!bLoadedClientData && !bServerInitialized) {
         bServerInitialized = true;
-        LoadClientData(DefaultServerURL);
+        LoadClientData("");
     }
 }
 
@@ -52,8 +52,6 @@ void SPLATEAUServerDatasetSelectPanel::InitUITexts() {
             }
             std::string TmpStr3 = DataSets->at(0).datasets[0].description;
             DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr3.c_str()));
-            std::string TmpStr4 = std::to_string(DataSets->at(0).datasets[0].max_lod);
-            MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr4.c_str()));
         }
     }
 }
@@ -92,42 +90,6 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
 
 TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructServerDataPanel() {
     return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 12))
-        [
-            SNew(SHorizontalBox) +
-            SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f) +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .HAlign(HAlign_Right)
-        .Padding(FMargin(0, 0, 0, 0))
-        .FillWidth(0.25f)
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Right)
-        .Text(LOCTEXT("Server URL", "サーバーURL"))
-        ] +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f) +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(1)
-        [
-            SAssignNew(ServerURL, SEditableTextBox)
-            .Justification(ETextJustify::Left)
-        .Text(FText::FromString(DefaultServerURL.c_str()))
-        ]
-    + SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f)]
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(32, 0, 32, 20))[
@@ -286,11 +248,8 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
                                 if (bLoadedClientData) {
                                     std::string TmpStr = DataSets->at(PrefectureID).datasets[MunicipalityID].description;
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str()));
-                                    std::string TmpStr2 = std::to_string(DataSets->at(PrefectureID).datasets[MunicipalityID].max_lod);
-                                    MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr2.c_str()));
                                 } else {
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
-                                    MaxLODText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
                                 }
                             }));
                         MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
@@ -320,28 +279,6 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
 
 TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDescriptionPanel() {
     return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(32, 10, 0, 5))
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Left)
-        .Text(LOCTEXT("Max LOD", "最大LOD"))
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(32, 0, 32, 0))
-        [
-            SNew(SEditableTextBox)
-            .Justification(ETextJustify::Left)
-        .Text_Lambda([this]() {
-        if (!bLoadedClientData)
-            return LOCTEXT("Loading", "Loading...");
-        else
-            return MaxLODText;
-            })
-        .IsReadOnly(true)
-        ]
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(32, 15, 0, 5))

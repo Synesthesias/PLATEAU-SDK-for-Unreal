@@ -55,13 +55,13 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
             World->ChangeFeatureLevel(GWorld->FeatureLevel);
         }
         const auto& SourcePath = ExtentEditorPtr.Pin()->GetSourcePath();
-        const auto ClientRef = ExtentEditorPtr.Pin()->GetClientRef();
+        const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
         const auto ID = ExtentEditorPtr.Pin()->GetServerDatasetID();
         const auto bImportFromServer = ExtentEditorPtr.Pin()->IsImportFromServer();
         std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
         if (bImportFromServer) {
             try {
-                const auto DatasetSource = plateau::dataset::DatasetSource::createServer(ID, ClientRef);
+                const auto DatasetSource = plateau::dataset::DatasetSource::createServer(ID, *ClientRef);
                 DatasetAccessor = DatasetSource.getAccessor();
             }
             catch (...) {

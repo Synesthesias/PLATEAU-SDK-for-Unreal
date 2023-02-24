@@ -79,7 +79,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         bool bImportFromServer;
 
-    plateau::network::Client ClientRef;
+    std::shared_ptr<plateau::network::Client> ClientPtr;
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void LoadAsync();

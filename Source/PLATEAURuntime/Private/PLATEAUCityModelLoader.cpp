@@ -194,12 +194,12 @@ void APLATEAUCityModelLoader::LoadAsync() {
             GeoReference = GeoReference,
             ImportSettings = ImportSettings,
             bImportFromServer = bImportFromServer,
-            ClientRef = ClientRef,
+            Client = *ClientPtr,
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference, bImportFromServer, ClientRef);
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
