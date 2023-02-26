@@ -167,8 +167,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 if (bImportFromServer) {
                     if (ServerPanelRef->GetDatasetAccessor() != nullptr)
                         IsValidDatasetSet = ServerPanelRef->GetDatasetAccessor()->getPackages() != PredefinedCityModelPackage::None;
-                }
-                else {
+                } else {
                     if (DatasetAccessor != nullptr)
                         IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
                 }
@@ -282,18 +281,18 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
             [this]() {
                 return ZoneID;
             })
-        .bImportFromServer_Lambda(
-            [this]() {
-                return bImportFromServer;
-            })
-        .ClientRef_Lambda(
-            [this]() {
-                return ServerPanelRef->GetClientRef();
-            })
-        .ServerDatasetID_Lambda(
-            [this]() {
-                return ServerPanelRef->GetServerDatasetID();
-            })];
+                .bImportFromServer_Lambda(
+                    [this]() {
+                        return bImportFromServer;
+                    })
+                .ClientRef_Lambda(
+                    [this]() {
+                        return ServerPanelRef->GetClientRef();
+                    })
+                        .ServerDatasetID_Lambda(
+                            [this]() {
+                                return ServerPanelRef->GetServerDatasetID();
+                            })];
 
     TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
     ModelDataPlacementVerticalBox.Pin()->AddSlot()
@@ -335,22 +334,29 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
             [this]() {
                 if (bImportFromServer) {
                     return ServerPanelRef->GetDatasetAccessor();
-                }
-                else {
+                } else {
                     return DatasetAccessor;
                 }
             })
         .Extent_Lambda(
             [this, ExtentEditButton]() {
-                const auto MinPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().min);
-                const auto MaxPoint = GeoReference.GetData().project(ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData().max);
+                // 緯度経度の範囲情報
+                const auto Extent = ExtentEditButton.Pin()->GetExtent().Get({}).GetNativeData();
 
-                const auto NewNativeReferencePoint = (MinPoint + MaxPoint) / 2.0;
-                if(NewNativeReferencePoint != NativeReferencePoint &&  fabs(NewNativeReferencePoint.x) > 0.00001){
-                    NativeReferencePoint = NewNativeReferencePoint;
-                    GeoReference.ReferencePoint.X += NativeReferencePoint.x;
-                    GeoReference.ReferencePoint.Y += NativeReferencePoint.y;
-                    GeoReference.ReferencePoint.Z += NativeReferencePoint.z;
+                // 平面直角座標系への変換
+                auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
+                GeoReferenceWithoutOffset.ZoneID = ZoneID;
+                GeoReferenceWithoutOffset.UpdateNativeData();
+
+                const auto MinPoint = GeoReferenceWithoutOffset.GetData().project(Extent.min);
+                const auto MaxPoint = GeoReferenceWithoutOffset.GetData().project(Extent.max);
+                const auto NewExtentCenterRaw = (MinPoint + MaxPoint) / 2.0;
+                const auto NewExtentCenter = FVector3d(NewExtentCenterRaw.x, NewExtentCenterRaw.y, NewExtentCenterRaw.z);
+                if (FMath::Abs(ExtentCenter.X - NewExtentCenter.X) > 1000.0 ||
+                    FMath::Abs(ExtentCenter.Y - NewExtentCenter.Y) > 1000.0 ||
+                    FMath::Abs(ExtentCenter.Z - NewExtentCenter.Z) > 1000.0) {
+                    ExtentCenter = NewExtentCenter;
+                    ReferencePoint = ExtentCenter;
                 }
 
                 return ExtentEditButton.Pin()->GetExtent().Get({});
@@ -361,114 +367,110 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .AutoHeight()
         .Padding(FMargin(10, 5, 10, 5))
         [SNew(STextBlock)
-        .Text(LOCTEXT("Offset Vector", "オフセット値を設定"))
+        .Text(LOCTEXT("Offset Vector", "オフセット値(cm)を設定"))
         ];
 
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
-        .Padding(FMargin(84, 5, 86, 20))
+        .Padding(FMargin(84, 5, 86, 0))
         [SNew(SButton)
         .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
         .ButtonColorAndOpacity(BUTTON_COLOR)
         .OnClicked_Lambda(
             [this]() {
-                GeoReference.ReferencePoint.X = NativeReferencePoint.x;
-                GeoReference.ReferencePoint.Y = NativeReferencePoint.y;
-                GeoReference.ReferencePoint.Z = NativeReferencePoint.z;
+                ReferencePoint = ExtentCenter;
                 return FReply::Handled();
             })
         .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Set Default Offset", "範囲の中心点を入力"))
+                ]
+        ];
+
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        .Padding(FMargin(30, 5, 10, 0))
+        [SNew(SHorizontalBox) +
+        SHorizontalBox::Slot()
+        .AutoWidth()
+        .VAlign(VAlign_Center)
         [SNew(STextBlock)
-        .Justification(ETextJustify::Center)
-        .Margin(FMargin(0, 5, 0, 5))
-        .Text(LOCTEXT("Set Default Offset", "範囲の中心点を入力"))
-        ]
-        ];
-
-    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
-        .AutoHeight()
-        .Padding(FMargin(10, 5, 10, 20))
-        [SNew(SHorizontalBox) +
-        SHorizontalBox::Slot()
-        .AutoWidth()
-        .VAlign(VAlign_Center)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("label X", "X (東が正方向)"))
+        .Text(LOCTEXT("label X", "X (東が正方向)"))
+        .MinDesiredWidth(100.0f)
         ] +
+
         SHorizontalBox::Slot()
         .FillWidth(1)
         .VAlign(VAlign_Center)
         [SNew(SNumericEntryBox<double>)
-        .AllowSpin(true)
-        .MaxSliderValue(100000000)
-        .MinSliderValue(-100000000)
-        .OnValueChanged_Lambda(
-            [this](double value) {
-                GeoReference.ReferencePoint.X = value;
+        .AllowSpin(false)
+        .OnValueCommitted_Lambda(
+            [this](double value, ETextCommit::Type TextCommitType) {
+                ReferencePoint.X = value;
             })
         .Value_Lambda(
             [this]() {
-                return GeoReference.ReferencePoint.X;
+                return ReferencePoint.X;
             })
         ]
         ];
 
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
-        .Padding(FMargin(10, 5, 10, 20))
+        .Padding(FMargin(30, 5, 10, 0))
         [SNew(SHorizontalBox) +
         SHorizontalBox::Slot()
         .AutoWidth()
         .VAlign(VAlign_Center)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("label Y", "Y (南が正方向)"))
+        [SNew(STextBlock)
+        .Text(LOCTEXT("label Y", "Y (南が正方向)"))
+        .MinDesiredWidth(100.0f)
         ] +
+
         SHorizontalBox::Slot()
         .FillWidth(1)
         .VAlign(VAlign_Center)
         [SNew(SNumericEntryBox<double>)
-        .AllowSpin(true)
-        .MaxSliderValue(100000000)
-        .MinSliderValue(-100000000)
-        .OnValueChanged_Lambda(
-            [this](double value) {
-                GeoReference.ReferencePoint.Y = value;
+        .AllowSpin(false)
+        .OnValueCommitted_Lambda(
+            [this](double value, ETextCommit::Type TextCommitType) {
+                ReferencePoint.Y = value;
             })
         .Value_Lambda(
             [this]() {
-                return GeoReference.ReferencePoint.Y;
+                return ReferencePoint.Y;
             })
         ]
         ];
 
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
-        .Padding(FMargin(10, 5, 10, 20))
+        .Padding(FMargin(30, 5, 10, 0))
         [SNew(SHorizontalBox) +
         SHorizontalBox::Slot()
         .AutoWidth()
         .VAlign(VAlign_Center)
-        [
-            SNew(STextBlock)
-            .Text(LOCTEXT("label Z", "Z (高さ)"))
+        [SNew(STextBlock)
+        .Text(LOCTEXT("label Z", "Z (高さ)"))
+        .MinDesiredWidth(100.0f)
         ] +
+
         SHorizontalBox::Slot()
         .FillWidth(1)
         .VAlign(VAlign_Center)
         [SNew(SNumericEntryBox<double>)
-        .AllowSpin(true)
-        .MaxSliderValue(100000000)
-        .MinSliderValue(-100000000)
-        .OnValueChanged_Lambda(
-            [this](double value) {
-                GeoReference.ReferencePoint.Z = value;
+        .AllowSpin(false)
+        .OnValueCommitted_Lambda(
+            [this](double value, ETextCommit::Type TextCommitType) {
+                if (TextCommitType == ETextCommit::Type::OnEnter)
+                    ReferencePoint.Z = value;
             })
         .Value_Lambda(
             [this]() {
-                return GeoReference.ReferencePoint.Z;
+                return ReferencePoint.Z;
             })
         ]
         ];
@@ -476,7 +478,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     // モデルをインポート
     PerFeatureSettingsVerticalBox.Pin()->AddSlot()
         .AutoHeight()
-        .Padding(FMargin(84, 5, 86, 20))
+        .Padding(FMargin(84, 20, 86, 20))
         [SNew(SButton)
         .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
@@ -491,8 +493,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 Loader->ClientRef = ServerPanelRef->GetClientRef();
                 if (bImportFromServer) {
                     Loader->Source = ServerPanelRef->GetServerDatasetID().c_str();
-                }
-                else {
+                } else {
                     Loader->Source = SourcePath;
                 }
                 const auto& ExtentOpt = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
@@ -501,10 +502,12 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                     return FReply::Handled();
                 }
                 Loader->Extent = ExtentOpt.GetValue();
-
-                // TODO: 無しでも動くように変更
                 Loader->Extent.Min.Height = -100000;
                 Loader->Extent.Max.Height = 100000;
+
+                Loader->GeoReference.ReferencePoint = ReferencePoint;
+                Loader->GeoReference.ZoneID = ZoneID;
+                Loader->GeoReference.UpdateNativeData();
 
                 // 設定を登録,ロード処理実行
                 Loader->ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);

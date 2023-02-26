@@ -75,12 +75,10 @@ namespace {
                 if (bUseAsBackPanel) {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.01f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.6f);
-                }
-                else if (bGrayOut) {
+                } else if (bGrayOut) {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.7f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 0.3f);
-                }
-                else {
+                } else {
                     DynMat->SetScalarParameterValue(TEXT("Multiplyer"), 0.7f);
                     DynMat->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
                 }
@@ -100,8 +98,7 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {
-}
+    , ViewportClient(InViewportClient) {}
 
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
@@ -233,13 +230,13 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, pla
 
         // 範囲内のPanelについて表示をONにする
         const auto& AsyncLoadedPanel = AsyncLoadedPanels[MeshCode];
+        AsyncLoadedPanel->Tick();
         if (AsyncLoadedPanel->GetFullyLoaded()) {
             for (int i = 0; i < 4; i++) {
                 if (bDetailed) {
                     const auto PanelComponent = AsyncLoadedPanel->GetDetailedPanelComponent(i);
                     PanelComponent->SetVisibility(true);
-                }
-                else {
+                } else {
                     const auto PanelComponent = AsyncLoadedPanel->GetPanelComponent(i);
                     PanelComponent->SetVisibility(true);
                 }
@@ -251,101 +248,106 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, pla
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input) {
-    Async(EAsyncExecution::Thread,
-        [this, Input]() {
+    GetMaxLodTask = Async(EAsyncExecution::Thread,
+        [Input = Input]() mutable {
             const bool BldgExists = Input.BldgGmlPath != "";
-            int BldgLODNum = Input.BldgMaxLod;
-            if (BldgLODNum == -1 && BldgExists)
-                BldgLODNum = GetMaxLod(Input.BldgGmlPath);
+            if (Input.BldgMaxLod == -1 && BldgExists)
+                Input.BldgMaxLod = GetMaxLod(Input.BldgGmlPath);
 
-            FString FilePathBldg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Building, BldgLODNum, false);
-            FString DetailedFilePathBldg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Building, BldgLODNum, true);
-
-            const bool CityExists = Input.FrnGmlPath != "";
-            int CityLODNum = Input.FrnMaxLod;
-            if (CityLODNum == -1 && CityExists)
-                CityLODNum = GetMaxLod(Input.FrnGmlPath);
-
-            FString FilePathCity = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::CityFurniture, CityLODNum, false);
-            FString DetailedFilePathCity = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::CityFurniture, CityLODNum, true);
+            const bool FrnExists = Input.FrnGmlPath != "";
+            if (Input.FrnMaxLod == -1 && FrnExists)
+                Input.FrnMaxLod = GetMaxLod(Input.FrnGmlPath);
 
             const bool RoadExists = Input.RoadGmlPath != "";
-            int RoadLODNum = Input.RoadMaxLod;
-            if (RoadLODNum == -1 && RoadExists)
-                RoadLODNum = GetMaxLod(Input.RoadGmlPath);
-
-            FString FilePathRoad = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Road, RoadLODNum, false);
-            FString DetailedFilePathRoad = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Road, RoadLODNum, true);
+            if (Input.RoadMaxLod == -1 && RoadExists)
+                Input.RoadMaxLod = GetMaxLod(Input.RoadGmlPath);
 
             const bool VegExists = Input.VegGmlPath != "";
-            int VegLODNum = Input.VegMaxLod;
-            if (VegLODNum == -1 && VegExists)
-                VegLODNum = GetMaxLod(Input.VegGmlPath);
+            if (Input.VegMaxLod == -1 && VegExists)
+                Input.VegMaxLod = GetMaxLod(Input.VegGmlPath);
 
-            FString FilePathVeg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Vegetation, VegLODNum, false);
-            FString DetailedFilePathVeg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
-                + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Vegetation, VegLODNum, true);
-
-
-            USceneComponent* TempBldgPanelComponent = nullptr;
-            const auto BldgTexture = FPLATEAUTextureLoader::LoadTransient(FilePathBldg);
-            TempBldgPanelComponent = CreatePanelMeshComponent(BldgTexture, !BldgExists, false, BaseMat);
-            USceneComponent* TempCityPanelComponent = nullptr;
-            const auto CityTexture = FPLATEAUTextureLoader::LoadTransient(FilePathCity);
-            TempCityPanelComponent = CreatePanelMeshComponent(CityTexture, !CityExists, false, BaseMat);
-            USceneComponent* TempRoadPanelComponent = nullptr;
-            const auto RoadTexture = FPLATEAUTextureLoader::LoadTransient(FilePathRoad);
-            TempRoadPanelComponent = CreatePanelMeshComponent(RoadTexture, !RoadExists, false, BaseMat);
-            USceneComponent* TempVegPanelComponent = nullptr;
-            const auto VegTexture = FPLATEAUTextureLoader::LoadTransient(FilePathVeg);
-            TempVegPanelComponent = CreatePanelMeshComponent(VegTexture, !VegExists, false, BaseMat);
-
-            USceneComponent* TempDetailedBldgPanelComponent = nullptr;
-            const auto DetailedBldgTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathBldg);
-            TempDetailedBldgPanelComponent = CreatePanelMeshComponent(DetailedBldgTexture, !BldgExists, false, BaseMat);
-            USceneComponent* TempDetailedCityPanelComponent = nullptr;
-            const auto DetailedCityTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathCity);
-            TempDetailedCityPanelComponent = CreatePanelMeshComponent(DetailedCityTexture, !CityExists, false, BaseMat);
-            USceneComponent* TempDetailedRoadPanelComponent = nullptr;
-            const auto DetailedRoadTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathRoad);
-            TempDetailedRoadPanelComponent = CreatePanelMeshComponent(DetailedRoadTexture, !RoadExists, false, BaseMat);
-            USceneComponent* TempDetailedVegPanelComponent = nullptr;
-            const auto DetailedVegTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathVeg);
-            TempDetailedVegPanelComponent = CreatePanelMeshComponent(DetailedVegTexture, !VegExists, false, BaseMat);
-
-            const auto Texture = FPLATEAUTextureLoader::LoadTransient(FPaths::ProjectPluginsDir() + "PLATEAU-SDK-for-Unreal/Content/round-button.png");
-            USceneComponent* TempBackPanelComponent = CreatePanelMeshComponent(Texture, true, true, BaseMat);
-            {
-                FScopeLock Lock(&CriticalSection);
-                PanelComponents.Add(TempBldgPanelComponent);
-                PanelComponents.Add(TempCityPanelComponent);
-                PanelComponents.Add(TempRoadPanelComponent);
-                PanelComponents.Add(TempVegPanelComponent);
-
-                DetailedPanelComponents.Add(TempDetailedBldgPanelComponent);
-                DetailedPanelComponents.Add(TempDetailedCityPanelComponent);
-                DetailedPanelComponents.Add(TempDetailedRoadPanelComponent);
-                DetailedPanelComponents.Add(TempDetailedVegPanelComponent);
-
-                BackPanelComponent = TempBackPanelComponent;
-                IsFullyLoaded = true;
-            }
+            return Input;
         });
 }
+
+void FPLATEAUAsyncLoadedFeatureInfoPanel::Tick() {
+    if (IsFullyLoaded)
+        return;
+
+    if (!GetMaxLodTask.IsReady())
+        return;
+
+    const auto Input = GetMaxLodTask.Get();
+    const bool BldgExists = Input.BldgGmlPath != "";
+    const bool CityExists = Input.FrnGmlPath != "";
+    const bool RoadExists = Input.RoadGmlPath != "";
+    const bool VegExists = Input.VegGmlPath != "";
+
+    FString FilePathBldg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Building, Input.BldgMaxLod, false);
+    FString DetailedFilePathBldg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Building, Input.BldgMaxLod, true);
+
+    FString FilePathCity = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::CityFurniture, Input.FrnMaxLod, false);
+    FString DetailedFilePathCity = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::CityFurniture, Input.FrnMaxLod, true);
+
+    FString FilePathRoad = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Road, Input.RoadMaxLod, false);
+    FString DetailedFilePathRoad = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Road, Input.RoadMaxLod, true);
+
+    FString FilePathVeg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Vegetation, Input.VegMaxLod, false);
+    FString DetailedFilePathVeg = FPaths::ProjectDir() + "Plugins/PLATEAU-SDK-for-Unreal/Content/"
+        + MakeTexturePath(plateau::dataset::PredefinedCityModelPackage::Vegetation, Input.VegMaxLod, true);
+
+    const auto BldgTexture = FPLATEAUTextureLoader::LoadTransient(FilePathBldg);
+    USceneComponent* TempBldgPanelComponent = CreatePanelMeshComponent(BldgTexture, !BldgExists, false, BaseMat);
+    const auto CityTexture = FPLATEAUTextureLoader::LoadTransient(FilePathCity);
+    USceneComponent* TempCityPanelComponent = CreatePanelMeshComponent(CityTexture, !CityExists, false, BaseMat);
+    const auto RoadTexture = FPLATEAUTextureLoader::LoadTransient(FilePathRoad);
+    USceneComponent* TempRoadPanelComponent = CreatePanelMeshComponent(RoadTexture, !RoadExists, false, BaseMat);
+    const auto VegTexture = FPLATEAUTextureLoader::LoadTransient(FilePathVeg);
+    USceneComponent* TempVegPanelComponent = CreatePanelMeshComponent(VegTexture, !VegExists, false, BaseMat);
+
+    const auto DetailedBldgTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathBldg);
+    USceneComponent* TempDetailedBldgPanelComponent = CreatePanelMeshComponent(
+        DetailedBldgTexture, !BldgExists, false, BaseMat);
+    const auto DetailedCityTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathCity);
+    USceneComponent* TempDetailedCityPanelComponent = CreatePanelMeshComponent(
+        DetailedCityTexture, !CityExists, false, BaseMat);
+    const auto DetailedRoadTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathRoad);
+    USceneComponent* TempDetailedRoadPanelComponent = CreatePanelMeshComponent(
+        DetailedRoadTexture, !RoadExists, false, BaseMat);
+    const auto DetailedVegTexture = FPLATEAUTextureLoader::LoadTransient(DetailedFilePathVeg);
+    USceneComponent* TempDetailedVegPanelComponent = CreatePanelMeshComponent(
+        DetailedVegTexture, !VegExists, false, BaseMat);
+
+    const auto Texture = FPLATEAUTextureLoader::LoadTransient(FPaths::ProjectPluginsDir() + "PLATEAU-SDK-for-Unreal/Content/round-button.png");
+    USceneComponent* TempBackPanelComponent = CreatePanelMeshComponent(Texture, true, true, BaseMat);
+
+    PanelComponents.Add(TempBldgPanelComponent);
+    PanelComponents.Add(TempCityPanelComponent);
+    PanelComponents.Add(TempRoadPanelComponent);
+    PanelComponents.Add(TempVegPanelComponent);
+
+    DetailedPanelComponents.Add(TempDetailedBldgPanelComponent);
+    DetailedPanelComponents.Add(TempDetailedCityPanelComponent);
+    DetailedPanelComponents.Add(TempDetailedRoadPanelComponent);
+    DetailedPanelComponents.Add(TempDetailedVegPanelComponent);
+
+    BackPanelComponent = TempBackPanelComponent;
+    IsFullyLoaded = true;
+}
+
 
 const FString FPLATEAUAsyncLoadedFeatureInfoPanel::MakeTexturePath(const plateau::dataset::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText) {
     FString Path = "";
     if (bEnableText) {
         Path += PANEL_PATH_WITHTEXT;
-    }
-    else {
+    } else {
         Path += PANEL_PATH_NOTEXT;
     }
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUGeometry.h"
 #include "Widgets/SCompoundWidget.h"
 
 namespace plateau::dataset {
@@ -30,8 +31,11 @@ private:
     bool bIsSeletedServerPrefecture = false;
     int PrefectureID = 1;
     int MunicipalityID = 1;
-    TVec3d NativeReferencePoint;
-    FPLATEAUGeoReference GeoReference;
+
+    // 選択範囲の中心
+    FVector3d ExtentCenter;
+    // UI上で設定されるオフセット値
+    FVector3d ReferencePoint;
 
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
