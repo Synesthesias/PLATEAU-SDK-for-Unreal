@@ -49,7 +49,10 @@ FPLATEAUBasemap::FPLATEAUBasemap(
     : GeoReference(InGeoReference)
     , ViewportClient(InViewportClient) {}
 
-FPLATEAUBasemap::~FPLATEAUBasemap() {}
+FPLATEAUBasemap::~FPLATEAUBasemap()
+{
+    
+}
 
 
 void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
@@ -101,7 +104,7 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
         auto TileCoordinate = FPLATEAUTileCoordinate::FromNativeData(RawTileCoordinate);
         if (!AsyncLoadedTiles.Find(TileCoordinate)) {
             const auto& AsyncLoadedTile = AsyncLoadedTiles.Add(TileCoordinate, MakeShared<FPLATEAUAsyncLoadedVectorTile>());
-            AsyncLoadedTile->LoadAsync(TileCoordinate);
+            AsyncLoadedTile->StartLoading(TileCoordinate);
             continue;
         }
 
@@ -143,8 +146,9 @@ uint32 GetTypeHash(const FPLATEAUTileCoordinate& Value) {
     return Value.ZoomLevel * 100000000 + Value.Row * 10000 + Value.Column;
 }
 
-void FPLATEAUAsyncLoadedVectorTile::LoadAsync(const FPLATEAUTileCoordinate& InTileCoordinate) {
-    Async(EAsyncExecution::Thread,
+void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate) {
+    IsLoading = true;
+    Task = Async(EAsyncExecution::Thread,
         [this, InTileCoordinate]() {
 
             const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\Basemap"));
@@ -163,5 +167,6 @@ void FPLATEAUAsyncLoadedVectorTile::LoadAsync(const FPLATEAUTileCoordinate& InTi
                 TileComponent = TempComponent;
                 IsFullyLoaded = true;
             }
+            IsLoading = false;
         });
 }

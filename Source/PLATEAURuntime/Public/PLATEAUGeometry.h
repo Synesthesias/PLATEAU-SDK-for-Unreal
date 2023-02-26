@@ -63,13 +63,12 @@ public:
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);
 
     plateau::geometry::GeoReference& GetData();
+    void UpdateNativeData();
 
 private:
     friend class UPLATEAUGeoReferenceBlueprintLibrary;
 
     plateau::geometry::GeoReference Data;
-
-    void UpdateNativeData();
 };
 
 UCLASS()

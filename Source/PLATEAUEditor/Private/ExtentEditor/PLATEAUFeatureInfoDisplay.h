@@ -29,6 +29,9 @@ struct FPLATEAUMeshCodeFeatureInfoInput {
  */
 struct FPLATEAUAsyncLoadedFeatureInfoPanel {
 public:
+    ~FPLATEAUAsyncLoadedFeatureInfoPanel() {
+    }
+
     bool GetFullyLoaded() {
         FScopeLock Lock(&CriticalSection);
         return IsFullyLoaded;
@@ -51,17 +54,19 @@ public:
 
     void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
     void LoadMaterial();
+    void Tick();
 
 private:
     const FString MakeTexturePath(const plateau::dataset::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
 
 private:
     FCriticalSection CriticalSection;
-    bool IsFullyLoaded;
+    std::atomic<bool> IsFullyLoaded;
     TArray<USceneComponent*> PanelComponents;
     TArray<USceneComponent*> DetailedPanelComponents;
     USceneComponent* BackPanelComponent;
     UMaterial* BaseMat;
+    TFuture<FPLATEAUMeshCodeFeatureInfoInput> GetMaxLodTask;
 };
 
 /**

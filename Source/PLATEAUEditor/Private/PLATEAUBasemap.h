@@ -25,12 +25,17 @@ struct FPLATEAUTileCoordinate {
 
 struct FPLATEAUAsyncLoadedVectorTile {
 public:
-    //FPLATEAUAsyncLoadedVectorTile()
-    //    : IsFullyLoaded(false)
-    //    , TileComponent(nullptr) {}
+    FPLATEAUAsyncLoadedVectorTile()
+        : IsFullyLoaded(false)
+        , TileComponent(nullptr) {}
+
+    ~FPLATEAUAsyncLoadedVectorTile()
+    {
+        if (IsLoading && !IsFullyLoaded)
+            Task.Wait();
+    }
 
     bool GetFullyLoaded() {
-        FScopeLock Lock(&CriticalSection);
         return IsFullyLoaded;
     }
 
@@ -39,12 +44,14 @@ public:
         return TileComponent;
     }
 
-    void LoadAsync(const FPLATEAUTileCoordinate& InTileCoordinate);
-    
+    void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate);
+
 private:
     FCriticalSection CriticalSection;
-    bool IsFullyLoaded;
+    std::atomic<bool> IsFullyLoaded;
+    std::atomic<bool> IsLoading;
     UStaticMeshComponent* TileComponent;
+    TFuture<void> Task;
 };
 
 uint32 GetTypeHash(const FPLATEAUTileCoordinate& Value);
