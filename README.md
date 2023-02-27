@@ -3,10 +3,10 @@
 # PLATEAU SDK for Unreal
 PLATEAU SDK for Unrealは、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都市モデルデータをUnreal Engine 5で扱うためのツールキットであり、主に以下の機能を提供しています。
 
-- 直感的なCityGMLのインポート
+- CityGMLの直感的なインポート
   - 地図上での範囲選択による3D都市モデルの抽出
-  - PLATEAUのサーバー上で提供される3D都市モデルへのアクセス
-- インポートされた3D都市モデルに含まれる地物のフィルタリング
+  - PLATEAUのサーバーで提供されるCityGMLへのアクセス
+- 3D都市モデルに含まれる地物のフィルタリング
 - 3D都市モデルの3Dファイル形式へのエクスポート
 - 3D都市モデルの属性にアクセスするためのBlueprint API
 
@@ -17,7 +17,7 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 # 動作環境
 - Windows（x86_64）
 - MacOS（ARM）
-- Android, iOS
+- Android、iOS
   - モバイル向けには、一部の機能のみ（緯度経度と直交座標の相互変換など）をサポートしています。
 
 # 利用手順
