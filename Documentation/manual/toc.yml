@@ -4,8 +4,6 @@
   items:
   - name: インストール
     href: Installation.md
-  - name: チュートリアル
-    href: Tutorial.md
   - name: 都市モデルのインポート
     href: ImportCityModels.md
   - name: 都市モデルのエクスポート

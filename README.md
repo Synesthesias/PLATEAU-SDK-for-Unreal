@@ -1,4 +1,4 @@
-![](README_Images/PlateauEyecatchUnrealEngine_YuGothic.png)
+![](README_Images/PLATEAUEyecatchUnrealEngine_YuGothic.png)
 
 # PLATEAU SDK for Unrealについて
 PLATEAU SDK for Unrealは、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都市モデルデータをUnreal Engine 5で扱うためのツールキットであり、主に以下の機能を提供しています。
