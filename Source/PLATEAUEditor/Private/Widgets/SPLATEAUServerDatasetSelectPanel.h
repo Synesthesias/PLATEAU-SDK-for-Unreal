@@ -1,8 +1,13 @@
 #pragma once
 
+#include <plateau/dataset/dataset_source.h>
+#include <plateau/dataset/i_dataset_accessor.h>
+
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 #include <plateau/network/client.h>
+
+class UPLATEAUServerConnectionSettings;
 
 class SPLATEAUServerDatasetSelectPanel : public SCompoundWidget {
 public:
@@ -13,11 +18,14 @@ public:
 private:
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
+    UPLATEAUServerConnectionSettings* Settings;
+    TSharedPtr<IDetailsView> ConnectionSettingsView;
+
     int PrefectureID = 0;
     int MunicipalityID = 0;
     bool bIsVisible = false;
 
-    plateau::network::Client ClientRef;
+    std::shared_ptr<plateau::network::Client> ClientPtr;
     std::shared_ptr<std::vector<plateau::network::DatasetMetadataGroup>> DataSets;
 
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
@@ -26,12 +34,9 @@ private:
     TMap<int, FText> PrefectureTexts;
     TMap<int, FText> MunicipalityTexts;
     TSharedPtr<SComboButton> MunicipalityComboButton;
-    TSharedPtr<SEditableTextBox> ServerURL;
-    const std::string DefaultServerURL = plateau::network::Client::getDefaultServerUrl();
 
     bool bLoadedClientData = false;
     bool bServerInitialized = false;
-    FText MaxLODText;
     FText DescriptionText;
     FCriticalSection Mutex;
 
@@ -44,11 +49,17 @@ public:
     void InitServerData();
     inline std::shared_ptr<plateau::dataset::IDatasetAccessor> GetDatasetAccessor() {
         if (bLoadedClientData) {
+            if (DataSets->size() <= PrefectureID)
+                return nullptr;
+
+            if (DataSets->at(PrefectureID).datasets.size() < MunicipalityID)
+                return nullptr;
+
             const auto& newDatasetID = DataSets->at(PrefectureID).datasets[MunicipalityID].id;
             if (newDatasetID != datasetID) {
                 datasetID = newDatasetID;
                 try {
-                    const auto InDatasetSource = DatasetSource::createServer(newDatasetID, ClientRef);
+                    const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(newDatasetID, *ClientPtr);
                     DatasetAccessor = InDatasetSource.getAccessor();
                 }
                 catch (...) {
@@ -61,16 +72,15 @@ public:
             return nullptr;
         }
     }
-    inline plateau::network::Client GetClientRef() {
-        return ClientRef;
+    inline std::shared_ptr<plateau::network::Client> GetClientPtr() {
+        return ClientPtr;
     }
     inline std::string GetServerDatasetID() {
         return DataSets->at(PrefectureID).datasets[MunicipalityID].id;
     }
 
 private:
-    void LoadClientData(const std::string& InServerURL);
-    void LoadServerDataWithURL(const std::string& InServerURL);
+    void LoadClientData(const std::string& InServerURL = "", const std::string& InToken = "");
     void InitUITexts();
     TSharedPtr<SVerticalBox> ConstructServerDataPanel();
     TSharedPtr<SVerticalBox> ConstructPrefectureSelectPanel();

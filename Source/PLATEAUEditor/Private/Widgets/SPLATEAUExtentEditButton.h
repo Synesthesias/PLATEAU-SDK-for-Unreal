@@ -14,12 +14,12 @@ public:
         : _ZoneID(9)
         , _SourcePath("")
         , _bImportFromServer(false)
-        , _ClientRef() { }
+        , _ClientPtr() { }
 
         SLATE_ATTRIBUTE(int, ZoneID)
         SLATE_ATTRIBUTE(FString, SourcePath)
 	    SLATE_ATTRIBUTE(bool, bImportFromServer)
-        SLATE_ATTRIBUTE(plateau::network::Client, ClientRef)
+        SLATE_ATTRIBUTE(std::shared_ptr<plateau::network::Client>, ClientPtr)
         SLATE_ATTRIBUTE(std::string, ServerDatasetID)
 
         SLATE_END_ARGS()
@@ -37,7 +37,7 @@ private:
     int ZoneIDCache;
     FString SourcePathCache;
     bool bImportFromServer;
-    plateau::network::Client ClientRef;
+    std::shared_ptr<plateau::network::Client> ClientPtr;
     std::string ServerDatasetID;
 
     TSharedPtr<class FPLATEAUExtentEditor> ExtentEditor;

@@ -3,6 +3,7 @@
 #include <libplateau_api.h>
 #include <plateau/dataset/mesh_code.h>
 #include <set>
+#include <optional>
 #include "plateau/network/client.h"
 
 namespace plateau::dataset {
@@ -13,7 +14,7 @@ namespace plateau::dataset {
     class LIBPLATEAU_EXPORT GmlFile {
     public:
         explicit GmlFile(const std::string& path);
-        explicit GmlFile(const std::string& path, const int max_lod);
+        GmlFile(const std::string& path, const network::Client& client, int max_lod = -1);
 
 
         const std::string& getPath() const;
@@ -63,6 +64,9 @@ namespace plateau::dataset {
         bool is_valid_;
         bool is_local_;
         int max_lod_;
+
+        /// サーバーモード(is_local_ が falseのとき)のみ利用します。ダウンロードに使用するクライアントです。
+        std::optional<network::Client> client_;
 
         void applyPath();
     };

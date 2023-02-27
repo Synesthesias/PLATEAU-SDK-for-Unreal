@@ -79,12 +79,12 @@ void FPLATEAUExtentEditor::SetImportFromServer(bool InBool) {
     bImportFromServer = InBool;
 }
 
-plateau::network::Client FPLATEAUExtentEditor::GetClientRef() const {
-    return ClientRef;
+std::shared_ptr<plateau::network::Client> FPLATEAUExtentEditor::GetClientPtr() const {
+    return ClientPtr;
 }
 
-void FPLATEAUExtentEditor::SetClientRef(plateau::network::Client InClientRef) {
-    ClientRef = InClientRef;
+void FPLATEAUExtentEditor::SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr) {
+    ClientPtr = InClientPtr;
 }
 
 const std::string FPLATEAUExtentEditor::GetServerDatasetID() const {

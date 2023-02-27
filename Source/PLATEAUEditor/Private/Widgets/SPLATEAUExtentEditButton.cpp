@@ -35,12 +35,12 @@ void SPLATEAUExtentEditButton::Construct(const FArguments& InArgs) {
             [this, ZoneID = InArgs._ZoneID,
             SourcePath = InArgs._SourcePath,
             bImportFromServer = InArgs._bImportFromServer,
-            ClientRef = InArgs._ClientRef,
+            ClientPtr = InArgs._ClientPtr,
             ServerDatasetID = InArgs._ServerDatasetID]() {
         IPLATEAUEditorModule::Get().GetExtentEditor()->SetSourcePath(SourcePath.Get());
         IPLATEAUEditorModule::Get().GetExtentEditor()->SetImportFromServer(bImportFromServer.Get());
         if (bImportFromServer.Get()) {
-            IPLATEAUEditorModule::Get().GetExtentEditor()->SetClientRef(ClientRef.Get());
+            IPLATEAUEditorModule::Get().GetExtentEditor()->SetClientPtr(ClientPtr.Get());
             IPLATEAUEditorModule::Get().GetExtentEditor()->SetServerDatasetID(ServerDatasetID.Get());
         }
 

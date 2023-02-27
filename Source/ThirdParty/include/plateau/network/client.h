@@ -12,7 +12,6 @@ namespace plateau::network {
         std::string id;
         std::string title;
         std::string description;
-        int max_lod = 0;
         std::vector<std::string> feature_types;
     };
 
@@ -46,18 +45,35 @@ namespace plateau::network {
      */
     class LIBPLATEAU_EXPORT Client {
     public:
-        explicit Client(const std::string& server_url = "");
+        /**
+         * @param server_url 接続先のURLです。空文字の場合、デフォルトのものを利用します。
+         * @param api_token 接続時のBearer認証トークンです。空文字の場合、デフォルトのものを利用します。
+         */
+        Client(const std::string& server_url, const std::string& api_token);
+
+        static Client createClientForMockServer();
 
         std::string getApiServerUrl() const;
         void setApiServerUrl(const std::string& url);
+        void setApiToken(const std::string& api_token);
         std::shared_ptr<std::vector<DatasetMetadataGroup>> getMetadata() const;
         void getMetadata(std::vector<DatasetMetadataGroup>& out_metadata_groups) const;
+
+        /**
+         * @brief サーバーから json を受け取り、それをパースしてデータファイルに関する情報を得ます。
+         * 受け取る json の例 : https://plateau-api-mock-v2.deta.dev/sdk/datasets/23ku/files
+         */
         DatasetFiles getFiles(const std::string& id) const;
         std::string download(const std::string& destination_directory_path, const std::string& url) const;
 
-        static const std::string& getDefaultServerUrl();
+        /// 開発用に用意したモックサーバーのURLです。
+        static const std::string& getMockServerUrl();
 
     private:
         std::string server_url_;
+        std::string api_token_;
+
+        static std::string endPointUrlForMetadataGroups() { return "/sdk/datasets"; }
+        static std::string endPointUrlForFiles(const std::string& id) { return "/sdk/datasets/" + id + "/files"; }
     };
 }

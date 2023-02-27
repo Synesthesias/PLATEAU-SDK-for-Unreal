@@ -11,6 +11,7 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Framework/Docking/LayoutExtender.h"
 #include "Widgets/SPLATEAUFilteringPanel.h"
+#include "Widgets/SOverlay.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"

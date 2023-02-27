@@ -281,18 +281,18 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
             [this]() {
                 return ZoneID;
             })
-                .bImportFromServer_Lambda(
-                    [this]() {
-                        return bImportFromServer;
-                    })
-                .ClientRef_Lambda(
-                    [this]() {
-                        return ServerPanelRef->GetClientRef();
-                    })
-                        .ServerDatasetID_Lambda(
-                            [this]() {
-                                return ServerPanelRef->GetServerDatasetID();
-                            })];
+        .bImportFromServer_Lambda(
+            [this]() {
+                return bImportFromServer;
+            })
+        .ClientPtr_Lambda(
+            [this]() {
+                return ServerPanelRef->GetClientPtr();
+            })
+        .ServerDatasetID_Lambda(
+            [this]() {
+                return ServerPanelRef->GetServerDatasetID();
+            })];
 
     TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
     ModelDataPlacementVerticalBox.Pin()->AddSlot()
@@ -490,7 +490,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
                 const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
                 Loader->bImportFromServer = bImportFromServer;
-                Loader->ClientRef = ServerPanelRef->GetClientRef();
+                Loader->ClientPtr = ServerPanelRef->GetClientPtr();
                 if (bImportFromServer) {
                     Loader->Source = ServerPanelRef->GetServerDatasetID().c_str();
                 } else {

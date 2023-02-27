@@ -78,16 +78,20 @@ public:
         }
     }
 
-    static FString CopyGmlFile(const FString& Source, const FString& GmlPath) {
+    static FString CopyGmlFile(const FString& Source, const FString& GmlPath, const bool bImportFromServer) {
         const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
 
         // ファイルコピー
         try {
-            const auto CopiedGml = plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath)).fetch(TCHAR_TO_UTF8(*Destination));
+            const auto SourceGml = bImportFromServer
+                ? plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath), plateau::network::Client("", ""))
+                : plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath));
+            const auto CopiedGml = SourceGml.fetch(TCHAR_TO_UTF8(*Destination));
             return UTF8_TO_TCHAR(CopiedGml->getPath().c_str());
         }
-        catch (...) {
+        catch (std::exception& e) {
             UE_LOG(LogTemp, Error, TEXT("Failed to copy %s"), *GmlPath);
+            UE_LOG(LogTemp, Error, TEXT("%s"), UTF8_TO_TCHAR(e.what()));
             return TEXT("");
         }
     }
@@ -194,12 +198,12 @@ void APLATEAUCityModelLoader::LoadAsync() {
             GeoReference = GeoReference,
             ImportSettings = ImportSettings,
             bImportFromServer = bImportFromServer,
-            ClientRef = ClientRef,
+            Client = *ClientPtr,
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference, bImportFromServer, ClientRef);
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
@@ -233,7 +237,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
             FLoadInputData InputData = LoadInputDataArray[Index];
 
-            const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath);
+            const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
 
             // TODO: fldでgml名被る

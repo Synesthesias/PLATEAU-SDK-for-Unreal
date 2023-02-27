@@ -1,4 +1,7 @@
 #include "SPLATEAUServerDatasetSelectPanel.h"
+
+#include <PLATEAUServerConnectionSettings.h>
+
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "SlateOptMacros.h"
 
@@ -6,20 +9,22 @@
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/dataset/dataset_source.h>
 
+#include "PLATEAUServerConnectionSettingsDetails.h"
+
 #define LOCTEXT_NAMESPACE "SPLATEAUServerDatasetSelectPanel"
 
-void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL) {
-    const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
-        ClientRef = plateau::network::Client(InServerURL);
-        const auto tempDatasets = ClientRef.getMetadata();
+void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL, const std::string& InToken) {
+    const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL, InToken] {
+        ClientPtr = std::make_shared<plateau::network::Client>(InServerURL, InToken);
+        const auto tempDatasets = ClientPtr->getMetadata();
         static FCriticalSection CriticalSection;
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, tempDatasets] {
             {
                 FScopeLock Lock(&CriticalSection);
                 DataSets = tempDatasets;
+                InitUITexts();
             }
-            InitUITexts();
             bLoadedClientData = true;
             }, TStatId(), nullptr, ENamedThreads::GameThread);
 
@@ -29,12 +34,8 @@ void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServe
 void SPLATEAUServerDatasetSelectPanel::InitServerData() {
     if (!bLoadedClientData && !bServerInitialized) {
         bServerInitialized = true;
-        LoadClientData(DefaultServerURL);
+        LoadClientData("");
     }
-}
-
-void SPLATEAUServerDatasetSelectPanel::LoadServerDataWithURL(const std::string& InServerURL) {
-    LoadClientData(InServerURL.c_str());
 }
 
 void SPLATEAUServerDatasetSelectPanel::InitUITexts() {
@@ -52,8 +53,6 @@ void SPLATEAUServerDatasetSelectPanel::InitUITexts() {
             }
             std::string TmpStr3 = DataSets->at(0).datasets[0].description;
             DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr3.c_str()));
-            std::string TmpStr4 = std::to_string(DataSets->at(0).datasets[0].max_lod);
-            MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr4.c_str()));
         }
     }
 }
@@ -62,11 +61,30 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
     OwnerWindow = InArgs._OwnerWindow;
 
+    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+    FDetailsViewArgs DetailsViewArgs;
+    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+    DetailsViewArgs.bAllowSearch = false;
+    Settings = NewObject<UPLATEAUServerConnectionSettings>();
+
+    ConnectionSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+    ConnectionSettingsView->RegisterInstancedCustomPropertyLayout(
+        UPLATEAUServerConnectionSettings::StaticClass(),
+        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUServerConnectionSettingsDetails::MakeInstance));
+    ConnectionSettingsView->SetObject(Settings);
+
     ChildSlot[
         SNew(SVerticalBox)
             .Visibility_Lambda([this]() {
             return bIsVisible ? EVisibility::Visible : EVisibility::Collapsed;
                 })
+            + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 0, 0, 0)
+                    [
+                        ConnectionSettingsView.ToSharedRef()
+                    ]
             + SVerticalBox::Slot()
                     .AutoHeight()
                     [
@@ -92,42 +110,6 @@ void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
 
 TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructServerDataPanel() {
     return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 12))
-        [
-            SNew(SHorizontalBox) +
-            SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f) +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .HAlign(HAlign_Right)
-        .Padding(FMargin(0, 0, 0, 0))
-        .FillWidth(0.25f)
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Right)
-        .Text(LOCTEXT("Server URL", "サーバーURL"))
-        ] +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f) +
-        SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(1)
-        [
-            SAssignNew(ServerURL, SEditableTextBox)
-            .Justification(ETextJustify::Left)
-        .Text(FText::FromString(DefaultServerURL.c_str()))
-        ]
-    + SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        .Padding(0, 0, 0, 0)
-        .FillWidth(0.1f)]
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(32, 0, 32, 20))[
@@ -144,8 +126,12 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructServerDataPa
                     bLoadedClientData = false;
                     PrefectureID = 0;
                     MunicipalityID = 0;
-                    const std::string TmpString = TCHAR_TO_UTF8(*ServerURL->GetText().ToString());
-                    LoadServerDataWithURL(TmpString);
+
+                    const auto ConnectionSettings = GetMutableDefault<UPLATEAUServerConnectionSettings>();
+
+                    const auto Url = TCHAR_TO_UTF8(*ConnectionSettings->Url);
+                    const auto Token = TCHAR_TO_UTF8(*ConnectionSettings->Token);
+                    LoadClientData(Url, Token);
                 }
                 return FReply::Handled();
                     })
@@ -286,11 +272,8 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
                                 if (bLoadedClientData) {
                                     std::string TmpStr = DataSets->at(PrefectureID).datasets[MunicipalityID].description;
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR(TmpStr.c_str()));
-                                    std::string TmpStr2 = std::to_string(DataSets->at(PrefectureID).datasets[MunicipalityID].max_lod);
-                                    MaxLODText = FText::FromString(UTF8_TO_TCHAR(TmpStr2.c_str()));
                                 } else {
                                     DescriptionText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
-                                    MaxLODText = FText::FromString(UTF8_TO_TCHAR("Loading..."));
                                 }
                             }));
                         MenuBuilder.AddMenuEntry(ItemText, TAttribute<FText>(), FSlateIcon(), ItemAction);
@@ -320,28 +303,6 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDatasetSelec
 
 TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructDescriptionPanel() {
     return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(32, 10, 0, 5))
-        [
-            SNew(STextBlock)
-            .Justification(ETextJustify::Left)
-        .Text(LOCTEXT("Max LOD", "最大LOD"))
-        ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(32, 0, 32, 0))
-        [
-            SNew(SEditableTextBox)
-            .Justification(ETextJustify::Left)
-        .Text_Lambda([this]() {
-        if (!bLoadedClientData)
-            return LOCTEXT("Loading", "Loading...");
-        else
-            return MaxLODText;
-            })
-        .IsReadOnly(true)
-        ]
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(32, 15, 0, 5))

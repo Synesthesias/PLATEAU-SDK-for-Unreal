@@ -40,8 +40,8 @@ public:
     const bool IsImportFromServer() const;
     void SetImportFromServer(bool InBool);
 
-    plateau::network::Client GetClientRef() const;
-    void SetClientRef(const plateau::network::Client InClientRef);
+    std::shared_ptr<plateau::network::Client> GetClientPtr() const;
+    void SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr);
 
     const std::string GetServerDatasetID() const;
     void SetServerDatasetID(const std::string InID);
@@ -52,7 +52,7 @@ private:
     TOptional<FPLATEAUExtent> Extent;
 
     bool bImportFromServer = false;
-    plateau::network::Client ClientRef;
+    std::shared_ptr<plateau::network::Client> ClientPtr;
     std::string ServerDatasetID;
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
