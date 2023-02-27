@@ -7,6 +7,8 @@
 #include "Widgets/SCompoundWidget.h"
 #include <plateau/network/client.h>
 
+class UPLATEAUServerConnectionSettings;
+
 class SPLATEAUServerDatasetSelectPanel : public SCompoundWidget {
 public:
     SLATE_BEGIN_ARGS(SPLATEAUServerDatasetSelectPanel) {}
@@ -16,6 +18,9 @@ public:
 private:
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
+    UPLATEAUServerConnectionSettings* Settings;
+    TSharedPtr<IDetailsView> ConnectionSettingsView;
+
     int PrefectureID = 0;
     int MunicipalityID = 0;
     bool bIsVisible = false;
@@ -29,7 +34,6 @@ private:
     TMap<int, FText> PrefectureTexts;
     TMap<int, FText> MunicipalityTexts;
     TSharedPtr<SComboButton> MunicipalityComboButton;
-    TSharedPtr<SEditableTextBox> ServerURL;
 
     bool bLoadedClientData = false;
     bool bServerInitialized = false;
@@ -76,8 +80,7 @@ public:
     }
 
 private:
-    void LoadClientData(const std::string& InServerURL);
-    void LoadServerDataWithURL(const std::string& InServerURL);
+    void LoadClientData(const std::string& InServerURL = "", const std::string& InToken = "");
     void InitUITexts();
     TSharedPtr<SVerticalBox> ConstructServerDataPanel();
     TSharedPtr<SVerticalBox> ConstructPrefectureSelectPanel();

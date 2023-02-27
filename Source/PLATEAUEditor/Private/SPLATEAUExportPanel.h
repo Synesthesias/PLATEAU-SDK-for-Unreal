@@ -6,6 +6,8 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Styling/ISlateStyle.h"
 
+class UPLATEAUExportSettings;
+
 enum class EMeshFileFormat : uint8_t {
     OBJ = 0,
     FBX,

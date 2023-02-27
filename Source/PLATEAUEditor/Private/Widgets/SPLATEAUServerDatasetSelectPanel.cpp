@@ -1,4 +1,7 @@
 #include "SPLATEAUServerDatasetSelectPanel.h"
+
+#include <PLATEAUServerConnectionSettings.h>
+
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 #include "SlateOptMacros.h"
 
@@ -6,11 +9,13 @@
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/dataset/dataset_source.h>
 
+#include "PLATEAUServerConnectionSettingsDetails.h"
+
 #define LOCTEXT_NAMESPACE "SPLATEAUServerDatasetSelectPanel"
 
-void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL) {
-    const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL] {
-        ClientPtr = std::make_shared<plateau::network::Client>("https://api.plateau.dev.reearth.io", "secret-56c66bcac0ab4724b86fc48309fe517a");
+void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServerURL, const std::string& InToken) {
+    const auto ServerLoadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([&, InServerURL, InToken] {
+        ClientPtr = std::make_shared<plateau::network::Client>(InServerURL, InToken);
         const auto tempDatasets = ClientPtr->getMetadata();
         static FCriticalSection CriticalSection;
 
@@ -18,8 +23,8 @@ void SPLATEAUServerDatasetSelectPanel::LoadClientData(const std::string& InServe
             {
                 FScopeLock Lock(&CriticalSection);
                 DataSets = tempDatasets;
+                InitUITexts();
             }
-            InitUITexts();
             bLoadedClientData = true;
             }, TStatId(), nullptr, ENamedThreads::GameThread);
 
@@ -31,10 +36,6 @@ void SPLATEAUServerDatasetSelectPanel::InitServerData() {
         bServerInitialized = true;
         LoadClientData("");
     }
-}
-
-void SPLATEAUServerDatasetSelectPanel::LoadServerDataWithURL(const std::string& InServerURL) {
-    LoadClientData(InServerURL.c_str());
 }
 
 void SPLATEAUServerDatasetSelectPanel::InitUITexts() {
@@ -60,11 +61,30 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
     OwnerWindow = InArgs._OwnerWindow;
 
+    FPropertyEditorModule& PropertyEditorModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+    FDetailsViewArgs DetailsViewArgs;
+    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+    DetailsViewArgs.bAllowSearch = false;
+    Settings = NewObject<UPLATEAUServerConnectionSettings>();
+
+    ConnectionSettingsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+    ConnectionSettingsView->RegisterInstancedCustomPropertyLayout(
+        UPLATEAUServerConnectionSettings::StaticClass(),
+        FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUServerConnectionSettingsDetails::MakeInstance));
+    ConnectionSettingsView->SetObject(Settings);
+
     ChildSlot[
         SNew(SVerticalBox)
             .Visibility_Lambda([this]() {
             return bIsVisible ? EVisibility::Visible : EVisibility::Collapsed;
                 })
+            + SVerticalBox::Slot()
+                    .AutoHeight()
+                    .Padding(0, 0, 0, 0)
+                    [
+                        ConnectionSettingsView.ToSharedRef()
+                    ]
             + SVerticalBox::Slot()
                     .AutoHeight()
                     [
@@ -106,8 +126,12 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructServerDataPa
                     bLoadedClientData = false;
                     PrefectureID = 0;
                     MunicipalityID = 0;
-                    const std::string TmpString = TCHAR_TO_UTF8(*ServerURL->GetText().ToString());
-                    LoadServerDataWithURL(TmpString);
+
+                    const auto ConnectionSettings = GetMutableDefault<UPLATEAUServerConnectionSettings>();
+
+                    const auto Url = TCHAR_TO_UTF8(*ConnectionSettings->Url);
+                    const auto Token = TCHAR_TO_UTF8(*ConnectionSettings->Token);
+                    LoadClientData(Url, Token);
                 }
                 return FReply::Handled();
                     })
