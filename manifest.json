@@ -27,7 +27,7 @@
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "sU5AZAQSC9bIEL8MnuksFjCtW6dcJGGnLqxGImyJFU4="
+          "hash": "R3jOb8I/nve6spWULb2NONR5uR7d76GsV9ZjxZII8fM="
         }
       },
       "is_incremental": false,
@@ -82,24 +82,12 @@
       "version": ""
     },
     {
-      "type": "Conceptual",
-      "source_relative_path": "manual/Tutorial.md",
-      "output": {
-        ".html": {
-          "relative_path": "manual/Tutorial.html",
-          "hash": "DTWYixyAb6ePP+w38XOKyv23JL048loV6n2OR6aBj68="
-        }
-      },
-      "is_incremental": false,
-      "version": ""
-    },
-    {
       "type": "Toc",
       "source_relative_path": "manual/toc.yml",
       "output": {
         ".html": {
           "relative_path": "manual/toc.html",
-          "hash": "pPnTEbd4xfXKHqsyiQDc58C5r8+/+pyqvW9x3Qo5uPo="
+          "hash": "2gmbqbsWNPOoqcr2nsNnNx5wiZvPkJmjNqhMfHxO784="
         }
       },
       "is_incremental": false,
@@ -473,7 +461,7 @@
         "ConceptualDocumentProcessor": {
           "can_incremental": false,
           "incrementalPhase": "build",
-          "total_file_count": 6,
+          "total_file_count": 5,
           "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
