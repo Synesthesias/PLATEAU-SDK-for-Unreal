@@ -63,7 +63,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/ImportCityModels.html",
-          "hash": "ypFlhuoc9sxfHs1A/AvT4LZDbGvbX0qmcrupqOgN0RQ="
+          "hash": "tGe0L3J/MDqqY9BGG8YpYwPKMlBKcy3VdyfBUse848U="
         }
       },
       "is_incremental": false,
@@ -286,6 +286,17 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual/importCityModels/importPerPackageConfig.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/importCityModels/offset.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/importCityModels/offset.png"
         }
       },
       "is_incremental": false,
