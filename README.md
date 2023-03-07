@@ -30,6 +30,11 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 - SDKの最新版は[Releaseページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)からダウンロードしてください。
 - インストール手順、使用方法については[マニュアル](https://Project-PLATEAU.github.io/PLATEAU-SDK-for-Unreal/index.html) をご覧ください。
 
+# 注意点
+- 現在、この SDKとドキュメントは日本語のみ対応しています。
+- 都市モデルのインポート方法は「ローカル」と「サーバー」の2種類ありますが、  
+  ローカルを推奨します。サーバーモードで利用できるデータはまだ少ないためです。
+
 # ライセンス
 - 本リポジトリはMITライセンスで提供されています。
 - ソースコードおよび関連ドキュメントの著作権は国土交通省に帰属します。
