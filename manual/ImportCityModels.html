@@ -89,16 +89,24 @@
 <ul>
 <li>Unreal Engineのメニューバーから <code>PLATEAU → PLATEAU SDK</code> を選択します。<br>表示されるウィンドウの上部に3つのタブ「インポート、モデル調整、エクスポート」があります。<br>このうちインポートを選択します。
 <img src="../resources/manual/importCityModels/plateauWindowImport.png" alt=""></li>
-<li>インポート先がローカルかサーバーかを選択します。<ul>
-<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。  3D都市モデルはG空間情報センターのPLATEAUポータルサイトからダウンロードできます。<ul>
+<li>インポート元で <code>ローカル</code> か <code>サーバー</code> を選択します。</li>
+</ul>
+<div class="NOTE"><h5>Note</h5><p>今のところ、「サーバー」ではなく「ローカル」を推奨します。<br>すみませんが、現状ではサーバーで利用できるデータは少ないためです。<br>今後サーバー上にデータを整備していく予定です。</p>
+</div>
+<h4 id="ローカルからインポートする場合">ローカルからインポートする場合</h4>
+<ul>
+<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。  3D都市モデルは<a href="https://www.geospatial.jp/ckan/dataset/plateau">G空間情報センターのPLATEAUポータルサイト</a>からダウンロードできます。<ul>
 <li><code>参照</code>ボタンを押します。都市データのフォルダの選択画面が表示されます。</li>
-<li>都市データのフォルダの中には、<code>udx</code>,<code>codelists</code>という名前のフォルダがあるはずです。<br><code>udx</code>の<strong>1つ上</strong>のフォルダを選択します。</li>
+<li>都市データのフォルダの中には、<code>udx</code>,<code>codelists</code>という名前のフォルダがあるはずです。<br><code>udx</code>から<strong>階層が1つ上</strong>のフォルダを選択します。</li>
 </ul>
 </li>
-<li><code>サーバー</code>では、ローカルの代わりにPLATEAUのデータサーバーから都市データをインポートできます。<ul>
-<li>この機能は未実装です。</li>
 </ul>
-</li>
+<h4 id="サーバーからインポートする場合">サーバーからインポートする場合</h4>
+<ul>
+<li><code>サーバー</code>では、PLATEAUのデータサーバーから直接 都市データをインポートできます。<ul>
+<li><code>接続先設定</code> の欄がありますが、設定しなくとも自動でデフォルトのURLに接続されます。<br>別のURLに接続したい場合のみ、URLを入力して「サーバーデータ更新」ボタンを押してください。<br><code>トークン</code> は Bearer認証のトークンです。</li>
+<li><code>データセットの選択</code>で<code>都道府県</code>を選択します。</li>
+<li>するとその都道府県に対応する <code>データセット</code>が選択肢に出てくるので選びます。</li>
 </ul>
 </li>
 </ul>
