@@ -7,7 +7,7 @@
 
 ## エクスポート手順
 ### エクスポート対象の指定
-- メニューバーから ```PLATEAU → PLATEAU SDK``` を選択し、エクスポートを開きます。  
+- メニューバーから `PLATEAU → PLATEAU SDK` を選択し、エクスポートを開きます。  
     
   ![](../resources/manual/exportCityModels/exportWindow.png)
     
