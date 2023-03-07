@@ -19,7 +19,7 @@ void UPLATEAUCityGmlProxy::Activate() {
             if (CityModelData == nullptr)
                 Failed.Broadcast();
 
-            Completed.Broadcast(CityModelCache[GmlInfo.GmlName]);
+            Completed.Broadcast(FPLATEAUCityModel(CityModelData));
         }
 
         }, TStatId(), nullptr, ENamedThreads::AnyBackgroundThreadNormalTask);
