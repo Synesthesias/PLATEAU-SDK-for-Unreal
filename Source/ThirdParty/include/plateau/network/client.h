@@ -48,6 +48,7 @@ namespace plateau::network {
         /**
          * @param server_url 接続先のURLです。空文字の場合、デフォルトのものを利用します。
          * @param api_token 接続時のBearer認証トークンです。空文字の場合、デフォルトのものを利用します。
+         * 空文字の場合にデフォルトになる理由は、利用者側からデフォルトURL等が見えないほうが安全だからです。
          */
         Client(const std::string& server_url, const std::string& api_token);
 
@@ -64,6 +65,13 @@ namespace plateau::network {
          * 受け取る json の例 : https://plateau-api-mock-v2.deta.dev/sdk/datasets/23ku/files
          */
         DatasetFiles getFiles(const std::string& id) const;
+
+        /**
+         * @brief ファイルをダウンロードします。
+         * @param destination_directory_path ダウンロード先のローカルディレクトリのパスです。
+         * @param url URLです。
+         * @return ダウンロードしたファイルのパスを返します。
+         */
         std::string download(const std::string& destination_directory_path, const std::string& url) const;
 
         /// 開発用に用意したモックサーバーのURLです。

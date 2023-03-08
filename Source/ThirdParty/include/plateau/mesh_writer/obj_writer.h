@@ -30,8 +30,8 @@ namespace plateau::meshWriter {
         void writeMtl(const std::string& obj_file_path);
 
 
-        std::map<std::string, std::string> required_materials_;
         unsigned v_offset_, uv_offset_;
+        std::map<std::string, std::string> required_materials_;
 
     };
 }

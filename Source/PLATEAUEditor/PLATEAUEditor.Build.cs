@@ -69,8 +69,30 @@ public class PLATEAUEditor : ModuleRules
             );
 
 
+        var plateauLibs = new string[]
+        {
+            "plateau",
+            "citygml",
+            "GLTFSDK",
+            "libssl-1_1-x64",
+            "xerces-c_4",
+            "libcrypto-1_1-x64",
+            "libfbxsdk-md",
+            "libxml2-md",
+            "zlib-md"
+        };
+
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        //PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public\\libplateau"));
+        PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
+
+        PublicAdditionalLibraries.Add("glu32.lib");
+        PublicAdditionalLibraries.Add("opengl32.lib");
+
+        foreach (var lib in plateauLibs)
+        {
+            var libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
+            PublicAdditionalLibraries.Add(Path.Combine(libPath, $"{lib}.lib"));
+        }
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
