@@ -10,16 +10,18 @@ public class PLATEAURuntime : ModuleRules
         CppStandard = CppStandardVersion.Cpp17;
 
         PublicIncludePaths.AddRange(
-            new string[] {
+            new string[]
+            {
             }
-            );
+        );
 
 
         PrivateIncludePaths.AddRange(
-            new string[] {
+            new string[]
+            {
                 // ... add other private include paths required here ...
             }
-            );
+        );
 
 
         PublicDependencyModuleNames.AddRange(
@@ -27,7 +29,7 @@ public class PLATEAURuntime : ModuleRules
             {
                 "Core", "CoreUObject", "Engine", "InputCore",
             }
-            );
+        );
 
 
         PrivateDependencyModuleNames.AddRange(
@@ -40,10 +42,11 @@ public class PLATEAURuntime : ModuleRules
                 "StaticMeshDescription",
                 "RHI",
                 "ImageWrapper",
-                "RenderCore"
+                "RenderCore",
+                "OpenGL"
                 // ... add private dependencies that you statically link with here ...	
             }
-            );
+        );
 
 
         DynamicallyLoadedModuleNames.AddRange(
@@ -51,63 +54,31 @@ public class PLATEAURuntime : ModuleRules
             {
                 // ... add any modules that your module loads dynamically here ...
             }
-            );
+        );
 
+        var plateauLibs = new string[]
+        {
+            "plateau",
+            "citygml",
+            "GLTFSDK",
+            "libssl-1_1-x64",
+            "xerces-c_4",
+            "libcrypto-1_1-x64",
+            "libfbxsdk-md",
+            "libxml2-md",
+            "zlib-md"
+        };
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 
-        string libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
-        PublicAdditionalLibraries.Add(Path.Combine(libPath, "plateau.lib"));
-        PublicAdditionalLibraries.Add(Path.Combine(libPath, "citygml.lib"));
+        PublicAdditionalLibraries.Add("glu32.lib");
+        PublicAdditionalLibraries.Add("opengl32.lib");
 
-        string dllPath = Path.Combine(libPath, "plateau.dll");
-        string dllName = "plateau.dll";
-        CopyDll(dllName, dllPath);
-
-        dllPath = Path.Combine(libPath, "citygml.dll");
-        dllName = "citygml.dll";
-        CopyDll(dllName, dllPath);
-
-        RuntimeDependencies.Add("$(TargetOutputDir)/plateau.dll", Path.Combine(ModuleDirectory, "../ThirdParty/lib/plateau.dll"));
-
-        RuntimeDependencies.Add("$(TargetOutputDir)/citygml.dll", Path.Combine(ModuleDirectory, "../ThirdParty/lib/citygml.dll"));
-
-        PublicDelayLoadDLLs.Add("plateau.dll");
-        PublicDelayLoadDLLs.Add("citygml.dll");
-
-        //using c++17
-        CppStandard = CppStandardVersion.Cpp17;
-    }
-
-    // copy dll file to Binaries
-    private void CopyDll(string dllName, string dllFullPath)
-    {
-        if (!File.Exists(dllFullPath))
+        foreach (var lib in plateauLibs)
         {
-            Console.WriteLine("file {0} does not exist", dllName);
-            return;
-        }
-
-        string binariesDir = Path.Combine(ModuleDirectory, "../../../../Binaries/Win64/");
-        if (!Directory.Exists(binariesDir))
-        {
-            Directory.CreateDirectory(binariesDir);
-        }
-
-        string binariesDllFullPath = Path.Combine(binariesDir, dllName);
-        if (File.Exists(binariesDllFullPath))
-        {
-            File.SetAttributes(binariesDllFullPath, File.GetAttributes(binariesDllFullPath) & ~FileAttributes.ReadOnly);
-        }
-        
-        try
-        {
-            File.Copy(dllFullPath, binariesDllFullPath, true);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("failed to copy file: {0}", dllName);
+            var libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
+            PublicAdditionalLibraries.Add(Path.Combine(libPath, $"{lib}.lib"));
         }
     }
 }

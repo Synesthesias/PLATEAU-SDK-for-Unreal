@@ -5,7 +5,7 @@
 #  ifdef LIBPLATEAU_BUILD
 #    define LIBPLATEAU_EXPORT  __declspec(dllexport)
 #  else
-#    define LIBPLATEAU_EXPORT  __declspec(dllimport)
+#    define LIBPLATEAU_EXPORT
 #  endif
 #else
 #  define LIBPLATEAU_API
