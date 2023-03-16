@@ -66,6 +66,7 @@ namespace plateau::dataset {
     public:
         /**
          * \brief GMLファイル群のうち、範囲が extent の内部であり、パッケージ種が package であるものを vector で返します。
+         * なお、 package はフラグの集合と見なされるので、複数のビットを立てることで複数の指定が可能です。
          */
          virtual std::shared_ptr<std::vector<GmlFile>> getGmlFiles(const PredefinedCityModelPackage package) = 0;
 

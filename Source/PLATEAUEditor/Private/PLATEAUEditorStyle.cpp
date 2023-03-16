@@ -1,3 +1,5 @@
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+
 #include "PLATEAUEditorStyle.h"
 
 #include "Framework/Application/SlateApplication.h"

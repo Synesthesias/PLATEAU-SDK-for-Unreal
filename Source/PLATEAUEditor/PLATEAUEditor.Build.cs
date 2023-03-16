@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 using UnrealBuildTool;
 using System;
@@ -71,15 +71,7 @@ public class PLATEAUEditor : ModuleRules
 
         var plateauLibs = new string[]
         {
-            "plateau",
-            "citygml",
-            "GLTFSDK",
-            "libssl-1_1-x64",
-            "xerces-c_4",
-            "libcrypto-1_1-x64",
-            "libfbxsdk-md",
-            "libxml2-md",
-            "zlib-md"
+            "plateau"
         };
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
@@ -93,6 +85,8 @@ public class PLATEAUEditor : ModuleRules
             var libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
             PublicAdditionalLibraries.Add(Path.Combine(libPath, $"{lib}.lib"));
         }
+
+        PublicDefinitions.Add("CITYGML_STATIC_DEFINE");
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;

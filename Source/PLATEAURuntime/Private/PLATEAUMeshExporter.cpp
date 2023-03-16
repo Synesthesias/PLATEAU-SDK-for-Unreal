@@ -1,3 +1,5 @@
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+
 #include "PLATEAUMeshExporter.h"
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/obj_writer.h"

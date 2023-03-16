@@ -1,3 +1,5 @@
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+
 #pragma once
 
 #include <plateau/dataset/dataset_source.h>
