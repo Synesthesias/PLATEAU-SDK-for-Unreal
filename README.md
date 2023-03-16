@@ -21,7 +21,7 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 <img src="README_Images/GameSample.png" width="48%" />&nbsp;
 
 # 動作環境
-- Windows（x86_64）
+- Windows（x86_64） Visual Studio 2019 の利用を想定
 - MacOS（ARM）
 - Android、iOS
   - モバイル向けには、一部の機能のみ（緯度経度と直交座標の相互変換など）をサポートしています。
