@@ -58,23 +58,44 @@ public class PLATEAURuntime : ModuleRules
             }
         );
 
-        var plateauLibs = new string[]
-        {
-            "plateau"
-        };
+        IncludeLibPlateau();
+    }
+
+    // íçà” : PLATEAUEditor.Build.cs Ç…Ç‡ìØÇ∂Ç‡ÇÃÇèëÇ¢ÇƒÇ≠ÇæÇ≥Ç¢
+    public void IncludeLibPlateau()
+    {
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 
-        PublicAdditionalLibraries.Add("glu32.lib");
-        PublicAdditionalLibraries.Add("opengl32.lib");
+        PublicDefinitions.Add("CITYGML_STATIC_DEFINE");
 
-        foreach (var lib in plateauLibs)
+        string libPlateauPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            var libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
-            PublicAdditionalLibraries.Add(Path.Combine(libPath, $"{lib}.lib"));
+            libPlateauPath = libPlateauPath + "/windows/plateau_combined.lib";
+            PublicAdditionalLibraries.Add("glu32.lib");
+            PublicAdditionalLibraries.Add("opengl32.lib");
+        }
+        else if (Target.Platform == UnrealTargetPlatform.Mac)
+        {
+            libPlateauPath = libPlateauPath + "macos/libplateau_combined.a";
+        }
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
+        {
+            libPlateauPath = libPlateauPath + "linux/libplateau.a";
+        }
+        else
+        {
+            throw new Exception("Unknown OS.");
         }
 
-        PublicDefinitions.Add("CITYGML_STATIC_DEFINE");
+        PublicAdditionalLibraries.Add(libPlateauPath);
+
+
+
+        //using c++17
+        CppStandard = CppStandardVersion.Cpp17;
     }
 }
