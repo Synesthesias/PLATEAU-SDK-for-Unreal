@@ -80,11 +80,11 @@ public class PLATEAURuntime : ModuleRules
         }
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            libPlateauPath = libPlateauPath + "macos/libplateau_combined.a";
+            libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
-            libPlateauPath = libPlateauPath + "linux/libplateau.a";
+            libPlateauPath = libPlateauPath + "/linux/libplateau.a";
         }
         else
         {

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUAttributeValue.h"
-
 #include "PLATEAUCityObject.generated.h"
 
 namespace citygml {

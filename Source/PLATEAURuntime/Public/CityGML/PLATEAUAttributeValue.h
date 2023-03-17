@@ -3,11 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "citygml/attributesmap.h"
 #include "PLATEAUAttributeValue.generated.h"
-
-namespace citygml {
-    class AttributeValue;
-}
 
 typedef TMap<FString, struct FPLATEAUAttributeValue> FPLATEAUAttributeMap;
 
