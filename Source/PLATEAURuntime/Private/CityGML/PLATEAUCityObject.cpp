@@ -2,7 +2,7 @@
 
 
 #include "CityGML/PLATEAUCityObject.h"
-#include "PLATEAUAttributeValue.h"
+#include "CityGML/PLATEAUAttributeValue.h"
 #include "citygml/cityobject.h"
 #include "citygml/object.h"
 
