@@ -6,7 +6,12 @@
 #include "citygml/attributesmap.h"
 #include "PLATEAUAttributeValue.generated.h"
 
-typedef TMap<FString, struct FPLATEAUAttributeValue> FPLATEAUAttributeMap;
+USTRUCT(BlueprintType)
+struct FPLATEAUAttributeMap
+{
+    GENERATED_USTRUCT_BODY();
+    std::map<FString, struct FPLATEAUAttributeValue> value;
+};
 
 UENUM(BlueprintType)
 enum class EPLATEAUAttributeType : uint8 {
@@ -73,6 +78,6 @@ public:
         BlueprintCallable,
         BlueprintPure,
         Category = "PLATEAU|CityGML")
-        static TMap<FString, FPLATEAUAttributeValue>& GetAttributeMap(UPARAM(ref)
+        static FPLATEAUAttributeMap& GetAttributeMap(UPARAM(ref)
             FPLATEAUAttributeValue& Value);
 };

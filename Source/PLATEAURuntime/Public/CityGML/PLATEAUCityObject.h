@@ -43,6 +43,6 @@ public:
         BlueprintCallable,
         BlueprintPure,
         Category = "PLATEAU|CityGML")
-        static TMap<FString, FPLATEAUAttributeValue>& GetAttributeMap(
+        static FPLATEAUAttributeMap& GetAttributeMap(
             UPARAM(ref) FPLATEAUCityObject& CityObject);
 };

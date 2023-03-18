@@ -7,7 +7,7 @@
 #include "citygml/object.h"
 
 
-TMap<FString, FPLATEAUAttributeValue>& UPLATEAUCityObjectBlueprintLibrary::GetAttributeMap(FPLATEAUCityObject& CityObject) {
+FPLATEAUAttributeMap& UPLATEAUCityObjectBlueprintLibrary::GetAttributeMap(FPLATEAUCityObject& CityObject) {
     if (CityObject.AttributeMapCache != nullptr)
         return *CityObject.AttributeMapCache;
 
@@ -18,7 +18,7 @@ TMap<FString, FPLATEAUAttributeValue>& UPLATEAUCityObjectBlueprintLibrary::GetAt
 
     const auto& AttributeMapData = CityObject.Data->getAttributes();
     for (const auto& [Key, Value] : AttributeMapData) {
-        CityObject.AttributeMapCache->Add(UTF8_TO_TCHAR(Key.c_str()), FPLATEAUAttributeValue(&Value));
+        CityObject.AttributeMapCache->value.at(UTF8_TO_TCHAR(Key.c_str())) = FPLATEAUAttributeValue(&Value);
     }
     return *CityObject.AttributeMapCache;
 }

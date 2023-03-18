@@ -19,7 +19,7 @@ FString UPLATEAUAttributeValueBlueprintLibrary::GetString(const FPLATEAUAttribut
     return UTF8_TO_TCHAR(Value.Data->asString().c_str());
 }
 
-TMap<FString, FPLATEAUAttributeValue>& UPLATEAUAttributeValueBlueprintLibrary::GetAttributeMap(FPLATEAUAttributeValue& Value) {
+FPLATEAUAttributeMap& UPLATEAUAttributeValueBlueprintLibrary::GetAttributeMap(FPLATEAUAttributeValue& Value) {
     if (Value.AttributeMapCache != nullptr)
         return *Value.AttributeMapCache;
 
@@ -31,7 +31,7 @@ TMap<FString, FPLATEAUAttributeValue>& UPLATEAUAttributeValueBlueprintLibrary::G
     const auto& AttributeMapData = Value.Data->asAttributeSet();
 
     for (const auto& [Key, Val] : AttributeMapData) {
-        Value.AttributeMapCache->Add(UTF8_TO_TCHAR(Key.c_str()), FPLATEAUAttributeValue(&Val));
+        Value.AttributeMapCache->value.at(UTF8_TO_TCHAR(Key.c_str())) = FPLATEAUAttributeValue(&Val);
     }
     return *Value.AttributeMapCache;
 }
