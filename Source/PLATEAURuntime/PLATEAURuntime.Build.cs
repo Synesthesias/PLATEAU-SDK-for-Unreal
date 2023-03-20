@@ -82,7 +82,7 @@ public class PLATEAURuntime : ModuleRules
         {
             libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/lib/libiconv.tbd");
-            PublicAdditionalLibraries.Add("/opt/homebrew/Cellar/mesa-glu/9.0.2/lib/libGLU.1.3.1.dylib");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
