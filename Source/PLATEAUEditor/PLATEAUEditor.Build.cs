@@ -92,6 +92,9 @@ public class PLATEAUEditor : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
             libPlateauPath += "macos/libplateau_combined.a";
+            PublicAdditionalLibraries.Add("/opt/homebrew/Cellar/libiconv/1.17/lib/libiconv.dylib");
+            // PublicAdditionalLibraries.Add("GLU");
+            PublicAdditionalLibraries.Add("/opt/homebrew/Cellar/mesa-glu/9.0.2/lib/libGLU.1.3.1.dylib");
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
@@ -102,7 +105,6 @@ public class PLATEAUEditor : ModuleRules
             throw new Exception("Unknown OS.");
         }
 
-        PublicAdditionalLibraries.Add(libPlateauPath);
 
        
 

@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandAInfrastructure and Transport
+// Copyright 2023 Ministry of Landï¿½AInfrastructure and Transport
 
 using UnrealBuildTool;
 using System;
@@ -61,7 +61,7 @@ public class PLATEAURuntime : ModuleRules
         IncludeLibPlateau();
     }
 
-    // ’ˆÓ : PLATEAUEditor.Build.cs ‚É‚à“¯‚¶‚à‚Ì‚ğ‘‚¢‚Ä‚­‚¾‚³‚¢
+    // ï¿½ï¿½ï¿½ï¿½ : PLATEAUEditor.Build.cs ï¿½É‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public void IncludeLibPlateau()
     {
 
@@ -81,6 +81,8 @@ public class PLATEAURuntime : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
             libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/lib/libiconv.tbd");
+            PublicAdditionalLibraries.Add("/opt/homebrew/Cellar/mesa-glu/9.0.2/lib/libGLU.1.3.1.dylib");
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
