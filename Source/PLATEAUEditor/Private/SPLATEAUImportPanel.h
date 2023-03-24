@@ -43,7 +43,8 @@ private:
     TSharedPtr<IDetailsView> ImportSettingsView = nullptr;
     TSharedPtr<class SPLATEAUServerDatasetSelectPanel> ServerPanelRef = nullptr;
 
-    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> ServerDatasetAccessor;
+    std::shared_ptr<plateau::dataset::IDatasetAccessor> LocalDatasetAccessor;
 
     TSharedRef<SVerticalBox> CreateSourcePathSelectPanel();
     TSharedRef<SHorizontalBox> CreateFileSourceSelectButton();

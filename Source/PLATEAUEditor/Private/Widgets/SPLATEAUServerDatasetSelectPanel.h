@@ -2,14 +2,21 @@
 
 #pragma once
 
-#include <plateau/dataset/dataset_source.h>
-#include <plateau/dataset/i_dataset_accessor.h>
-
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
+
 #include <plateau/network/client.h>
 
 class UPLATEAUServerConnectionSettings;
+
+/**
+ * @brief UIに表示するデータセット情報
+ */
+struct FPLATEAUServerDatasetMetadata {
+    FString Title;
+    FString Description;
+    std::string ID;
+};
 
 class SPLATEAUServerDatasetSelectPanel : public SCompoundWidget {
 public:
@@ -17,75 +24,62 @@ public:
     SLATE_ARGUMENT(TWeakPtr<class SWindow>, OwnerWindow)
         SLATE_END_ARGS()
 
-private:
-    TWeakPtr<SWindow> OwnerWindow;
-    TSharedPtr<class FPLATEAUEditorStyle> Style;
-    UPLATEAUServerConnectionSettings* Settings;
-    TSharedPtr<IDetailsView> ConnectionSettingsView;
-
-    int PrefectureID = 0;
-    int MunicipalityID = 0;
-    bool bIsVisible = false;
-
-    std::shared_ptr<plateau::network::Client> ClientPtr;
-    std::shared_ptr<std::vector<plateau::network::DatasetMetadataGroup>> DataSets;
-
-    std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
-    std::string datasetID;
-
-    TMap<int, FText> PrefectureTexts;
-    TMap<int, FText> MunicipalityTexts;
-    TSharedPtr<SComboButton> MunicipalityComboButton;
-
-    bool bLoadedClientData = false;
-    bool bServerInitialized = false;
-    FText DescriptionText;
-    FCriticalSection Mutex;
-
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs);
     void SetPanelVisibility(bool bVisible) {
         bIsVisible = bVisible;
     }
-    void InitServerData();
-    inline std::shared_ptr<plateau::dataset::IDatasetAccessor> GetDatasetAccessor() {
-        if (bLoadedClientData) {
-            if (DataSets->size() <= PrefectureID)
-                return nullptr;
 
-            if (DataSets->at(PrefectureID).datasets.size() < MunicipalityID)
-                return nullptr;
+    std::string GetServerDatasetID() const;
 
-            const auto& newDatasetID = DataSets->at(PrefectureID).datasets[MunicipalityID].id;
-            if (newDatasetID != datasetID) {
-                datasetID = newDatasetID;
-                try {
-                    const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(newDatasetID, *ClientPtr);
-                    DatasetAccessor = InDatasetSource.getAccessor();
-                }
-                catch (...) {
-                    DatasetAccessor = nullptr;
-                    UE_LOG(LogTemp, Error, TEXT("Invalid Server Dataset ID"));
-                }
-            }
-            return DatasetAccessor;
-        } else {
-            return nullptr;
-        }
-    }
-    inline std::shared_ptr<plateau::network::Client> GetClientPtr() {
+    std::shared_ptr<plateau::network::Client> GetClientPtr() {
         return ClientPtr;
     }
-    inline std::string GetServerDatasetID() {
-        return DataSets->at(PrefectureID).datasets[MunicipalityID].id;
+
+    void SetSelectDatasetCallback(const TFunction<void()> Function) {
+        OnSelectDataset = Function;
     }
 
+    //virtual void Tick(FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+    virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
 private:
-    void LoadClientData(const std::string& InServerURL = "", const std::string& InToken = "");
-    void InitUITexts();
+    TWeakPtr<SWindow> OwnerWindow;
+    TSharedPtr<class FPLATEAUEditorStyle> Style;
+    UPLATEAUServerConnectionSettings* Settings;
+    TSharedPtr<IDetailsView> ConnectionSettingsView;
+    TFunction<void()> OnSelectDataset;
+    TFuture<void> GetDatasetMetadataTask;
+
+    bool bIsVisible = false;
+
+    std::atomic<bool> bIsNativeDatasetMetadataAvailable = false;
+    std::atomic<bool> bIsGettingNativeDatasetMetadata = false;
+    bool bHasDatasetMetadataLoaded = false;
+
+    std::shared_ptr<plateau::network::Client> ClientPtr;
+    std::shared_ptr<std::vector<plateau::network::DatasetMetadataGroup>> NativeDatasetMetadataGroups;
+
+    TMap<FString, TArray<FPLATEAUServerDatasetMetadata>> DatasetMetadataByGroup;
+
+    FString SelectedGroupTitle;
+    FPLATEAUServerDatasetMetadata SelectedDataset;
+
+    FCriticalSection GetDatasetMetadataSection;
+
+    TFuture<void> GetDatasetMetadataAsync(const std::string& InServerURL = "", const std::string& InToken = "");
+    void LoadDatasetMetadataFromNative();
+
     TSharedPtr<SVerticalBox> ConstructServerDataPanel();
-    TSharedPtr<SVerticalBox> ConstructPrefectureSelectPanel();
-    TSharedPtr<SVerticalBox> ConstructDatasetSelectPanel();
+    TSharedPtr<SHorizontalBox> ConstructDatasetGroupSelectPanel();
+    TSharedPtr<SHorizontalBox> ConstructDatasetSelectPanel();
     TSharedPtr<SVerticalBox> ConstructDescriptionPanel();
+
+    // Callbacks
+    FText OnGetDatasetGroupText() const;
+    FText OnGetDatasetText() const;
+    TSharedRef<SWidget> OnGetDatasetGroupMenuContent();
+    TSharedRef<SWidget> OnGetDatasetMenuContent();
+    FText OnGetDescriptionText() const;
 };
