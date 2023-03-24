@@ -1,10 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright Â© 2023 Ministry of Landã€Infrastructure and Transport
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "PLATEAUAttributeValue.h"
-
 #include "PLATEAUCityObject.generated.h"
 
 namespace citygml {
@@ -12,7 +11,7 @@ namespace citygml {
 }
 
 /*
- * “sŽsƒIƒuƒWƒFƒNƒg‚ÌBlueprintŒü‚¯ƒ‰ƒbƒp[‚Å‚·B
+ * éƒ½å¸‚ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®Blueprintå‘ã‘ãƒ©ãƒƒãƒ‘ãƒ¼ã§ã™ã€‚
  */
 USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAUCityObject {
@@ -38,12 +37,12 @@ class PLATEAURUNTIME_API UPLATEAUCityObjectBlueprintLibrary : public UBlueprintF
 
 public:
     /*
-     * “sŽsƒIƒuƒWƒFƒNƒg‚ª•ÛŽ‚·‚é‘®«î•ñ‚ðŽæ“¾‚µ‚Ü‚·B
+     * éƒ½å¸‚ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãŒä¿æŒã™ã‚‹å±žæ€§æƒ…å ±ã‚’å–å¾—ã—ã¾ã™ã€‚
      */
     UFUNCTION(
         BlueprintCallable,
         BlueprintPure,
         Category = "PLATEAU|CityGML")
-        static TMap<FString, FPLATEAUAttributeValue>& GetAttributeMap(
+        static FPLATEAUAttributeMap& GetAttributeMap(
             UPARAM(ref) FPLATEAUCityObject& CityObject);
 };

@@ -1,3 +1,5 @@
+// Copyright 2023 Ministry of Land�AInfrastructure and Transport
+
 using UnrealBuildTool;
 using System;
 using System.IO;
@@ -56,29 +58,46 @@ public class PLATEAURuntime : ModuleRules
             }
         );
 
-        var plateauLibs = new string[]
-        {
-            "plateau",
-            "citygml",
-            "GLTFSDK",
-            "libssl-1_1-x64",
-            "xerces-c_4",
-            "libcrypto-1_1-x64",
-            "libfbxsdk-md",
-            "libxml2-md",
-            "zlib-md"
-        };
+        IncludeLibPlateau();
+    }
+
+    // ���� : PLATEAUEditor.Build.cs �ɂ��������̂������Ă�������
+    public void IncludeLibPlateau()
+    {
 
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 
-        PublicAdditionalLibraries.Add("glu32.lib");
-        PublicAdditionalLibraries.Add("opengl32.lib");
+        PublicDefinitions.Add("CITYGML_STATIC_DEFINE");
 
-        foreach (var lib in plateauLibs)
+        string libPlateauPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            var libPath = Path.Combine(ModuleDirectory, "../ThirdParty/lib");
-            PublicAdditionalLibraries.Add(Path.Combine(libPath, $"{lib}.lib"));
+            libPlateauPath = libPlateauPath + "/windows/plateau_combined.lib";
+            PublicAdditionalLibraries.Add("glu32.lib");
+            PublicAdditionalLibraries.Add("opengl32.lib");
         }
+        else if (Target.Platform == UnrealTargetPlatform.Mac)
+        {
+            libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/lib/libiconv.tbd");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
+        }
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
+        {
+            libPlateauPath = libPlateauPath + "/linux/libplateau.a";
+        }
+        else
+        {
+            throw new Exception("Unknown OS.");
+        }
+
+        PublicAdditionalLibraries.Add(libPlateauPath);
+
+
+
+        //using c++17
+        CppStandard = CppStandardVersion.Cpp17;
     }
 }

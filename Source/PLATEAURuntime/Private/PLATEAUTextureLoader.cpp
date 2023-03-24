@@ -1,3 +1,5 @@
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+
 #include "PLATEAUTextureLoader.h"
 
 #include "IImageWrapper.h"
@@ -11,45 +13,149 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUTextureLoader"), STATGROUP_PLATEAUTextureLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, STATGROUP_PLATEAUTextureLoader);
 
+namespace {
+    bool TryLoadAndUncompressImageFile(const FString& TexturePath,
+        TArray64<uint8>& OutUncompressedData, int32& OutWidth, int32& OutHeight, EPixelFormat& OutPixelFormat) {
+        if (TexturePath.IsEmpty())
+            return false;
+
+        IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+        TArray64<uint8> Buffer;
+        if (!FFileHelper::LoadFileToArray(Buffer, *TexturePath)) {
+            return false;
+        }
+
+        const EImageFormat Format = ImageWrapperModule.DetectImageFormat(Buffer.GetData(), Buffer.Num());
+
+        if (Format == EImageFormat::Invalid)
+            return false;
+        const auto ImageWrapper = ImageWrapperModule.CreateImageWrapper(Format);
+
+        if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num()))
+            return false;
+
+        ERGBFormat RGBFormat;
+        const int32 BitDepth = ImageWrapper->GetBitDepth();
+        OutWidth = ImageWrapper->GetWidth();
+        OutHeight = ImageWrapper->GetHeight();
+
+        if (BitDepth == 16) {
+            OutPixelFormat = PF_FloatRGBA;
+            RGBFormat = ERGBFormat::RGBAF;
+        } else if (BitDepth == 8) {
+            OutPixelFormat = PF_B8G8R8A8;
+            RGBFormat = ERGBFormat::BGRA;
+        } else {
+            //UE_LOG(LogImageUtils, Warning, TEXT("Error creating texture. Bit depth is unsupported. (%d)"), BitDepth);
+            return false;
+        }
+
+        ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData);
+
+        return true;
+    }
+
+    void UpdateTextureGPUResourceWithDummy(UTexture2D* const Texture, const EPixelFormat PixelFormat) {
+        Texture->SetPlatformData(new FTexturePlatformData());
+        Texture->GetPlatformData()->SizeX = 1;
+        Texture->GetPlatformData()->SizeY = 1;
+        Texture->GetPlatformData()->PixelFormat = PixelFormat;
+
+        FTexture2DMipMap* Mip = new FTexture2DMipMap();
+        Texture->GetPlatformData()->Mips.Add(Mip);
+        Mip->SizeX = 1;
+        Mip->SizeY = 1;
+
+        // GPixelFormats contains meta information for each pixel format 
+        {
+            const uint32 MipBytes = Mip->SizeX * Mip->SizeY * GPixelFormats[PixelFormat].BlockBytes;
+            Mip->BulkData.Lock(LOCK_READ_WRITE);
+
+            void* TextureData = Mip->BulkData.Realloc(MipBytes);
+
+            static TArray<uint8> DummyBytes;
+            DummyBytes.SetNum(MipBytes);
+
+            FMemory::Memcpy(TextureData, DummyBytes.GetData(), MipBytes);
+
+            Mip->BulkData.Unlock();
+        }
+
+        // GPU上でテクスチャ構築
+        Texture->UpdateResource();
+    }
+
+    void SetTexturePlatformData(UTexture2D* Texture, const TArray64<uint8>& UncompressedImageData,
+        const int32 Mip0Size, const int32 Width, const int32 Height, const EPixelFormat PixelFormat) {
+        Texture->SetPlatformData(new FTexturePlatformData());
+        Texture->GetPlatformData()->SizeX = Width;
+        Texture->GetPlatformData()->SizeY = Height;
+        Texture->GetPlatformData()->PixelFormat = PixelFormat;
+        FTexture2DMipMap* Mip = new FTexture2DMipMap();
+        Texture->GetPlatformData()->Mips.Add(Mip);
+        Mip->SizeX = Width;
+        Mip->SizeY = Height;
+        {
+            Mip->BulkData.Lock(LOCK_READ_WRITE);
+
+            void* TextureData = Mip->BulkData.Realloc(Mip0Size);
+            FMemory::Memcpy(TextureData, UncompressedImageData.GetData(), Mip0Size);
+
+            Mip->BulkData.Unlock();
+        }
+    }
+
+    void UpdateTextureGPUResourceAsync(
+        const TArray64<uint8>& UncompressedImageData, UTexture2D* const Texture,
+        const int32 Mip0Size, const int32 Width, const int32 Height, const EPixelFormat PixelFormat) {
+
+        TArray<void*, TInlineAllocator<MAX_TEXTURE_MIP_COUNT>> MipData;
+        MipData.Add(FMemory::Malloc(Mip0Size));
+        // TODO: 動的メモリ確保不要?
+        FMemory::Memcpy(MipData[0], UncompressedImageData.GetData(), Mip0Size);
+
+        if (!GRHISupportsAsyncTextureCreation) {
+            Texture->UpdateResource();
+        }
+
+        FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
+            Width, Height,
+            PixelFormat,
+            1,
+            TexCreate_ShaderResource,
+            MipData.GetData(), 1
+        );
+
+        for (void* NewData : MipData) {
+            if (NewData) {
+                FMemory::Free(NewData);
+            }
+        }
+        MipData.Empty();
+
+        {
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [&]() {
+                    // link RHI texture to UTexture2D
+                    ENQUEUE_RENDER_COMMAND(UpdateTextureReference)(
+                        [Texture, RHITexture2D](FRHICommandListImmediate& RHICmdList) {
+                            RHIUpdateTextureReference(Texture->TextureReference.TextureReferenceRHI, RHITexture2D);
+                            Texture->RefreshSamplerStates();
+                        }
+                    );
+                }, TStatId(), nullptr, ENamedThreads::GameThread)
+                ->Wait();
+        }
+    }
+}
+
 UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
-    if (TexturePath.IsEmpty())
-        return nullptr;
-
-    IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-
-    TArray64<uint8> Buffer;
-    if (!FFileHelper::LoadFileToArray(Buffer, *TexturePath)) {
-        return nullptr;
-    }
-
-    const EImageFormat Format = ImageWrapperModule.DetectImageFormat(Buffer.GetData(), Buffer.Num());
-
-    if (Format == EImageFormat::Invalid)
-        return nullptr;
-    const auto ImageWrapper = ImageWrapperModule.CreateImageWrapper(Format);
-
-    if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num()))
-        return nullptr;
-
+    int32 Width, Height;
     EPixelFormat PixelFormat;
-    ERGBFormat RGBFormat;
-    const int32 BitDepth = ImageWrapper->GetBitDepth();
-    const int32 Width = ImageWrapper->GetWidth();
-    const int32 Height = ImageWrapper->GetHeight();
-
-    if (BitDepth == 16) {
-        PixelFormat = PF_FloatRGBA;
-        RGBFormat = ERGBFormat::RGBAF;
-    } else if (BitDepth == 8) {
-        PixelFormat = PF_B8G8R8A8;
-        RGBFormat = ERGBFormat::BGRA;
-    } else {
-        //UE_LOG(LogImageUtils, Warning, TEXT("Error creating texture. Bit depth is unsupported. (%d)"), BitDepth);
-        return nullptr;
-    }
-
     TArray64<uint8> UncompressedData;
-    ImageWrapper->GetRaw(RGBFormat, BitDepth, UncompressedData);
+    if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
+        return nullptr;
 
     // Mip0Data
     const int32 Mip0Size = Width * Height * GPixelFormats[PixelFormat].BlockBytes;
@@ -72,11 +178,11 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
 
                 NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
-                //20221108 テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
-                FString TextureReativePath;
-                FString TextureRerativePathPrefix;
-                TexturePath.Split(TEXT("PLATEAU\\"), &TextureRerativePathPrefix, &TextureReativePath);
-                DesiredTextureName = TextureReativePath;
+                // テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
+                FString TextureRelativePath;
+                FString TextureRelativePathPrefix;
+                TexturePath.Split(TEXT("PLATEAU\\"), &TextureRelativePathPrefix, &TextureRelativePath);
+                DesiredTextureName = TextureRelativePath;
                 FString NewUniqueName = DesiredTextureName;
                 if (!NewTexture->Rename(*NewUniqueName, nullptr, REN_Test)) {
                     NewUniqueName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(DesiredTextureName)).ToString();
@@ -87,58 +193,15 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
                 // TODO: Streaming有効化
                 NewTexture->NeverStream = true;
 
-
-
-                // ダミーテクスチャ作成
-                {
-                    NewTexture->SetPlatformData(new FTexturePlatformData());
-                    NewTexture->GetPlatformData()->SizeX = 1;
-                    NewTexture->GetPlatformData()->SizeY = 1;
-                    NewTexture->GetPlatformData()->PixelFormat = PixelFormat;
-
-                    FTexture2DMipMap* Mip = new FTexture2DMipMap();
-                    NewTexture->GetPlatformData()->Mips.Add(Mip);
-                    Mip->SizeX = 1;
-                    Mip->SizeY = 1;
-
-                    // GPixelFormats contains meta information for each pixel format 
-                    {
-                        const uint32 MipBytes = Mip->SizeX * Mip->SizeY * GPixelFormats[PixelFormat].BlockBytes;
-                        Mip->BulkData.Lock(LOCK_READ_WRITE);
-
-                        void* TextureData = Mip->BulkData.Realloc(MipBytes);
-
-                        static TArray<uint8> DummyBytes;
-                        DummyBytes.SetNum(MipBytes);
-
-                        FMemory::Memcpy(TextureData, DummyBytes.GetData(), MipBytes);
-
-                        Mip->BulkData.Unlock();
-                    }
-
-                    // GPU上でテクスチャ構築
-                    NewTexture->UpdateResource();
-                }
+                if (GRHISupportsAsyncTextureCreation)
+                    UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
 
                 // アセットとして保存するデータで上書き
-                NewTexture->SetPlatformData(new FTexturePlatformData());
-                NewTexture->GetPlatformData()->SizeX = Width;
-                NewTexture->GetPlatformData()->SizeY = Height;
-                NewTexture->GetPlatformData()->PixelFormat = PixelFormat;
-                FTexture2DMipMap* Mip = new FTexture2DMipMap();
-                NewTexture->GetPlatformData()->Mips.Add(Mip);
-                Mip->SizeX = Width;
-                Mip->SizeY = Height;
-                {
-                    Mip->BulkData.Lock(LOCK_READ_WRITE);
+                SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
 
-                    void* TextureData = Mip->BulkData.Realloc(Mip0Size);
-                    FMemory::Memcpy(TextureData, UncompressedData.GetData(), Mip0Size);
-
-                    Mip->BulkData.Unlock();
-                }
-
-                // 描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
+                // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
+                if (!GRHISupportsAsyncTextureCreation)
+                    NewTexture->UpdateResource();
 
                 NewTexture->AddToRoot();
                 NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
@@ -159,82 +222,18 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
     }
     check(IsValid(NewTexture));
 
-    TArray<void*, TInlineAllocator<MAX_TEXTURE_MIP_COUNT>> MipData;
-    MipData.Add(FMemory::Malloc(Mip0Size));
-    // TODO: 動的メモリ確保不要?
-    FMemory::Memcpy(MipData[0], UncompressedData.GetData(), Mip0Size);
-
-    FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
-        Width, Height,
-        PixelFormat,
-        1,
-        TexCreate_ShaderResource,
-        MipData.GetData(), 1
-    );
-
-    for (void* NewData : MipData) {
-        if (NewData) {
-            FMemory::Free(NewData);
-        }
-    }
-    MipData.Empty();
-
-    {
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&]() {
-                // link RHI texture to UTexture2D
-                ENQUEUE_RENDER_COMMAND(UpdateTextureReference)(
-                    [NewTexture, RHITexture2D](FRHICommandListImmediate& RHICmdList) {
-                        RHIUpdateTextureReference(NewTexture->TextureReference.TextureReferenceRHI, RHITexture2D);
-                        NewTexture->RefreshSamplerStates();
-                    }
-                );
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
-    }
+    if (GRHISupportsAsyncTextureCreation)
+        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
 
     return NewTexture;
 }
 
 UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
-    if (TexturePath.IsEmpty())
-        return nullptr;
-
-    IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
-
-    TArray64<uint8> Buffer;
-    if (!FFileHelper::LoadFileToArray(Buffer, *TexturePath)) {
-        return nullptr;
-    }
-
-    const EImageFormat Format = ImageWrapperModule.DetectImageFormat(Buffer.GetData(), Buffer.Num());
-
-    if (Format == EImageFormat::Invalid)
-        return nullptr;
-    const auto ImageWrapper = ImageWrapperModule.CreateImageWrapper(Format);
-
-    if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num()))
-        return nullptr;
-
+    int32 Width, Height;
     EPixelFormat PixelFormat;
-    ERGBFormat RGBFormat;
-    const int32 BitDepth = ImageWrapper->GetBitDepth();
-    const int32 Width = ImageWrapper->GetWidth();
-    const int32 Height = ImageWrapper->GetHeight();
-
-    if (BitDepth == 16) {
-        PixelFormat = PF_FloatRGBA;
-        RGBFormat = ERGBFormat::RGBAF;
-    } else if (BitDepth == 8) {
-        PixelFormat = PF_B8G8R8A8;
-        RGBFormat = ERGBFormat::BGRA;
-    } else {
-        //UE_LOG(LogImageUtils, Warning, TEXT("Error creating texture. Bit depth is unsupported. (%d)"), BitDepth);
-        return nullptr;
-    }
-
     TArray64<uint8> UncompressedData;
-    ImageWrapper->GetRaw(RGBFormat, BitDepth, UncompressedData);
+    if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
+        return nullptr;
 
     // Mip0Data
     const int32 Mip0Size = Width * Height * GPixelFormats[PixelFormat].BlockBytes;
@@ -254,74 +253,20 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
 
                 NewTexture->NeverStream = true;
 
-                // ダミーテクスチャ作成
-                {
-                    NewTexture->SetPlatformData(new FTexturePlatformData());
-                    NewTexture->GetPlatformData()->SizeX = 1;
-                    NewTexture->GetPlatformData()->SizeY = 1;
-                    NewTexture->GetPlatformData()->PixelFormat = PixelFormat;
-
-                    FTexture2DMipMap* Mip = new FTexture2DMipMap();
-                    NewTexture->GetPlatformData()->Mips.Add(Mip);
-                    Mip->SizeX = 1;
-                    Mip->SizeY = 1;
-
-                    // GPixelFormats contains meta information for each pixel format 
-                    {
-                        const uint32 MipBytes = Mip->SizeX * Mip->SizeY * GPixelFormats[PixelFormat].BlockBytes;
-                        Mip->BulkData.Lock(LOCK_READ_WRITE);
-
-                        void* TextureData = Mip->BulkData.Realloc(MipBytes);
-
-                        static TArray<uint8> DummyBytes;
-                        DummyBytes.SetNum(MipBytes);
-
-                        FMemory::Memcpy(TextureData, DummyBytes.GetData(), MipBytes);
-
-                        Mip->BulkData.Unlock();
-                    }
-
-                    // GPU上でテクスチャ構築
+                if (GRHISupportsAsyncTextureCreation)
+                    UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
+                else {
+                    SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
                     NewTexture->UpdateResource();
                 }
+
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
     }
     check(IsValid(NewTexture));
 
-    TArray<void*, TInlineAllocator<MAX_TEXTURE_MIP_COUNT>> MipData;
-    MipData.Add(FMemory::Malloc(Mip0Size));
-    // TODO: 動的メモリ確保不要?
-    FMemory::Memcpy(MipData[0], UncompressedData.GetData(), Mip0Size);
-
-    FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
-        Width, Height,
-        PixelFormat,
-        1,
-        TexCreate_ShaderResource,
-        MipData.GetData(), 1
-    );
-
-    for (void* NewData : MipData) {
-        if (NewData) {
-            FMemory::Free(NewData);
-        }
-    }
-    MipData.Empty();
-
-    {
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&]() {
-                // link RHI texture to UTexture2D
-                ENQUEUE_RENDER_COMMAND(UpdateTextureReference)(
-                    [NewTexture, RHITexture2D](FRHICommandListImmediate& RHICmdList) {
-                        RHIUpdateTextureReference(NewTexture->TextureReference.TextureReferenceRHI, RHITexture2D);
-                        NewTexture->RefreshSamplerStates();
-                    }
-                );
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
-    }
+    if (GRHISupportsAsyncTextureCreation)
+        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
 
     return NewTexture;
 }

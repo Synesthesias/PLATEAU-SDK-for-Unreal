@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 #include "SPLATEAUImportPanel.h"
 
@@ -82,7 +81,13 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
     TWeakPtr<SVerticalBox> VerticalBox;
     TWeakPtr<SVerticalBox> ModelDataPlacementVerticalBox;
     ServerPanelRef = SNew(SPLATEAUServerDatasetSelectPanel);
-    ServerPanelRef->InitServerData();
+
+    ServerPanelRef->SetSelectDatasetCallback([this]() {
+        const auto ID = ServerPanelRef->GetServerDatasetID();
+        const auto Client = ServerPanelRef->GetClientPtr();
+        const auto ServerDatasetSource = plateau::dataset::DatasetSource::createServer(ID, *Client);
+        ServerDatasetAccessor = ServerDatasetSource.getAccessor();
+        });
 
     ChildSlot
         [
@@ -163,16 +168,13 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         [SAssignNew(ModelDataPlacementVerticalBox, SVerticalBox)
         .Visibility_Lambda(
             [this]() {
-                auto IsValidDatasetSet = false;
-                if (bImportFromServer) {
-                    if (ServerPanelRef->GetDatasetAccessor() != nullptr)
-                        IsValidDatasetSet = ServerPanelRef->GetDatasetAccessor()->getPackages() != PredefinedCityModelPackage::None;
-                } else {
-                    if (DatasetAccessor != nullptr)
-                        IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
-                }
+                const auto DatasetAccessor = bImportFromServer ? ServerDatasetAccessor : LocalDatasetAccessor;
 
-                return IsValidDatasetSet
+                const auto IsDatasetValid =
+                    DatasetAccessor != nullptr &&
+                    DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
+
+                return IsDatasetValid
                     ? EVisibility::Visible
                     : EVisibility::Collapsed;
             })
@@ -227,8 +229,8 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 FMenuBuilder MenuBuilder(true, nullptr);
                 const auto Items = GetZoneIDTexts();
                 for (auto ItemIter = Items.CreateConstIterator(); ItemIter; ++ItemIter) {
-                    const auto ItemText = ItemIter->Value;
-                    const auto ID = ItemIter->Key;
+                    const auto& ItemText = ItemIter->Value;
+                    const auto& ID = ItemIter->Key;
                     FUIAction ItemAction(FExecuteAction::CreateLambda(
                         [this, ID]() {
                             ZoneID = ID;
@@ -281,18 +283,18 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
             [this]() {
                 return ZoneID;
             })
-        .bImportFromServer_Lambda(
-            [this]() {
-                return bImportFromServer;
-            })
-        .ClientPtr_Lambda(
-            [this]() {
-                return ServerPanelRef->GetClientPtr();
-            })
-        .ServerDatasetID_Lambda(
-            [this]() {
-                return ServerPanelRef->GetServerDatasetID();
-            })];
+                .bImportFromServer_Lambda(
+                    [this]() {
+                        return bImportFromServer;
+                    })
+                .ClientPtr_Lambda(
+                    [this]() {
+                        return ServerPanelRef->GetClientPtr();
+                    })
+                        .ServerDatasetID_Lambda(
+                            [this]() {
+                                return ServerPanelRef->GetServerDatasetID();
+                            })];
 
     TWeakPtr<SVerticalBox> PerFeatureSettingsVerticalBox;
     ModelDataPlacementVerticalBox.Pin()->AddSlot()
@@ -332,11 +334,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         [SNew(SPLATEAUFeatureImportSettingsView)
         .DatasetAccessor_Lambda(
             [this]() {
-                if (bImportFromServer) {
-                    return ServerPanelRef->GetDatasetAccessor();
-                } else {
-                    return DatasetAccessor;
-                }
+                return bImportFromServer ? ServerDatasetAccessor : LocalDatasetAccessor;
             })
         .Extent_Lambda(
             [this, ExtentEditButton]() {
@@ -574,9 +572,11 @@ TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {
                         .Text(LOCTEXT("Invalid Path", "直下にudxフォルダを持つフォルダを選択してください。"))
                         .Visibility_Lambda(
                             [this] {
-                                auto IsValidDatasetSet = false;
-                                if (DatasetAccessor != nullptr)
-                                    IsValidDatasetSet = DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
+                                const auto DatasetAccessor = bImportFromServer ? ServerDatasetAccessor : LocalDatasetAccessor;
+
+                                const auto IsValidDatasetSet = 
+                                    DatasetAccessor != nullptr &&
+                                    DatasetAccessor->getPackages() != PredefinedCityModelPackage::None;
                                 return IsValidDatasetSet
                                     ? EVisibility::Collapsed
                                     : EVisibility::Visible;
@@ -675,10 +675,10 @@ FReply SPLATEAUImportPanel::OnBtnSelectFolderPathClicked() {
         SourcePath = OutFolderName;
         try {
             const auto InDatasetSource = DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
-            DatasetAccessor = InDatasetSource.getAccessor();
+            LocalDatasetAccessor = InDatasetSource.getAccessor();
         }
         catch (...) {
-            DatasetAccessor = nullptr;
+            LocalDatasetAccessor = nullptr;
             UE_LOG(LogTemp, Error, TEXT("Invalid source path : %s"), *SourcePath);
         }
     }

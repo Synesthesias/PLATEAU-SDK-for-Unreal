@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 
 #include "PLATEAUBasemap.h"
@@ -91,11 +91,16 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
         FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
             FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
 
+        auto Extent = Box.GetExtent();
+        Extent.X = FMath::Abs(Extent.X);
+        Extent.Y = FMath::Abs(Extent.Y);
+        Extent.Z = FMath::Abs(Extent.Z);
+
         ViewportClient.Pin()->GetPreviewScene()->AddComponent(
             TileComponent,
             FTransform(FRotator(0, 0, 0),
                 Box.GetCenter() - FVector::UpVector,
-                Box.GetExtent() / 50
+                Extent / 50
             ));
         TilesInScene.Add(TileComponent);
     }
