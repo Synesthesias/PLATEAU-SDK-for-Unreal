@@ -184,9 +184,12 @@ namespace {
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
         LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
+        // StaticMeshesへのアクセスでAccess Violationが発生することがあるため冗長なコピーを生成。
+        // コピーキャプチャでレースコンディション発生する場合がある？
+        const auto CopiedStaticMeshes = StaticMeshes;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [StaticMeshes = StaticMeshes]() {
-                UStaticMesh::BatchBuild(StaticMeshes, true);
+            [CopiedStaticMeshes]() {
+                UStaticMesh::BatchBuild(CopiedStaticMeshes, true);
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         StaticMeshes.Reset();
     }
