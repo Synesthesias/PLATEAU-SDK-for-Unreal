@@ -13,8 +13,6 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUTextureLoader"), STATGROUP_PLATEAUTextureLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, STATGROUP_PLATEAUTextureLoader);
 
-static bool GRHITest = false;
-
 namespace {
     bool TryLoadAndUncompressImageFile(const FString& TexturePath,
         TArray64<uint8>& OutUncompressedData, int32& OutWidth, int32& OutHeight, EPixelFormat& OutPixelFormat) {
@@ -117,7 +115,7 @@ namespace {
         // TODO: 動的メモリ確保不要?
         FMemory::Memcpy(MipData[0], UncompressedImageData.GetData(), Mip0Size);
 
-        if (!GRHITest) {
+        if (!GRHISupportsAsyncTextureCreation) {
             Texture->UpdateResource();
         }
 
@@ -195,14 +193,14 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
                 // TODO: Streaming有効化
                 NewTexture->NeverStream = true;
 
-                if (GRHITest)
+                if (GRHISupportsAsyncTextureCreation)
                     UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
 
                 // アセットとして保存するデータで上書き
                 SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
 
                 // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
-                if (!GRHITest)
+                if (!GRHISupportsAsyncTextureCreation)
                     NewTexture->UpdateResource();
 
                 NewTexture->AddToRoot();
@@ -224,7 +222,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
     }
     check(IsValid(NewTexture));
 
-    if (GRHITest)
+    if (GRHISupportsAsyncTextureCreation)
         UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
 
     return NewTexture;
@@ -255,7 +253,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
 
                 NewTexture->NeverStream = true;
 
-                if (GRHITest)
+                if (GRHISupportsAsyncTextureCreation)
                     UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
                 else {
                     SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
@@ -267,7 +265,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
     }
     check(IsValid(NewTexture));
 
-    if (GRHITest)
+    if (GRHISupportsAsyncTextureCreation)
         UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
 
     return NewTexture;
