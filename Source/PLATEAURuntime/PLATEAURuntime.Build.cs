@@ -61,7 +61,7 @@ public class PLATEAURuntime : ModuleRules
         IncludeLibPlateau();
     }
 
-    // ���� : PLATEAUEditor.Build.cs �ɂ��������̂������Ă�������
+    // 注意 : PLATEAUEditor.Build.cs にも同じものを書いてください
     public void IncludeLibPlateau()
     {
 
