@@ -65,6 +65,8 @@ public class PLATEAURuntime : ModuleRules
     public void IncludeLibPlateau()
     {
 
+        bEnableExceptions = true;
+        
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 

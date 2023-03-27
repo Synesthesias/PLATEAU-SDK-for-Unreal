@@ -12,7 +12,11 @@
 #include "plateau/polygon_mesh/mesh.h"
 #include "plateau/polygon_mesh/sub_mesh.h"
 #include "MeshDescription.h"
-#include "StaticMeshAttributes.h"
+#include "Runtime/StaticMeshDescription/Public/StaticMeshAttributes.h"
+#include "MaterialTypes.h"
+#include "Engine/Classes/Engine/Texture.h"
+#include "Engine/Classes/Components/StaticMeshComponent.h"
+#include "Engine/Classes/Materials/MaterialInstance.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "filesystem"
 

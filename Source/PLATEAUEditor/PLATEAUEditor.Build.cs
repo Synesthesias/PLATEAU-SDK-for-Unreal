@@ -28,7 +28,8 @@ public class PLATEAUEditor : ModuleRules
             new string[]
             {
                 "Core",
-                "PLATEAURuntime"
+                "PLATEAURuntime",
+                "PropertyEditor"
                 // ... add other public dependencies that you statically link with here ...
             }
             );
@@ -76,6 +77,8 @@ public class PLATEAUEditor : ModuleRules
     public void IncludeLibPlateau()
     {
 
+        bEnableExceptions = true;
+        
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 
