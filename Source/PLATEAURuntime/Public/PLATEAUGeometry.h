@@ -14,11 +14,11 @@ struct PLATEAURUNTIME_API FPLATEAUGeoCoordinate {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Latitude;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Longitude;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Height;
 
     FPLATEAUGeoCoordinate();
@@ -36,9 +36,9 @@ struct PLATEAURUNTIME_API FPLATEAUExtent {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         FPLATEAUGeoCoordinate Min;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         FPLATEAUGeoCoordinate Max;
 
     FPLATEAUExtent() = default;
@@ -54,9 +54,9 @@ struct PLATEAURUNTIME_API FPLATEAUGeoReference {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         int ZoneID;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         FVector ReferencePoint;
 
     FPLATEAUGeoReference();

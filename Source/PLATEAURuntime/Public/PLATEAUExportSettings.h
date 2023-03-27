@@ -48,6 +48,6 @@ class PLATEAURUNTIME_API UPLATEAUExportSettings : public UObject {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Export Settings")
         FPLATEAUFeatureExportSettings ExportSetting;
 };
