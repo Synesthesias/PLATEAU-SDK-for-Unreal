@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandÅAInfrastructure and Transport
+// Copyright 2023 Ministry of Land„ÄÅInfrastructure and Transport
 
 #pragma once
 
@@ -42,7 +42,7 @@ public:
         FPLATEAUGeoCoordinate Max;
 
     FPLATEAUExtent() = default;
-    FPLATEAUExtent(plateau::geometry::Extent InExtent);
+    FPLATEAUExtent(const plateau::geometry::Extent& InExtent);
 
     plateau::geometry::Extent GetNativeData() const;
     bool operator==(const FPLATEAUExtent& other) const;
@@ -55,9 +55,9 @@ struct PLATEAURUNTIME_API FPLATEAUGeoReference {
 
 public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
-        int ZoneID;
+        int ZoneID = 9;
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
-        FVector ReferencePoint;
+        FVector ReferencePoint = FVector::ZeroVector;
 
     FPLATEAUGeoReference();
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);

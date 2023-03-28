@@ -28,7 +28,7 @@ enum class EPLATEAUMeshGranularity : uint8 {
 
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureImportSettings {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
 public:
     UPROPERTY(EditAnywhere, Category = "Import Settings")

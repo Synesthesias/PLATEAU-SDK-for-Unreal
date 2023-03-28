@@ -74,7 +74,7 @@ void APLATEAUInstancedCityModel::Tick(float DeltaTime) {
 
 }
 
-plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetExistPackage() {
+plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetExistPackage() const {
     //キャッシュが取られている前提
     const auto LocalCachePath = FPaths::ProjectContentDir() + "PLATEAU/Datasets/" + DatasetName;
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
@@ -204,8 +204,8 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
         const auto GameThreadTask =
             FFunctionGraphTask::CreateAndDispatchWhenReady([this, InCityObjectType] {
 
-            for (const auto GmlComponent : GetRootComponent()->GetAttachChildren()) {
-                for (const auto LodComponent : GmlComponent->GetAttachChildren()) {
+            for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+                for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
                     TArray<USceneComponent*> AllComponents;
                     LodComponent->GetChildrenComponents(true, AllComponents);
                     for (const auto& Component : AllComponents) {
@@ -261,10 +261,10 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
     return this;
 }
 
-TArray<PLATEAUPackageLOD> APLATEAUInstancedCityModel::GetPackageLODs() {
+TArray<PLATEAUPackageLOD> APLATEAUInstancedCityModel::GetPackageLODs() const {
     TArray<PLATEAUPackageLOD> ReturnLODs;
 
-    int MaxLOD, MinLOD = 0;
+    int MaxLOD = 0, MinLOD = 0;
 
     const auto LocalCachePath = FPaths::ProjectContentDir() + "PLATEAU/Datasets/" + DatasetName;
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;

@@ -29,7 +29,7 @@ bool FPLATEAUGeoCoordinate::operator!=(const FPLATEAUGeoCoordinate& other) const
 
 /**** Extent ****/
 
-FPLATEAUExtent::FPLATEAUExtent(plateau::geometry::Extent InExtent)
+FPLATEAUExtent::FPLATEAUExtent(const plateau::geometry::Extent& InExtent)
     : Min(InExtent.min)
     , Max(InExtent.max) {}
 
@@ -57,8 +57,10 @@ namespace {
     }
 }
 
-FPLATEAUGeoReference::FPLATEAUGeoReference() : ZoneID(9)
-, Data(GetDefaultNativeData()) {}
+FPLATEAUGeoReference::FPLATEAUGeoReference()
+    : ZoneID(9)
+    , ReferencePoint(FVector::ZeroVector)
+    , Data(GetDefaultNativeData()) {}
 
 FPLATEAUGeoReference::FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference)
     : ZoneID(InGeoReference.getZoneID())

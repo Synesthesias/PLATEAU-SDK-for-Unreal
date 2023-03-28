@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandÅAInfrastructure and Transport
+// Copyright 2023 Ministry of Land„ÄÅInfrastructure and Transport
 
 #pragma once
 
@@ -47,12 +47,12 @@ public:
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
 
-    plateau::dataset::PredefinedCityModelPackage GetExistPackage();
+    plateau::dataset::PredefinedCityModelPackage GetExistPackage() const;
 
 
     APLATEAUInstancedCityModel* FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bSingleLOD);
     APLATEAUInstancedCityModel* FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType);
-    TArray<PLATEAUPackageLOD> GetPackageLODs();
+    TArray<PLATEAUPackageLOD> GetPackageLODs() const;
 
     bool IsFiltering();
 
