@@ -83,7 +83,7 @@ public class PLATEAURuntime : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
             libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
-            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/usr/lib/libiconv.tbd");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)
