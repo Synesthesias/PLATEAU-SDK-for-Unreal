@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandÅAInfrastructure and Transport
+// Copyright 2023 Ministry of Land„ÄÅInfrastructure and Transport
 
 #pragma once
 
@@ -14,11 +14,11 @@ struct PLATEAURUNTIME_API FPLATEAUGeoCoordinate {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Latitude;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Longitude;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         double Height;
 
     FPLATEAUGeoCoordinate();
@@ -36,13 +36,13 @@ struct PLATEAURUNTIME_API FPLATEAUExtent {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         FPLATEAUGeoCoordinate Min;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
         FPLATEAUGeoCoordinate Max;
 
     FPLATEAUExtent() = default;
-    FPLATEAUExtent(plateau::geometry::Extent InExtent);
+    FPLATEAUExtent(const plateau::geometry::Extent& InExtent);
 
     plateau::geometry::Extent GetNativeData() const;
     bool operator==(const FPLATEAUExtent& other) const;
@@ -54,10 +54,10 @@ struct PLATEAURUNTIME_API FPLATEAUGeoReference {
     GENERATED_USTRUCT_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
-        int ZoneID;
-    UPROPERTY(EditAnywhere)
-        FVector ReferencePoint;
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
+        int ZoneID = 9;
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Geometry")
+        FVector ReferencePoint = FVector::ZeroVector;
 
     FPLATEAUGeoReference();
     FPLATEAUGeoReference(const plateau::geometry::GeoReference& InGeoReference);

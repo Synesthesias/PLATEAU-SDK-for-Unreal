@@ -27,7 +27,7 @@ enum class ECoordinateSystem : uint8 {
 
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureExportSettings {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
 public:
     UPROPERTY(EditAnywhere, Category = "Export Settings")
@@ -48,6 +48,6 @@ class PLATEAURUNTIME_API UPLATEAUExportSettings : public UObject {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Export Settings")
         FPLATEAUFeatureExportSettings ExportSetting;
 };

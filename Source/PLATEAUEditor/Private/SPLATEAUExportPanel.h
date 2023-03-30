@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Editor/PropertyEditor/Public/IDetailsView.h"
 #include "Styling/ISlateStyle.h"
 
 class UPLATEAUExportSettings;

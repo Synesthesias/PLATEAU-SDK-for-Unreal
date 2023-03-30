@@ -61,10 +61,12 @@ public class PLATEAURuntime : ModuleRules
         IncludeLibPlateau();
     }
 
-    // ���� : PLATEAUEditor.Build.cs �ɂ��������̂������Ă�������
+    // 注意 : PLATEAUEditor.Build.cs にも同じものを書いてください
     public void IncludeLibPlateau()
     {
 
+        bEnableExceptions = true;
+        
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PublicSystemIncludePaths.Add(Path.Combine(ModuleDirectory, "../ThirdParty/include"));
 

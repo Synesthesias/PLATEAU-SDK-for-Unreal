@@ -11,8 +11,13 @@
 #include "plateau/polygon_mesh/node.h"
 #include "plateau/polygon_mesh/mesh.h"
 #include "plateau/polygon_mesh/sub_mesh.h"
-#include "MeshDescription.h"
-#include "StaticMeshAttributes.h"
+#include "MeshDescription/Public/MeshDescription.h"
+#include "Runtime/StaticMeshDescription/Public/StaticMeshAttributes.h"
+#include "MaterialTypes.h"
+#include "Engine/Classes/Engine/Texture.h"
+#include "Engine/Classes/Components/StaticMeshComponent.h"
+#include "Engine/Classes/Materials/MaterialInstance.h"
+#include "Engine/Classes/Engine/StaticMesh.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "filesystem"
 
@@ -127,7 +132,7 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
 void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
     //StaticMeshComponentにキャスト
     UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
-    FStaticMeshAttributes Attributes(*StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0));
+    // FStaticMeshAttributes Attributes(*StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0));
 
     //渡すためのデータ各種
     std::vector<TVec3d> Vertices;

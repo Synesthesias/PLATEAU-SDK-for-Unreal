@@ -14,7 +14,7 @@
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
-	"EngineVersion" : ["5.1.1"],
+	"EngineVersion" : ["5.1.0"],
 	"Modules": [
 		{
 			"Name": "PLATEAURuntime",

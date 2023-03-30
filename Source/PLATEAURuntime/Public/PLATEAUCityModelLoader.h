@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandÅAInfrastructure and Transport
+// Copyright 2023 Ministry of Land„ÄÅInfrastructure and Transport
 
 #pragma once
 
@@ -37,14 +37,14 @@ namespace plateau::udx {
 
 USTRUCT()
 struct FPLATEAUCityModelLoadStatus {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
 public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
-        int TotalGmlCount;
+        int TotalGmlCount = 0;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
-        int LoadedGmlCount;
+        int LoadedGmlCount = 0;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         TArray<FString> LoadingGmls;

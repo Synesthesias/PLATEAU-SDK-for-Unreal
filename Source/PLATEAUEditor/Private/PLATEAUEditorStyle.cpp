@@ -2,28 +2,18 @@
 
 #include "PLATEAUEditorStyle.h"
 
-#include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyle.h"
 #include "Styling/SlateStyleRegistry.h"
 
-#include "Brushes/SlateBorderBrush.h"
-#include "Brushes/SlateBoxBrush.h"
 #include "Brushes/SlateImageBrush.h"
-#include "Fonts/SlateFontInfo.h"
+#include "Brushes/SlateColorBrush.h"
 #include "Interfaces/IPluginManager.h"
 #include "Math/Vector2D.h"
-#include "Misc/Paths.h"
-#include "Styling/SlateStyleRegistry.h"
 #include "Styling/SlateTypes.h"
 #include "Styling/CoreStyle.h"
 
 #define IMAGE_BRUSH(RelativePath, ...)                                         \
   FSlateImageBrush(                                                            \
-      FPLATEAUEditorStyle::InContent(RelativePath, ".png"),                    \
-      __VA_ARGS__)
-
-#define BOX_BRUSH(RelativePath, ...)                                           \
-  FSlateBoxBrush(                                                              \
       FPLATEAUEditorStyle::InContent(RelativePath, ".png"),                    \
       __VA_ARGS__)
 
@@ -44,8 +34,8 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
     const FVector2D Icon180x141(180.0f, 141.0f);
     const FVector2D Icon256x256(256.0f, 256.0f);
     const FVector2D TabBackground(512.0f, 180.0f);
-    
-    Set("PLATEAUEditor.LogoImage", 
+
+    Set("PLATEAUEditor.LogoImage",
         new IMAGE_BRUSH("logo_for_unreal", FVector2D(270.0f, 67.5f)));
     Set("PLATEAUEditor.BuildingIconImage",
         new IMAGE_BRUSH("dark_icon_building", Icon30x30));
@@ -66,9 +56,9 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
     Set("PLATEAUEditor.TabBackground",
         new IMAGE_BRUSH("round-window-wide", TabBackground));
     Set("PLATEAUEditor.LogoBackground",
-    new BOX_BRUSH("Old/Menu_Background", 0.0f, FLinearColor::FromSRGBColor(FColor(0xFF676767))));
+        new FSlateColorBrush(FLinearColor::FromSRGBColor(FColor(0xFF676767))));
     Set("PLATEAUEditor.LogoBorder",
-        new BOX_BRUSH("Old/Menu_Background", 0.0f, FLinearColor::FromSRGBColor(FColor(0xFFD2D2D2))));
+        new FSlateColorBrush(FLinearColor::FromSRGBColor(FColor(0xFFD2D2D2))));
 
     Set(
         "PLATEAUEditor.Heading1",
@@ -81,7 +71,7 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
         FTextBlockStyle()
         .SetColorAndOpacity(FSlateColor::UseForeground())
         .SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 12)));
-    
+
     FSlateStyleRegistry::RegisterSlateStyle(*this);
 }
 
@@ -91,5 +81,4 @@ FPLATEAUEditorStyle::~FPLATEAUEditorStyle() {
 }
 
 #undef IMAGE_BRUSH
-#undef BOX_BRUSH
 #undef DEFAULT_FONT

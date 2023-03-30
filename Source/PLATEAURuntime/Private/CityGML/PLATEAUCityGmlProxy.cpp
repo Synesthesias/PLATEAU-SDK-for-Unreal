@@ -4,6 +4,7 @@
 #include "CityGML/PLATEAUCityModel.h"
 
 #include <citygml/citygml.h>
+#include <Misc/Paths.h>
 
 #include "Async/Async.h"
 

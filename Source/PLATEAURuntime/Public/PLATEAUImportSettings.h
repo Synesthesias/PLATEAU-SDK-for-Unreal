@@ -28,7 +28,7 @@ enum class EPLATEAUMeshGranularity : uint8 {
 
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureImportSettings {
-    GENERATED_BODY()
+    GENERATED_USTRUCT_BODY()
 
 public:
     UPROPERTY(EditAnywhere, Category = "Import Settings")
@@ -55,23 +55,23 @@ class PLATEAURUNTIME_API UPLATEAUImportSettings : public UObject {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings Building;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings Road;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings Vegetation;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings CityFurniture;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings Relief;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings DisasterRisk;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings LandUse;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings UrbanPlanningDecision;
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         FPLATEAUFeatureImportSettings Unknown;
 
     FPLATEAUFeatureImportSettings GetFeatureSettings(plateau::dataset::PredefinedCityModelPackage Package) const {
