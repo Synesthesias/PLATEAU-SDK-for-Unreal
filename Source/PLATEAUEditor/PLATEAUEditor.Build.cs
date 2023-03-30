@@ -95,7 +95,7 @@ public class PLATEAUEditor : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
             libPlateauPath += "macos/libplateau_combined.a";
-            PublicAdditionalLibraries.Add("/opt/homebrew/Cellar/libiconv/1.17/lib/libiconv.dylib");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
             // PublicAdditionalLibraries.Add("GLU");
             PublicAdditionalLibraries.Add("//Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         }
