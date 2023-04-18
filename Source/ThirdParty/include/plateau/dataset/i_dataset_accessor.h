@@ -18,31 +18,6 @@ namespace plateau::dataset {
             : name_(std::move(name)) {
         }
 
-        //! 建築物、建築物部分、建築物付属物及びこれらの境界面
-        inline static const std::string bldg = "bldg";
-        //! 道路
-        inline static const std::string tran = "tran";
-        //! 都市計画決定情報
-        inline static const std::string urf = "urf";
-        //! 土地利用
-        inline static const std::string luse = "luse";
-        //! 都市設備
-        inline static const std::string frn = "frn";
-        //! 植生
-        inline static const std::string veg = "veg";
-        //! 起伏
-        inline static const std::string dem = "dem";
-        //! 洪水浸水想定区域
-        inline static const std::string fld = "fld";
-        //! 津波浸水想定
-        inline static const std::string tnm = "tnm";
-        //! 土砂災害警戒区域
-        inline static const std::string lsld = "lsld";
-        //! 高潮浸水想定区域
-        inline static const std::string htd = "htd";
-        //! 内水浸水想定区域
-        inline static const std::string ifld = "ifld";
-
         static PredefinedCityModelPackage getPackage(const std::string& folder_name);
         static CityModelPackageInfo getPackageInfo(const std::string& folder_name);
 
@@ -60,6 +35,31 @@ namespace plateau::dataset {
 
     private:
         std::string name_;
+
+        //! 建築物、建築物部分、建築物付属物及びこれらの境界面
+        static const std::string bldg;
+        //! 道路
+        static const std::string tran;
+        //! 都市計画決定情報
+        static const std::string urf;
+        //! 土地利用
+        static const std::string luse;
+        //! 都市設備
+        static const std::string frn;
+        //! 植生
+        static const std::string veg;
+        //! 起伏
+        static const std::string dem;
+        //! 洪水浸水想定区域
+        static const std::string fld;
+        //! 津波浸水想定
+        static const std::string tnm;
+        //! 土砂災害警戒区域
+        static const std::string lsld;
+        //! 高潮浸水想定区域
+        static const std::string htd;
+        //! 内水浸水想定区域
+        static const std::string ifld;
     };
 
     class LIBPLATEAU_EXPORT IDatasetAccessor {

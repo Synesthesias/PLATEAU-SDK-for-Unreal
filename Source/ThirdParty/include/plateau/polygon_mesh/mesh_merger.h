@@ -61,7 +61,8 @@ namespace plateau::polygonMesh {
          * 子の CityObject は検索しません。
          * 子の Geometry は再帰的に検索します。
          */
-        static std::list<const citygml::Polygon*> findAllPolygons(const citygml::CityObject& city_obj, unsigned lod);
+        static std::list<const citygml::Polygon *>
+        findAllPolygons(const citygml::CityObject &city_obj, unsigned lod, long long &out_vertices_count);
 
         /**
          * PLATEAUからメッシュを読み込んで座標軸を変換をするとき、このままだとメッシュが裏返ることがあります（座標軸が反転したりするので）。
