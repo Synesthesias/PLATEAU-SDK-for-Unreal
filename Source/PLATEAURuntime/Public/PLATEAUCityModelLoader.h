@@ -31,6 +31,14 @@ enum class EBuildingTypeMask : uint8 {
     OuterCeilingSurface
 };
 
+UENUM(BlueprintType)
+enum class ECityModelLoadingPhase : uint8 {
+    Idle = 0,
+    Start = 1,
+    Cancelling = 2,
+    Finished = 3
+};
+
 namespace plateau::udx {
     enum class PredefinedCityModelPackage : uint32_t;
 }
@@ -51,6 +59,7 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         TArray<FString> FailedGmls;
+
 };
 
 UCLASS()
@@ -79,14 +88,26 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         bool bImportFromServer;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        ECityModelLoadingPhase Phase;
+
     std::shared_ptr<plateau::network::Client> ClientPtr;
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void LoadAsync();
 
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+        void Cancel();
+
+
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+    TAtomic<bool> bCanceled;
+
+    FCriticalSection LoadMeshSection;
 
 public:
     // Called every frame

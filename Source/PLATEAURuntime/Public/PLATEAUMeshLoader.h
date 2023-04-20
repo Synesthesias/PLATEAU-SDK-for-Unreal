@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of LandÅAInfrastructure and Transport
+// Copyright 2023 Ministry of Land„ÄÅInfrastructure and Transport
 
 #pragma once
 
@@ -15,7 +15,8 @@ namespace plateau::polygonMesh {
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
 public:
-    void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel);
+    void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>& bCanceled);
+    //void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel);
 
 private:
     TArray<UStaticMesh*> StaticMeshes;
