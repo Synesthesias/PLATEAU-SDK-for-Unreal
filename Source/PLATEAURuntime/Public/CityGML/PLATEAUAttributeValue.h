@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 #pragma once
 
@@ -58,7 +58,7 @@ public:
         BlueprintCallable,
         BlueprintPure,
         Category = "PLATEAU|CityGML")
-        static TEnumAsByte<EPLATEAUAttributeType> GetType(
+        static EPLATEAUAttributeType GetType(
             UPARAM(ref) const FPLATEAUAttributeValue& Value);
 
     /*
