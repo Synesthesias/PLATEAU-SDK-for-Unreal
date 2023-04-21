@@ -201,8 +201,20 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         // コピーキャプチャでレースコンディション発生する場合がある？
         const auto CopiedStaticMeshes = StaticMeshes;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [CopiedStaticMeshes]() {
-                UStaticMesh::BatchBuild(CopiedStaticMeshes, true);
+            [CopiedStaticMeshes, &bCanceled]() {
+                //UStaticMesh::BatchBuild(CopiedStaticMeshes, true);
+                UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [&bCanceled](UStaticMesh* mesh) {
+                    
+                    UE_LOG(LogTemp, Log, TEXT("UStaticMesh::BatchBuild callback"));
+
+                    if (bCanceled.Load(EMemoryOrder::Relaxed)) {
+                        UE_LOG(LogTemp, Warning, TEXT("UStaticMesh::BatchBuild Canceled"));
+                        return false;
+                    }
+
+                    return true;
+                    });
+
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         StaticMeshes.Reset();
     }
