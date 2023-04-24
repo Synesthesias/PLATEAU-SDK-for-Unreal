@@ -541,8 +541,7 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .ButtonColorAndOpacity(FSlateColor(FColor(255, 0, 0)))
         .OnClicked_Lambda(
             [this]() {
-                UE_LOG(LogTemp, Warning, TEXT("Import Cancelled!"));
-                
+
                 if(CurrentLoader.IsValid())
                     CurrentLoader->Cancel();
 
@@ -570,7 +569,6 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
         .VAlign(VAlign_Center)
         .ForegroundColor(FColor::White)
         .ButtonColorAndOpacity(FSlateColor(FColor(255, 0, 0)))
-        //.IsFocusable(false)
         .Content()
                 [SNew(STextBlock)
                 .Justification(ETextJustify::Center)
@@ -584,29 +582,6 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 return EVisibility::Collapsed;
             })
         ];
-
-    /*
-    FSlateColorBrush bgColor = FSlateColorBrush(FLinearColor::Red);
-    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
-        .AutoHeight()
-        .Padding(FMargin(84, 20, 86, 20))
-        [SNew(SBorder)
-        .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .BorderImage(&bgColor)
-        .BorderBackgroundColor(FSlateColor(FColor(255, 0, 0)))
-        .Content()
-            [SNew(STextBlock)
-            .Justification(ETextJustify::Center)
-            .Margin(FMargin(0, 5, 0, 5))
-            .Text(LOCTEXT("Canceling Button", "キャンセル中…"))
-            ]
-        .Visibility_Lambda(
-            [this]() {
-                return EVisibility::Visible;
-            })
-        ];
-     */
 }
 
 TSharedRef<SVerticalBox> SPLATEAUImportPanel::CreateSourcePathSelectPanel() {

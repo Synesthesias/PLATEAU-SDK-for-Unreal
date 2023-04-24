@@ -181,20 +181,12 @@ namespace {
     }
 }
 
-//void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
-void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>& bCanceled) {
-
-    //ダミー
-    //TAtomic<bool> bCanceled(false);
+void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
 
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
         
-        UE_LOG(LogTemp, Log, TEXT("LoadModel StaticMeshes [%d]"), i);
-
-        if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-            UE_LOG(LogTemp, Log, TEXT("LoadModel Canceled 1-1 [%d]"), i);
+        if (bCanceled->Load(EMemoryOrder::Relaxed)) 
             break;
-        }
 
         LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
         // StaticMeshesへのアクセスでAccess Violationが発生することがあるため冗長なコピーを生成。
@@ -202,16 +194,9 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         const auto CopiedStaticMeshes = StaticMeshes;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [CopiedStaticMeshes, &bCanceled]() {
-                //UStaticMesh::BatchBuild(CopiedStaticMeshes, true);
                 UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [&bCanceled](UStaticMesh* mesh) {
-                    
-                    UE_LOG(LogTemp, Log, TEXT("UStaticMesh::BatchBuild callback"));
-
-                    if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-                        UE_LOG(LogTemp, Warning, TEXT("UStaticMesh::BatchBuild Canceled"));
+                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
                         return false;
-                    }
-
                     return true;
                     });
 
@@ -223,12 +208,8 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     TMap<int, TSet<FString>> NameMap;
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
 
-        UE_LOG(LogTemp, Log, TEXT("LoadModel NameMap [%d]"), i);
-
-        if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-            UE_LOG(LogTemp, Warning, TEXT("LoadModel Canceled 2-1"));
+        if (bCanceled->Load(EMemoryOrder::Relaxed)) 
             break;
-        }
 
         const auto& RootNode = InModel->getRootNodeAt(i);
         FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
@@ -237,10 +218,8 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         auto& Value = NameMap.Add(Key);
         for (int j = 0; j < RootNode.getChildCount(); ++j) {
 
-            if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-                UE_LOG(LogTemp, Warning, TEXT("LoadModel Canceled 2-2"));
+            if (bCanceled->Load(EMemoryOrder::Relaxed)) 
                 break;
-            }
 
             const auto& Node = RootNode.getChildAt(j);
             Value.Add(UTF8_TO_TCHAR(Node.getName().c_str()));
@@ -255,13 +234,6 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
             for (const auto& LodComponent : LodComponents) {
 
                 auto LodComponentName = LodComponent->GetName();
-
-                UE_LOG(LogTemp, Log, TEXT("LoadModel CreateAndDispatchWhenReady LOD:[%s]"), *LodComponentName);
-                if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-                    UE_LOG(LogTemp, Warning, TEXT("LoadModel Canceled 3-1 LOD:[%s]"), *LodComponentName);
-                    break;
-                }
-
                 int Lod;
                 FString LodString = LodComponentName.RightChop(3);
                 LodString = LodString.LeftChop(LodString.Len() - 1);
@@ -273,11 +245,8 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
 
                     auto ComponentName = Component->GetName();
 
-                    UE_LOG(LogTemp, Log, TEXT("LoadModel CreateAndDispatchWhenReady Comp:[%s]"), *ComponentName);
-                    if (bCanceled.Load(EMemoryOrder::Relaxed)) {
-                        UE_LOG(LogTemp, Warning, TEXT("LoadModel Canceled 4-1 Comp:[%s]"), *ComponentName);
+                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
                         break;
-                    }
 
                     int Index = 0;
                     if (ComponentName.FindLastChar('_', Index)) {

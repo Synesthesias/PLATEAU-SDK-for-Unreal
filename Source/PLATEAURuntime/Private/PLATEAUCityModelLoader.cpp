@@ -185,7 +185,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
 
     Phase = ECityModelLoadingPhase::Start;
-    bCanceled.Store(false, EMemoryOrder::Relaxed);
+    bCanceled.Exchange(false);
 
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
@@ -210,31 +210,21 @@ void APLATEAUCityModelLoader::LoadAsync() {
             LoadMeshSection = &LoadMeshSection
         ]() mutable {
 
-        UE_LOG(LogTemp, Log, TEXT("LoadAsync Started!"));
-
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
             ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client); 
-
-        UE_LOG(LogTemp, Log, TEXT("LoadAsync LoadInputDataArray"));
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
             Loader->Status.TotalGmlCount = GmlCount;
         });
 
-        //FCriticalSection LoadMeshSection;
-
         TArray<TFuture<bool>> Futures;
         TArray<FString> GmlNames;
 
         for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
 
-            UE_LOG(LogTemp, Log, TEXT("LoadAsync LoadInputDataArray [%d]"), Index);
-
-            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 1  index:[%d]"), Index);
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
                 break;
-            }
 
             FGenericPlatformProcess::ConditionalSleep(
                 [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
@@ -242,12 +232,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     int LoadCompletedCount = 0;
                     for (int i = 0; i < Futures.Num(); ++i) {
 
-                        UE_LOG(LogTemp, Log, TEXT("LoadAsync GmlNames [%d]"), i);
-
-                        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                            UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 1-2 i:[%d]"), i);
+                        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
                             return true;
-                        }
 
                         if (!Futures[i].IsReady())
                             CurrentLoadingGmls.Add(GmlNames[i]);
@@ -263,11 +249,6 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     return CurrentLoadingGmls.Num() < 4;
                 }, 3);
 
-            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 1-3"));
-                break;
-            }
-
             FLoadInputData InputData = LoadInputDataArray[Index];
 
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
@@ -278,6 +259,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
             Futures.Add(Async(EAsyncExecution::Thread,
                 [InputData, &LoadInputDataArray, Source,
                 ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef]() {
+
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                        return false;
+
                     const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
 
                     if (CityModel == nullptr) {
@@ -290,24 +275,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                         return false;
                     }
 
-                    UE_LOG(LogTemp, Log, TEXT("LoadAsync Futures Add [%s]"), *GmlName);
-
-                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                        UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 2 [%s]"), *GmlName);
-
-                        ExecuteInGameThread(OwnerLoader,
-                            [GmlName](auto Loader) {
-                                ++Loader->Status.LoadedGmlCount;
-                                Loader->Status.LoadingGmls.Remove(GmlName);
-                                Loader->Status.FailedGmls.Add(GmlName);
-                            });
-                        return false;
-                    }
-                    UE_LOG(LogTemp, Log, TEXT("LoadAsync Futures Add [%s]"), *GmlName);
-
                     const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
-
-                    UE_LOG(LogTemp, Log, TEXT("LoadAsync Futures Add MeshExtractor extracted [%s]"), *GmlName);
 
                     // 各GMLについて親Componentを作成
                     // コンポーネントは拡張子無しgml名に設定
@@ -315,33 +283,14 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
 
                     {
-                        //FScopeLock Lock(&LoadMeshSection);
                         FScopeLock Lock(LoadMeshSection);
-
-                        UE_LOG(LogTemp, Log, TEXT("LoadAsync LoadMeshSection [%s]") ,*GmlName);
-                        /* */
-                        check(bCanceledRef != nullptr);
-                        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                            UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 2-3  [%s]"), *GmlName);
-
-                            //Lock.Unlock();
-                            return false;
-                        }
-
-                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, *bCanceledRef);
-                        //FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model) ;
+                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
                     return true;
                 }));
         }
 
-
-        UE_LOG(LogTemp, Log, TEXT("LoadAsync LoadInputDataArray Iteration Finished."));
-
         if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-            UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 3"));
-
-            //処理
             Futures.Empty();
             GmlNames.Empty();
         }
@@ -352,12 +301,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 int LoadCompletedCount = 0;
                 for (int i = 0; i < Futures.Num(); ++i) {
 
-                    UE_LOG(LogTemp, Log, TEXT("LoadAsync Futures waint for completion [%d]"), i);
-
-                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                        UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 3-2 i:[%d]"), i);
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
                         break;
-                    }
 
                     if (!Futures[i].IsReady())
                         CurrentLoadingGmls.Add(GmlNames[i]);
@@ -371,28 +316,19 @@ void APLATEAUCityModelLoader::LoadAsync() {
                         });
                 }
 
-                if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-                    UE_LOG(LogTemp, Warning, TEXT("LoadAsync Canceled 3-3"));
-                    return true;
-                }
-
                 return CurrentLoadingGmls.Num() == 0;
             }, 3);
 
         *Phase = ECityModelLoadingPhase::Finished;
-        UE_LOG(LogTemp, Warning, TEXT("LoadAsync Finished! cancel:[%s]"), bCanceledRef->Load(EMemoryOrder::Relaxed) ? TEXT("True") : TEXT("False"));
     });
-
 
 #endif
 }
 
 void APLATEAUCityModelLoader::Cancel() {
-
-    UE_LOG(LogTemp, Log, TEXT("APLATEAUCityModelLoader Cancel Called. Phase:[%d]") , Phase);
     if (Phase == ECityModelLoadingPhase::Start)         
     {
-        bCanceled.Store(true, EMemoryOrder::Relaxed);
+        bCanceled.Exchange(true);
         Phase = ECityModelLoadingPhase::Cancelling;
     }
 }
