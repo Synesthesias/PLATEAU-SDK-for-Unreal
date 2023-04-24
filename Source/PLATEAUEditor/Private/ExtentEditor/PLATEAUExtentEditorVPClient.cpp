@@ -1,7 +1,7 @@
 // Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 #include "PLATEAUExtentEditorVPClient.h"
-#include "PLATEAUExtentEditor.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 
 #include <plateau/dataset/i_dataset_accessor.h>
 

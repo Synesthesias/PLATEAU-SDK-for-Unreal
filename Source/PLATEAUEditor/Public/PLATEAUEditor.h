@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-class IPLATEAUEditorModule : public IModuleInterface
+class PLATEAUEDITOR_API IPLATEAUEditorModule : public IModuleInterface
 {
 public:
     static IPLATEAUEditorModule& Get();

@@ -95,4 +95,12 @@ void FPLATEAUExtentEditor::SetServerDatasetID(std::string InID) {
     ServerDatasetID = InID;
 }
 
+const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& FPLATEAUExtentEditor::GetPLATEAUSDKEditorUtilityWidget() const {
+    return PLATEAUSDKEditorUtilityWidget;
+}
+
+void FPLATEAUExtentEditor::SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget) {
+    PLATEAUSDKEditorUtilityWidget = Widget;
+}
+
 #undef LOCTEXT_NAMESPACE

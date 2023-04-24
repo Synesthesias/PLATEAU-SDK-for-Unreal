@@ -10,12 +10,13 @@
 class FEditorViewportClient;
 class SDockTab;
 class FViewportTabContent;
+class UPLATEAUSDKEditorUtilityWidget;
 
 /**
  * @brief 範囲選択画面の表示、操作、情報取得、設定を行うためのインスタンスメソッドを提供します。
  *
  */
-class FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
+class PLATEAUEDITOR_API FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
 public:
     FPLATEAUExtentEditor();
     ~FPLATEAUExtentEditor();
@@ -46,6 +47,8 @@ public:
     const std::string GetServerDatasetID() const;
     void SetServerDatasetID(const std::string InID);
 
+    const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& GetPLATEAUSDKEditorUtilityWidget() const;
+    void SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget);
 private:
     FString SourcePath;
     FPLATEAUGeoReference GeoReference;
@@ -57,4 +60,6 @@ private:
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
     TWeakObjectPtr<class APLATEAUCityModelLoader> Loader;
+
+    TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget> PLATEAUSDKEditorUtilityWidget;
 };

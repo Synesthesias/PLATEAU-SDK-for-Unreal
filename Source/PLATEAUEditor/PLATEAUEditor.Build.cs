@@ -27,9 +27,10 @@ public class PLATEAUEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
+                "Blutility",
                 "Core",
                 "PLATEAURuntime",
-                "PropertyEditor"
+                "PropertyEditor",
                 // ... add other public dependencies that you statically link with here ...
             }
             );
@@ -38,25 +39,26 @@ public class PLATEAUEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
+                "AdvancedPreviewScene",
+                "AssetTools",
                 "Core",
                 "CoreUObject",
-                "Engine",
-                "Slate",
-                "SlateCore",
-                "LevelEditor",
-                "Projects",
                 "DesktopPlatform",
-                "InputCore",
+                "Engine",
                 "FBX",
+                "InputCore",
+                "LevelEditor",
                 "UnrealEd",
-                "AssetTools",
                 "EditorStyle",
-                "PropertyEditor",
-                "AdvancedPreviewScene",
-                "WorkspaceMenuStructure",
                 "MeshDescription",
+                "PropertyEditor",
+                "Projects",
+                "RHI",
+                "Slate",
+                "SlateCore",                
                 "StaticMeshDescription",
-                "RHI"
+                "UMG",
+                "WorkspaceMenuStructure",
                 // ... add private dependencies that you statically link with here ...	
             }
             );

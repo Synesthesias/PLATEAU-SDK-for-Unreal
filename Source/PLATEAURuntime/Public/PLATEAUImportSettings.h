@@ -10,6 +10,8 @@
 
 #include "PLATEAUImportSettings.generated.h"
 
+#define LOCTEXT_NAMESPACE "PLATEAUImportSettings"
+
 namespace plateau {
     namespace dataset {
         enum class PredefinedCityModelPackage : uint32;
@@ -78,7 +80,7 @@ public:
         switch (Package) {
         case plateau::dataset::PredefinedCityModelPackage::Building: return Building;
         case plateau::dataset::PredefinedCityModelPackage::Road: return Road;
-        case plateau::dataset::PredefinedCityModelPackage::Vegetation: Vegetation;
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return Vegetation;
         case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return CityFurniture;
         case plateau::dataset::PredefinedCityModelPackage::Relief: return Relief;
         case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return DisasterRisk;
@@ -89,6 +91,36 @@ public:
         }
     }
 
+    FPLATEAUFeatureImportSettings& GetFeatureSettingsRef(plateau::dataset::PredefinedCityModelPackage Package) {
+        switch (Package) {
+        case plateau::dataset::PredefinedCityModelPackage::Building: return Building;
+        case plateau::dataset::PredefinedCityModelPackage::Road: return Road;
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return Vegetation;
+        case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return CityFurniture;
+        case plateau::dataset::PredefinedCityModelPackage::Relief: return Relief;
+        case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return DisasterRisk;
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return LandUse;
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return UrbanPlanningDecision;
+        case plateau::dataset::PredefinedCityModelPackage::Unknown: return Unknown;
+        default: return Unknown;
+        }
+    }
+    
+    static FName GetFeaturePlacementSettingsPropertyName(plateau::dataset::PredefinedCityModelPackage Package) {
+        switch (Package) {
+        case plateau::dataset::PredefinedCityModelPackage::Building: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Building);
+        case plateau::dataset::PredefinedCityModelPackage::Road: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Road);
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Vegetation);
+        case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, CityFurniture);
+        case plateau::dataset::PredefinedCityModelPackage::Relief: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Relief);
+        case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, DisasterRisk);
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, LandUse);
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, UrbanPlanningDecision);
+        case plateau::dataset::PredefinedCityModelPackage::Unknown: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Unknown);
+        default: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Unknown);
+        }
+    }
+    
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetAllPackages() {
         return {
             plateau::dataset::PredefinedCityModelPackage::Building,
@@ -103,6 +135,14 @@ public:
         };
     }
 
+    static TMap<EPLATEAUMeshGranularity, FText> GetGranularityTexts() {
+        TMap<EPLATEAUMeshGranularity, FText> Items;
+        Items.Add(EPLATEAUMeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PrimaryFeatureObject", "主要地物単位"));
+        Items.Add(EPLATEAUMeshGranularity::PerAtomicFeatureObject, LOCTEXT("AtomicFeatureObject", "最小地物単位"));
+        Items.Add(EPLATEAUMeshGranularity::PerCityModelArea, LOCTEXT("CityModelArea", "地域単位"));
+        return Items;
+    }
+    
     static plateau::polygonMesh::MeshGranularity ConvertGranularity(EPLATEAUMeshGranularity Value) {
         // TODO: 共通化
         switch (Value) {
@@ -116,4 +156,20 @@ public:
 
         return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
     }
+
+    static TMap<int64, FText> GetCategoryNames() {
+        TMap<int64, FText> Items;
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), LOCTEXT("PrimaryFeatureObject", "建築物"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Road), LOCTEXT("PrimaryFeatureObject", "道路"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Vegetation), LOCTEXT("PrimaryFeatureObject", "植生"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::CityFurniture), LOCTEXT("PrimaryFeatureObject", "都市設備"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Relief), LOCTEXT("PrimaryFeatureObject", "起伏"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::DisasterRisk), LOCTEXT("PrimaryFeatureObject", "災害リスク"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::LandUse), LOCTEXT("PrimaryFeatureObject", "土地利用"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision), LOCTEXT("PrimaryFeatureObject", "都市計画決定情報"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Unknown), LOCTEXT("PrimaryFeatureObject", "その他"));
+        return Items;
+    }
 };
+
+#undef LOCTEXT_NAMESPACE

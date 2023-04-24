@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+class UPLATEAUSDKEditorUtilityWidget;
+
 /**
  *
  */
