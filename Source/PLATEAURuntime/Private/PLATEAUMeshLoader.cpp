@@ -208,9 +208,6 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     TMap<int, TSet<FString>> NameMap;
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
 
-        if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-            break;
-
         const auto& RootNode = InModel->getRootNodeAt(i);
         FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
         int Key;
@@ -265,7 +262,6 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
                 }
             }
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
