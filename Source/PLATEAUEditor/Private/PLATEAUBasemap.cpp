@@ -47,11 +47,11 @@ FPLATEAUBasemap::FPLATEAUBasemap(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {}
+    , ViewportClient(InViewportClient) {
+}
 
-FPLATEAUBasemap::~FPLATEAUBasemap()
-{
-    
+FPLATEAUBasemap::~FPLATEAUBasemap() {
+
 }
 
 
@@ -163,31 +163,24 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
                 TCHAR_TO_UTF8(*Destination),
                 InTileCoordinate.ToNativeData());
 
-
             const FString TexturePath = UTF8_TO_TCHAR(Tile->image_path.c_str());
 
-            IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile(); 
-            if (!PlatformFile.FileExists(*TexturePath))
-            {
+            IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+            if (!PlatformFile.FileExists(*TexturePath)) {
                 UE_LOG(LogTemp, Error, TEXT("File not exists : %s"), *TexturePath);
-
                 IsLoading = false;
                 return;
             }
-            else if (PlatformFile.FileSize(*TexturePath) <= 0)
-            {
-
+            else if (PlatformFile.FileSize(*TexturePath) <= 0) {
                 UE_LOG(LogTemp, Error, TEXT("File size 0 : %s"), *TexturePath, PlatformFile.FileSize(*TexturePath));
-
                 IsLoading = false;
                 return;
             }
-            
 
             // テクスチャ読み込み
             const auto Texture = FPLATEAUTextureLoader::LoadTransient(*TexturePath);
 
-            if(Texture == nullptr)
+            if (Texture == nullptr)
                 UE_LOG(LogTemp, Error, TEXT("Load Error :  %s"), *TexturePath);
 
             const auto TempComponent = CreateTileComponentInGameThread(Texture);
