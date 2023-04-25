@@ -487,6 +487,8 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 UObject* EmptyActorAsset = EmptyActorAssetData.GetAsset();
                 const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
                 const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
+                CurrentLoader = MakeWeakObjectPtr<APLATEAUCityModelLoader>(Loader);
+
                 Loader->bImportFromServer = bImportFromServer;
                 Loader->ClientPtr = ServerPanelRef->GetClientPtr();
                 if (bImportFromServer) {
@@ -519,6 +521,66 @@ void SPLATEAUImportPanel::Construct(const FArguments& InArgs, const TSharedRef<F
                 .Margin(FMargin(0, 5, 0, 5))
                 .Text(LOCTEXT("Import Button", "モデルをインポート"))
                 ]
+        .Visibility_Lambda(
+            [this]() {
+                if (CurrentLoader.IsValid() &&
+                   (CurrentLoader->Phase == ECityModelLoadingPhase::Start || 
+                    CurrentLoader->Phase == ECityModelLoadingPhase::Cancelling))
+                    return EVisibility::Collapsed;
+                return EVisibility::Visible;
+            })
+        ];
+
+    // モデルインポートをキャンセル
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        .Padding(FMargin(84, 20, 86, 20))
+        [SNew(SButton)
+        .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FSlateColor(FColor(255, 0, 0)))
+        .OnClicked_Lambda(
+            [this]() {
+
+                if(CurrentLoader.IsValid())
+                    CurrentLoader->Cancel();
+
+                return FReply::Handled();
+            })
+        .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Cancel Button", "インポートをキャンセルする"))
+                ]
+        .Visibility_Lambda(
+            [this]() {
+                if (CurrentLoader.IsValid() && CurrentLoader->Phase == ECityModelLoadingPhase::Start)
+                    return EVisibility::Visible;
+                return EVisibility::Collapsed;
+            })
+        ];
+
+    // キャンセル中
+    PerFeatureSettingsVerticalBox.Pin()->AddSlot()
+        .AutoHeight()
+        .Padding(FMargin(84, 20, 86, 20))
+        [SNew(SButton)
+        .VAlign(VAlign_Center)
+        .ForegroundColor(FColor::White)
+        .ButtonColorAndOpacity(FSlateColor(FColor(255, 0, 0)))
+        .Content()
+                [SNew(STextBlock)
+                .Justification(ETextJustify::Center)
+                .Margin(FMargin(0, 5, 0, 5))
+                .Text(LOCTEXT("Canceling Button", "キャンセル中…"))
+                ]
+        .Visibility_Lambda(
+            [this]() {
+                if (CurrentLoader.IsValid() && CurrentLoader->Phase == ECityModelLoadingPhase::Cancelling)
+                    return EVisibility::Visible;
+                return EVisibility::Collapsed;
+            })
         ];
 }
 

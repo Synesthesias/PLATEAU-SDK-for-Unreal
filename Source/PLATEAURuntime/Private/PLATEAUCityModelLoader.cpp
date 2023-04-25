@@ -145,6 +145,8 @@ private:
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
+    bCanceled.Store(false, EMemoryOrder::Relaxed);
+    Phase = ECityModelLoadingPhase::Idle;
 }
 
 namespace {
@@ -182,6 +184,9 @@ namespace {
 void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
 
+    Phase = ECityModelLoadingPhase::Start;
+    bCanceled.Exchange(false);
+
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
@@ -199,28 +204,37 @@ void APLATEAUCityModelLoader::LoadAsync() {
             ImportSettings = ImportSettings,
             bImportFromServer = bImportFromServer,
             Client = *ClientPtr,
-            OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
+            OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
+            bCanceledRef = &bCanceled,
+            Phase = &Phase,
+            LoadMeshSection = &LoadMeshSection
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client); 
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
             Loader->Status.TotalGmlCount = GmlCount;
         });
 
-        FCriticalSection LoadMeshSection;
-
         TArray<TFuture<bool>> Futures;
         TArray<FString> GmlNames;
 
         for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
+
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+                break;
+
             FGenericPlatformProcess::ConditionalSleep(
-                [&Futures, &GmlNames, OwnerLoader]() {
+                [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
                     TArray<FString> CurrentLoadingGmls;
                     int LoadCompletedCount = 0;
                     for (int i = 0; i < Futures.Num(); ++i) {
+
+                        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+                            return true;
+
                         if (!Futures[i].IsReady())
                             CurrentLoadingGmls.Add(GmlNames[i]);
                         else
@@ -241,11 +255,14 @@ void APLATEAUCityModelLoader::LoadAsync() {
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
 
             // TODO: fldでgml名被る
-
             GmlNames.Add(GmlName);
             Futures.Add(Async(EAsyncExecution::Thread,
                 [InputData, &LoadInputDataArray, Source,
-                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection]() {
+                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef]() {
+
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                        return false;
+
                     const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
 
                     if (CityModel == nullptr) {
@@ -266,19 +283,27 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
 
                     {
-                        FScopeLock Lock(&LoadMeshSection);
-
-                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
+                        FScopeLock Lock(LoadMeshSection);
+                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
                     return true;
                 }));
         }
 
+        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+            Futures.Empty();
+            GmlNames.Empty();
+        }
+
         FGenericPlatformProcess::ConditionalSleep(
-            [&Futures, &GmlNames, OwnerLoader]() {
+            [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
                 TArray<FString> CurrentLoadingGmls;
                 int LoadCompletedCount = 0;
                 for (int i = 0; i < Futures.Num(); ++i) {
+
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+                        break;
+
                     if (!Futures[i].IsReady())
                         CurrentLoadingGmls.Add(GmlNames[i]);
                     else
@@ -290,10 +315,22 @@ void APLATEAUCityModelLoader::LoadAsync() {
                             Loader->Status.LoadingGmls = CurrentLoadingGmls;
                         });
                 }
+
                 return CurrentLoadingGmls.Num() == 0;
             }, 3);
+
+        *Phase = ECityModelLoadingPhase::Finished;
     });
+
 #endif
+}
+
+void APLATEAUCityModelLoader::Cancel() {
+    if (Phase == ECityModelLoadingPhase::Start)         
+    {
+        bCanceled.Store(true);
+        Phase = ECityModelLoadingPhase::Cancelling;
+    }
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

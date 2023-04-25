@@ -32,6 +32,8 @@ private:
     int PrefectureID = 1;
     int MunicipalityID = 1;
 
+    TWeakObjectPtr<APLATEAUCityModelLoader> CurrentLoader = nullptr;
+
     // 選択範囲の中心
     FVector3d ExtentCenter;
     // UI上で設定されるオフセット値
