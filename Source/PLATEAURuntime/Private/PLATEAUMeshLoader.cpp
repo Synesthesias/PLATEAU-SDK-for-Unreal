@@ -195,9 +195,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [CopiedStaticMeshes, &bCanceled]() {
                 UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [&bCanceled](UStaticMesh* mesh) {
-                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-                        return false;
-                    return true;
+                    return bCanceled->Load(EMemoryOrder::Relaxed);
                     });
 
             }, TStatId(), nullptr, ENamedThreads::GameThread);

@@ -328,7 +328,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 void APLATEAUCityModelLoader::Cancel() {
     if (Phase == ECityModelLoadingPhase::Start)         
     {
-        bCanceled.Exchange(true);
+        bCanceled.Store(true);
         Phase = ECityModelLoadingPhase::Cancelling;
     }
 }
