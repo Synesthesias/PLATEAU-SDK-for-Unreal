@@ -6,24 +6,6 @@
 #include "citygml/attributesmap.h"
 #include "PLATEAUAttributeValue.generated.h"
 
-USTRUCT(BlueprintType)
-struct FPLATEAUAttributeMap
-{
-    GENERATED_USTRUCT_BODY();
-    std::map<FString, struct FPLATEAUAttributeValue> value;
-};
-
-UENUM(BlueprintType)
-enum class EPLATEAUAttributeType : uint8 {
-    String,
-    Double,
-    Integer,
-    Date,
-    Uri,
-    Measure,
-    AttributeSet,
-    Boolean
-};
 
 /*
  * 都市オブジェクト属性値のBlueprint向けラッパーです。
@@ -42,7 +24,28 @@ private:
     friend class UPLATEAUAttributeValueBlueprintLibrary;
 
     citygml::AttributeValue* Data;
-    TSharedPtr<FPLATEAUAttributeMap> AttributeMapCache;
+    TSharedPtr<struct FPLATEAUAttributeMap> AttributeMapCache;
+};
+
+
+USTRUCT(BlueprintType)
+struct FPLATEAUAttributeMap
+{
+    GENERATED_USTRUCT_BODY();
+    UPROPERTY(BlueprintReadOnly)
+    TMap<FString, FPLATEAUAttributeValue> value;
+};
+
+UENUM(BlueprintType)
+enum class EPLATEAUAttributeType : uint8 {
+    String,
+    Double,
+    Integer,
+    Date,
+    Uri,
+    Measure,
+    AttributeSet,
+    Boolean
 };
 
 

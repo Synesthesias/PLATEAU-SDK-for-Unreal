@@ -31,7 +31,7 @@ FPLATEAUAttributeMap& UPLATEAUAttributeValueBlueprintLibrary::GetAttributeMap(FP
     const auto& AttributeMapData = Value.Data->asAttributeSet();
 
     for (const auto& [Key, Val] : AttributeMapData) {
-        Value.AttributeMapCache->value.at(UTF8_TO_TCHAR(Key.c_str())) = FPLATEAUAttributeValue(&Val);
+        Value.AttributeMapCache->value[UTF8_TO_TCHAR(Key.c_str())] = FPLATEAUAttributeValue(&Val);
     }
     return *Value.AttributeMapCache;
 }
