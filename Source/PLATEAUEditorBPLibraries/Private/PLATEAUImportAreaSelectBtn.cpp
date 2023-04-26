@@ -11,7 +11,7 @@
  * @brief エリア選択ウィンドウ表示
  * @param ZoneID ゾーンID
  * @param SourcePath データソースパス（ローカルではデータディレクトリへのパス、サーバではデータセットID）
- * @param bImportFromServer サーバ起動か？
+ * @param bImportFromServer サーバーからインポートするかどうか
  */
 void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer) {
     const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
@@ -27,7 +27,7 @@ void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString
     // ビューポートの操作性向上のため100分の1スケールで設定
     const plateau::geometry::GeoReference RawGeoReference(ZoneID, {}, 1, plateau::geometry::CoordinateSystem::ESU);
     ExtentEditor->SetGeoReference(RawGeoReference);
-    
+
     const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
     GlobalTabManager->TryInvokeTab(FPLATEAUExtentEditor::TabId);
 }

@@ -5,8 +5,7 @@
 #include "CoreMinimal.h"
 
 
-class FPLATEAUEditorBPLibraries : public IModuleInterface
-{
+class FPLATEAUEditorBPLibraries : public IModuleInterface {
 public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;

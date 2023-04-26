@@ -13,5 +13,5 @@ void FPLATEAUEditorBPLibraries::ShutdownModule() {
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FPLATEAUEditorBPLibraries, PLATEAUEditorBPLibraries);

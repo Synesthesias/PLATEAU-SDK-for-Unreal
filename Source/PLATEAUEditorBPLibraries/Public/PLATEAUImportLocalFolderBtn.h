@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "PLATEAUImportLocalBtn.generated.h"
+#include "PLATEAUImportLocalFolderBtn.generated.h"
 
 
 UCLASS()
-class UPLATEAUImportLocalBtn : public UBlueprintFunctionLibrary {
-	GENERATED_BODY()
+class UPLATEAUImportLocalFolderBtn : public UBlueprintFunctionLibrary {
+    GENERATED_BODY()
     static void* GetWindowHandle();
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
-    static bool OpenDirectoryDialog(UPARAM(ref) bool& IsDatasetValid, UPARAM(ref) FString& SourcePath);	
+    static bool OpenDirectoryDialog(UPARAM(ref) bool& IsDatasetValid, UPARAM(ref) FString& SourcePath);
 };
