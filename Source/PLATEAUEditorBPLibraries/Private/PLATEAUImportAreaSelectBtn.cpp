@@ -5,29 +5,31 @@
 #include "PLATEAUImportSettings.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
+#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 
 /**
  * @brief エリア選択ウィンドウ表示
  * @param ZoneID ゾーンID
- * @param SourcePath データソースパス
+ * @param SourcePath データソースパス（ローカルではデータディレクトリへのパス、サーバではデータセットID）
  * @param bImportFromServer サーバ起動か？
- * @return ウィジェットインスタンス
  */
-const UPLATEAUSDKEditorUtilityWidget* UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer) {
+void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer) {
     const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
+    ExtentEditor->SetImportFromServer(bImportFromServer);
+    if (bImportFromServer) {
+        // サーバーデータが受信されている時のみ範囲選択ボタンが表示されるようになっている
+        ExtentEditor->SetClientPtr(ExtentEditor->GetPLATEAUSDKEditorUtilityWidget().Get()->GetClientPtr());
+        ExtentEditor->SetServerDatasetID(TCHAR_TO_UTF8(*SourcePath));
+    } else {
+        ExtentEditor->SetSourcePath(SourcePath);
+    }
+
+    // ビューポートの操作性向上のため100分の1スケールで設定
     const plateau::geometry::GeoReference RawGeoReference(ZoneID, {}, 1, plateau::geometry::CoordinateSystem::ESU);
     ExtentEditor->SetGeoReference(RawGeoReference);
-    ExtentEditor->SetSourcePath(SourcePath);
-    ExtentEditor->SetImportFromServer(bImportFromServer);
-
+    
     const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
     GlobalTabManager->TryInvokeTab(FPLATEAUExtentEditor::TabId);
-
-    if (ExtentEditor->GetPLATEAUSDKEditorUtilityWidget().IsValid()) {
-        return ExtentEditor->GetPLATEAUSDKEditorUtilityWidget().Get();
-    }
-    
-    return nullptr;
 }
 
 /**

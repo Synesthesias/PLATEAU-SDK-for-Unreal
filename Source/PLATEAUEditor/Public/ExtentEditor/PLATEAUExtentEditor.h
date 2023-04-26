@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AdvancedPreviewSceneModule.h"
 #include "PLATEAUGeometry.h"
+#include "PLATEAUEditor/Private/PLATEAUFeatureImportSettingsDetails.h"
 #include <plateau/network/client.h>
 
 class FEditorViewportClient;
@@ -44,9 +45,15 @@ public:
     std::shared_ptr<plateau::network::Client> GetClientPtr() const;
     void SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr);
 
-    const std::string GetServerDatasetID() const;
-    void SetServerDatasetID(const std::string InID);
+    const std::string& GetServerDatasetID() const;
+    void SetServerDatasetID(const std::string& InID);
 
+    const plateau::dataset::PredefinedCityModelPackage& GetLocalPackageMask() const;
+    void SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
+
+    const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
+    void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
+    
     const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& GetPLATEAUSDKEditorUtilityWidget() const;
     void SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget);
 private:
@@ -57,6 +64,8 @@ private:
     bool bImportFromServer = false;
     std::shared_ptr<plateau::network::Client> ClientPtr;
     std::string ServerDatasetID;
+    plateau::dataset::PredefinedCityModelPackage LocalPackageMask;
+    plateau::dataset::PredefinedCityModelPackage ServerPackageMask;
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
     TWeakObjectPtr<class APLATEAUCityModelLoader> Loader;

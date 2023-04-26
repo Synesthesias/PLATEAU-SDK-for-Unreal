@@ -205,18 +205,19 @@ FVector3d SPLATEAUExtentEditorViewport::GetReferencePoint(const plateau::geometr
 
 int64 SPLATEAUExtentEditorViewport::GetPackageMask() const {
     const auto& Extent = ExtentEditorPtr.Pin()->GetExtent();
-    
     if (ExtentEditorPtr.Pin()->IsImportFromServer()) {
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
-        const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()), *ClientRef);
+        const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(ExtentEditorPtr.Pin()->GetServerDatasetID(), *ClientRef);
         const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
         const auto PackageMask = FilteredDatasetAccessor->getPackages(); 
+        ExtentEditorPtr.Pin()->SetServerPackageMask(PackageMask);
         return static_cast<int64>(PackageMask);
     }
     
     const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()));
     const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
     const auto PackageMask = FilteredDatasetAccessor->getPackages();
+    ExtentEditorPtr.Pin()->SetLocalPackageMask(PackageMask);
     return static_cast<int64>(PackageMask);
 }
 

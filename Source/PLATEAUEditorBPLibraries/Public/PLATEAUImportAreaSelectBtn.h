@@ -60,7 +60,7 @@ class UPLATEAUImportAreaSelectBtn : public UBlueprintFunctionLibrary {
 	GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
-    static const UPLATEAUSDKEditorUtilityWidget* OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer);
+    static void OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
     static TArray<int64> GetAllPackages();

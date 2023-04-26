@@ -11,19 +11,26 @@
 /**
  * @brief モデルインポート開始
  * @param ZoneID ゾーンID
- * @param SourcePath データソースパス
  * @param ReferencePoint リファレンス位置
  * @param PackageInfoSettingsData UIで設定されたパッケージ設定情報データ
+ * @param bImportFromServer サーバーからインポートするか？
  */
-void UPLATEAUImportModelBtn::LocalImportModel(const int ZoneID, const FString& SourcePath, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings> PackageInfoSettingsData) {
+void UPLATEAUImportModelBtn::ImportModel(const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings> PackageInfoSettingsData, const bool bImportFromServer) {
+    const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
     const auto EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
     const auto EmptyActorAsset = EmptyActorAssetData.GetAsset();
     const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
     const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
-    Loader->bImportFromServer = false;
-    Loader->Source = SourcePath;
-    // ClientPtrは何か設定しないとクラッシュします
-    Loader->ClientPtr = std::make_shared<plateau::network::Client>("", "");
+    Loader->bImportFromServer = bImportFromServer;
+
+    if (bImportFromServer) {
+        Loader->ClientPtr = ExtentEditor->GetClientPtr();
+        Loader->Source = ExtentEditor->GetServerDatasetID().c_str();
+    } else {
+        // ClientPtrは何か設定しないとクラッシュします
+        Loader->ClientPtr = std::make_shared<plateau::network::Client>("", "");
+        Loader->Source = ExtentEditor->GetSourcePath();
+    }
     
     const auto& Extent = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
     Loader->Extent = Extent.GetValue();
@@ -34,9 +41,7 @@ void UPLATEAUImportModelBtn::LocalImportModel(const int ZoneID, const FString& S
     Loader->GeoReference.ZoneID = ZoneID;
     Loader->GeoReference.UpdateNativeData();
 
-    const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
-    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
-    const auto PackageMask = FilteredDatasetAccessor->getPackages();
+    const auto& PackageMask = bImportFromServer ? ExtentEditor->GetServerPackageMask() : ExtentEditor->GetLocalPackageMask();
     const auto ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
     for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
         if ((Package & PackageMask) == plateau::dataset::PredefinedCityModelPackage::None)

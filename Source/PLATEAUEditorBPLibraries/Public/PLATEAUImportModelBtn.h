@@ -13,5 +13,5 @@ class UPLATEAUImportModelBtn : public UBlueprintFunctionLibrary {
 	GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
-    static void LocalImportModel(const int ZoneID, const FString& SourcePath, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings> PackageInfoSettingsData);
+    static void ImportModel(const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings> PackageInfoSettingsData, const bool bImportFromServer);
 };
