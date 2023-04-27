@@ -17,7 +17,7 @@ FPLATEAUAttributeMap& UPLATEAUCityObjectBlueprintLibrary::GetAttributeMap(FPLATE
 
     const auto& AttributeMapData = CityObject.Data->getAttributes();
     for (const auto& [Key, Value] : AttributeMapData) {
-        CityObject.AttributeMapCache->value[UTF8_TO_TCHAR(Key.c_str())] = FPLATEAUAttributeValue(&Value);
+        CityObject.AttributeMapCache->value.Add(FString(UTF8_TO_TCHAR(Key.c_str())),  FPLATEAUAttributeValue(&Value));
     }
     return *CityObject.AttributeMapCache;
 }
