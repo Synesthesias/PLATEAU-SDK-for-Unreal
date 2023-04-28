@@ -76,7 +76,7 @@ public:
     static const std::string& getDefaultUrl();
 
 private:
-    static inline std::string default_url_ = "http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png";
+    static const std::string default_url_;
 
     std::string url_;
     std::string destination_;

@@ -2,53 +2,51 @@
 このページではブループリントを利用して都市モデルの属性情報にアクセスする方法を記載します。
 
 ## 都市モデルのロード
-![](../resources/manual/accessCityObject/sample.png)
 
 サンプルとしてマウスをクリックした際にカメラの中心に位置する都市オブジェクトの属性情報を画面に表示するスクリプトを紹介します。
 
-### コンストラクションスクリプト
+### ブループリントの利用
+
+SDKにはサンプルのブループリントが含まれています。  
+確認するには、コンテンツブラウザで `設定 → プラグインコンテンツを表示`　にチェックを入れ、次の場所にあるブループリントを開いてください：  
+`Plugins/PLATEAU SDK for Unreal コンテンツ/Samples/AttributeLoadSample/ClickToGetAttribute`  
+  
+このブループリントを利用するには次のようにします：
+- 都市モデルをインポートしたレベルに `ClickToGetAttribute` を配置します。  
+- その詳細の CityModel 欄にインポートした都市モデルを割り当てます。
+- `ウィンドウ/ワールドセッティング`の`GameMode/ゲームモードオーバーライド`を`ClickEventGameMode`に指定します。
+- 再生して都市オブジェクトをクリックすると属性情報が表示されます。
+
+![](../resources/manual/accessCityObject/sample.png)
+
+### ブループリントの説明
 
 ![](../resources/manual/accessCityObject/blueprint.png)
 
-#### クリックされたコンポーネントの取得
+#### マウスクリックに LineTrace を飛ばす
 
 ![](../resources/manual/accessCityObject/blueprintSection1.png)
 
-- `LineTraceByChannel`ノードによって画面中央にあるコンポーネントを取得します。
 
-#### コンポーネントに対応する都市オブジェクトの取得
+#### クリック位置の CityObjectID を取得する
 
 ![](../resources/manual/accessCityObject/blueprintSection2.png)
 
 - `CityModel`変数には属性情報を取得したい`PLATEAUInstancedCityModel`アクタを設定します。
   - `PLATEAUInstancedCityModel`アクタは都市モデルをインポートすることによって生成されます。
-- `GetCityObjectInfo`ノードは`USceneComponent`を受け取って都市オブジェクトにアクセスするために必要な情報を出力します。
+- `GetCityObjectInfo`ノードは`Component`を受け取って都市オブジェクトにアクセスするために必要な情報 `PLATEAUCityObjectInfo` を出力します。
+- `PLATEAUCityObjectInfo` の `ID` から、個々の都市オブジェクトのIDを取得できます。
+
+#### GMLファイルをパースし、CityObjectIDに対応する属性情報を取得する
 - `LoadAsync`ノードは非同期でCityGMLのパースを行い、`CityModel`インスタンスを出力します。
 - `GetCityObjectByID`ノードは`CityModel`インスタンスと`FeatureID`を受け取り、対応する`CityObject`インスタンスを出力します。
-
-#### 都市オブジェクトの属性情報の可視化
-
+- `CityObject` は属性情報を持ちます。属性情報はキーと値のペアのセットです。
+- `GetAttributeMap`ノードは`CityObject`インスタンスを受け取り、都市オブジェクトが持つ属性情報を`AttributeMap`インスタンスとして出力します。
 ![](../resources/manual/accessCityObject/blueprintSection3.png)
 
-- `GetAttributeMap`ノードは`CityObject`インスタンスを受け取り、都市オブジェクトが持つ属性情報を`AttributeMap`インスタンスとして出力します。
+#### 都市オブジェクトの属性情報の表示
+![](../resources/manual/accessCityObject/blueprintSection4.png)
 
-## 属性情報の取得方法
-
-![](../resources/manual/accessCityObject/placeGetObjectInfo.png)
-
-- コンテンツブラウザから`Plugin/PLATEAU SDK for Unrealコンテンツ`の`GetObjectInfo`をレベル上に配置します。
-
-![](../resources/manual/accessCityObject/assignInstance.png)
-
-- `全て/デフォルト/Plateau Instance`に配置した都市オブジェクトを指定します。
-
-![](../resources/manual/accessCityObject/getObjectInfoSettings.png)
-
-- `その他/入力/Auto Receive Input`を`Player 0`に指定します。 
-
-![](../resources/manual/accessCityObject/overrideGameMode.png)
-
-- `ウィンドウ/ワールドセッティング`の`GameMode/ゲームモードオーバーライド`を`ClickEventGameMode`に指定します。
 
 ## 属性とは
 
