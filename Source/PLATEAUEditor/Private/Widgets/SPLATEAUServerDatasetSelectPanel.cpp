@@ -48,15 +48,23 @@ TFuture<void> SPLATEAUServerDatasetSelectPanel::GetDatasetMetadataAsync(const st
     SelectedGroupTitle = "";
     SelectedDataset = FPLATEAUServerDatasetMetadata();
 
-    return Async(EAsyncExecution::Thread, [this, InServerURL, InToken] {
+    // スレッド実行中にインスタンスが破棄されることを防ぐため、スレッド側でスマートポインタを保持する。
+    TWeakPtr<SPLATEAUServerDatasetSelectPanel> WeakSelfPtr = SharedThis(this);
+    return Async(EAsyncExecution::Thread, [InServerURL, InToken, WeakSelfPtr] {
+        const auto NewClient = std::make_shared<plateau::network::Client>(InServerURL, InToken);
+        const auto NewMetadataGroups = NewClient->getMetadata();
+        const auto Self = WeakSelfPtr.Pin();
+        if (Self == nullptr)
+            return;
+
         {
-            FScopeLock Lock(&GetDatasetMetadataSection);
-            ClientPtr = std::make_shared<plateau::network::Client>(InServerURL, InToken);
-            NativeDatasetMetadataGroups = ClientPtr->getMetadata();
+            FScopeLock Lock(&Self->GetDatasetMetadataSection);
+            Self->ClientPtr = std::make_shared<plateau::network::Client>(InServerURL, InToken);
+            Self->NativeDatasetMetadataGroups = Self->ClientPtr->getMetadata();
         }
 
-        bIsNativeDatasetMetadataAvailable = true;
-        bIsGettingNativeDatasetMetadata = false;
+        Self->bIsNativeDatasetMetadataAvailable = true;
+        Self->bIsGettingNativeDatasetMetadata = false;
         });
 }
 
@@ -68,15 +76,18 @@ void SPLATEAUServerDatasetSelectPanel::LoadDatasetMetadataFromNative() {
 
     DatasetMetadataByGroup.Empty();
 
-    for (const auto& DatasetGroup : *NativeDatasetMetadataGroups) {
-        const auto GroupTitle = UTF8_TO_TCHAR(DatasetGroup.title.c_str());
-        auto& DatasetInfoArray = DatasetMetadataByGroup.FindOrAdd(GroupTitle);
-        for (const auto& Dataset : DatasetGroup.datasets) {
-            FPLATEAUServerDatasetMetadata DatasetInfo;
-            DatasetInfo.Title = UTF8_TO_TCHAR(Dataset.title.c_str());
-            DatasetInfo.Description = UTF8_TO_TCHAR(Dataset.description.c_str());
-            DatasetInfo.ID = Dataset.id;
-            DatasetInfoArray.Add(DatasetInfo);
+    {
+        FScopeLock Lock(&GetDatasetMetadataSection);
+        for (const auto& DatasetGroup : *NativeDatasetMetadataGroups) {
+            const auto GroupTitle = UTF8_TO_TCHAR(DatasetGroup.title.c_str());
+            auto& DatasetInfoArray = DatasetMetadataByGroup.FindOrAdd(GroupTitle);
+            for (const auto& Dataset : DatasetGroup.datasets) {
+                FPLATEAUServerDatasetMetadata DatasetInfo;
+                DatasetInfo.Title = UTF8_TO_TCHAR(Dataset.title.c_str());
+                DatasetInfo.Description = UTF8_TO_TCHAR(Dataset.description.c_str());
+                DatasetInfo.ID = Dataset.id;
+                DatasetInfoArray.Add(DatasetInfo);
+            }
         }
     }
 
@@ -84,6 +95,7 @@ void SPLATEAUServerDatasetSelectPanel::LoadDatasetMetadataFromNative() {
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
 void SPLATEAUServerDatasetSelectPanel::Construct(const FArguments& InArgs) {
     if (!bIsGettingNativeDatasetMetadata)
         GetDatasetMetadataAsync("", "");
