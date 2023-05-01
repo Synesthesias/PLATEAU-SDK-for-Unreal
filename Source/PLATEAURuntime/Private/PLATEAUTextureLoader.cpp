@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUTextureLoader.h"
 
@@ -150,10 +150,11 @@ namespace {
     }
 }
 
-UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
+UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSlash) {
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
+    const auto TexturePath = TexturePath_SlashOrBackSlash.Replace(*FString("\\"), *FString("/"));
     if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
         return nullptr;
 
@@ -179,9 +180,9 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath) {
                 NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
                 // テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
-                FString TextureRelativePath;
                 FString TextureRelativePathPrefix;
-                TexturePath.Split(TEXT("PLATEAU\\"), &TextureRelativePathPrefix, &TextureRelativePath);
+                const auto BaseDir = FPaths::ProjectContentDir() + "PLATEAU/";
+                auto TextureRelativePath = TexturePath.Replace(*BaseDir, *FString(""));
                 DesiredTextureName = TextureRelativePath;
                 FString NewUniqueName = DesiredTextureName;
                 if (!NewTexture->Rename(*NewUniqueName, nullptr, REN_Test)) {
