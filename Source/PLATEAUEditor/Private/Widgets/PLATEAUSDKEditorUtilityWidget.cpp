@@ -1,6 +1,8 @@
 // Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 #include "PLATEAUEditor/Public/Widgets/PLATEAUSDKEditorUtilityWidget.h"
+
+#include "Selection.h"
 #include "Async/Async.h"
 
 
@@ -19,17 +21,16 @@ void UPLATEAUSDKEditorUtilityWidget::AreaSelectSuccessInvoke(const FVector3d& Re
  * @param InToken トークン
  */
 void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken) {
-    if (bGettingNativeDatasetMetadata)
-        return;
+    if (bGettingNativeDatasetMetadata) return;
 
     bGettingNativeDatasetMetadata = true;
     ServerDatasetMetadataMapArray.Reset();
-    
+
     Async(EAsyncExecution::Thread, [this, InServerURL, InToken] {
         ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
         std::vector<plateau::network::DatasetMetadataGroup> NativeDatasetMetadataGroups;
         ClientPtr->getMetadata(NativeDatasetMetadataGroups);
-        
+
         for (const auto& DatasetGroup : NativeDatasetMetadataGroups) {
             FServerDatasetMetadataMap ServerDatasetMetadataMap;
             ServerDatasetMetadataMap.GroupTitle = UTF8_TO_TCHAR(DatasetGroup.title.c_str());
@@ -46,7 +47,43 @@ void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InSe
         FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
             GetDatasetMetaDataAsyncSuccessDelegate.Broadcast(ServerDatasetMetadataMapArray);
         }, TStatId(), nullptr, ENamedThreads::GameThread);
-        
+
         bGettingNativeDatasetMetadata = false;
     });
+}
+
+/**
+ * @brief 選択イベント通知の実行制御
+ * @param TopMenuPanel イベント通知するパネル
+ */
+void UPLATEAUSDKEditorUtilityWidget::SetEnableSelectionChangedEvent(const ETopMenuPanel TopMenuPanel) {
+    switch (TopMenuPanel) {
+    case ETopMenuPanel::ImportPanel:
+        if (SelectionChangedEventHandle.IsValid()) {
+            USelection::SelectionChangedEvent.Remove(SelectionChangedEventHandle);
+            SelectionChangedEventHandle.Reset();
+        }
+        break;
+    case ETopMenuPanel::ModelAdjustmentPanel:
+    case ETopMenuPanel::ExportPanel:
+        if (!SelectionChangedEventHandle.IsValid()) {
+            SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddUObject(this, &UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged);
+        }
+        break;
+    default:
+        if (SelectionChangedEventHandle.IsValid()) {
+            USelection::SelectionChangedEvent.Remove(SelectionChangedEventHandle);
+            SelectionChangedEventHandle.Reset();
+        }        
+    }
+}
+
+/**
+ * @brief 選択が変更された時に通知
+ * @param InSelection 選択されたオブジェクト
+ */
+void UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged(UObject* InSelection) {
+    if (Cast<USelection>(InSelection)) {
+        OnEditorSelectionChanged();
+    }
 }

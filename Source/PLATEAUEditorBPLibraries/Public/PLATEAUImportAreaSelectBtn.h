@@ -13,20 +13,20 @@ USTRUCT(BlueprintType)
 struct FPackageInfo {
     GENERATED_BODY()
 
-    FPackageInfo() : HasAppearance(true), MinLod(0), MaxLod(3) {
+    FPackageInfo() {
     }
-
+    
     FPackageInfo(const bool InHasAppearance, const int InMinLod, const int InMaxLod) : HasAppearance(InHasAppearance), MinLod(InMinLod), MaxLod(InMaxLod) {
     }
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    bool HasAppearance;
+    bool HasAppearance = true;
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    int MinLod;
+    int MinLod = 0;
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    int MaxLod;
+    int MaxLod = 3;
 };
 
 USTRUCT(BlueprintType)
@@ -55,9 +55,6 @@ class UPLATEAUImportAreaSelectBtn : public UBlueprintFunctionLibrary {
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
     static void OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer);
-
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
-    static TArray<int64> GetAllPackages();
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
     static TArray<FText> GetGranularityTexts();

@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUImportAreaSelectBtn.h"
 #include <plateau/geometry/geo_reference.h>
@@ -33,18 +33,6 @@ void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString
 }
 
 /**
- * @brief パッケージの種類を表すビット一覧を取得
- * @return ビット演算用の数値配列
- */
-TArray<int64> UPLATEAUImportAreaSelectBtn::GetAllPackages() {
-    TArray<int64> Packages;
-    for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
-        Packages.Add(static_cast<int64>(Package));
-    }
-    return Packages;
-}
-
-/**
  * @brief モデル結合単位の名称が格納された一覧を取得
  * @return モデル結合単位名称配列
  */
@@ -59,7 +47,7 @@ TArray<FText> UPLATEAUImportAreaSelectBtn::GetGranularityTexts() {
 
 /**
  * @brief パッケージがどのカテゴリーを表すのかを示すための名前一覧を取得
- * @return カテゴリー名マップ
+ * @return カテゴリー情報のマップ
  */
 TMap<int64, FText> UPLATEAUImportAreaSelectBtn::GetCategoryNames() {
     return UPLATEAUImportSettings::GetCategoryNames();

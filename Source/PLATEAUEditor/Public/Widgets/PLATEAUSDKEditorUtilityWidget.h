@@ -8,10 +8,18 @@
 #include "PLATEAUSDKEditorUtilityWidget.generated.h"
 
 
+UENUM(BlueprintType)
+enum class ETopMenuPanel : uint8 {
+    None,
+    ImportPanel,
+    ModelAdjustmentPanel,
+    ExportPanel
+};
+
 USTRUCT(BlueprintType)
 struct FServerDatasetMetadata {
     GENERATED_BODY()
-    
+
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
     FString Title;
 
@@ -28,7 +36,7 @@ struct FServerDatasetMetadataMap {
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
     FString GroupTitle;
-    
+
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
     TArray<FServerDatasetMetadata> ServerDatasetMetadataArray;
 };
@@ -38,25 +46,33 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetDatasetMetaDataAsyncSuccessDeleg
 
 UCLASS(Blueprintable)
 class PLATEAUEDITOR_API UPLATEAUSDKEditorUtilityWidget : public UEditorUtilityWidget {
-	GENERATED_BODY()
+    GENERATED_BODY()
 public:
     void AreaSelectSuccessInvoke(const FVector3d& ReferencePoint, const int64& PackageMask) const;
 
     std::shared_ptr<plateau::network::Client> GetClientPtr() {
-        return ClientPtr;    
+        return ClientPtr;
     }
-    
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
-    void GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken);
-    
+
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
     FAreaSelectSuccessDelegate AreaSelectSuccessDelegate;
 
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
     FGetDatasetMetaDataAsyncSuccessDelegate GetDatasetMetaDataAsyncSuccessDelegate;
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
+    void GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
+    void SetEnableSelectionChangedEvent(const ETopMenuPanel TopMenuPanel);
+
+    UFUNCTION(BlueprintImplementableEvent, CallInEditor, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
+    void OnEditorSelectionChanged();
 private:
     bool bGettingNativeDatasetMetadata;
-    FCriticalSection GetDatasetMetadataSection;
     std::shared_ptr<plateau::network::Client> ClientPtr;
     TArray<FServerDatasetMetadataMap> ServerDatasetMetadataMapArray;
+
+    void OnSelectionChanged(UObject* InSelection);
+    FDelegateHandle SelectionChangedEventHandle;
 };

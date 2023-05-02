@@ -159,15 +159,29 @@ public:
 
     static TMap<int64, FText> GetCategoryNames() {
         TMap<int64, FText> Items;
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), LOCTEXT("Building", "建築物"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Road), LOCTEXT("Road", "道路"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Vegetation), LOCTEXT("Vegetation", "植生"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::CityFurniture), LOCTEXT("CityFurniture", "都市設備"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Relief), LOCTEXT("Relief", "起伏"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::DisasterRisk), LOCTEXT("DisasterRisk", "災害リスク"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::LandUse), LOCTEXT("LandUse", "土地利用"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision), LOCTEXT("UrbanPlanningDecision", "都市計画決定情報"));
-        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Unknown), LOCTEXT("Unknown", "その他"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), LOCTEXT("CategoryBuilding", "建築物"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Road), LOCTEXT("CategoryRoad", "道路"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Vegetation), LOCTEXT("CategoryVegetation", "植生"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::CityFurniture), LOCTEXT("CategoryCityFurniture", "都市設備"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Relief), LOCTEXT("CategoryRelief", "起伏"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::DisasterRisk), LOCTEXT("CategoryDisasterRisk", "災害リスク"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::LandUse), LOCTEXT("CategoryLandUse", "土地利用"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision), LOCTEXT("CategoryUrbanPlanningDecision", "都市計画決定情報"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Unknown), LOCTEXT("CategoryUnknown", "その他"));
+        return Items;
+    }
+
+    static TMap<int64, FText> GetFilteringNames() {
+        TMap<int64, FText> Items;
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), LOCTEXT("FilteringBuilding", "建造物(Building)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Road), LOCTEXT("FilteringRoad", "道路 (Road)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Vegetation), LOCTEXT("FilteringVegetation", "植生(Vegetation)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::CityFurniture), LOCTEXT("FilteringCityFurniture", "都市設備 (CityFurniture)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Relief), LOCTEXT("FilteringRelief", "土地起伏(Relief)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::DisasterRisk), LOCTEXT("FilteringDisasterRisk", "災害リスク (DisasterRisk)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::LandUse), LOCTEXT("FilteringLandUse", "土地利用 (LandUse)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision), LOCTEXT("FilteringUrbanPlanningDecision", "都市計画決定情報 (UrbanPlanningDecision)"));
+        Items.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Unknown), LOCTEXT("FilteringUnknown", "その他 (Unknown)"));
         return Items;
     }
 };
