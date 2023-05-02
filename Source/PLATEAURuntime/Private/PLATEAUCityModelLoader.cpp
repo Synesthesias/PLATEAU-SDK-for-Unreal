@@ -30,7 +30,6 @@ public:
         const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference, const bool bImportFromServer, const plateau::network::Client ClientRef) {
         // ファイル検索
         const auto DatasetSource = LoadDataset(bImportFromServer, Source, ClientRef);
-
         TArray<FLoadInputData> LoadInputDataArray;
 
         for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
@@ -72,8 +71,7 @@ public:
     static plateau::dataset::DatasetSource LoadDataset(bool bImportFromServer, FString Source, plateau::network::Client ClientRef) {
         if (bImportFromServer) {
             return plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*Source), ClientRef);
-        }
-        else {
+        } else {
             return plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*Source));
         }
     }
@@ -191,9 +189,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
 
-    ModelActor->SetActorLabel(FPaths::GetCleanFilename(Source));
     ModelActor->GeoReference = GeoReference;
-    ModelActor->DatasetName = FPaths::GetCleanFilename(Source);
 
     Async(EAsyncExecution::Thread,
         [
@@ -211,7 +207,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
-            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client); 
+            ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
@@ -221,9 +217,12 @@ void APLATEAUCityModelLoader::LoadAsync() {
         TArray<TFuture<bool>> Futures;
         TArray<FString> GmlNames;
 
+        bool bHasDatasetNameSet = false;
+        FCriticalSection SetDatasetNameSection;
+
         for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
 
-            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                 break;
 
             FGenericPlatformProcess::ConditionalSleep(
@@ -232,7 +231,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     int LoadCompletedCount = 0;
                     for (int i = 0; i < Futures.Num(); ++i) {
 
-                        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+                        if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                             return true;
 
                         if (!Futures[i].IsReady())
@@ -253,6 +252,35 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
+
+            {
+                FScopeLock Lock(&SetDatasetNameSection);
+                if (!bHasDatasetNameSet) {
+                    bHasDatasetNameSet = true;
+
+                    // データセット名をGMLファイルパスから取得
+                    // TODO: libplateauに委譲。データセット名を取得するAPI実装
+                    auto DatasetName =
+                        CopiedGmlPath.RightChop((FPaths::ProjectContentDir() + "PLATEAU/Datasets/").Len());
+
+                    // 最初のパスの区切りを探す。
+                    int32 FirstSlashIndex, FirstBackSlashIndex;
+                    if (!DatasetName.FindChar(static_cast<TCHAR>('/'), FirstSlashIndex)) {
+                        FirstSlashIndex = TNumericLimits<int32>::Max();
+                    }
+                    if (!DatasetName.FindChar(static_cast<TCHAR>('\\'), FirstBackSlashIndex)) {
+                        FirstBackSlashIndex = TNumericLimits<int32>::Max();
+                    }
+                    DatasetName = DatasetName.Left(FMath::Min(FirstSlashIndex, FirstBackSlashIndex));
+
+                    // 3D都市モデルアクタにデータセット名を登録
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [ModelActor, DatasetName]() {
+                            ModelActor->DatasetName = DatasetName;
+                            ModelActor->SetActorLabel(DatasetName);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                }
+            }
 
             // TODO: fldでgml名被る
             GmlNames.Add(GmlName);
@@ -301,7 +329,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 int LoadCompletedCount = 0;
                 for (int i = 0; i < Futures.Num(); ++i) {
 
-                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) 
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                         break;
 
                     if (!Futures[i].IsReady())
@@ -326,8 +354,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 }
 
 void APLATEAUCityModelLoader::Cancel() {
-    if (Phase == ECityModelLoadingPhase::Start)         
-    {
+    if (Phase == ECityModelLoadingPhase::Start) {
         bCanceled.Store(true);
         Phase = ECityModelLoadingPhase::Cancelling;
     }
