@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUImportLocalFolderBtn.h"
 #include <plateau/dataset/dataset_source.h>
