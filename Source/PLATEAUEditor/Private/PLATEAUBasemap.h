@@ -3,8 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "Tasks/Task.h"
 #include "PLATEAUGeometry.h"
+
+using namespace UE::Tasks;
+
+UENUM(BlueprintType)
+enum class EVectorTileLoadingPhase : uint8 {
+    Idle = 0,
+    Loading = 1,
+    FullyLoaded = 2,
+    Failed = 3
+};
 
 struct FPLATEAUExtent;
 
@@ -26,17 +36,21 @@ struct FPLATEAUTileCoordinate {
 struct FPLATEAUAsyncLoadedVectorTile {
 public:
     FPLATEAUAsyncLoadedVectorTile()
-        : IsFullyLoaded(false)
+        : LoadPhase(EVectorTileLoadingPhase::Idle)
         , TileComponent(nullptr) {}
 
     ~FPLATEAUAsyncLoadedVectorTile()
     {
-        if (IsLoading && !IsFullyLoaded)
+        if(LoadPhase == EVectorTileLoadingPhase::Loading)
             Task.Wait();
     }
 
     bool GetFullyLoaded() {
-        return IsFullyLoaded;
+        return (LoadPhase == EVectorTileLoadingPhase::FullyLoaded);
+    }
+
+    bool GetFailed() {
+        return (LoadPhase == EVectorTileLoadingPhase::Failed);
     }
 
     UStaticMeshComponent* GetComponent() {
@@ -44,14 +58,13 @@ public:
         return TileComponent;
     }
 
-    void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate);
+    void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate, FPipe& Pipe);
 
 private:
     FCriticalSection CriticalSection;
-    std::atomic<bool> IsFullyLoaded;
-    std::atomic<bool> IsLoading;
+    TAtomic<EVectorTileLoadingPhase> LoadPhase;
     UStaticMeshComponent* TileComponent;
-    TFuture<void> Task;
+    FTask Task;
 };
 
 uint32 GetTypeHash(const FPLATEAUTileCoordinate& Value);
@@ -71,5 +84,7 @@ private:
     TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
 
     TMap<FPLATEAUTileCoordinate, TSharedPtr<FPLATEAUAsyncLoadedVectorTile>> AsyncLoadedTiles;
-    TSet<UStaticMeshComponent*> TilesInScene;
+    TSet<UStaticMeshComponent*> TilesInScene;  
+
+    FPipe VectorTilePipe{ TEXT("VectorTilePipe") };
 };
