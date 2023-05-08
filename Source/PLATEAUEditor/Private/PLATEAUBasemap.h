@@ -58,7 +58,7 @@ public:
         return TileComponent;
     }
 
-    void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate, FPipe& Pipe);
+    void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate, FPipe& VectorTilePipe);
 
 private:
     FCriticalSection CriticalSection;
