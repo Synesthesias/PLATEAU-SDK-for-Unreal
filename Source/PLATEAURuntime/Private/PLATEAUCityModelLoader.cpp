@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 
 #include "PLATEAUCityModelLoader.h"
@@ -30,7 +30,6 @@ public:
         const FPLATEAUExtent& Extent, FPLATEAUGeoReference& GeoReference, const bool bImportFromServer, const plateau::network::Client ClientRef) {
         // ファイル検索
         const auto DatasetSource = LoadDataset(bImportFromServer, Source, ClientRef);
-
         TArray<FLoadInputData> LoadInputDataArray;
 
         for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
@@ -72,8 +71,7 @@ public:
     static plateau::dataset::DatasetSource LoadDataset(bool bImportFromServer, FString Source, plateau::network::Client ClientRef) {
         if (bImportFromServer) {
             return plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*Source), ClientRef);
-        }
-        else {
+        } else {
             return plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*Source));
         }
     }
@@ -145,6 +143,8 @@ private:
 
 APLATEAUCityModelLoader::APLATEAUCityModelLoader() {
     PrimaryActorTick.bCanEverTick = false;
+    bCanceled.Store(false, EMemoryOrder::Relaxed);
+    Phase = ECityModelLoadingPhase::Idle;
 }
 
 namespace {
@@ -182,13 +182,14 @@ namespace {
 void APLATEAUCityModelLoader::LoadAsync() {
 #if WITH_EDITOR
 
+    Phase = ECityModelLoadingPhase::Start;
+    bCanceled.Exchange(false);
+
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
 
-    ModelActor->SetActorLabel(FPaths::GetCleanFilename(Source));
     ModelActor->GeoReference = GeoReference;
-    ModelActor->DatasetName = FPaths::GetCleanFilename(Source);
 
     Async(EAsyncExecution::Thread,
         [
@@ -199,7 +200,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
             ImportSettings = ImportSettings,
             bImportFromServer = bImportFromServer,
             Client = *ClientPtr,
-            OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this)
+            OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
+            bCanceledRef = &bCanceled,
+            Phase = &Phase,
+            LoadMeshSection = &LoadMeshSection
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
@@ -210,17 +214,26 @@ void APLATEAUCityModelLoader::LoadAsync() {
             Loader->Status.TotalGmlCount = GmlCount;
         });
 
-        FCriticalSection LoadMeshSection;
-
         TArray<TFuture<bool>> Futures;
         TArray<FString> GmlNames;
 
+        bool bHasDatasetNameSet = false;
+        FCriticalSection SetDatasetNameSection;
+
         for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
+
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                break;
+
             FGenericPlatformProcess::ConditionalSleep(
-                [&Futures, &GmlNames, OwnerLoader]() {
+                [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
                     TArray<FString> CurrentLoadingGmls;
                     int LoadCompletedCount = 0;
                     for (int i = 0; i < Futures.Num(); ++i) {
+
+                        if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                            return true;
+
                         if (!Futures[i].IsReady())
                             CurrentLoadingGmls.Add(GmlNames[i]);
                         else
@@ -240,12 +253,44 @@ void APLATEAUCityModelLoader::LoadAsync() {
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
 
-            // TODO: fldでgml名被る
+            {
+                FScopeLock Lock(&SetDatasetNameSection);
+                if (!bHasDatasetNameSet) {
+                    bHasDatasetNameSet = true;
 
+                    // データセット名をGMLファイルパスから取得
+                    // TODO: libplateauに委譲。データセット名を取得するAPI実装
+                    auto DatasetName =
+                        CopiedGmlPath.RightChop((FPaths::ProjectContentDir() + "PLATEAU/Datasets/").Len());
+
+                    // 最初のパスの区切りを探す。
+                    int32 FirstSlashIndex, FirstBackSlashIndex;
+                    if (!DatasetName.FindChar(static_cast<TCHAR>('/'), FirstSlashIndex)) {
+                        FirstSlashIndex = TNumericLimits<int32>::Max();
+                    }
+                    if (!DatasetName.FindChar(static_cast<TCHAR>('\\'), FirstBackSlashIndex)) {
+                        FirstBackSlashIndex = TNumericLimits<int32>::Max();
+                    }
+                    DatasetName = DatasetName.Left(FMath::Min(FirstSlashIndex, FirstBackSlashIndex));
+
+                    // 3D都市モデルアクタにデータセット名を登録
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [ModelActor, DatasetName]() {
+                            ModelActor->DatasetName = DatasetName;
+                            ModelActor->SetActorLabel(DatasetName);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                }
+            }
+
+            // TODO: fldでgml名被る
             GmlNames.Add(GmlName);
             Futures.Add(Async(EAsyncExecution::Thread,
                 [InputData, &LoadInputDataArray, Source,
-                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection]() {
+                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef]() {
+
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                        return false;
+
                     const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
 
                     if (CityModel == nullptr) {
@@ -266,19 +311,27 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
 
                     {
-                        FScopeLock Lock(&LoadMeshSection);
-
-                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model);
+                        FScopeLock Lock(LoadMeshSection);
+                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
                     return true;
                 }));
         }
 
+        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+            Futures.Empty();
+            GmlNames.Empty();
+        }
+
         FGenericPlatformProcess::ConditionalSleep(
-            [&Futures, &GmlNames, OwnerLoader]() {
+            [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
                 TArray<FString> CurrentLoadingGmls;
                 int LoadCompletedCount = 0;
                 for (int i = 0; i < Futures.Num(); ++i) {
+
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
+                        break;
+
                     if (!Futures[i].IsReady())
                         CurrentLoadingGmls.Add(GmlNames[i]);
                     else
@@ -290,10 +343,21 @@ void APLATEAUCityModelLoader::LoadAsync() {
                             Loader->Status.LoadingGmls = CurrentLoadingGmls;
                         });
                 }
+
                 return CurrentLoadingGmls.Num() == 0;
             }, 3);
+
+        *Phase = ECityModelLoadingPhase::Finished;
     });
+
 #endif
+}
+
+void APLATEAUCityModelLoader::Cancel() {
+    if (Phase == ECityModelLoadingPhase::Start) {
+        bCanceled.Store(true);
+        Phase = ECityModelLoadingPhase::Cancelling;
+    }
 }
 
 void APLATEAUCityModelLoader::BeginPlay() {

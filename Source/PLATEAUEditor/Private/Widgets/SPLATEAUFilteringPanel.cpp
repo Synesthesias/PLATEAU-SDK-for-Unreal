@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "SPLATEAUFilteringPanel.h"
 #include "SlateOptMacros.h"
@@ -65,8 +65,18 @@ void SPLATEAUFilteringPanel::SetAllVegetationSettingFlag(const bool InBool) {
 
 void SPLATEAUFilteringPanel::CheckTargetLODs() {
     if (bActorSelected == false) {
-        AvailablePackage = SelectingActor->GetExistPackage();
-        TargetLODs = SelectingActor->GetPackageLODs();
+        AvailablePackage = SelectingActor->GetCityModelPackages();
+        TargetLODs = {
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::Building),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::Road),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::UrbanPlanningDecision),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::LandUse),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::CityFurniture),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::Vegetation),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::Relief),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::DisasterRisk),
+            SelectingActor->GetMinMaxLod(PredefinedCityModelPackage::Unknown),
+        };
         TargetMaxLOD = TargetLODs[0].MaxLOD;
         TargetMinLOD = TargetLODs[0].MinLOD;
     }

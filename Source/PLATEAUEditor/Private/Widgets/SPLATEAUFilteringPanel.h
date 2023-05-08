@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #pragma once
 
@@ -10,11 +10,6 @@
 #include <plateau/dataset/city_model_package.h>
 #include <citygml/cityobject.h>
 
-struct PLATEAUPackageLOD {
-    int MaxLOD = 0;
-    int MinLOD = 0;
-};
-
 class SPLATEAUFilteringPanel : public SCompoundWidget {
 public:
     SLATE_BEGIN_ARGS(SPLATEAUFilteringPanel) {}
@@ -24,7 +19,7 @@ public:
 private:
     TWeakPtr<SWindow> OwnerWindow;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
-    TArray<PLATEAUPackageLOD> TargetLODs;
+    TArray<FPLATEAUMinMaxLod> TargetLODs;
 
     bool bShowMultiLOD = true;
 

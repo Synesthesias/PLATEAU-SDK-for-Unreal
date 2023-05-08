@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "CityGML/PLATEAUCityObject.h"
 #include "CityGML/PLATEAUAttributeValue.h"
@@ -17,7 +17,7 @@ FPLATEAUAttributeMap& UPLATEAUCityObjectBlueprintLibrary::GetAttributeMap(FPLATE
 
     const auto& AttributeMapData = CityObject.Data->getAttributes();
     for (const auto& [Key, Value] : AttributeMapData) {
-        CityObject.AttributeMapCache->value.at(UTF8_TO_TCHAR(Key.c_str())) = FPLATEAUAttributeValue(&Value);
+        CityObject.AttributeMapCache->value.Add(FString(UTF8_TO_TCHAR(Key.c_str())),  FPLATEAUAttributeValue(&Value));
     }
     return *CityObject.AttributeMapCache;
 }

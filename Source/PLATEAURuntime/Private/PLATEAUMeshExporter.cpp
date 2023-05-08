@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUMeshExporter.h"
 #include "plateau/mesh_writer/gltf_writer.h"
@@ -94,12 +94,13 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
     const auto RootComponent = ModelActor->GetRootComponent();
     const auto Components = RootComponent->GetAttachChildren();
-    for (int i = 0; i < Components.Num(); i++) {
+    for (int i = 0; i < Components.Num(); i++)
+    {
         //BillboardComponentなるコンポーネントがついていることがあるので無視
-        if (!Components[i]->GetName().Contains("BillboardComponent")) {
-            ModelArray.Add(CreateModel(Components[i], Option));
-            ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
-        }
+        if (Components[i]->GetName().Contains("BillboardComponent")) continue;
+        
+        ModelArray.Add(CreateModel(Components[i], Option));
+        ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
     }
     return ModelArray;
 }
@@ -174,7 +175,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         const int EndIndex = Section.FirstIndex + Section.NumTriangles * 3;
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
-        FString PathName;
+        FString PathName = FString("");
         if (Option.bExportTexture) {
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
             if (MaterialInstance->TextureParameterValues.Num() > 0) {
@@ -186,7 +187,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
 
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
+        if (!PathName.IsEmpty())
+        {
+            OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
+        }
     }
 
     // TODO: MeshDescription使用する方法だと何故かUV取得できない

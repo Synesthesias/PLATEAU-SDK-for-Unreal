@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUTextureLoader.h"
@@ -181,15 +181,23 @@ namespace {
     }
 }
 
-void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel) {
+void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
+
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
+        
+        if (bCanceled->Load(EMemoryOrder::Relaxed)) 
+            break;
+
         LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
         // StaticMeshesへのアクセスでAccess Violationが発生することがあるため冗長なコピーを生成。
         // コピーキャプチャでレースコンディション発生する場合がある？
         const auto CopiedStaticMeshes = StaticMeshes;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [CopiedStaticMeshes]() {
-                UStaticMesh::BatchBuild(CopiedStaticMeshes, true);
+            [CopiedStaticMeshes, &bCanceled]() {
+                UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [&bCanceled](UStaticMesh* mesh) {
+                    return bCanceled->Load(EMemoryOrder::Relaxed);
+                    });
+
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         StaticMeshes.Reset();
     }
@@ -197,23 +205,29 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     // TODO: フィルタリング機能に委譲
     TMap<int, TSet<FString>> NameMap;
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
+
         const auto& RootNode = InModel->getRootNodeAt(i);
         FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
         int Key;
         FDefaultValueHelper::ParseInt(KeyString.RightChop(3), Key);
         auto& Value = NameMap.Add(Key);
         for (int j = 0; j < RootNode.getChildCount(); ++j) {
+
+            if (bCanceled->Load(EMemoryOrder::Relaxed)) 
+                break;
+
             const auto& Node = RootNode.getChildAt(j);
             Value.Add(UTF8_TO_TCHAR(Node.getName().c_str()));
         }
     }
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [ParentComponent, &NameMap]() {
+        [ParentComponent, &NameMap, &bCanceled]() {
             TArray<USceneComponent*> LodComponents;
             ParentComponent->GetChildrenComponents(false, LodComponents);
 
             for (const auto& LodComponent : LodComponents) {
+
                 auto LodComponentName = LodComponent->GetName();
                 int Lod;
                 FString LodString = LodComponentName.RightChop(3);
@@ -223,7 +237,12 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
                 TArray<USceneComponent*> Components;
                 LodComponent->GetChildrenComponents(true, Components);
                 for (const auto& Component : Components) {
+
                     auto ComponentName = Component->GetName();
+
+                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
+                        break;
+
                     int Index = 0;
                     if (ComponentName.FindLastChar('_', Index)) {
                         if (ComponentName.RightChop(Index + 1).IsNumeric()) {
@@ -241,7 +260,6 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
                 }
             }
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {

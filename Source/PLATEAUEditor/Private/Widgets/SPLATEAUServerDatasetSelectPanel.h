@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #pragma once
 
@@ -41,7 +41,6 @@ public:
         OnSelectDataset = Function;
     }
 
-    //virtual void Tick(FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
     virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 private:

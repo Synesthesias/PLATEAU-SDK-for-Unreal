@@ -1,4 +1,4 @@
-// Copyright © 2023 Ministry of Land、Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #pragma once
 
@@ -30,6 +30,8 @@ private:
     bool bIsSeletedServerPrefecture = false;
     int PrefectureID = 1;
     int MunicipalityID = 1;
+
+    TWeakObjectPtr<APLATEAUCityModelLoader> CurrentLoader = nullptr;
 
     // 選択範囲の中心
     FVector3d ExtentCenter;
