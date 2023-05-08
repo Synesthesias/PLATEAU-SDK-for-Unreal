@@ -27,6 +27,15 @@
 			"Type": "Editor",
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": ["Win64", "Mac"]
+		},
+		{
+			"Name": "PLATEAUEditorBPLibraries",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64",
+				"Mac"
+			]
 		}
 	]
 }
