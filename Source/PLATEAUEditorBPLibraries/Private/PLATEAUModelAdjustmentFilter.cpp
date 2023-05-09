@@ -2,6 +2,9 @@
 
 #include "PLATEAUModelAdjustmentFilter.h"
 #include "PLATEAUImportSettings.h"
+#include "PLATEAUModelAdjustmentBuilding.h"
+#include "PLATEAUModelAdjustmentRelief.h"
+#include "PLATEAUModelAdjustmentVegetation.h"
 #include "PLATEAUEditor/Private/Widgets/SPLATEAUFilteringPanel.h"
 using namespace citygml;
 
@@ -18,22 +21,19 @@ TMap<int64, FText> UPLATEAUModelAdjustmentFilter::GetFilteringNames() {
  * @param InSelection アウトライナー上で選択したPLATEAUInstancedCityModel
  * @return パッケージ情報
  */
-int64 UPLATEAUModelAdjustmentFilter::GetExistPackage(const APLATEAUInstancedCityModel* InSelection) {
-    return static_cast<int64>(InSelection->GetExistPackage());
+int64 UPLATEAUModelAdjustmentFilter::GetCityModelPackages(const APLATEAUInstancedCityModel* InSelection) {
+    return static_cast<int64>(InSelection->GetCityModelPackages());
 }
 
 /**
  * @brief 選択中のPLATEAUInstancedCityModelからLOD情報取得
  * @param InSelection アウトライナー上で選択したPLATEAUInstancedCityModel
- * @return 各パッケージのLOD情報を格納した配列
+ * @param InPackage LOD取得対象のパッケージ
+ * @return 対象パッケージのLOD情報を格納した構造体
  */
-TArray<FPLATEAUPackageLOD> UPLATEAUModelAdjustmentFilter::GetPackageLODs(const APLATEAUInstancedCityModel* InSelection) {
-    TArray<FPLATEAUPackageLOD> PLATEAUPackageLOD;
-    const auto PackageLODs = InSelection->GetPackageLODs();
-    for (const auto& [MaxLOD, MinLOD] : PackageLODs) {
-        PLATEAUPackageLOD.Add(FPLATEAUPackageLOD(MinLOD, MaxLOD));
-    }
-    return PLATEAUPackageLOD;
+FPLATEAUPackageLod UPLATEAUModelAdjustmentFilter::GetMinMaxLod(const APLATEAUInstancedCityModel* InSelection, const int64 InPackage) {
+    const auto [MinLOD, MaxLOD] = InSelection->GetMinMaxLod(static_cast<plateau::dataset::PredefinedCityModelPackage>(InPackage));
+    return FPLATEAUPackageLod(MinLOD, MaxLOD);
 }
 
 /**
@@ -54,5 +54,14 @@ int64 UPLATEAUModelAdjustmentFilter::GetMaxCityObjectType() {
  * @param EnableCityObject 有効化オブジェクトタイプ
  */
 void UPLATEAUModelAdjustmentFilter::ApplyFilter(APLATEAUInstancedCityModel* InSelection, const int64 EnablePackage, const int MinLOD, const int MaxLOD, const bool bShowMultiLOD, const int64 EnableCityObject) {
-    InSelection->FilterByLODs(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), MinLOD, MaxLOD, bShowMultiLOD)->FilterByFeatureTypes(static_cast<citygml::CityObject::CityObjectsType>(EnableCityObject));
+    // オプションにない地物タイプは全て含める
+    auto FilteringFlags = UPLATEAUModelAdjustmentBuilding::GetAllBuildingSettingFlags();
+    FilteringFlags.Append(UPLATEAUModelAdjustmentRelief::GetAllReliefSettingFlags());
+    FilteringFlags.Append(UPLATEAUModelAdjustmentVegetation::GetAllVegetationSettingFlags());
+    int64 HiddenFeatureTypes = 0;
+    for (const auto& FilteringFlag : FilteringFlags) {
+        HiddenFeatureTypes += ~FilteringFlag;
+    }
+    
+    InSelection->FilterByLODs(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), MinLOD, MaxLOD, bShowMultiLOD)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));
 }

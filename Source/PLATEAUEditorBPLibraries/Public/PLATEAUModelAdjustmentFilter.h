@@ -10,13 +10,13 @@ class APLATEAUInstancedCityModel;
 
 
 USTRUCT(BlueprintType)
-struct FPLATEAUPackageLOD {
+struct FPLATEAUPackageLod {
     GENERATED_BODY()
 
-    FPLATEAUPackageLOD() {
+    FPLATEAUPackageLod() {
     }
 
-    FPLATEAUPackageLOD(const int InMinLod, const int InMaxLod) : MinLod(InMinLod), MaxLod(InMaxLod) {
+    FPLATEAUPackageLod(const int InMinLod, const int InMaxLod) : MinLod(InMinLod), MaxLod(InMaxLod) {
     }
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
@@ -34,10 +34,10 @@ public:
     static TMap<int64, FText> GetFilteringNames();
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static int64 GetExistPackage(const APLATEAUInstancedCityModel* InSelection);
+    static int64 GetCityModelPackages(const APLATEAUInstancedCityModel* InSelection);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static TArray<FPLATEAUPackageLOD> GetPackageLODs(const APLATEAUInstancedCityModel* InSelection);
+    static FPLATEAUPackageLod GetMinMaxLod(const APLATEAUInstancedCityModel* InSelection, const int64 InPackage);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
     static int64 GetMaxCityObjectType();
