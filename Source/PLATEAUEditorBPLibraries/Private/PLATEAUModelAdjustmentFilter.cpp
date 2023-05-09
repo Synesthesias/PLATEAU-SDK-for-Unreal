@@ -37,14 +37,6 @@ FPLATEAUPackageLod UPLATEAUModelAdjustmentFilter::GetMinMaxLod(const APLATEAUIns
 }
 
 /**
- * @brief 全オブジェクトタイプを表す数値を取得
- * @return 全オブジェクトタイプを表す数値
- */
-int64 UPLATEAUModelAdjustmentFilter::GetMaxCityObjectType() {
-    return static_cast<int64>(CityObject::CityObjectsType::COT_All);
-}
-
-/**
  * @brief フィルタリング実行
  * @param InSelection アウトライナー上で選択したPLATEAUInstancedCityModel
  * @param EnablePackage 有効化パッケージ

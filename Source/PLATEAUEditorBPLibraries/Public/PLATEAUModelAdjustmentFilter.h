@@ -40,8 +40,5 @@ public:
     static FPLATEAUPackageLod GetMinMaxLod(const APLATEAUInstancedCityModel* InSelection, const int64 InPackage);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static int64 GetMaxCityObjectType();
-
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
     static void ApplyFilter(APLATEAUInstancedCityModel* InSelection, const int64 EnablePackage, const int MinLOD, const int MaxLOD, const bool bShowMultiLOD, const int64 EnableCityObject);
 };
