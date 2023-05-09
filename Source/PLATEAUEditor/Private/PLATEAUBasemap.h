@@ -37,20 +37,16 @@ struct FPLATEAUAsyncLoadedVectorTile {
 public:
     FPLATEAUAsyncLoadedVectorTile()
         : LoadPhase(EVectorTileLoadingPhase::Idle)
-        , TileComponent(nullptr) {}
+        , TileComponent(nullptr) {
+    }
 
-    ~FPLATEAUAsyncLoadedVectorTile()
-    {
-        if(LoadPhase == EVectorTileLoadingPhase::Loading)
+    ~FPLATEAUAsyncLoadedVectorTile() {
+        if (LoadPhase == EVectorTileLoadingPhase::Loading)
             Task.Wait();
     }
 
-    bool GetFullyLoaded() {
-        return (LoadPhase == EVectorTileLoadingPhase::FullyLoaded);
-    }
-
-    bool GetFailed() {
-        return (LoadPhase == EVectorTileLoadingPhase::Failed);
+    EVectorTileLoadingPhase GetLoadPhase() {
+        return LoadPhase;
     }
 
     UStaticMeshComponent* GetComponent() {
@@ -82,9 +78,7 @@ public:
 private:
     FPLATEAUGeoReference GeoReference;
     TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
-
+    FPipe VectorTilePipe;
     TMap<FPLATEAUTileCoordinate, TSharedPtr<FPLATEAUAsyncLoadedVectorTile>> AsyncLoadedTiles;
-    TSet<UStaticMeshComponent*> TilesInScene;  
-
-    FPipe VectorTilePipe{ TEXT("VectorTilePipe") };
+    TSet<UStaticMeshComponent*> TilesInScene;
 };

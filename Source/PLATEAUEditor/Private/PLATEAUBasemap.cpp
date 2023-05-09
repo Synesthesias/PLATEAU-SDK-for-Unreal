@@ -47,14 +47,14 @@ FPLATEAUBasemap::FPLATEAUBasemap(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {
+    , ViewportClient(InViewportClient)
+    , VectorTilePipe{ TEXT("VectorTilePipe") } {
 }
 
 FPLATEAUBasemap::~FPLATEAUBasemap() {
     if (VectorTilePipe.HasWork())
         VectorTilePipe.WaitUntilEmpty();
 }
-
 
 void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
     int ZoomLevel = 18;
@@ -70,7 +70,7 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
     const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\Basemap"));
 
     for (auto& Entry : AsyncLoadedTiles) {
-        if (!Entry.Value->GetFullyLoaded())
+        if (Entry.Value->GetLoadPhase() != EVectorTileLoadingPhase::FullyLoaded)
             continue;
 
         const auto TileComponent = Entry.Value->GetComponent();
@@ -115,7 +115,7 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
         }
 
         const auto& AsyncLoadedTile = AsyncLoadedTiles[TileCoordinate];
-        if (AsyncLoadedTile->GetFullyLoaded()) {
+        if (AsyncLoadedTile->GetLoadPhase() == EVectorTileLoadingPhase::FullyLoaded) {
             const auto TileComponent = AsyncLoadedTile->GetComponent();
             TileComponent->SetVisibility(true);
         }
@@ -154,14 +154,13 @@ uint32 GetTypeHash(const FPLATEAUTileCoordinate& Value) {
 
 void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate, FPipe& VectorTilePipe) {
     LoadPhase = EVectorTileLoadingPhase::Loading;
-
     Task = VectorTilePipe.Launch(TEXT("VectorTileTask"),
         [this, InTileCoordinate]() {
-         
+
             const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\Basemap"));
             const FString TexturePath = UTF8_TO_TCHAR(VectorTileDownloader::calcDestinationPath(InTileCoordinate.ToNativeData(), TCHAR_TO_UTF8(*Destination)).u8string().c_str());
             IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-            
+
             //テクスチャが存在する場合
             if (PlatformFile.FileExists(*TexturePath)) {
                 //画像サイス0の場合
@@ -172,7 +171,7 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
                     return;
                 }
             }
-            else  {
+            else {
                 //画像ダウンロード
                 const auto Tile = VectorTileDownloader::download(
                     VectorTileDownloader::getDefaultUrl(),
@@ -180,8 +179,8 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
                     InTileCoordinate.ToNativeData());
 
                 //読込エラー
-                if(Tile->result != HttpResult::Success) {
-                    UE_LOG(LogTemp, Error, TEXT("Image Load Error! %d : %s"), Tile->result , *TexturePath);
+                if (Tile->result != HttpResult::Success) {
+                    UE_LOG(LogTemp, Error, TEXT("Image Load Error! %d : %s"), Tile->result, *TexturePath);
                     LoadPhase = EVectorTileLoadingPhase::Failed;
                     return;
                 }
@@ -189,12 +188,12 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
 
             // テクスチャ読み込み
             const auto Texture = FPLATEAUTextureLoader::LoadTransient(*TexturePath);
-            if (Texture == nullptr)                 {
+            if (Texture == nullptr) {
                 UE_LOG(LogTemp, Error, TEXT("Texture Load Error : %s"), *TexturePath);
                 LoadPhase = EVectorTileLoadingPhase::Failed;
                 return;
             }
-            
+
             const auto TempComponent = CreateTileComponentInGameThread(Texture);
             {
                 FScopeLock Lock(&CriticalSection);
