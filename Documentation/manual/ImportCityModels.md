@@ -110,6 +110,11 @@
   進捗表示がすべて「完了」になったらインポート終了です。  
 ![](../resources/manual/importCityModels/importComplete.png)
 
+### インポートのキャンセル
+- インポート処理中に`インポートをキャンセルする`ボタンを押します。
+- キャンセル処理中は、ボタンが`キャンセル中…`の表記に変わります。
+  再度`モデルをインポート`ボタンが表示されたらキャンセル完了です。
+
 ### 読み込み状況の確認
 PLATEAUCityModelLoaderアクタの詳細パネルから読み込み状況の確認ができます。
 ![](../resources/manual/importCityModels/progress.png)
