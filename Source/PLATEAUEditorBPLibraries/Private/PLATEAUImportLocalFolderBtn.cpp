@@ -5,7 +5,7 @@
 #include "Interfaces/IMainFrameModule.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"
 
-static constexpr TCHAR DialogTitle[] = TEXT("Select folder.");
+static constexpr TCHAR OpenImportDirectoryDialogTitle[] = TEXT("入力フォルダ選択");
 
 /**
  * @brief OSのウィンドウハンドルを他のAPIのためにvoidポインタの形で取得する
@@ -30,7 +30,7 @@ void* UPLATEAUImportLocalFolderBtn::GetWindowHandle() {
  */
 bool UPLATEAUImportLocalFolderBtn::OpenDirectoryDialog(bool& IsDatasetValid, FString& SourcePath) {
     IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
-    if (FString OutFolderName; DesktopPlatform->OpenDirectoryDialog(GetWindowHandle(), DialogTitle, "", OutFolderName)) {
+    if (FString OutFolderName; DesktopPlatform->OpenDirectoryDialog(GetWindowHandle(), OpenImportDirectoryDialogTitle, "", OutFolderName)) {
         try {
             const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*OutFolderName));
             const auto LocalDatasetAccessor = InDatasetSource.getAccessor();
