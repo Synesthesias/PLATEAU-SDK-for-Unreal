@@ -114,7 +114,7 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 
     // 地物表示
     if (FeatureInfoDisplay == nullptr) {
-        FeatureInfoDisplay = MakeUnique<FPLATEAUFeatureInfoDisplay>(GeoReference, SharedThis(this));
+        FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(GeoReference, SharedThis(this));
     }
 
     TArray<FVector> CornerWorldPositions;
@@ -148,7 +148,9 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
     FPLATEAUExtent Extent(plateau::geometry::Extent(MinCoordinate, MaxCoordinate));
 
     Basemap->UpdateAsync(Extent);
-    FeatureInfoDisplay->UpdateAsync(Extent, *DatasetAccessor, GetViewTransform().GetLocation().Z < 4000, GetViewTransform().GetLocation().Z < 2000);
+
+    // , GetViewTransform().GetLocation().Z < 4000, GetViewTransform().GetLocation().Z < 2000
+    FeatureInfoDisplay->UpdateAsync(Extent, *DatasetAccessor);
 
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {
