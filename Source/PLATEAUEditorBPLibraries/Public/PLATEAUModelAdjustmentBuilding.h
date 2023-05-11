@@ -12,7 +12,7 @@ class PLATEAUEDITORBPLIBRARIES_API UPLATEAUModelAdjustmentBuilding : public UBlu
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static bool IsBuildingPackage(const int64 InPackage);
+    static bool IsBuildingPackage(const int64 Package);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
     static TArray<int64> GetAllBuildingSettingFlags();

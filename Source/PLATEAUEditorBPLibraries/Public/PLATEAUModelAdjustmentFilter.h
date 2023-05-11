@@ -34,11 +34,11 @@ public:
     static TMap<int64, FText> GetFilteringNames();
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static int64 GetCityModelPackages(const APLATEAUInstancedCityModel* InSelection);
+    static int64 GetCityModelPackages(const APLATEAUInstancedCityModel* TargetCityModel);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static FPLATEAUPackageLod GetMinMaxLod(const APLATEAUInstancedCityModel* InSelection, const int64 InPackage);
+    static FPLATEAUPackageLod GetMinMaxLod(const APLATEAUInstancedCityModel* TargetCityModel, const int64 Package);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static void ApplyFilter(APLATEAUInstancedCityModel* InSelection, const int64 EnablePackage, const int MinLOD, const int MaxLOD, const bool bShowMultiLOD, const int64 EnableCityObject);
+    static void ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const int MinLOD, const int MaxLOD, const bool bShowMultiLOD, const int64 EnableCityObject);
 };

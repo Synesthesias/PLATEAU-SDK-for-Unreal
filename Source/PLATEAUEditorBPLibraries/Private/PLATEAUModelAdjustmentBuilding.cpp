@@ -6,11 +6,11 @@ using namespace citygml;
 
 /**
  * @brief パッケージが建造物かどうか取得
- * @param InPackage パッケージ
+ * @param Package パッケージ
  * @return 建造物か？
  */
-bool UPLATEAUModelAdjustmentBuilding::IsBuildingPackage(const int64 InPackage) {
-    return static_cast<plateau::dataset::PredefinedCityModelPackage>(InPackage) == plateau::dataset::PredefinedCityModelPackage::Building;
+bool UPLATEAUModelAdjustmentBuilding::IsBuildingPackage(const int64 Package) {
+    return static_cast<plateau::dataset::PredefinedCityModelPackage>(Package) == plateau::dataset::PredefinedCityModelPackage::Building;
 }
 
 /**

@@ -12,7 +12,7 @@ class PLATEAUEDITORBPLIBRARIES_API UPLATEAUModelAdjustmentVegetation : public UB
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    static bool IsVegetationPackage(const int64 InPackage);
+    static bool IsVegetationPackage(const int64 Package);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
     static TArray<int64> GetAllVegetationSettingFlags();

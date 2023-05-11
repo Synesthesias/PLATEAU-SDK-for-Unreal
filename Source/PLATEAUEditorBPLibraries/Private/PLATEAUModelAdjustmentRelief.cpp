@@ -6,11 +6,11 @@ using namespace citygml;
 
 /**
  * @brief パッケージが土地起伏かどうか取得
- * @param InPackage パッケージ
+ * @param Package パッケージ
  * @return 土地起伏か？
  */
-bool UPLATEAUModelAdjustmentRelief::IsReliefPackage(const int64 InPackage) {
-    return static_cast<plateau::dataset::PredefinedCityModelPackage>(InPackage) == plateau::dataset::PredefinedCityModelPackage::Relief;
+bool UPLATEAUModelAdjustmentRelief::IsReliefPackage(const int64 Package) {
+    return static_cast<plateau::dataset::PredefinedCityModelPackage>(Package) == plateau::dataset::PredefinedCityModelPackage::Relief;
 }
 
 /**
