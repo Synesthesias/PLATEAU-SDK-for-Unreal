@@ -18,12 +18,13 @@ FPLATEAUExtentGizmo::FPLATEAUExtentGizmo()
 void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI, double CameraDistance) {
     SphereMaterial.Get()->SetVectorParameterValue(FName("Color"), Color);
 
-    double radius = CameraDistance / 20;
+    const auto Radius = FMath::Min(CameraDistance / 20, 500);
+
     DrawSphere(
         PDI,
         GetHandlePosition(Index),
         FRotator(),
-        FVector(radius),
+        FVector(Radius),
         24, 6, SphereMaterial->GetRenderProxy(), 9
     );
 
@@ -31,7 +32,7 @@ void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* 
         PDI,
         GetHandlePosition(Index),
         FRotator(),
-        FVector(radius),
+        FVector(Radius),
         24, 6, SphereMaterial->GetRenderProxy(), 9
     );
 }
