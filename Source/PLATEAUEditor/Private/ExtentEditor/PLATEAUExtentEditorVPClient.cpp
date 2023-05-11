@@ -218,6 +218,18 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
     }
 }
 
+void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) {
+
+    const double CameraDistance = GetViewTransform().GetLocation().Z;
+    const auto& MeshCodes = DatasetAccessor->getMeshCodes();
+    auto meshptr = MeshCodes.begin();
+
+    for (const auto& Gizmo : MeshCodeGizmos) {
+        const auto code = (*meshptr++).get();
+        Gizmo.DrawRegionMeshID(InViewport, View, Canvas, code.c_str(), CameraDistance);
+    }
+}
+
 void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState& InInputState, bool bIsDragging,
     bool bNudge) {
     if (!TryGetWorldPositionOfCursor(TrackingStartedPosition))
