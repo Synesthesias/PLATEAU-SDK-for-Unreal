@@ -17,6 +17,13 @@ enum class EPLATEAUFeatureInfoVisibility : uint8_t;
 
 typedef TMap<plateau::dataset::PredefinedCityModelPackage, std::shared_ptr<std::vector<plateau::dataset::GmlFile>>> FPLATEAUFeatureInfoPanelInput;
 
+enum class EPLATEAUFeatureInfoPanelStatus
+{
+    Idle,
+    Loading,
+    FullyLoaded
+};
+
 /**
  * @brief 各メッシュコード(グリッド)に表示する地物情報のパネルを表します。
  */
@@ -27,9 +34,7 @@ public:
         const TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient);
     ~FPLATEAUAsyncLoadedFeatureInfoPanel() {}
 
-    bool GetFullyLoaded() {
-        return bFullyLoaded;
-    }
+    EPLATEAUFeatureInfoPanelStatus GetStatus() const;
 
     /**
      * @brief 地物情報パネルの可視性を取得します。
@@ -42,22 +47,23 @@ public:
     void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
 
     /**
-     * @brief GMLファイルの一覧を入力として、非同期に地物情報を読み込みます。
+     * @brief GMLファイルの一覧を入力として、非同期に地物の最大LOD情報を読み込みます。
      * パネルの可視化は読み込みが完了した後にTickが呼び出された際に行われます。
      *
      * @param Input GMLファイルの一覧
      * @param InBox パネルの表示範囲
      */
-    void LoadAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox);
+    void LoadMaxLodAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox);
+
     void Tick();
 
 private:
     TWeakPtr<FPLATEAUFeatureInfoDisplay> Owner;
     TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient;
-    
-    TAtomic<bool> bFullyLoaded;
-    TFuture<TMap<plateau::dataset::PredefinedCityModelPackage, int>> GetMaxLodTask;
 
+    UE::Tasks::TTask<TMap<plateau::dataset::PredefinedCityModelPackage, int>> GetMaxLodTask;
+
+    TAtomic<EPLATEAUFeatureInfoPanelStatus> Status;
     EPLATEAUFeatureInfoVisibility Visibility;
     FBox Box;
     TArray<USceneComponent*> IconComponents;
@@ -65,4 +71,5 @@ private:
     USceneComponent* BackPanelComponent;
 
     void ApplyVisibility() const;
+    void CreatePanelComponents(const TMap<plateau::dataset::PredefinedCityModelPackage, int>& MaxLods);
 };

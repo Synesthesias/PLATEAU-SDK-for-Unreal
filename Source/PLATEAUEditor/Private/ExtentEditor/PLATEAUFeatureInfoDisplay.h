@@ -25,24 +25,23 @@ enum class EPLATEAUFeatureInfoVisibility : uint8_t {
 struct FPLATEAUFeatureInfoMaterialKey {
     plateau::dataset::PredefinedCityModelPackage Package;
     int Lod;
-    bool bGrayout;
     bool bDetailed;
 };
 
 inline bool operator==(const FPLATEAUFeatureInfoMaterialKey& A, const FPLATEAUFeatureInfoMaterialKey& B) {
-    return A.Package == B.Package && A.Lod == B.Lod && A.bGrayout == B.bGrayout && A.bDetailed == B.bDetailed;
+    return A.Package == B.Package && A.Lod == B.Lod && A.bDetailed == B.bDetailed;
 }
 
 inline bool operator!=(const FPLATEAUFeatureInfoMaterialKey& A, const FPLATEAUFeatureInfoMaterialKey& B) {
-    return A.Package != B.Package || A.Lod != B.Lod || A.bGrayout != B.bGrayout || A.bDetailed != B.bDetailed;
+    return A.Package != B.Package || A.Lod != B.Lod || A.bDetailed != B.bDetailed;
 }
 
 inline uint32 GetTypeHash(const FPLATEAUFeatureInfoMaterialKey& Key) {
+    // ビット配列：D00LLL00PPPPP
     return
         FMath::FloorLog2(static_cast<uint32>(Key.Package)) // 0 ~ 31(5bits)
-        + (Key.Lod << 6) // 0 ~ 4(3bits)
-        + ((Key.bGrayout ? 1 : 0) << 10)
-        + ((Key.bDetailed ? 1 : 0) << 11);
+        + (Key.Lod << 7) // 0 ~ 4(3bits)
+        + ((Key.bDetailed ? 1 : 0) << 12);
 }
 
 /**
@@ -80,4 +79,5 @@ private:
     UMaterialInstanceDynamic* BackPanelMaterial;
 
     void InitializeMaterials();
+    int CountLoadingPanels();
 };

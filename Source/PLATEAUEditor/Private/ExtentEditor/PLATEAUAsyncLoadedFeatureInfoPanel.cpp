@@ -18,6 +18,8 @@
 using namespace plateau::dataset;
 
 namespace {
+    constexpr float PanelScaleMultiplier = 2.0f;
+
     UStaticMeshComponent* CreatePanelMeshComponent(UMaterialInstanceDynamic* Material) {
         const FName MeshName = MakeUniqueObjectName(
             GetTransientPackage(),
@@ -38,6 +40,41 @@ namespace {
 
         return PanelComponent;
     }
+
+    FTransform CalculateIconTransform(const FBox& Box, const int IconIndex, const int IconCount) {
+        FTransform Transform{};
+        Transform.SetIdentity();
+
+        const auto Center = Box.GetCenter();
+        FVector Offset{
+            // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
+            // 中心座標を指定するため50f足している。
+            100.0f * IconIndex - 100.0f * IconCount / 2.0f + 50.0f,
+            0.0f,
+            // バックパネルより手前に表示
+            2.0f
+        };
+        Offset *= PanelScaleMultiplier;
+        Transform.SetTranslation(Center + Offset);
+
+        Transform.SetScale3D(PanelScaleMultiplier * FVector3d::One());
+
+        return Transform;
+    }
+
+    FTransform CalculateBackPanelTransform(const FBox& Box, const int IconCount) {
+        FTransform Transform{};
+        Transform.SetIdentity();
+
+        auto Translation = Box.GetCenter();
+        // ベースマップより手前に表示
+        Translation.Z += 1.0f;
+        Transform.SetTranslation(Translation);
+
+        Transform.SetScale3D(FVector3d(IconCount + 0.4, 1.5, 1.0) * PanelScaleMultiplier);
+
+        return Transform;
+    }
 }
 
 FPLATEAUAsyncLoadedFeatureInfoPanel::FPLATEAUAsyncLoadedFeatureInfoPanel(
@@ -45,9 +82,13 @@ FPLATEAUAsyncLoadedFeatureInfoPanel::FPLATEAUAsyncLoadedFeatureInfoPanel(
     const TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient)
     : Owner(Owner)
     , ViewportClient(ViewportClient)
-    , bFullyLoaded(false)
+    , Status(EPLATEAUFeatureInfoPanelStatus::Idle)
     , Visibility(EPLATEAUFeatureInfoVisibility::Hidden)
     , BackPanelComponent(nullptr) {}
+
+EPLATEAUFeatureInfoPanelStatus FPLATEAUAsyncLoadedFeatureInfoPanel::GetStatus() const {
+    return Status;
+}
 
 EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetVisibility() const {
     return Visibility;
@@ -81,13 +122,67 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::ApplyVisibility() const {
         Component->SetVisibility(Visibility == EPLATEAUFeatureInfoVisibility::Detailed);
     }
 
+    if (BackPanelComponent == nullptr)
+        return;
+
     BackPanelComponent->SetVisibility(Visibility != EPLATEAUFeatureInfoVisibility::Hidden);
 }
 
-void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox) {
-    Box = InBox;
+void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<PredefinedCityModelPackage, int>& MaxLods)
+{
+    if (MaxLods.IsEmpty())
+        return;
 
-    GetMaxLodTask = Async(EAsyncExecution::Thread,
+    const auto OwnerStrongPtr = Owner.Pin();
+
+    // パネルコンポーネント生成
+    for (const auto& Package : FPLATEAUFeatureInfoDisplay::GetDisplayedPackages()) {
+        FPLATEAUFeatureInfoMaterialKey Key = {};
+        Key.bDetailed = false;
+        Key.Package = Package;
+
+        if (!MaxLods.Find(Package))
+            continue;
+
+        Key.Lod = MaxLods[Package];
+
+        const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
+        const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
+        // 常にバックパネルより後に描画
+        IconComponent->SetTranslucentSortPriority(-1);
+        IconComponents.Add(IconComponent);
+
+        Key.bDetailed = true;
+        const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
+        const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
+        // 常にバックパネルより後に描画
+        DetailedIconComponent->SetTranslucentSortPriority(-1);
+        DetailedIconComponents.Add(DetailedIconComponent);
+    }
+    BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
+
+    const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
+
+    if (PreviewScene == nullptr)
+        return;
+
+    // シーンにパネルを配置
+    check(IconComponents.Num() == DetailedIconComponents.Num());
+    for (int i = 0; i < IconComponents.Num(); ++i) {
+        const auto Transform = CalculateIconTransform(Box, i, IconComponents.Num());
+        PreviewScene->AddComponent(IconComponents[i], Transform);
+        PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
+    }
+
+    const auto BackPanelTransform = CalculateBackPanelTransform(Box, IconComponents.Num());
+    PreviewScene->AddComponent(BackPanelComponent, BackPanelTransform);
+}
+
+void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox) {
+    Box = InBox;
+    Status = EPLATEAUFeatureInfoPanelStatus::Loading;
+
+    GetMaxLodTask = UE::Tasks::Launch(TEXT("GetMaxLODTask"),
         [Input]() mutable {
             TMap<PredefinedCityModelPackage, int> MaxLods;
 
@@ -105,70 +200,20 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadAsync(const FPLATEAUFeatureInfoPan
             }
 
             return MaxLods;
-        });
+        }, LowLevelTasks::ETaskPriority::BackgroundHigh);
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::Tick() {
-    constexpr float PanelScaleMultiplier = 2.0f;
-
-    if (bFullyLoaded)
+    if (Status == EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
         return;
 
-    if (!GetMaxLodTask.IsReady())
+    if (!GetMaxLodTask.IsCompleted())
         return;
 
-    const auto Input = GetMaxLodTask.Get();
-
-    if (Input.IsEmpty())
-        return;
-
-    const auto OwnerStrongPtr = Owner.Pin();
-
-    // パネルコンポーネント生成
-    for (const auto& Package : FPLATEAUFeatureInfoDisplay::GetDisplayedPackages()) {
-        FPLATEAUFeatureInfoMaterialKey Key = {};
-        Key.bDetailed = false;
-        Key.Package = Package;
-
-        if (!Input.Find(Package)) {
-            Key.bGrayout = true;
-            Key.Lod = 0;
-        } else {
-            Key.bGrayout = false;
-            Key.Lod = Input[Package];
-        }
-
-        const auto PanelMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
-        IconComponents.Add(CreatePanelMeshComponent(PanelMaterial));
-
-        Key.bDetailed = true;
-        const auto DetailedPanelMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
-        DetailedIconComponents.Add(CreatePanelMeshComponent(DetailedPanelMaterial));
-    }
-    BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
-
-    const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
-
-    if (PreviewScene == nullptr)
-        return;
-
-    // シーンにパネルを配置
-    for (int i = 0; i < 4; ++i) {
-        const auto IconTransform = FTransform(FRotator(0, 0, 0),
-            Box.GetCenter() + FVector::UpVector * 2 + FVector((80 * PanelScaleMultiplier * i) - 120 * PanelScaleMultiplier, 0, 0),
-            FVector3d(0.8, 0.8, 0.8) * PanelScaleMultiplier);
-
-        PreviewScene->AddComponent(IconComponents[i], IconTransform);
-        PreviewScene->AddComponent(DetailedIconComponents[i], IconTransform);
-    }
-    const auto BackPanelTransform = FTransform(FRotator(0, 0, 0),
-        Box.GetCenter() + FVector::UpVector,
-        FVector3d(4, 1.3, 1) * PanelScaleMultiplier);
-
-    PreviewScene->AddComponent(BackPanelComponent, BackPanelTransform);
+    CreatePanelComponents(GetMaxLodTask.GetResult());
 
     ApplyVisibility();
 
-    bFullyLoaded = true;
+    Status = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 }
 

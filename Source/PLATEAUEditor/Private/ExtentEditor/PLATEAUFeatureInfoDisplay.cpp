@@ -19,8 +19,17 @@
 #include "Materials/MaterialInstanceDynamic.h"
 
 using namespace plateau::dataset;
+using namespace UE::Tasks;
 
 namespace {
+    /**
+     * @brief 最大並列数
+     */
+    constexpr int MaxParallelCount = 8;
+
+     /**
+      * @brief Packageに対応するアイコンのファイル名を取得します。
+      */
     FString GetIconFileName(const PredefinedCityModelPackage Package) {
         switch (Package) {
         case PredefinedCityModelPackage::Building: return "3dicon_Building.png";
@@ -33,6 +42,10 @@ namespace {
         }
     }
 
+    /**
+     * @brief キーに対応するテクスチャのパスを取得します。
+     * @return
+     */
     FString GetTexturePath(const FPLATEAUFeatureInfoMaterialKey& MaterialKey) {
         const FString WithTextDirName = "AreaIcon_WithText/";
         const FString NoTextDirName = "AreaIcon_NoText/";
@@ -56,13 +69,8 @@ namespace {
         const auto Material = UMaterialInstanceDynamic::Create(BaseMaterial, GetTransientPackage());
         const auto Texture = FPLATEAUTextureLoader::LoadTransient(GetTexturePath(MaterialKey));
         Material->SetTextureParameterValue(TEXT("Texture"), Texture);
-        if (MaterialKey.bGrayout) {
-            Material->SetScalarParameterValue(TEXT("Multiplier"), 0.2f);
-            Material->SetScalarParameterValue(TEXT("Opacity"), 0.2f);
-        } else {
-            Material->SetScalarParameterValue(TEXT("Multiplier"), 0.7f);
-            Material->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
-        }
+        Material->SetScalarParameterValue(TEXT("Multiplier"), 1.0f);
+        Material->SetScalarParameterValue(TEXT("Opacity"), 1.0f);
         return Material;
     }
 
@@ -97,33 +105,45 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
 void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, const IDatasetAccessor& InDatasetAccessor) {
+    // 全てのパネルの状態を更新
+    for (const auto& Entry: AsyncLoadedPanels) {
+        Entry.Value->Tick();
+    }
+
     const auto MeshCodes = MeshCode::getThirdMeshes(InExtent.GetNativeData());
+    auto LoadingPanelCount = CountLoadingPanels();
 
+    // 範囲内の各地域メッシュについてパネルの生成・読み込みを行う。
     for (const auto& RawMeshCode : *MeshCodes) {
-        // Panelが生成されていない場合は生成
         const auto MeshCode = UTF8_TO_TCHAR(RawMeshCode.get().c_str());
-        if (!AsyncLoadedPanels.Find(MeshCode)) {
-            const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
-            AsyncLoadedTile->SetVisibility(Visibility);
-            AsyncLoadedPanels.Add(MeshCode, AsyncLoadedTile);
 
-            FPLATEAUFeatureInfoPanelInput Input;
-            for (const auto& Package : GetDisplayedPackages()) {
-                Input.Add(Package, FindGmlFiles(InDatasetAccessor, RawMeshCode, Package));
-            }
-            auto TileExtent = RawMeshCode.getExtent();
-            const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
-            const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
-            FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
-                FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
-            AsyncLoadedTile->LoadAsync(Input, Box);
+        // 最大並列数以上は同時に読み込まない。
+        if (LoadingPanelCount >= MaxParallelCount)
+            break;
 
+        // 生成済みの場合はスキップ
+        if (AsyncLoadedPanels.Find(MeshCode))
             continue;
-        }
 
-        // 範囲内のPanelについて表示をONにする
-        const auto& AsyncLoadedPanel = AsyncLoadedPanels[MeshCode];
-        AsyncLoadedPanel->Tick();
+        const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
+        AsyncLoadedTile->SetVisibility(Visibility);
+        AsyncLoadedPanels.Add(MeshCode, AsyncLoadedTile);
+
+        FPLATEAUFeatureInfoPanelInput Input;
+        for (const auto& Package : GetDisplayedPackages()) {
+            Input.Add(Package, FindGmlFiles(InDatasetAccessor, RawMeshCode, Package));
+        }
+        const auto TileExtent = RawMeshCode.getExtent();
+        const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
+        const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
+        const FBox Box{
+            FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
+            FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z)
+        };
+
+        AsyncLoadedTile->LoadMaxLodAsync(Input, Box);
+
+        ++LoadingPanelCount;
     }
 }
 
@@ -144,13 +164,13 @@ EPLATEAUFeatureInfoVisibility FPLATEAUFeatureInfoDisplay::GetVisibility() const 
 }
 
 void FPLATEAUFeatureInfoDisplay::SetVisibility(const EPLATEAUFeatureInfoVisibility Value) {
+    Visibility = Value;
     for (const auto& Entry : AsyncLoadedPanels) {
         Entry.Value->SetVisibility(Visibility);
     }
 }
 
-TArray<PredefinedCityModelPackage> FPLATEAUFeatureInfoDisplay::GetDisplayedPackages()
-{
+TArray<PredefinedCityModelPackage> FPLATEAUFeatureInfoDisplay::GetDisplayedPackages() {
     static TArray DisplayedPackages = {
         PredefinedCityModelPackage::Building,
         PredefinedCityModelPackage::Road,
@@ -170,10 +190,8 @@ void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     TArray<FPLATEAUFeatureInfoMaterialKey> Keys;
     for (const auto& Package : GetDisplayedPackages()) {
         for (int Lod = 0; Lod < 4; ++Lod) {
-            Keys.Add({ Package, Lod, false, false });
-            Keys.Add({ Package, Lod, false, true });
-            Keys.Add({ Package, Lod, true, false });
-            Keys.Add({ Package, Lod, true, true });
+            Keys.Add({ Package, Lod, false });
+            Keys.Add({ Package, Lod, true });
         }
     }
 
@@ -181,4 +199,13 @@ void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     for (const auto& Key : Keys) {
         FeatureInfoMaterials.Add(Key, CreateMaterial(BaseMaterial, Key));
     }
+}
+
+int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
+    int Count = 0;
+    for (const auto& Entry : AsyncLoadedPanels) {
+        if (Entry.Value->GetStatus() == EPLATEAUFeatureInfoPanelStatus::Loading)
+            ++Count;
+    }
+    return Count;
 }

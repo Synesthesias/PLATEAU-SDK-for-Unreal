@@ -15,13 +15,15 @@
 #include "SEditorViewport.h"
 #include "AdvancedPreviewScene.h"
 #include "SPLATEAUExtentEditorViewport.h"
-#include "MouseDeltaTracker.h"
 
 #include "AssetViewerSettings.h"
 #include "CameraController.h"
 #include "EditorViewportClient.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEAUExtentEditorViewportClient"
+
+DECLARE_STATS_GROUP(TEXT("PLATEAUExtentEditor"), STATGROUP_PLATEAUExtentEditor, STATCAT_PLATEAUSDK);
+DECLARE_CYCLE_STAT(TEXT("FeatureInfoDisplay"), STAT_FeatureInfoDisplay, STATGROUP_PLATEAUExtentEditor);
 
 namespace {
     /**
@@ -103,7 +105,7 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
         Gizmo.SetSelected(Gizmo.IntersectsWith(ExtentMin, ExtentMax));
     }
 
-    FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(GetViewTransform().GetLocation().Z < 10000);
+    FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(GetViewTransform().GetLocation().Z < 10000.0);
 
     // ベースマップ
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -149,8 +151,19 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 
     Basemap->UpdateAsync(Extent);
 
-    // , GetViewTransform().GetLocation().Z < 4000, GetViewTransform().GetLocation().Z < 2000
-    FeatureInfoDisplay->UpdateAsync(Extent, *DatasetAccessor);
+    {
+        SCOPE_CYCLE_COUNTER(STAT_FeatureInfoDisplay);
+        const auto CameraDistance = GetViewTransform().GetLocation().Z;
+        if (CameraDistance < 4000.0) {
+            FeatureInfoDisplay->SetVisibility(EPLATEAUFeatureInfoVisibility::Detailed);
+            FeatureInfoDisplay->UpdateAsync(Extent, *DatasetAccessor);
+        } else if (CameraDistance < 10000.0) {
+            FeatureInfoDisplay->SetVisibility(EPLATEAUFeatureInfoVisibility::Visible);
+            FeatureInfoDisplay->UpdateAsync(Extent, *DatasetAccessor);
+        } else {
+            FeatureInfoDisplay->SetVisibility(EPLATEAUFeatureInfoVisibility::Hidden);
+        }
+    }
 
     // 何も選択されていない場合は既定の動作(視点移動等)
     if (SelectedHandleIndex == -1) {
