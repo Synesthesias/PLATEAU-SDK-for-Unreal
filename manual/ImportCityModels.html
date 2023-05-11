@@ -91,11 +91,9 @@
 <img src="../resources/manual/importCityModels/plateauWindowImport.png" alt=""></li>
 <li>インポート元で <code>ローカル</code> か <code>サーバー</code> を選択します。</li>
 </ul>
-<div class="NOTE"><h5>Note</h5><p>今のところ、「サーバー」ではなく「ローカル」を推奨します。<br>すみませんが、現状ではサーバーで利用できるデータは少ないためです。<br>2023年度中にSDK向けのサーバーデータの範囲を拡充予定です。</p>
-</div>
 <h4 id="ローカルからインポートする場合">ローカルからインポートする場合</h4>
 <ul>
-<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。  3D都市モデルは<a href="https://www.geospatial.jp/ckan/dataset/plateau">G空間情報センターのPLATEAUポータルサイト</a>からダウンロードできます。<ul>
+<li>導入したい都市データが自分のコンピュータにある場合はローカルを選択します。3D都市モデルは<a href="https://www.geospatial.jp/ckan/dataset/plateau">G空間情報センターのPLATEAUポータルサイト</a>からダウンロードできます。<ul>
 <li><code>参照</code>ボタンを押します。都市データのフォルダの選択画面が表示されます。</li>
 <li>都市データのフォルダの中には、<code>udx</code>,<code>codelists</code>という名前のフォルダがあるはずです。<br><code>udx</code>から<strong>階層が1つ上</strong>のフォルダを選択します。</li>
 </ul>
@@ -103,7 +101,7 @@
 </ul>
 <h4 id="サーバーからインポートする場合">サーバーからインポートする場合</h4>
 <ul>
-<li><code>サーバー</code>では、PLATEAUのデータサーバーから直接 都市データをインポートできます。<ul>
+<li><code>サーバー</code>では、PLATEAUのデータサーバーから直接3D都市モデルをインポートできます。<ul>
 <li><code>接続先設定</code> の欄がありますが、設定しなくとも自動でデフォルトのURLに接続されます。<br>別のURLに接続したい場合のみ、URLを入力して「サーバーデータ更新」ボタンを押してください。<br><code>トークン</code> は Bearer認証のトークンです。</li>
 <li><code>データセットの選択</code>で<code>都道府県</code>を選択します。</li>
 <li>するとその都道府県に対応する <code>データセット</code>が選択肢に出てくるので選びます。</li>
@@ -114,14 +112,24 @@
 <p>リストのうち、都市が属する場所として近いものを選択します。<br><img src="../resources/manual/importCityModels/coordinateSystemSelect.png" alt=""><br>適切なものを選ぶと座標の誤差が小さくなります。<br>ここで選択する座標系は国土交通省が定める平面直角座標系に準拠しています。<br>詳しくは <a href="https://www.gsi.go.jp/sokuchikijun/jpc.html">国土地理院のWebサイト「わかりやすい平面直角座標系」</a> をご覧ください。</p>
 <h3 id="インポート範囲の選択">インポート範囲の選択</h3>
 <ul>
-<li><code>範囲選択</code>ボタンを押します。</li>
-<li>利用可能な範囲の一覧が緑色の線で表示されます。
+<li><code>範囲選択</code>ボタンを押すと範囲選択画面が開きます。
 <img src="../resources/manual/importCityModels/areaSelectWindow.png" alt="">  </li>
-<li>青色のハンドルをドラッグして範囲を選択します。</li>
-<li>シーンビュー左上の<code>決定</code>ボタンを押します。</li>
-<li><strong>補足</strong>:<br>地域の区分を確認したい時は、ローカルにダウンロードしたフォルダに付属している <code>indexmap</code> という名前のpdfファイルをご覧ください。<br>下図のように地図上に区分が記載されています。
-<img src="../resources/manual/importCityModels/idmap.png" alt=""></li>
+<li>範囲選択画面の操作方法：<ul>
+<li>マウスホイールを上下に回してズームアウト、ズームインします。</li>
+<li>マウスクリックしたままドラッグしてカメラ移動します。</li>
+<li>オレンジ色の球体をドラッグして範囲を選択します。</li>
+<li>ビューポート左上の決定ボタンを押して範囲を確定します。</li>
 </ul>
+</li>
+<li>画面のみかた：<ul>
+<li>青色の線は利用可能な地域を示します。</li>
+<li>地域ごとに利用可能な地物種類とLODがアイコン形式で表示されます。(地形、災害リスクなど、アイコンとして表示されない地物も一部存在します。)</li>
+<li>地図は国土地理院のサイトから自動でダウンロードされて表示されます。インターネットへの接続が必要です。</li>
+</ul>
+</li>
+</ul>
+<p><strong>補足</strong>:<br>  地域の区分を確認したい時は、ローカルにダウンロードしたフォルダに付属している <code>indexmap</code> という名前のpdfファイルをご覧ください。<br>下図のように地図上に区分が記載されています。
+  <img src="../resources/manual/importCityModels/idmap.png" alt=""></p>
 <h3 id="地物別設定">地物別設定</h3>
 <p>地物の種類ごとにインポートに関する設定を行います。<br><img src="../resources/manual/importCityModels/importPerPackageConfig.png" alt=""><br><strong>設定項目について:</strong></p>
 <ul>
@@ -170,6 +178,12 @@
 <ul>
 <li><code>モデルをインポート</code>ボタンを押します。</li>
 <li>処理が進むと、都市のオブジェクトが順次シーンに配置されていきます。<br>進捗表示がすべて「完了」になったらインポート終了です。<br><img src="../resources/manual/importCityModels/importComplete.png" alt=""></li>
+</ul>
+<h3 id="インポートのキャンセル">インポートのキャンセル</h3>
+<ul>
+<li>インポート処理中に<code>インポートをキャンセルする</code>ボタンを押します。</li>
+<li>キャンセル処理中は、ボタンが<code>キャンセル中…</code>の表記に変わります。
+再度<code>モデルをインポート</code>ボタンが表示されたらキャンセル完了です。</li>
 </ul>
 <h3 id="読み込み状況の確認">読み込み状況の確認</h3>
 <p>PLATEAUCityModelLoaderアクタの詳細パネルから読み込み状況の確認ができます。

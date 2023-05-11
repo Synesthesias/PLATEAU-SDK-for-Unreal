@@ -81,48 +81,41 @@
 
 <p>このページではブループリントを利用して都市モデルの属性情報にアクセスする方法を記載します。</p>
 <h2 id="都市モデルのロード">都市モデルのロード</h2>
-<p><img src="../resources/manual/accessCityObject/sample.png" alt=""></p>
 <p>サンプルとしてマウスをクリックした際にカメラの中心に位置する都市オブジェクトの属性情報を画面に表示するスクリプトを紹介します。</p>
-<h3 id="コンストラクションスクリプト">コンストラクションスクリプト</h3>
-<p><img src="../resources/manual/accessCityObject/blueprint.png" alt=""></p>
-<h4 id="クリックされたコンポーネントの取得">クリックされたコンポーネントの取得</h4>
-<p><img src="../resources/manual/accessCityObject/blueprintSection1.png" alt=""></p>
+<h3 id="ブループリントの利用">ブループリントの利用</h3>
+<p>SDKにはサンプルのブループリントが含まれています。<br>確認するには、コンテンツブラウザで <code>設定 → プラグインコンテンツを表示</code>　にチェックを入れ、次の場所にあるブループリントを開いてください：<br><code>Plugins/PLATEAU SDK for Unreal コンテンツ/Samples/AttributeLoadSample/ClickToGetAttribute</code>  </p>
+<p>このブループリントを利用するには次のようにします：</p>
 <ul>
-<li><code>LineTraceByChannel</code>ノードによって画面中央にあるコンポーネントを取得します。</li>
+<li>都市モデルをインポートしたレベルに <code>ClickToGetAttribute</code> を配置します。  </li>
+<li>その詳細の CityModel 欄にインポートした都市モデルを割り当てます。</li>
+<li><code>ウィンドウ/ワールドセッティング</code>の<code>GameMode/ゲームモードオーバーライド</code>を<code>ClickEventGameMode</code>に指定します。</li>
+<li>再生して都市オブジェクトをクリックすると属性情報が表示されます。</li>
 </ul>
-<h4 id="コンポーネントに対応する都市オブジェクトの取得">コンポーネントに対応する都市オブジェクトの取得</h4>
+<p><img src="../resources/manual/accessCityObject/sample.png" alt=""></p>
+<h3 id="ブループリントの説明">ブループリントの説明</h3>
+<p><img src="../resources/manual/accessCityObject/blueprint.png" alt=""></p>
+<h4 id="マウスクリックに-linetrace-を飛ばす">マウスクリックに LineTrace を飛ばす</h4>
+<p><img src="../resources/manual/accessCityObject/blueprintSection1.png" alt=""></p>
+<h4 id="クリック位置の-cityobjectid-を取得する">クリック位置の CityObjectID を取得する</h4>
 <p><img src="../resources/manual/accessCityObject/blueprintSection2.png" alt=""></p>
 <ul>
 <li><code>CityModel</code>変数には属性情報を取得したい<code>PLATEAUInstancedCityModel</code>アクタを設定します。<ul>
 <li><code>PLATEAUInstancedCityModel</code>アクタは都市モデルをインポートすることによって生成されます。</li>
 </ul>
 </li>
-<li><code>GetCityObjectInfo</code>ノードは<code>USceneComponent</code>を受け取って都市オブジェクトにアクセスするために必要な情報を出力します。</li>
+<li><code>GetCityObjectInfo</code>ノードは<code>Component</code>を受け取って都市オブジェクトにアクセスするために必要な情報 <code>PLATEAUCityObjectInfo</code> を出力します。</li>
+<li><code>PLATEAUCityObjectInfo</code> の <code>ID</code> から、個々の都市オブジェクトのIDを取得できます。</li>
+</ul>
+<h4 id="gmlファイルをパースしcityobjectidに対応する属性情報を取得する">GMLファイルをパースし、CityObjectIDに対応する属性情報を取得する</h4>
+<ul>
 <li><code>LoadAsync</code>ノードは非同期でCityGMLのパースを行い、<code>CityModel</code>インスタンスを出力します。</li>
 <li><code>GetCityObjectByID</code>ノードは<code>CityModel</code>インスタンスと<code>FeatureID</code>を受け取り、対応する<code>CityObject</code>インスタンスを出力します。</li>
+<li><code>CityObject</code> は属性情報を持ちます。属性情報はキーと値のペアのセットです。</li>
+<li><code>GetAttributeMap</code>ノードは<code>CityObject</code>インスタンスを受け取り、都市オブジェクトが持つ属性情報を<code>AttributeMap</code>インスタンスとして出力します。
+<img src="../resources/manual/accessCityObject/blueprintSection3.png" alt=""></li>
 </ul>
-<h4 id="都市オブジェクトの属性情報の可視化">都市オブジェクトの属性情報の可視化</h4>
-<p><img src="../resources/manual/accessCityObject/blueprintSection3.png" alt=""></p>
-<ul>
-<li><code>GetAttributeMap</code>ノードは<code>CityObject</code>インスタンスを受け取り、都市オブジェクトが持つ属性情報を<code>AttributeMap</code>インスタンスとして出力します。</li>
-</ul>
-<h2 id="属性情報の取得方法">属性情報の取得方法</h2>
-<p><img src="../resources/manual/accessCityObject/placeGetObjectInfo.png" alt=""></p>
-<ul>
-<li>コンテンツブラウザから<code>Plugin/PLATEAU SDK for Unrealコンテンツ</code>の<code>GetObjectInfo</code>をレベル上に配置します。</li>
-</ul>
-<p><img src="../resources/manual/accessCityObject/assignInstance.png" alt=""></p>
-<ul>
-<li><code>全て/デフォルト/Plateau Instance</code>に配置した都市オブジェクトを指定します。</li>
-</ul>
-<p><img src="../resources/manual/accessCityObject/getObjectInfoSettings.png" alt=""></p>
-<ul>
-<li><code>その他/入力/Auto Receive Input</code>を<code>Player 0</code>に指定します。 </li>
-</ul>
-<p><img src="../resources/manual/accessCityObject/overrideGameMode.png" alt=""></p>
-<ul>
-<li><code>ウィンドウ/ワールドセッティング</code>の<code>GameMode/ゲームモードオーバーライド</code>を<code>ClickEventGameMode</code>に指定します。</li>
-</ul>
+<h4 id="都市オブジェクトの属性情報の表示">都市オブジェクトの属性情報の表示</h4>
+<p><img src="../resources/manual/accessCityObject/blueprintSection4.png" alt=""></p>
 <h2 id="属性とは">属性とは</h2>
 <p>都市オブジェクトの情報は「属性」として取得できます。<br>属性は例えば  </p>
 <pre><code class="lang-text">(String) 大字・町コード =&gt; 42,

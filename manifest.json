@@ -39,7 +39,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/AccessCityObject.html",
-          "hash": "VKxqdRsQO+1/p/VCnN6OQngoBqmnnRh78YKzWXi9YVw="
+          "hash": "q3QUPXpxLtH/zoxcETK5kvJvLseBHHhrguv9HcQfuLI="
         }
       },
       "is_incremental": false,
@@ -63,7 +63,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/ImportCityModels.html",
-          "hash": "rn6PgXrE5DYNN0WEzf2eqjB4Yp3dAQ5av7pbyJF3qnw="
+          "hash": "Y5YnJM60HGUFQ/xjjjzM+r7ZzQFbLPeyNV/8SM75AcE="
         }
       },
       "is_incremental": false,
@@ -165,6 +165,17 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual/accessCityObject/blueprintSection3.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/accessCityObject/blueprintSection4.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/accessCityObject/blueprintSection4.png"
         }
       },
       "is_incremental": false,
