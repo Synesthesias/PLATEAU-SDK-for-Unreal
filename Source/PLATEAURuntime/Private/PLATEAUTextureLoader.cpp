@@ -252,7 +252,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
                     RF_Transient
                     );
 
-                NewTexture->NeverStream = true;
+                NewTexture->NeverStream = false;
 
                 if (GRHISupportsAsyncTextureCreation)
                     UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);

@@ -95,13 +95,13 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
         auto Extent = Box.GetExtent();
         Extent.X = FMath::Abs(Extent.X);
         Extent.Y = FMath::Abs(Extent.Y);
-        Extent.Z = FMath::Abs(Extent.Z);
+        Extent.Z = 0.01;
 
         ViewportClient.Pin()->GetPreviewScene()->AddComponent(
             TileComponent,
             FTransform(FRotator(0, 0, 0),
                 Box.GetCenter() - FVector::UpVector,
-                Extent / 50
+                Extent / 50.0
             ));
         TilesInScene.Add(TileComponent);
     }
