@@ -52,7 +52,7 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".obj";
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i]);
+            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i]);
         }
     }
 }
@@ -70,7 +70,7 @@ void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstanc
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".fbx";
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i], Option.FbxWriteOptions);
+            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.FbxWriteOptions);
         }
     }
 }
@@ -85,7 +85,7 @@ void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstan
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 
             std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder.Replace(TEXT("/"), TEXT("\\"))));
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName.Replace(TEXT("/"), TEXT("\\"))), *ModelDataArray[i], Option.GltfWriteOptions);
+            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions);
         }
     }
 }
@@ -185,7 +185,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+                    const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
+                    PathName = BaseDir + Texture->GetName();
                 }
             }
         }
