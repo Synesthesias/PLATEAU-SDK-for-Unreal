@@ -170,9 +170,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     for (int k = 0; k < RenderMesh.Sections.Num(); k++) {
         const auto& Section = RenderMesh.Sections[k];
+        if(Section.NumTriangles <= 0) continue;
+        
         //サブメッシュの開始・終了インデックス計算
         const int FirstIndex = Section.FirstIndex;
-        const int EndIndex = Section.FirstIndex + Section.NumTriangles * 3;
+        const int EndIndex = Section.FirstIndex + Section.NumTriangles * 3 - 1;
+        ensureAlwaysMsgf((EndIndex - FirstIndex + 1) % 3 == 0, TEXT("SubMesh indices size should be multiple of 3.") );
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString PathName = FString("");
