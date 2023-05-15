@@ -214,15 +214,14 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
                 NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
 
                 // TODO: 関数化(SaveTexturePackage)
-                //Package->MarkPackageDirty();
-                //FAssetRegistryModule::AssetCreated(NewTexture);
-
-                //const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
-                //FSavePackageArgs Args;
-                //Args.SaveFlags = SAVE_NoError;
-                //Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
-                //Args.Error = GError;
-                //UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
+                Package->MarkPackageDirty();
+                FAssetRegistryModule::AssetCreated(NewTexture);
+                const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
+                FSavePackageArgs Args;
+                Args.SaveFlags = SAVE_NoError;
+                Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
+                Args.Error = GError;
+                UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
 
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
