@@ -18,13 +18,8 @@
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Materials/MaterialInstance.h"
 #include "Engine/Classes/Engine/StaticMesh.h"
-#include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "filesystem"
-#include "EditorFramework/AssetImportData.h"
-#include "HAL/FileManager.h"
-
-#if WITH_EDITOR
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
@@ -49,7 +44,8 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
-    } else {
+    }
+    else {
         ReferencePoint = FVector::ZeroVector;
     }
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
@@ -66,7 +62,8 @@ void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstanc
     plateau::meshWriter::FbxWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
-    } else {
+    }
+    else {
         ReferencePoint = FVector::ZeroVector;
     }
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
@@ -97,10 +94,11 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
     const auto RootComponent = ModelActor->GetRootComponent();
     const auto Components = RootComponent->GetAttachChildren();
-    for (int i = 0; i < Components.Num(); i++) {
+    for (int i = 0; i < Components.Num(); i++)
+    {
         //BillboardComponentなるコンポーネントがついていることがあるので無視
         if (Components[i]->GetName().Contains("BillboardComponent")) continue;
-
+        
         ModelArray.Add(CreateModel(Components[i], Option));
         ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
     }
@@ -118,22 +116,24 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
 }
 
 void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option) {
-    for (const auto& Component : NodeRootComponent->GetAttachChildren()) {
-        if (!Option.bExportHiddenObjects && !Component->IsVisible())
-            continue;
-
-        auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
+    const auto Components = NodeRootComponent->GetAttachChildren();
+    for (int i = 0; i < Components.Num(); i++) {
+        if (!Option.bExportHiddenObjects) {
+            if (!Components[i]->IsVisible()) {
+                continue;
+            }
+        }
+        auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Components[i]->GetName()));
         auto& Mesh = Node.getMesh();
         Mesh.emplace();
-        CreateMesh(Mesh.value(), Component, Option);
+        CreateMesh(Mesh.value(), Components[i], Option);
     }
 }
 
 void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
-    const auto StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
-
-    if (StaticMeshComponent->GetStaticMesh() == nullptr)
-        return;
+    //StaticMeshComponentにキャスト
+    UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
+    // FStaticMeshAttributes Attributes(*StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0));
 
     //渡すためのデータ各種
     std::vector<TVec3d> Vertices;
@@ -144,9 +144,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     const auto& RenderMesh = StaticMeshComponent->GetStaticMesh()->GetLODForExport(0);
 
-    auto& InVertices = RenderMesh.VertexBuffers.StaticMeshVertexBuffer;
-    for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
-        const FVector2f& UV = InVertices.GetVertexUV(i, 0);
+    for (uint32 i = 0; i < RenderMesh.VertexBuffers.StaticMeshVertexBuffer.GetNumVertices(); ++i) {
+        const FVector2f& UV = RenderMesh.VertexBuffers.StaticMeshVertexBuffer.GetVertexUV(i, 0);
         UV1.push_back(TVec2f(UV.X, 1.0f - UV.Y));
     }
 
@@ -171,38 +170,76 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     for (int k = 0; k < RenderMesh.Sections.Num(); k++) {
         const auto& Section = RenderMesh.Sections[k];
-        if (Section.NumTriangles <= 0) continue;
-
+        if(Section.NumTriangles <= 0) continue;
+        
         //サブメッシュの開始・終了インデックス計算
         const int FirstIndex = Section.FirstIndex;
         const int EndIndex = Section.FirstIndex + Section.NumTriangles * 3 - 1;
-        ensureAlwaysMsgf((EndIndex - FirstIndex + 1) % 3 == 0, TEXT("SubMesh indices size should be multiple of 3."));
+        ensureAlwaysMsgf((EndIndex - FirstIndex + 1) % 3 == 0, TEXT("SubMesh indices size should be multiple of 3.") );
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
-        FString TextureFilePath = FString("");
-
+        FString PathName = FString("");
         if (Option.bExportTexture) {
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
             if (MaterialInstance->TextureParameterValues.Num() > 0) {
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
-                    if (TextureSourceFiles.Num() == 0) {
-                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        continue;
-                    }
-
                     const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
-                    const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
-                    const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
-                    TextureFilePath = AssetBasePath / TextureFileRelativePath;
+                    PathName = BaseDir + Texture->GetName();
                 }
             }
         }
 
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*TextureFilePath), FirstIndex, EndIndex);
+        if (!PathName.IsEmpty())
+        {
+            OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
+        }
     }
+
+    // TODO: MeshDescription使用する方法だと何故かUV取得できない
+    //const auto VertexPositions = Attributes.GetVertexPositions();
+    //const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
+    //const auto Indices = Attributes.GetVertexInstanceVertexIndices();
+    //const auto SubMeshCount = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->PolygonGroups().Num();
+
+    //for (const FVertexInstanceID InstanceID : StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->VertexInstances().GetElementIDs()) {
+    //    auto UV = VertexInstanceUVs.Get(InstanceID, 0);
+    //    UV1.push_back(TVec2f(UV.X, UV.Y));
+    //}
+
+
+    //for (int i = 0; i < VertexPositions.GetNumElements(); i++) {
+    //    const auto VertexPosition = VertexPositions.Get(i, 0);
+    //    const TVec3d Vertex(VertexPosition.X + ReferencePoint.X, VertexPosition.Y + ReferencePoint.Y, VertexPosition.Z + ReferencePoint.Z);
+    //    Vertices.push_back(Vertex);
+    //}
+    //for (int i = 0; i < Indices.GetNumElements(); i++) {
+    //    OutIndices.push_back(Indices.Get(i));
+    //}
+
+    //int SubMeshIndex = 0;
+    //for (int k = 0; k < SubMeshCount; k++) {
+    //    //サブメッシュの開始・終了インデックス計算
+    //    const auto SubMeshPolygonNum = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0)->GetPolygonGroupPolygons(FPolygonGroupID(k)).Num();
+    //    const int SubMeshEndIndex = FMath::Min(SubMeshIndex - 1 + ((int)(SubMeshPolygonNum * 3)), (int)Vertices.size() - 1);
+
+    //    //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
+    //    FString PathName;
+    //    if (Option.bExportTexture) {
+    //        const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
+    //        if (MaterialInstance->TextureParameterValues.Num() > 0) {
+    //            FMaterialParameterMetadata MetaData;
+    //            MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
+    //            if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+    //                PathName = (FPaths::ProjectContentDir() + "PLATEAU/" + Texture->GetName()).Replace(TEXT("/"), TEXT("\\"));
+    //            }
+    //        }
+    //    }
+
+    //    OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), SubMeshIndex, SubMeshEndIndex);
+    //    SubMeshIndex = SubMeshEndIndex + 1;
+    //}
 
     OutMesh.addVerticesList(Vertices);
 
@@ -219,11 +256,11 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     if (ComponentName.FindLastChar('_', Index)) {
         if (ComponentName.RightChop(Index + 1).IsNumeric()) {
             return ComponentName.LeftChop(ComponentName.Len() - Index);
-        } else {
+        }
+        else {
             return ComponentName;
         }
-    } else
+    }
+    else
         return ComponentName;
 }
-
-#endif
