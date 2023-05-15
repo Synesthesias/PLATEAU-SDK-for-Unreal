@@ -156,11 +156,12 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
+    if(TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
     // 引数のパスのセパレーターはOSによって "/" か "¥" なので "/" に統一します。
     const auto TexturePath_NotNormalized = TexturePath_SlashOrBackSlash.Replace(*FString("\\"), *FString("/"));
     // パスに ".." が含まれる場合は、std::filesystem の機能を使って適用します。
     fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_NotNormalized)).lexically_normal();
-    const auto TexturePath = FString(UTF8_TO_TCHAR(TexturePathCpp.c_str()));
+    const FString TexturePath = TexturePathCpp.c_str();
 
     if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
         return nullptr;
