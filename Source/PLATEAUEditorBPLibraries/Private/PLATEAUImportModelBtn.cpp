@@ -9,13 +9,13 @@
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 
 /**
- * @brief モデルインポート開始
+ * @brief シティモデルローダー取得
  * @param ZoneID ゾーンID
  * @param ReferencePoint リファレンス位置
  * @param PackageInfoSettingsData UIで設定されたパッケージ設定情報データ
  * @param bImportFromServer サーバーからインポートするか？
  */
-void UPLATEAUImportModelBtn::ImportModel(const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData, const bool bImportFromServer) {
+APLATEAUCityModelLoader* UPLATEAUImportModelBtn::GetCityModelLoader(const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData, const bool bImportFromServer) {
     const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
     const auto EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
     const auto EmptyActorAsset = EmptyActorAssetData.GetAsset();
@@ -56,5 +56,5 @@ void UPLATEAUImportModelBtn::ImportModel(const int ZoneID, const FVector& Refere
     }
 
     Loader->ImportSettings = ImportSettings;
-    Loader->LoadAsync();
+    return Loader;
 }
