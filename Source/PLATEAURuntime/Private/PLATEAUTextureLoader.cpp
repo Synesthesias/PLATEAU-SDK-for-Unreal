@@ -175,7 +175,6 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&]() {
-                auto DesiredTextureName = FPaths::GetBaseFilename(TexturePath);
 
                 FString PackageName = TEXT("/Game/PLATEAU/Textures/");
                 PackageName += FPaths::GetBaseFilename(TexturePath);
@@ -189,13 +188,11 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
                 NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
                 // テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
-                FString TextureRelativePathPrefix;
-                const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
+                const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + FString("PLATEAU/")));
                 auto TextureRelativePath = TexturePath.Replace(*BaseDir, *FString(""));
-                DesiredTextureName = TextureRelativePath;
-                FString NewUniqueName = DesiredTextureName.Replace(*FString("\\"), *FString("/"));
+                FString NewUniqueName = TextureRelativePath.Replace(*FString("\\"), *FString("/"));
                 if (!NewTexture->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(DesiredTextureName)).ToString();
+                    NewUniqueName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(TextureRelativePath)).ToString();
                 }
 
                 NewTexture->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
