@@ -24,6 +24,6 @@ private:
         AActor& Actor, USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
         FString Name);
-    USceneComponent* LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
-    void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor);
+    USceneComponent* LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor);
+    void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor);
 };

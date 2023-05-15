@@ -7,6 +7,8 @@
 #include "RHICommandList.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/SavePackage.h"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #if WITH_EDITOR
 
@@ -154,7 +156,13 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
-    const auto TexturePath = TexturePath_SlashOrBackSlash.Replace(*FString("\\"), *FString("/"));
+    if(TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
+    // 引数のパスのセパレーターはOSによって "/" か "¥" なので "/" に統一します。
+    const auto TexturePath_NotNormalized = TexturePath_SlashOrBackSlash.Replace(*FString("\\"), *FString("/"));
+    // パスに ".." が含まれる場合は、std::filesystem の機能を使って適用します。
+    fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_NotNormalized)).lexically_normal();
+    const FString TexturePath = TexturePathCpp.c_str();
+
     if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
         return nullptr;
 
@@ -181,7 +189,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
                 // テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
                 FString TextureRelativePathPrefix;
-                const auto BaseDir = FPaths::ProjectContentDir() + "PLATEAU/";
+                const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
                 auto TextureRelativePath = TexturePath.Replace(*BaseDir, *FString(""));
                 DesiredTextureName = TextureRelativePath;
                 FString NewUniqueName = DesiredTextureName;
