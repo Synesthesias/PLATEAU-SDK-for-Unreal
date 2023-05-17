@@ -21,11 +21,11 @@ namespace plateau {
 UENUM(BlueprintType)
 enum class EPLATEAUMeshGranularity : uint8 {
     //! 最小地物単位(LOD2, LOD3の各部品)
-    PerAtomicFeatureObject,
+    PerAtomicFeatureObject = 1,
     //! 主要地物単位(建築物、道路等)
-    PerPrimaryFeatureObject,
+    PerPrimaryFeatureObject = 0,
     //! 都市モデル地域単位(GMLファイル内のすべてを結合)
-    PerCityModelArea
+    PerCityModelArea = 2
 };
 
 USTRUCT()
