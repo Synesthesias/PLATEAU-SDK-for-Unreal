@@ -21,9 +21,9 @@ namespace plateau {
 UENUM(BlueprintType)
 enum class EPLATEAUMeshGranularity : uint8 {
     //! 最小地物単位(LOD2, LOD3の各部品)
-    PerAtomicFeatureObject = 1,
+    PerAtomicFeatureObject = 0,
     //! 主要地物単位(建築物、道路等)
-    PerPrimaryFeatureObject = 0,
+    PerPrimaryFeatureObject = 1,
     //! 都市モデル地域単位(GMLファイル内のすべてを結合)
     PerCityModelArea = 2
 };
@@ -137,8 +137,8 @@ public:
 
     static TMap<EPLATEAUMeshGranularity, FText> GetGranularityTexts() {
         TMap<EPLATEAUMeshGranularity, FText> Items;
-        Items.Add(EPLATEAUMeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PrimaryFeatureObject", "主要地物単位"));
         Items.Add(EPLATEAUMeshGranularity::PerAtomicFeatureObject, LOCTEXT("AtomicFeatureObject", "最小地物単位"));
+        Items.Add(EPLATEAUMeshGranularity::PerPrimaryFeatureObject, LOCTEXT("PrimaryFeatureObject", "主要地物単位"));
         Items.Add(EPLATEAUMeshGranularity::PerCityModelArea, LOCTEXT("CityModelArea", "地域単位"));
         return Items;
     }
@@ -146,10 +146,10 @@ public:
     static plateau::polygonMesh::MeshGranularity ConvertGranularity(EPLATEAUMeshGranularity Value) {
         // TODO: 共通化
         switch (Value) {
+        case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
+            return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;            
         case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
             return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
-        case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
-            return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
         case EPLATEAUMeshGranularity::PerCityModelArea:
             return plateau::polygonMesh::MeshGranularity::PerCityModelArea;
         }
