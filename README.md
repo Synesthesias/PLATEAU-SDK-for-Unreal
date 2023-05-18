@@ -21,10 +21,16 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 <img src="README_Images/GameSample.png" width="48%" />&nbsp;
 
 # 動作環境
-- Windows（x86_64） Visual Studio 2019 の利用を想定
+
+**OS**
+- Windows（x86_64）
 - MacOS（ARM）
 - Android、iOS
-  - モバイル向けには、一部の機能のみ（緯度経度と直交座標の相互変換など）をサポートしています。
+  - モバイル向けには、一部の機能のみ（緯度経度と直交座標の相互変換など）をサポートしています。  
+
+**開発環境**
+- Unreal Engine, および (Windowsの場合) Visual Studio のバージョンについては、  
+  [Releaseページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases) に記載のものを利用してください。
 
 # 利用手順
 - SDKの最新版は[Releaseページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)からダウンロードしてください。
@@ -33,9 +39,6 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 
 # 注意点
 - 現在、この SDKとドキュメントは日本語のみ対応しています。
-- 都市モデルのインポート方法は「ローカル」と「サーバー」の2種類ありますが、  
-  ローカルを推奨します。サーバーモードで利用できるデータはまだ少ないためです。  
-  2023年度中にSDK向けのサーバーデータの範囲を拡充予定です。
 
 # ライセンス
 - 本リポジトリはMITライセンスで提供されています。
