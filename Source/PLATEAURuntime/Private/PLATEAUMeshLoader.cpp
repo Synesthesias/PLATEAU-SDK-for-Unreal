@@ -188,7 +188,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         if (bCanceled->Load(EMemoryOrder::Relaxed)) 
             break;
 
-        LoadNodeRecursive(ParentComponent, &InModel->getRootNodeAt(i), *ModelActor);
+        LoadNodeRecursive(ParentComponent, InModel->getRootNodeAt(i), *ModelActor);
         // StaticMeshesへのアクセスでAccess Violationが発生することがあるため冗長なコピーを生成。
         // コピーキャプチャでレースコンディション発生する場合がある？
         const auto CopiedStaticMeshes = StaticMeshes;
@@ -262,19 +262,19 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
-void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
+void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
     USceneComponent* Component = LoadNode(ParentComponent, Node, Actor);
 
     //TArray<TFuture<void>> Results;
-    for (int i = 0; i < Node->getChildCount(); i++) {
-        const auto& TargetNode = Node->getChildAt(i);
+    for (int i = 0; i < Node.getChildCount(); i++) {
+        const auto& TargetNode = Node.getChildAt(i);
 
         // TODO: NodeのLifetimeへの依存解消
         //Results.Add(Async(EAsyncExecution::Thread,
         //    [this, Comp, &TargetNode, &Actor] {
         //const auto ChildComponent = LoadNode(Component, &TargetNode, Actor);
 
-        LoadNodeRecursive(Component, &TargetNode, Actor);
+        LoadNodeRecursive(Component, TargetNode, Actor);
 
         //}));
     }
@@ -395,15 +395,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     return ComponentRef;
 }
 
-USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node* Node, AActor& Actor) {
+USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
     USceneComponent* Comp = nullptr;
-    if (Node->getMesh() == std::nullopt) {
+    if (Node.getMesh() == std::nullopt) {
+        FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
         //SceneComponentを付与
         FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&] {
+            [&,DesiredName] {
                 Comp = NewObject<USceneComponent>(&Actor, NAME_None);
-                const auto DesiredName = UTF8_TO_TCHAR(Node->getName().c_str());
-                FString NewUniqueName = DesiredName;
+                FString NewUniqueName = FString(DesiredName);
                 if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
                     NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
                 }
@@ -420,13 +420,13 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
     }
 
     // TODO: 空のMeshが入っている問題
-    if (Node->getMesh()->getVertices().size() == 0)
+    if (Node.getMesh()->getVertices().size() == 0)
         return nullptr;
 
-    const FString CompName = UTF8_TO_TCHAR(Node->getName().c_str());
+    const FString CompName = UTF8_TO_TCHAR(Node.getName().c_str());
     return CreateStaticMeshComponent(
         Actor, *ParentComponent,
-        Node->getMesh().value(),
+        Node.getMesh().value(),
         CompName);
 }
 

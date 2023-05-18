@@ -6,8 +6,6 @@
 
 #include "PLATEAUGeometry.h"
 
-struct FPLATEAUExtent;
-
 namespace plateau::dataset {
     class MeshCode;
     class GmlFile;
@@ -15,76 +13,71 @@ namespace plateau::dataset {
     enum class PredefinedCityModelPackage : uint32;
 }
 
-struct FPLATEAUMeshCodeFeatureInfoInput {
-    FString BldgGmlPath;
-    int BldgMaxLod;
-    FString RoadGmlPath;
-    int RoadMaxLod;
-    FString FrnGmlPath;
-    int FrnMaxLod;
-    FString VegGmlPath;
-    int VegMaxLod;
+enum class EPLATEAUFeatureInfoVisibility : uint8_t {
+    Hidden = 0,
+    Visible = 1,
+    Detailed = 2,
 };
 
 /**
- * @brief 各メッシュコード(グリッド)に表示する地物情報のパネルを表します。
+ * @brief 地物情報パネルのマテリアルを検索するためのキーです。
  */
-struct FPLATEAUAsyncLoadedFeatureInfoPanel {
-public:
-    ~FPLATEAUAsyncLoadedFeatureInfoPanel() {
-    }
-
-    bool GetFullyLoaded() {
-        FScopeLock Lock(&CriticalSection);
-        return IsFullyLoaded;
-    }
-
-    USceneComponent* GetPanelComponent(int Index) {
-        FScopeLock Lock(&CriticalSection);
-        return PanelComponents[Index];
-    }
-
-    USceneComponent* GetDetailedPanelComponent(int Index) {
-        FScopeLock Lock(&CriticalSection);
-        return DetailedPanelComponents[Index];
-    }
-
-    USceneComponent* GetBackPanelComponent() {
-        FScopeLock Lock(&CriticalSection);
-        return BackPanelComponent;
-    }
-
-    void LoadAsync(const FPLATEAUMeshCodeFeatureInfoInput& Input);
-    void LoadMaterial();
-    void Tick();
-
-private:
-    const FString MakeTexturePath(const plateau::dataset::PredefinedCityModelPackage Type, const int LOD, const bool bEnableText);
-
-private:
-    FCriticalSection CriticalSection;
-    std::atomic<bool> IsFullyLoaded;
-    TArray<USceneComponent*> PanelComponents;
-    TArray<USceneComponent*> DetailedPanelComponents;
-    USceneComponent* BackPanelComponent;
-    UMaterial* BaseMat;
-    TFuture<FPLATEAUMeshCodeFeatureInfoInput> GetMaxLodTask;
+struct FPLATEAUFeatureInfoMaterialKey {
+    plateau::dataset::PredefinedCityModelPackage Package;
+    int Lod;
+    bool bDetailed;
 };
+
+inline bool operator==(const FPLATEAUFeatureInfoMaterialKey& A, const FPLATEAUFeatureInfoMaterialKey& B) {
+    return A.Package == B.Package && A.Lod == B.Lod && A.bDetailed == B.bDetailed;
+}
+
+inline bool operator!=(const FPLATEAUFeatureInfoMaterialKey& A, const FPLATEAUFeatureInfoMaterialKey& B) {
+    return A.Package != B.Package || A.Lod != B.Lod || A.bDetailed != B.bDetailed;
+}
+
+inline uint32 GetTypeHash(const FPLATEAUFeatureInfoMaterialKey& Key) {
+    // ビット配列：D00LLL00PPPPP
+    return
+        FMath::FloorLog2(static_cast<uint32>(Key.Package)) // 0 ~ 31(5bits)
+        + (Key.Lod << 7) // 0 ~ 4(3bits)
+        + ((Key.bDetailed ? 1 : 0) << 12);
+}
 
 /**
  * 全ての地物情報パネルを管理します。UpdateAsyncを毎Tick呼び出す必要があります。
  */
-class FPLATEAUFeatureInfoDisplay {
+class FPLATEAUFeatureInfoDisplay : public TSharedFromThis<FPLATEAUFeatureInfoDisplay> {
 public:
     FPLATEAUFeatureInfoDisplay(const FPLATEAUGeoReference& InGeoReference, const TSharedPtr<class FPLATEAUExtentEditorViewportClient> InViewportClient);
     ~FPLATEAUFeatureInfoDisplay();
 
-    void UpdateAsync(const FPLATEAUExtent& InExtent, plateau::dataset::IDatasetAccessor& InDatasetAccessor, const bool bShow, const bool bDetailed);
+    void UpdateAsync(const FPLATEAUExtent& InExtent, const plateau::dataset::IDatasetAccessor& InDatasetAccessor);
+
+    UMaterialInstanceDynamic* GetFeatureInfoIconMaterial(const FPLATEAUFeatureInfoMaterialKey& Key);
+    UMaterialInstanceDynamic* GetBackPanelMaterial() const;
+
+    /**
+     * @brief 地物情報パネルの可視性を取得します。
+     */
+    EPLATEAUFeatureInfoVisibility GetVisibility() const;
+
+    /**
+     * @brief 地物情報パネルの可視性を設定します。
+     */
+    void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
+
+    static TArray<plateau::dataset::PredefinedCityModelPackage> GetDisplayedPackages();
 
 private:
     FPLATEAUGeoReference GeoReference;
     TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
 
-    TMap<FString, TSharedPtr<FPLATEAUAsyncLoadedFeatureInfoPanel>> AsyncLoadedPanels;
-    TSet<USceneComponent*> PanelsInScene;
+    EPLATEAUFeatureInfoVisibility Visibility;
+    TMap<FString, TSharedPtr<class FPLATEAUAsyncLoadedFeatureInfoPanel>> AsyncLoadedPanels;
+    TMap<FPLATEAUFeatureInfoMaterialKey, UMaterialInstanceDynamic*> FeatureInfoMaterials;
+    UMaterialInstanceDynamic* BackPanelMaterial;
+
+    void InitializeMaterials();
+    int CountLoadingPanels();
 };

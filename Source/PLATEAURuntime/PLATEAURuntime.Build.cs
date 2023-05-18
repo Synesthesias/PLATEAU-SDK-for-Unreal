@@ -45,7 +45,8 @@ public class PLATEAURuntime : ModuleRules
                 "RHI",
                 "ImageWrapper",
                 "RenderCore",
-                "OpenGL"
+                "OpenGL",
+                "Projects",
                 // ... add private dependencies that you statically link with here ...	
             }
         );
