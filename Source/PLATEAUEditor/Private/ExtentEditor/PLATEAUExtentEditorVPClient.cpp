@@ -1,7 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUExtentEditorVPClient.h"
-#include "PLATEAUExtentEditor.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
@@ -51,6 +51,8 @@ FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(
     , ExtentEditorPtr(InExtentEditor) {
     InPreviewScene->SetFloorVisibility(false);
     ExtentGizmo = MakeUnique<FPLATEAUExtentGizmo>();
+    DefaultGizmoHandlePosMin = ExtentGizmo->GetMin();
+    DefaultGizmoHandlePosMax = ExtentGizmo->GetMax();
 }
 
 FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
@@ -73,6 +75,12 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
     }
+
+    // ウィンドウオープン時にハンドル位置を中央に設定
+    ExtentGizmo->SetMinX(DefaultGizmoHandlePosMin.X);
+    ExtentGizmo->SetMaxX(DefaultGizmoHandlePosMax.X);
+    ExtentGizmo->SetMinY(DefaultGizmoHandlePosMin.Y);
+    ExtentGizmo->SetMaxY(DefaultGizmoHandlePosMax.Y);
 }
 
 FPLATEAUExtent FPLATEAUExtentEditorViewportClient::GetExtent() const {

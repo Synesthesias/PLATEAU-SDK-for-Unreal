@@ -3,18 +3,22 @@
 #include "PLATEAUWindow.h"
 
 #include "LevelEditor.h"
+#include "PLATEAUEditor.h"
 #include "SPLATEAUImportPanel.h"
 #include "SPLATEAUMainTab.h"
 #include "SPLATEAUExportPanel.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
+#include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Framework/Docking/LayoutExtender.h"
 #include "Widgets/SPLATEAUFilteringPanel.h"
 #include "Widgets/SOverlay.h"
+#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
+constexpr TCHAR WidgetPath[] = TEXT("/PLATEAU-SDK-for-Unreal/EUW/MainWindow");
 
 const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
 
@@ -40,7 +44,6 @@ void FPLATEAUWindow::Startup() {
 
     IMainFrameModule& MainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
     MainFrameModule.OnMainFrameCreationFinished().AddRaw(this, &FPLATEAUWindow::OnMainFrameLoad);
-
 }
 
 void FPLATEAUWindow::Shutdown() {
@@ -62,23 +65,30 @@ void FPLATEAUWindow::Shutdown() {
 }
 
 TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs) {
-    const auto Window = Show();
-    TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-        .ShouldAutosize(false)
-        .TabRole(ETabRole::NomadTab)[
-            SNew(SBox)
-                .WidthOverride(500)
-                .HeightOverride(700)
-                [
-                    Window.ToSharedRef()
-                ]
-        ];
+    const auto EditorUtilityWidget = LoadObject<UBlueprint>(nullptr, WidgetPath, nullptr, LOAD_EditorOnly, nullptr);
+    if (!IsValid(EditorUtilityWidget)) {
+        UE_LOG(LogTemp, Warning, TEXT("Missing Expected widget class at : %s"), WidgetPath);
+        const FText Title = LOCTEXT("Warning", "警告");
+        const FText DialogText = LOCTEXT("WidgetError", "ウィンドウを開けませんでした。プラグインが破損している可能性があります。");
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+        const auto SpawnedTab = SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
+        return SpawnedTab;
+    }
+    
+    const TSubclassOf<UPLATEAUSDKEditorUtilityWidget> WidgetClass{EditorUtilityWidget->GeneratedClass};
+    const auto& World = GEditor->GetEditorWorldContext().World();
+    const auto& PLATEAUSDKEditorUtilityWidget = CreateWidget<UPLATEAUSDKEditorUtilityWidget>(World, WidgetClass);
+    
+    const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
+    ExtentEditor->SetPLATEAUSDKEditorUtilityWidget(PLATEAUSDKEditorUtilityWidget);
+    
+    const auto SpawnedTab = SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
+    SpawnedTab->SetContent(PLATEAUSDKEditorUtilityWidget->TakeWidget());
     return SpawnedTab;
 }
 
-void FPLATEAUWindow::ConstructTab() {
-    const auto Window = Show();
-    TSharedRef<class FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
+void FPLATEAUWindow::ConstructTab() {    
+    TSharedRef<FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
     GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
         .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
 

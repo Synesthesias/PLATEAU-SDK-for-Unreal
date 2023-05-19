@@ -12,6 +12,8 @@
 
 #define LOCTEXT_NAMESPACE "APLATEAUCityModelLoader"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FImportCancelFinishedDelegate);
+
 namespace citygml {
     class CityModel;
 }
@@ -91,6 +93,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         ECityModelLoadingPhase Phase;
 
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
+        FImportCancelFinishedDelegate ImportCancelFinishedDelegate;
+    
     std::shared_ptr<plateau::network::Client> ClientPtr;
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")

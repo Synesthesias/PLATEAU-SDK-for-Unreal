@@ -12,11 +12,11 @@ namespace plateau::polygonMesh {
     */
     enum class MeshGranularity {
         //! 最小地物単位(LOD2, LOD3の各部品)
-        PerAtomicFeatureObject,
+        PerAtomicFeatureObject = 0,
         //! 主要地物単位(建築物、道路等)
-        PerPrimaryFeatureObject,
+        PerPrimaryFeatureObject = 1,
         //! 都市モデル地域単位(GMLファイル内のすべてを結合)
-        PerCityModelArea
+        PerCityModelArea = 2
     };
 
     struct MeshExtractOptions {

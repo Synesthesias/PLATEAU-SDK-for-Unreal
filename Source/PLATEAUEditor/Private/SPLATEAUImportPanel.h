@@ -23,7 +23,6 @@ public:
 public:
     /** Constructs this widget with InArgs */
     void Construct(const FArguments& InArgs, const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
-
 private:
     FString SourcePath;
     int ZoneID = 9;

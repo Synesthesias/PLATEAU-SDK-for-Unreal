@@ -203,6 +203,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
             bCanceledRef = &bCanceled,
             Phase = &Phase,
+            ImportCancelFinishedDelegate = ImportCancelFinishedDelegate,
             LoadMeshSection = &LoadMeshSection
         ]() mutable {
 
@@ -348,6 +349,10 @@ void APLATEAUCityModelLoader::LoadAsync() {
             }, 3);
 
         *Phase = ECityModelLoadingPhase::Finished;
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [ImportCancelFinishedDelegate] {
+                ImportCancelFinishedDelegate.Broadcast();
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
     });
 
 #endif

@@ -30,6 +30,9 @@ protected:
     virtual void BindCommands() override;
 
 private:
+    FVector3d GetReferencePoint(const plateau::geometry::Extent Extent, const int ZoneID);
+    int64 GetPackageMask() const;
+    
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
     // ViewportClientに渡すScene

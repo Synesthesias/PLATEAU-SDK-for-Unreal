@@ -50,6 +50,8 @@ private:
     FVector TrackingStartedPosition;
     FVector TrackingStartedGizmoPosition;
     FVector TrackingStartedCameraPosition;
+    FVector2D DefaultGizmoHandlePosMin;
+    FVector2D DefaultGizmoHandlePosMax;
 
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);

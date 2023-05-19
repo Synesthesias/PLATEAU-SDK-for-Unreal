@@ -87,12 +87,36 @@ void FPLATEAUExtentEditor::SetClientPtr(const std::shared_ptr<plateau::network::
     ClientPtr = InClientPtr;
 }
 
-const std::string FPLATEAUExtentEditor::GetServerDatasetID() const {
+const std::string& FPLATEAUExtentEditor::GetServerDatasetID() const {
     return ServerDatasetID;
 }
 
-void FPLATEAUExtentEditor::SetServerDatasetID(std::string InID) {
+void FPLATEAUExtentEditor::SetServerDatasetID(const std::string& InID) {
     ServerDatasetID = InID;
+}
+
+const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetLocalPackageMask() const {
+    return LocalPackageMask;
+}
+
+void FPLATEAUExtentEditor::SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {
+    LocalPackageMask = InPackageMask;
+}
+
+const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetServerPackageMask() const {
+    return ServerPackageMask;
+}
+
+void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {
+    ServerPackageMask = InPackageMask;
+}
+
+const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& FPLATEAUExtentEditor::GetPLATEAUSDKEditorUtilityWidget() const {
+    return PLATEAUSDKEditorUtilityWidget;
+}
+
+void FPLATEAUExtentEditor::SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget) {
+    PLATEAUSDKEditorUtilityWidget = Widget;
 }
 
 #undef LOCTEXT_NAMESPACE
