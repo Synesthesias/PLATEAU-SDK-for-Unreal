@@ -79,7 +79,7 @@ void SPLATEAUServerDatasetSelectPanel::LoadDatasetMetadataFromNative() {
     {
         FScopeLock Lock(&GetDatasetMetadataSection);
         for (const auto& DatasetGroup : *NativeDatasetMetadataGroups) {
-            const auto GroupTitle = UTF8_TO_TCHAR(DatasetGroup.title.c_str());
+            const FString GroupTitle = UTF8_TO_TCHAR(DatasetGroup.title.c_str());
             auto& DatasetInfoArray = DatasetMetadataByGroup.FindOrAdd(GroupTitle);
             for (const auto& Dataset : DatasetGroup.datasets) {
                 FPLATEAUServerDatasetMetadata DatasetInfo;
@@ -163,8 +163,8 @@ TSharedPtr<SVerticalBox> SPLATEAUServerDatasetSelectPanel::ConstructServerDataPa
         if (!bIsGettingNativeDatasetMetadata) {
             const auto ConnectionSettings = GetMutableDefault<UPLATEAUServerConnectionSettings>();
 
-            const auto Url = TCHAR_TO_UTF8(*ConnectionSettings->Url);
-            const auto Token = TCHAR_TO_UTF8(*ConnectionSettings->Token);
+            const std::string Url = TCHAR_TO_UTF8(*ConnectionSettings->Url);
+            const std::string Token = TCHAR_TO_UTF8(*ConnectionSettings->Token);
             GetDatasetMetadataAsync(Url, Token);
         }
         return FReply::Handled();
