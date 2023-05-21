@@ -115,7 +115,7 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, con
 
     // 範囲内の各地域メッシュについてパネルの生成・読み込みを行う。
     for (const auto& RawMeshCode : *MeshCodes) {
-        const auto MeshCode = UTF8_TO_TCHAR(RawMeshCode.get().c_str());
+        const FString MeshCode = UTF8_TO_TCHAR(RawMeshCode.get().c_str());
 
         // 最大並列数以上は同時に読み込まない。
         if (LoadingPanelCount >= MaxParallelCount)
