@@ -90,6 +90,10 @@ public:
         ExtentEditor->UnregisterTabSpawner(GlobalTabManager);
     }
 
+    virtual TSharedRef<FPLATEAUWindow> GetWindow() override {
+        return Window.ToSharedRef();
+    }
+    
     virtual TSharedRef<FPLATEAUExtentEditor> GetExtentEditor() override {
         return ExtentEditor.ToSharedRef();
     }

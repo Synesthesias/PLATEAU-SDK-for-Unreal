@@ -2,19 +2,12 @@
 
 #include "PLATEAUWindow.h"
 
+#include "EditorUtilityWidgetBlueprint.h"
 #include "LevelEditor.h"
-#include "PLATEAUEditor.h"
-#include "SPLATEAUImportPanel.h"
-#include "SPLATEAUMainTab.h"
-#include "SPLATEAUExportPanel.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
-#include "Widgets/Layout/SScrollBox.h"
 #include "Framework/Docking/LayoutExtender.h"
-#include "Widgets/SPLATEAUFilteringPanel.h"
-#include "Widgets/SOverlay.h"
-#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
@@ -65,31 +58,31 @@ void FPLATEAUWindow::Shutdown() {
 }
 
 TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs) {
-    const auto EditorUtilityWidget = LoadObject<UBlueprint>(nullptr, WidgetPath, nullptr, LOAD_EditorOnly, nullptr);
-    if (!IsValid(EditorUtilityWidget)) {
-        UE_LOG(LogTemp, Warning, TEXT("Missing Expected widget class at : %s"), WidgetPath);
-        const FText Title = LOCTEXT("Warning", "警告");
-        const FText DialogText = LOCTEXT("WidgetError", "ウィンドウを開けませんでした。プラグインが破損している可能性があります。");
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
-        const auto SpawnedTab = SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
-        return SpawnedTab;
+    EditorUtilityWidgetBlueprint = LoadObject<UEditorUtilityWidgetBlueprint>(nullptr, WidgetPath);
+    if (EditorUtilityWidgetBlueprint != nullptr) {
+        return EditorUtilityWidgetBlueprint->SpawnEditorUITab(TabSpawnArgs);
     }
-    
-    const TSubclassOf<UPLATEAUSDKEditorUtilityWidget> WidgetClass{EditorUtilityWidget->GeneratedClass};
-    const auto& World = GEditor->GetEditorWorldContext().World();
-    const auto& PLATEAUSDKEditorUtilityWidget = CreateWidget<UPLATEAUSDKEditorUtilityWidget>(World, WidgetClass);
-    
-    const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
-    ExtentEditor->SetPLATEAUSDKEditorUtilityWidget(PLATEAUSDKEditorUtilityWidget);
-    
-    const auto SpawnedTab = SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
-    SpawnedTab->SetContent(PLATEAUSDKEditorUtilityWidget->TakeWidget());
-    return SpawnedTab;
+
+    const FText Title = LOCTEXT("WidgetWarning", "ウィジェット破損");
+    const FText DialogText = LOCTEXT("WidgetWarningDetail", "PLATEAU SDKのウィジェットが破損しています。");
+    FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+    return SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
+}
+
+UEditorUtilityWidget* FPLATEAUWindow::GetEditorUtilityWidget() const {
+    return EditorUtilityWidgetBlueprint->GetCreatedWidget();
+}
+
+bool FPLATEAUWindow::CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const {
+    if (!EditorUtilityWidgetBlueprint.IsValid()) {
+        return true;
+    }
+    return EditorUtilityWidgetBlueprint.IsValid() && EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
 }
 
 void FPLATEAUWindow::ConstructTab() {    
     TSharedRef<FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
-    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
+    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUWindow::CanSpawnTab))
         .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
 
     FLevelEditorModule* LevelEditorModule =
@@ -132,62 +125,6 @@ void FPLATEAUWindow::OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNe
     if ((!IsNewProjectWindow) && (InRootWindow.IsValid())) {
         RootWindow = InRootWindow;
     }
-}
-
-TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
-    TabReference = SNew(SPLATEAUMainTab, Style.ToSharedRef());
-    return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()[
-            TabReference.ToSharedRef()
-        ]
-        + SVerticalBox::Slot()[
-            //インポート、編集、エクスポートそれぞれのスクロール部分
-            //TODO:編集画面のUIが出来次第組み込む
-            SNew(SOverlay)
-                + SOverlay::Slot()
-                .HAlign(HAlign_Fill)
-                .VAlign(VAlign_Top)[
-                    SNew(SScrollBox)
-                        .Visibility_Lambda([=]() {
-                        if (TabReference->IsCurrentIndex(1))
-                        return EVisibility::Visible;
-                        else
-                            return EVisibility::Collapsed;
-                            })
-                        + SScrollBox::Slot()[
-                            SNew(SPLATEAUImportPanel, Style.ToSharedRef())
-                        ]
-                ]
-                + SOverlay::Slot()
-                                .HAlign(HAlign_Center)
-                                .VAlign(VAlign_Top)[
-                                    SNew(SScrollBox)
-                                        .Visibility_Lambda([=]() {
-                                        if (TabReference->IsCurrentIndex(2))
-                                        return EVisibility::Visible;
-                                        else
-                                            return EVisibility::Collapsed;
-                                            })
-                                        + SScrollBox::Slot()[
-                                            SNew(SPLATEAUFilteringPanel, Style.ToSharedRef())
-                                        ]
-                                ]
-                                + SOverlay::Slot()
-                                                .HAlign(HAlign_Center)
-                                                .VAlign(VAlign_Top)[
-                                                    SNew(SScrollBox)
-                                                        .Visibility_Lambda([=]() {
-                                                        if (TabReference->IsCurrentIndex(3))
-                                                        return EVisibility::Visible;
-                                                        else
-                                                            return EVisibility::Collapsed;
-                                                            })
-                                                        + SScrollBox::Slot()[
-                                                            SNew(SPLATEAUExportPanel, Style.ToSharedRef())
-                                                        ]
-                                                ]
-        ];
 }
 
 #undef LEVEL_EDITOR_NAME

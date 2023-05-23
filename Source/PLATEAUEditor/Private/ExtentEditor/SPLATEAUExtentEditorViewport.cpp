@@ -19,6 +19,8 @@
 #include <fstream>
 #include "Misc/FileHelper.h"
 #include "IImageWrapperModule.h"
+#include "PLATEAUEditor.h"
+#include "PLATEAUWindow.h"
 #include "Async/Async.h"
 #include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 
@@ -154,9 +156,12 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 ExtentEditorPtr.Pin()->SetExtent(Extent);
                 const auto ReferencePoint = GetReferencePoint(ViewportClient->GetExtent().GetNativeData(), ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
                 const auto PackageMask = GetPackageMask();
-                
-                if (ExtentEditorPtr.Pin()->GetPLATEAUSDKEditorUtilityWidget().IsValid()) {
-                    ExtentEditorPtr.Pin()->GetPLATEAUSDKEditorUtilityWidget().Get()->AreaSelectSuccessInvoke(ReferencePoint, PackageMask);
+                const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
+                if (EditorUtilityWidget != nullptr) {
+                    const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
+                    if (PLATEAUSDKEditorUtilityWidget != nullptr) {
+                        PLATEAUSDKEditorUtilityWidget->AreaSelectSuccessInvoke(ReferencePoint, PackageMask);
+                    }
                 } else {
                     UE_LOG(LogTemp, Warning, TEXT("PLATEAU SDK Widget Error"));
                     const FText Title = LOCTEXT("Warning", "警告");

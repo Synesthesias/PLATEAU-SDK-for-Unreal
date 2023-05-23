@@ -4,23 +4,20 @@
 
 #include "CoreMinimal.h"
 
-class UPLATEAUSDKEditorUtilityWidget;
+class UEditorUtilityWidgetBlueprint;
+class UEditorUtilityWidget;
 
-/**
- *
- */
-class PLATEAUEDITOR_API FPLATEAUWindow
-{
+class PLATEAUEDITOR_API FPLATEAUWindow {
 public:
     FPLATEAUWindow(const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
-
     void Startup();
     void Shutdown();
-
+    UEditorUtilityWidget* GetEditorUtilityWidget() const;
 private:
     TSharedPtr<FExtender> Extender;
     TWeakPtr<SWindow> RootWindow;
     TWeakPtr<SWindow> MyWindow;
+    TWeakObjectPtr<UEditorUtilityWidgetBlueprint> EditorUtilityWidgetBlueprint;
     TSharedPtr<class FPLATEAUEditorStyle> Style;
     TSharedPtr<class SPLATEAUMainTab> TabReference;
 
@@ -32,5 +29,6 @@ private:
     void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
     void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
     TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& TabSpawnArgs);
+    bool CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const;
     void ConstructTab();
 };

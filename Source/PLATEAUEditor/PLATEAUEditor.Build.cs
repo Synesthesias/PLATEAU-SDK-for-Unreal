@@ -58,6 +58,7 @@ public class PLATEAUEditor : ModuleRules
                 "SlateCore",                
                 "StaticMeshDescription",
                 "UMG",
+                "UMGEditor",
                 "WorkspaceMenuStructure",
                 // ... add private dependencies that you statically link with here ...	
             }

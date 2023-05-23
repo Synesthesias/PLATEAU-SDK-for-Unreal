@@ -5,7 +5,6 @@
 #include "Selection.h"
 #include "Async/Async.h"
 
-
 /**
  * @brief 範囲選択完了通知
  * @param ReferencePoint リファレンス位置 
@@ -23,11 +22,11 @@ void UPLATEAUSDKEditorUtilityWidget::AreaSelectSuccessInvoke(const FVector3d& Re
 void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken) {
     if (bGettingNativeDatasetMetadata) return;
 
-    bGettingNativeDatasetMetadata = true;
-    ServerDatasetMetadataMapArray.Reset();
+    ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
 
-    Async(EAsyncExecution::Thread, [this, InServerURL, InToken] {
-        ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
+    Async(EAsyncExecution::Thread, [bGettingNativeDatasetMetadata = bGettingNativeDatasetMetadata, ServerDatasetMetadataMapArray = ServerDatasetMetadataMapArray, ClientPtr = ClientPtr, GetDatasetMetaDataAsyncSuccessDelegate = GetDatasetMetaDataAsyncSuccessDelegate]() mutable {
+        bGettingNativeDatasetMetadata = true;
+        ServerDatasetMetadataMapArray.Reset();
         std::vector<plateau::network::DatasetMetadataGroup> NativeDatasetMetadataGroups;
         ClientPtr->getMetadata(NativeDatasetMetadataGroups);
 
@@ -44,7 +43,7 @@ void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InSe
             ServerDatasetMetadataMapArray.Add(ServerDatasetMetadataMap);
         }
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        FFunctionGraphTask::CreateAndDispatchWhenReady([GetDatasetMetaDataAsyncSuccessDelegate, ServerDatasetMetadataMapArray] {
             GetDatasetMetaDataAsyncSuccessDelegate.Broadcast(ServerDatasetMetadataMapArray);
         }, TStatId(), nullptr, ENamedThreads::GameThread);
 
@@ -74,7 +73,7 @@ void UPLATEAUSDKEditorUtilityWidget::SetEnableSelectionChangedEvent(const ETopMe
         if (SelectionChangedEventHandle.IsValid()) {
             USelection::SelectionChangedEvent.Remove(SelectionChangedEventHandle);
             SelectionChangedEventHandle.Reset();
-        }        
+        }
     }
 }
 
