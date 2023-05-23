@@ -50,7 +50,7 @@ namespace plateau::dataset {
         static CityModelPackageInfo getPredefined(PredefinedCityModelPackage predefined) {
             switch (predefined) {
             case PredefinedCityModelPackage::Building:
-                return { true, 0, 3 };
+                return { true, 0, 4 };
             case PredefinedCityModelPackage::DisasterRisk:
                 return { false, 1, 1 };
             case PredefinedCityModelPackage::LandUse:
