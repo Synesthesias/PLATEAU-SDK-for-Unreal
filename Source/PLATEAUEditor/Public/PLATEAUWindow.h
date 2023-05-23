@@ -29,5 +29,6 @@ private:
     void OnPulldownMenuExtension(FMenuBuilder& MenuBuilder);
     void OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNewProjectWindow);
     TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& TabSpawnArgs);
+    bool CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const;
     void ConstructTab();
 };

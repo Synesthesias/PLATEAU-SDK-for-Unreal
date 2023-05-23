@@ -73,9 +73,16 @@ UEditorUtilityWidget* FPLATEAUWindow::GetEditorUtilityWidget() const {
     return EditorUtilityWidgetBlueprint->GetCreatedWidget();
 }
 
+bool FPLATEAUWindow::CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const {
+    if (!EditorUtilityWidgetBlueprint.IsValid()) {
+        return true;
+    }
+    return EditorUtilityWidgetBlueprint.IsValid() && EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
+}
+
 void FPLATEAUWindow::ConstructTab() {    
     TSharedRef<FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
-    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
+    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUWindow::CanSpawnTab))
         .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
 
     FLevelEditorModule* LevelEditorModule =
