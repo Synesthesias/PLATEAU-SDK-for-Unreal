@@ -10,5 +10,6 @@ public:
     static IPLATEAUEditorModule& Get();
     static bool IsAvailable();
 
+    virtual TSharedRef<class FPLATEAUWindow> GetWindow() = 0;
     virtual TSharedRef<class FPLATEAUExtentEditor> GetExtentEditor() = 0;
 };

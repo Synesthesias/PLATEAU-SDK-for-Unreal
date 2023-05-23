@@ -53,9 +53,6 @@ public:
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
-    
-    const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& GetPLATEAUSDKEditorUtilityWidget() const;
-    void SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget);
 private:
     FString SourcePath;
     FPLATEAUGeoReference GeoReference;
@@ -69,6 +66,4 @@ private:
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
     TWeakObjectPtr<class APLATEAUCityModelLoader> Loader;
-
-    TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget> PLATEAUSDKEditorUtilityWidget;
 };
