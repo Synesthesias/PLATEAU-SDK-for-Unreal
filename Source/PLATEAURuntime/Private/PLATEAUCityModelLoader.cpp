@@ -203,6 +203,9 @@ void APLATEAUCityModelLoader::LoadAsync() {
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
             bCanceledRef = &bCanceled,
             Phase = &Phase,
+            ImportGmlFilesDelegate = ImportGmlFilesDelegate,
+            ImportGmlProgressDelegate = ImportGmlProgressDelegate,
+            ImportFailedGmlFileDelegate = ImportFailedGmlFileDelegate,
             ImportCancelFinishedDelegate = ImportCancelFinishedDelegate,
             LoadMeshSection = &LoadMeshSection
         ]() mutable {
@@ -210,6 +213,17 @@ void APLATEAUCityModelLoader::LoadAsync() {
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
             ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
+        TArray<FString> GmlFiles;
+        for (const auto& [ExtractOptions, GmlPath] : LoadInputDataArray) {
+            const auto GmlName = FPaths::GetCleanFilename(GmlPath);
+            GmlFiles.Add(GmlName);
+        }
+            
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [ImportGmlFilesDelegate, GmlFiles] {
+                ImportGmlFilesDelegate.Broadcast(GmlFiles);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
             Loader->Status.TotalGmlCount = GmlCount;
@@ -253,7 +267,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
-
+            
             {
                 FScopeLock Lock(&SetDatasetNameSection);
                 if (!bHasDatasetNameSet) {
@@ -283,38 +297,69 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 }
             }
 
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                    if (!bCanceledRef->Load(EMemoryOrder::Relaxed))
+                        ImportGmlProgressDelegate.Broadcast(Index, 0.2);
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
+            
             // TODO: fldでgml名被る
             GmlNames.Add(GmlName);
             Futures.Add(Async(EAsyncExecution::Thread,
-                [InputData, &LoadInputDataArray, Source,
-                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef]() {
+                [InputData, &LoadInputDataArray, Source, ModelActor, GmlName,
+                OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef, Index, ImportGmlProgressDelegate, ImportFailedGmlFileDelegate] {
 
                     if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                         return false;
 
                     const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
-
                     if (CityModel == nullptr) {
                         ExecuteInGameThread(OwnerLoader,
-                            [GmlName](auto Loader) {
+                            [GmlName, Index, ImportFailedGmlFileDelegate](auto Loader) {
                                 ++Loader->Status.LoadedGmlCount;
                                 Loader->Status.LoadingGmls.Remove(GmlName);
                                 Loader->Status.FailedGmls.Add(GmlName);
+                                ImportFailedGmlFileDelegate.Broadcast(Index);
                             });
                         return false;
                     }
 
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                        if (!bCanceledRef->Load(EMemoryOrder::Relaxed))
+                            ImportGmlProgressDelegate.Broadcast(Index, 0.4);
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
+
                     const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
 
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                        if (!bCanceledRef->Load(EMemoryOrder::Relaxed))
+                            ImportGmlProgressDelegate.Broadcast(Index, 0.6);
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    
                     // 各GMLについて親Componentを作成
                     // コンポーネントは拡張子無しgml名に設定
                     const auto GmlRootComponentName = FPaths::GetBaseFilename(CopiedGmlPath);
                     const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
 
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                            if (!bCanceledRef->Load(EMemoryOrder::Relaxed))
+                                    ImportGmlProgressDelegate.Broadcast(Index, 0.8);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    
                     {
                         FScopeLock Lock(LoadMeshSection);
                         FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
+
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                            if (!bCanceledRef->Load(EMemoryOrder::Relaxed))
+                                ImportGmlProgressDelegate.Broadcast(Index, 1.0);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    
                     return true;
                 }));
         }

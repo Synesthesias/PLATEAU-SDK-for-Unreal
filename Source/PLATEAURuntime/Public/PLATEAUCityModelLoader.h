@@ -13,6 +13,9 @@
 #define LOCTEXT_NAMESPACE "APLATEAUCityModelLoader"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FImportCancelFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FImportGmlFilesDelegate, const TArray<FString>&, ImportGmlFIles);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FImportGmlProgressDelegate, int, GmlIndex, float, GmlProgress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FImportFailedGmlFileDelegate, int, GmlIndex);
 
 namespace citygml {
     class CityModel;
@@ -94,7 +97,16 @@ public:
         ECityModelLoadingPhase Phase;
 
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
+        FImportGmlFilesDelegate ImportGmlFilesDelegate;
+
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
+        FImportGmlProgressDelegate ImportGmlProgressDelegate;
+    
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
         FImportCancelFinishedDelegate ImportCancelFinishedDelegate;
+
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
+        FImportFailedGmlFileDelegate ImportFailedGmlFileDelegate;
     
     std::shared_ptr<plateau::network::Client> ClientPtr;
 
