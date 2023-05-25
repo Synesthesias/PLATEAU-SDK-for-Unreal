@@ -111,12 +111,4 @@ void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::Predefin
     ServerPackageMask = InPackageMask;
 }
 
-const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& FPLATEAUExtentEditor::GetPLATEAUSDKEditorUtilityWidget() const {
-    return PLATEAUSDKEditorUtilityWidget;
-}
-
-void FPLATEAUExtentEditor::SetPLATEAUSDKEditorUtilityWidget(const TWeakObjectPtr<UPLATEAUSDKEditorUtilityWidget>& Widget) {
-    PLATEAUSDKEditorUtilityWidget = Widget;
-}
-
 #undef LOCTEXT_NAMESPACE

@@ -3,9 +3,12 @@
 #include "PLATEAUImportAreaSelectBtn.h"
 #include <plateau/geometry/geo_reference.h>
 #include "PLATEAUImportSettings.h"
+#include "PLATEAUWindow.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
+
+#define LOCTEXT_NAMESPACE "UPLATEAUImportAreaSelectBtn"
 
 /**
  * @brief エリア選択ウィンドウ表示
@@ -14,12 +17,21 @@
  * @param bImportFromServer サーバーからインポートするかどうか
  */
 void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString& SourcePath, const bool bImportFromServer) {
+    const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
     const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
     ExtentEditor->SetImportFromServer(bImportFromServer);
     if (bImportFromServer) {
         // サーバーデータが受信されている時のみ範囲選択ボタンが表示されるようになっている
-        ExtentEditor->SetClientPtr(ExtentEditor->GetPLATEAUSDKEditorUtilityWidget().Get()->GetClientPtr());
-        ExtentEditor->SetServerDatasetID(TCHAR_TO_UTF8(*SourcePath));
+        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
+        if (EditorUtilityWidget != nullptr) {
+            ExtentEditor->SetClientPtr(EditorUtilityWidget->GetClientPtr());
+            ExtentEditor->SetServerDatasetID(TCHAR_TO_UTF8(*SourcePath));
+        } else {
+            const FText Title = LOCTEXT("Warning", "警告");
+            const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
+            FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+            return;
+        }
     } else {
         ExtentEditor->SetSourcePath(SourcePath);
     }
@@ -63,3 +75,5 @@ FPackageInfo UPLATEAUImportAreaSelectBtn::GetPackageInfo(const int64 Package) {
     const FPackageInfo PackageInfoData(PackageInfo.hasAppearance(), PackageInfo.minLOD(), PackageInfo.maxLOD());
     return PackageInfoData;
 }
+
+#undef LOCTEXT_NAMESPACE
