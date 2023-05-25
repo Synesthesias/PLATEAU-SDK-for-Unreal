@@ -267,7 +267,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
-            
+
             {
                 FScopeLock Lock(&SetDatasetNameSection);
                 if (!bHasDatasetNameSet) {
