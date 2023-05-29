@@ -58,10 +58,11 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(FViewport& InViewport, FSceneView& 
     const auto CenterX = MinX + (MaxX - MinX) / 2;
     const auto CenterY = MinY + (MaxY - MinY) / 2 * 1.28;
 
+    const auto dpi = Canvas.GetDPIScale();
     const auto ViewPlane = View.Project(FVector(CenterX, CenterY, 0));
 
-    const auto HalfX = InViewport.GetSizeXY().X / 2;
-    const auto HalfY = InViewport.GetSizeXY().Y / 2;
+    const auto HalfX = InViewport.GetSizeXY().X / 2 / dpi;
+    const auto HalfY = InViewport.GetSizeXY().Y / 2 / dpi;
 
     const auto XPos = HalfX + (HalfX * ViewPlane.X);
     const auto YPos = HalfY + (HalfY * -ViewPlane.Y);
