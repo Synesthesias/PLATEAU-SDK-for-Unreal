@@ -12,9 +12,9 @@
 
 #define LOCTEXT_NAMESPACE "APLATEAUCityModelLoader"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FImportCancelFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FImportFinishedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FImportGmlFilesDelegate, const TArray<FString>&, ImportGmlFIles);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FImportGmlProgressDelegate, int, GmlIndex, float, GmlProgress);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FImportGmlProgressDelegate, int, GmlIndex, float, GmlProgress, FText, GmlStatusText);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FImportFailedGmlFileDelegate, int, GmlIndex);
 
 namespace citygml {
@@ -103,7 +103,7 @@ public:
         FImportGmlProgressDelegate ImportGmlProgressDelegate;
     
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
-        FImportCancelFinishedDelegate ImportCancelFinishedDelegate;
+        FImportFinishedDelegate ImportFinishedDelegate;
 
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU")
         FImportFailedGmlFileDelegate ImportFailedGmlFileDelegate;
