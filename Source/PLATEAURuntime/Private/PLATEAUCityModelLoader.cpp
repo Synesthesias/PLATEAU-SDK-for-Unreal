@@ -203,13 +203,27 @@ void APLATEAUCityModelLoader::LoadAsync() {
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
             bCanceledRef = &bCanceled,
             Phase = &Phase,
-            ImportCancelFinishedDelegate = ImportCancelFinishedDelegate,
+            ImportGmlFilesDelegate = ImportGmlFilesDelegate,
+            ImportGmlProgressDelegate = ImportGmlProgressDelegate,
+            ImportFailedGmlFileDelegate = ImportFailedGmlFileDelegate,
+            ImportFinishedDelegate = ImportFinishedDelegate,
             LoadMeshSection = &LoadMeshSection
         ]() mutable {
 
         auto LoadInputDataArray = FCityModelLoaderImpl::PrepareInputData(
             ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
+        TArray<FString> GmlFiles;
+        for (const auto& [ExtractOptions, GmlPath] : LoadInputDataArray) {
+            const auto GmlName = FPaths::GetCleanFilename(GmlPath);
+            GmlFiles.Add(GmlName);
+        }
+            
+        FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [ImportGmlFilesDelegate, GmlFiles] {
+                ImportGmlFilesDelegate.Broadcast(GmlFiles);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            
         ExecuteInGameThread(OwnerLoader,
             [GmlCount = LoadInputDataArray.Num()](auto Loader){
             Loader->Status.TotalGmlCount = GmlCount;
@@ -222,12 +236,16 @@ void APLATEAUCityModelLoader::LoadAsync() {
         FCriticalSection SetDatasetNameSection;
 
         for (int Index = 0; Index < LoadInputDataArray.Num(); ++Index) {
-
-            if (bCanceledRef->Load(EMemoryOrder::Relaxed))
-                break;
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [Index, ImportGmlProgressDelegate] {
+                        ImportGmlProgressDelegate.Broadcast(Index, 0, LOCTEXT("Cancel", "キャンセルされました"));
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
+                continue;
+            }
 
             FGenericPlatformProcess::ConditionalSleep(
-                [&Futures, &GmlNames, OwnerLoader, &bCanceledRef]() {
+                [&Futures, &GmlNames, OwnerLoader, &bCanceledRef] {
                     TArray<FString> CurrentLoadingGmls;
                     int LoadCompletedCount = 0;
                     for (int i = 0; i < Futures.Num(); ++i) {
@@ -249,8 +267,20 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     return CurrentLoadingGmls.Num() < 4;
                 }, 3);
 
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [Index, ImportGmlProgressDelegate] {
+                        ImportGmlProgressDelegate.Broadcast(Index, 0, LOCTEXT("Cancel", "キャンセルされました"));
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
+                continue;
+            }
+            
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [Index, ImportGmlProgressDelegate] {
+                ImportGmlProgressDelegate.Broadcast(Index, 0, LOCTEXT("CopyGmlFile", "ファイル取得中..."));
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            
             FLoadInputData InputData = LoadInputDataArray[Index];
-
             const auto CopiedGmlPath = FCityModelLoaderImpl::CopyGmlFile(Source, InputData.GmlPath, bImportFromServer);
             const auto GmlName = FPaths::GetCleanFilename(InputData.GmlPath);
 
@@ -283,45 +313,89 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 }
             }
 
+            if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [Index, ImportGmlProgressDelegate] {
+                        ImportGmlProgressDelegate.Broadcast(Index, 0.25, LOCTEXT("Cancel", "キャンセルされました"));
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
+                continue;
+            }
+
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [Index, ImportGmlProgressDelegate] {
+                    ImportGmlProgressDelegate.Broadcast(Index, 0.25, LOCTEXT("ParseCityGml", "CityGMLパース中..."));
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
+            
             // TODO: fldでgml名被る
             GmlNames.Add(GmlName);
             Futures.Add(Async(EAsyncExecution::Thread,
-                [InputData, &LoadInputDataArray, Source,
-                ModelActor, GmlName, OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef]() {
+                [InputData, &LoadInputDataArray, Source, ModelActor, GmlName,
+                OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef, Index, ImportGmlProgressDelegate, ImportFailedGmlFileDelegate] {
 
                     if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                         return false;
 
                     const auto CityModel = FCityModelLoaderImpl::ParseCityGml(CopiedGmlPath);
-
                     if (CityModel == nullptr) {
                         ExecuteInGameThread(OwnerLoader,
-                            [GmlName](auto Loader) {
+                            [GmlName, Index, ImportFailedGmlFileDelegate](auto Loader) {
                                 ++Loader->Status.LoadedGmlCount;
                                 Loader->Status.LoadingGmls.Remove(GmlName);
                                 Loader->Status.FailedGmls.Add(GmlName);
+                                ImportFailedGmlFileDelegate.Broadcast(Index);
                             });
                         return false;
                     }
 
-                    const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                        FFunctionGraphTask::CreateAndDispatchWhenReady(
+                            [Index, ImportGmlProgressDelegate] {
+                                ImportGmlProgressDelegate.Broadcast(Index, 0.5, LOCTEXT("Cancel", "キャンセルされました"));
+                            }, TStatId(), nullptr, ENamedThreads::GameThread);
+                        return false;
+                    }
+                    
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [Index, ImportGmlProgressDelegate] {
+                        ImportGmlProgressDelegate.Broadcast(Index, 0.5, LOCTEXT("MeshExtractorExtract", "ポリゴンメッシュ変換中..."));
+                    }, TStatId(), nullptr, ENamedThreads::GameThread);
 
+                    const auto Model = MeshExtractor::extract(*CityModel, InputData.ExtractOptions);
+                    
                     // 各GMLについて親Componentを作成
                     // コンポーネントは拡張子無しgml名に設定
                     const auto GmlRootComponentName = FPaths::GetBaseFilename(CopiedGmlPath);
                     const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
 
+                    if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                        FFunctionGraphTask::CreateAndDispatchWhenReady(
+                            [Index, ImportGmlProgressDelegate] {
+                                ImportGmlProgressDelegate.Broadcast(Index, 0.75, LOCTEXT("Cancel", "キャンセルされました"));
+                            }, TStatId(), nullptr, ENamedThreads::GameThread);
+                        return false;
+                    }
+                    
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [Index, ImportGmlProgressDelegate] {
+                            ImportGmlProgressDelegate.Broadcast(Index, 0.75, LOCTEXT("LoadModel", "ワールドに読み込み中..."));
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    
                     {
                         FScopeLock Lock(LoadMeshSection);
                         FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
+
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [bCanceledRef, Index, ImportGmlProgressDelegate] {
+                            if (!bCanceledRef->Load(EMemoryOrder::Relaxed)) {
+                                ImportGmlProgressDelegate.Broadcast(Index, 1.0, LOCTEXT("Finish", "完了"));
+                            } else {
+                                ImportGmlProgressDelegate.Broadcast(Index, 0.75, LOCTEXT("Cancel", "キャンセルされました"));
+                            }
+                        }, TStatId(), nullptr, ENamedThreads::GameThread);
+                    
                     return true;
                 }));
-        }
-
-        if (bCanceledRef->Load(EMemoryOrder::Relaxed)) {
-            Futures.Empty();
-            GmlNames.Empty();
         }
 
         FGenericPlatformProcess::ConditionalSleep(
@@ -329,14 +403,11 @@ void APLATEAUCityModelLoader::LoadAsync() {
                 TArray<FString> CurrentLoadingGmls;
                 int LoadCompletedCount = 0;
                 for (int i = 0; i < Futures.Num(); ++i) {
-
-                    if (bCanceledRef->Load(EMemoryOrder::Relaxed))
-                        break;
-
-                    if (!Futures[i].IsReady())
+                    if (!Futures[i].IsReady()) {
                         CurrentLoadingGmls.Add(GmlNames[i]);
-                    else
+                    } else {
                         ++LoadCompletedCount;
+                    }
 
                     ExecuteInGameThread(OwnerLoader,
                         [&CurrentLoadingGmls, &LoadCompletedCount](TWeakObjectPtr<APLATEAUCityModelLoader> Loader) {
@@ -350,8 +421,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
 
         *Phase = ECityModelLoadingPhase::Finished;
         FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [ImportCancelFinishedDelegate] {
-                ImportCancelFinishedDelegate.Broadcast();
+            [ImportFinishedDelegate] {
+                ImportFinishedDelegate.Broadcast();
             }, TStatId(), nullptr, ENamedThreads::GameThread);
     });
 
