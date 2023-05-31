@@ -224,6 +224,8 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     auto Meshptr = MeshCodes.begin();
 
+    check(MeshCodes.size() == MeshCodeGizmos.Num());
+
     for (const auto& Gizmo : MeshCodeGizmos) {
         const auto code = (*Meshptr++).get();
         Gizmo.DrawRegionMeshID(InViewport, View, Canvas, code.c_str(), CameraDistance);
