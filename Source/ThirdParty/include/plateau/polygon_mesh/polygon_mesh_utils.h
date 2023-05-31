@@ -14,7 +14,7 @@ namespace plateau::polygonMesh {
     class LIBPLATEAU_EXPORT PolygonMeshUtils {
     public:
         /// 仕様上存在しうる最大LODです。 LODは0から始まるので、LODのパターン数は (この数 +1)です。
-        static constexpr int max_lod_in_specification_ = 3;
+        static constexpr int max_lod_in_specification_ = 4;
 
         /**
          * city_model の中心点を返します。
