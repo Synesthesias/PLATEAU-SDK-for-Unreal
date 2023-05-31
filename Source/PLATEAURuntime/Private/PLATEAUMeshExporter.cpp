@@ -191,10 +191,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
 
-        if (!PathName.IsEmpty())
-        {
-            OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
-        }
+        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
     }
 
     // TODO: MeshDescription使用する方法だと何故かUV取得できない
