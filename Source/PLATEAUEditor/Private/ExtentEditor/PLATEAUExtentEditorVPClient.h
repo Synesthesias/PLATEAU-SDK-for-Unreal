@@ -29,6 +29,7 @@ public:
     // FEditorViewportClient interface
     virtual void Tick(float DeltaSeconds) override;
     virtual void Draw(const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
+    virtual void DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) override;
     virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
     virtual void TrackingStopped() override;
     virtual bool ShouldScaleCameraSpeedByDistance() const override;
