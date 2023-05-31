@@ -21,7 +21,7 @@ public:
     FPLATEAUMeshCodeGizmo();
 
     void DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const;
-    void DrawRegionMeshID(FViewport& InViewport, FSceneView& View, FCanvas& Canvas, FString MeshCode, double CameraDistance) const;
+    void DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance) const;
 
     /**
      * @brief 内部状態から範囲の最小値を取得します。

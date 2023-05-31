@@ -51,9 +51,9 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     }
 }
 
-void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(FViewport& InViewport, FSceneView& View, FCanvas& Canvas, FString MeshCode, double CameraDistance) const {
-    const auto NearOffset = 4000;
-    const auto FarOffset = 100000;
+void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance) const {
+    constexpr auto NearOffset = 8000;
+    constexpr auto FarOffset = 100000;
 
     const auto CenterX = MinX + (MaxX - MinX) / 2;
     const auto CenterY = MinY + (MaxY - MinY) / 2 * 1.28;
