@@ -5,6 +5,7 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Editor/PropertyEditor/Public/IDetailsView.h"
 #include "Styling/ISlateStyle.h"
+#include "Widgets/SBoxPanel.h"
 
 class UPLATEAUExportSettings;
 
