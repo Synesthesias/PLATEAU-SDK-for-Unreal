@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Tasks/Task.h"
 #include "PLATEAUGeometry.h"
+#include "Tasks/Pipe.h"
 
 using namespace UE::Tasks;
 

@@ -8,7 +8,8 @@
 #include <plateau/dataset/mesh_code.h>
 #include <plateau/geometry/geo_reference.h>
 
-#include "Engine.h"
+#include "CanvasTypes.h"
+#include "Engine/Font.h"
 
 FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
     : MinX(-500), MinY(-500), MaxX(500), MaxY(500), IsSelected(false), LineThickness(1.0f) {}

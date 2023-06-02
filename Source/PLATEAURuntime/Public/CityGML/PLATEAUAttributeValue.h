@@ -28,15 +28,17 @@ private:
 };
 
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType,
+Category = "PLATEAU|CityGML")
 struct FPLATEAUAttributeMap
 {
     GENERATED_USTRUCT_BODY();
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
     TMap<FString, FPLATEAUAttributeValue> value;
 };
 
-UENUM(BlueprintType)
+UENUM(BlueprintType,
+Category = "PLATEAU|CityGML")
 enum class EPLATEAUAttributeType : uint8 {
     String,
     Double,
