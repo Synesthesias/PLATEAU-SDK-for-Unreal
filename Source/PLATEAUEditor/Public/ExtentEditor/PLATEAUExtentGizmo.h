@@ -8,7 +8,7 @@
 /**
  * @brief 範囲選択ギズモを表します。
  */
-class FPLATEAUExtentGizmo {
+class PLATEAUEDITOR_API FPLATEAUExtentGizmo {
 public:
     FPLATEAUExtentGizmo();
 
