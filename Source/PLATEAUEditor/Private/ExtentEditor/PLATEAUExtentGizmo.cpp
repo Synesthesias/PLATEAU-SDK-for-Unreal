@@ -1,14 +1,19 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 
-#include "PLATEAUExtentGizmo.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentGizmo.h"
 
 #include "SceneManagement.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
+constexpr int GDefault_Minx = -1000;
+constexpr int GDefault_Miny = -1000;
+constexpr int GDefault_Maxx = 1000;
+constexpr int GDefault_Maxy = 1000;
+
 
 FPLATEAUExtentGizmo::FPLATEAUExtentGizmo()
-    : MinX(-500), MaxX(500), MinY(-500), MaxY(500) {
+    : MinX(GDefault_Minx), MaxX(GDefault_Maxx), MinY(GDefault_Miny), MaxY(GDefault_Maxy) {
     SphereMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, NULL);
     SphereMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaMaterial = DuplicateObject(SphereMaterial, NULL);
@@ -58,6 +63,13 @@ void FPLATEAUExtentGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInter
         1.0f,
         FVector2D::Zero(), FVector2D::One(),
         AreaMaterial->GetRenderProxy(), 0);
+}
+
+void FPLATEAUExtentGizmo::InitHandlePosition() {
+    MinX = GDefault_Minx;
+    MinY = GDefault_Miny;
+    MaxX = GDefault_Maxx;
+    MaxY = GDefault_Maxy;
 }
 
 FVector FPLATEAUExtentGizmo::GetHandlePosition(int Index) {
