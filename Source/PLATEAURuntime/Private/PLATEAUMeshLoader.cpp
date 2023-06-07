@@ -7,11 +7,14 @@
 #include "citygml/citygml.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
 #include "StaticMeshAttributes.h"
 #include "Misc/DefaultValueHelper.h"
+
 
 #if WITH_EDITOR
 

@@ -18,8 +18,10 @@
 #include "Engine/Classes/Components/StaticMeshComponent.h"
 #include "Engine/Classes/Materials/MaterialInstance.h"
 #include "Engine/Classes/Engine/StaticMesh.h"
+#include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "filesystem"
+#include "HAL/FileManager.h"
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
