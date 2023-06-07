@@ -2,9 +2,7 @@
 ## 対応Unrealバージョンのインストール
 - Unreal Engineの対応バージョンについて、[リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases) に記載のバージョンを利用してください。
   - [Epic Games Launcher](https://www.unrealengine.com/ja/download) から指定のバージョンをインストールできます。
-- (Windowsの場合) Visual Studio の利用を想定しています。  
-  - Visual Studio についても、[リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases) に記載のバージョンを利用してください。
-  - インストール時は、[こちらの手順に従って](https://docs.unrealengine.com/5.0/ja/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/) 追加のコンポーネントをインストールしてください。
+
 
 ## Unrealプロジェクトの作成
 - 先ほどインストールしたバージョンを起動します。
@@ -32,3 +30,10 @@
 2. `距離スケーリング済みのカメラ速度を使用`にチェックを入れます。
 ![](../resources/manual/installation/distanceScaled.png)
 この操作を行うことで広域なマップでの操作性が向上します。
+
+# プラグインをビルドする場合
+- Windowsの場合、 Visual Studio の利用を想定しています。
+  - Visual Studio についても、[リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases) に記載のバージョンを利用してください。  
+    バージョンが違うとビルドに失敗する場合があります。
+  - Visual Studio のインストール時は、[こちらの手順に従って](https://docs.unrealengine.com/5.0/ja/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/) 追加のコンポーネントをインストールしてください。
+- MacOSの場合、Xcode がインストールされていることが前提となります。
