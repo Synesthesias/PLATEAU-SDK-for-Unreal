@@ -62,7 +62,7 @@ namespace plateau::network {
 
         /**
          * @brief サーバーから json を受け取り、それをパースしてデータファイルに関する情報を得ます。
-         * 受け取る json の例 : https://plateau-api-mock-v2.deta.dev/sdk/datasets/23ku/files
+         * 受け取る json の例 : https://plateauapimockv3-1-w3921743.deta.app/sdk/datasets/23ku/files
          */
         DatasetFiles getFiles(const std::string& id) const;
 
