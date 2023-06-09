@@ -60,6 +60,31 @@ namespace plateau::dataset {
         static const std::string htd;
         //! 内水浸水想定区域
         static const std::string ifld;
+        //! 交通(鉄道) 
+        static const std::string rwy;
+        //! 交通(航路)
+        static const std::string wwy;
+        //! 水部
+        static const std::string wtr;
+        //! 橋梁
+        static const std::string brid;
+        //! 徒歩道 
+        static const std::string trk;
+        //static const std::string track;
+        //! 広場
+        static const std::string squr;
+        //! トンネル 
+        static const std::string tun;
+        //! 地下埋設物 
+        static const std::string unf;
+        //! 地下街 
+        static const std::string ubld;
+        //! 区域 
+        static const std::string area;
+        //! その他の構造物 
+        static const std::string cons;
+        //! 汎用都市
+        static const std::string gen;
     };
 
     class LIBPLATEAU_EXPORT IDatasetAccessor {
