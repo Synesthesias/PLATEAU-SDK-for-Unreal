@@ -18,8 +18,14 @@ public:
     static bool MakeDirectory(const FString& Path, const bool CreateTree);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
+    static bool DeleteFile(const FString& Path);
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
     static bool DeleteDirectory(const FString& Path);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
-    static TArray<FString> FindFiles(const FString& Path);
+    static TArray<FString> FindFiles(const FString& Path, const FString& Filter = "*");
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
+    static bool WriteToFile(const FString& Path, const FString& Text);
 };

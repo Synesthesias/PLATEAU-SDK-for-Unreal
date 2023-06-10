@@ -11,31 +11,51 @@ TArray<int64> UPLATEAUEditorUtilTest::GetAllPackages() {
 
 bool UPLATEAUEditorUtilTest::MakeDirectory(const FString& Path, const bool CreateTree) {
     if (!FPaths::DirectoryExists(Path)) {
-        FFileManagerGeneric::Get().MakeDirectory(*Path, CreateTree);
-        return true;
+        return FFileManagerGeneric::Get().MakeDirectory(*Path, CreateTree);
     }
 
-    return false;
+    return true;
+}
+
+bool UPLATEAUEditorUtilTest::DeleteFile(const FString& Path) {
+    if (FPaths::FileExists(Path)) {
+        return FFileManagerGeneric::Get().Delete(*Path, true, true);
+    }
+
+    return true;
 }
 
 bool UPLATEAUEditorUtilTest::DeleteDirectory(const FString& Path) {
     if (FPaths::DirectoryExists(Path)) {
-        FFileManagerGeneric::Get().DeleteDirectory(*Path, true, true);
-        return true;
+        return FFileManagerGeneric::Get().DeleteDirectory(*Path, true, true);
     }
 
-    return false;    
+    return true;
 }
 
-TArray<FString> UPLATEAUEditorUtilTest::FindFiles(const FString& Path) {
-    TArray<FString> OutputArray;
-    OutputArray.Empty();
-    
-    if (FPaths::DirectoryExists(Path)) {
-        UE_LOG(LogTemp, Log, TEXT("Path:%s"), *(Path + "/*"));
+TArray<FString> UPLATEAUEditorUtilTest::FindFiles(const FString& Path, const FString& Filter) {
+    TArray<FString> FoundFileArray;
+    FoundFileArray.Empty();
 
-        FFileManagerGeneric::Get().FindFiles(OutputArray, *(Path + "/*"), true, false);
+    if (FPaths::DirectoryExists(Path)) {
+        if (0 < Filter.Len()) {
+            if (Path.Right(1) == "/") {
+                FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + Filter), true, false);
+            } else {
+                FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + "/" + Filter), true, false);
+            }
+        }
+        FFileManagerGeneric::Get().FindFiles(FoundFileArray, *Path, true, false);
     }
-    
-    return OutputArray;
+
+    return FoundFileArray;
+}
+
+bool UPLATEAUEditorUtilTest::WriteToFile(const FString& Path, const FString& Text) {
+    const FString& DirectoryPath = FPaths::GetPath(Path);
+    if (!FPaths::DirectoryExists(DirectoryPath)) {
+        FFileManagerGeneric::Get().MakeDirectory(*DirectoryPath, true);
+    }
+
+    return FFileHelper::SaveStringToFile(Text, *(DirectoryPath + "/" + FPaths::GetBaseFilename(Path) + ".txt"));
 }
