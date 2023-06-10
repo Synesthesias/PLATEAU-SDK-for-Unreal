@@ -13,4 +13,13 @@ class UPLATEAUEditorUtilTest : public UBlueprintFunctionLibrary {
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
     static TArray<int64> GetAllPackages();
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
+    static bool MakeDirectory(const FString& Path, const bool CreateTree);
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
+    static bool DeleteDirectory(const FString& Path);
+
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|Util")
+    static TArray<FString> FindFiles(const FString& Path);
 };
