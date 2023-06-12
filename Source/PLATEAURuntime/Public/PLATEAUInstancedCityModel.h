@@ -66,12 +66,11 @@ public:
     /**
      * @brief 3D都市モデル内の各地物について、引数に従って可視化・非可視化します。
      * @param InPackage 可視化するパッケージ
-     * @param MinLOD 可視化する最小LOD
-     * @param MaxLOD 可視化する最大LOD
+     * @param PackageToLodRangeMap パッケージごとのLODに関してのユーザー選択結果
      * @param bOnlyMaxLod trueの場合各地物について提供されている最大のLODのみ可視化します。
      * @return thisを返します。
      */
-    APLATEAUInstancedCityModel* FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bOnlyMaxLod);
+    APLATEAUInstancedCityModel* FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod);
 
     /**
      * @brief 3D都市モデル内の各地物について、引数に従って可視化・非可視化します。

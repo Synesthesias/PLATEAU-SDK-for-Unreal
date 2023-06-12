@@ -13,7 +13,6 @@
 
 #include "CityGML/PLATEAUCityGmlProxy.h"
 
-using namespace plateau::dataset;
 using namespace UE::Tasks;
 
 namespace {
@@ -61,7 +60,7 @@ namespace {
     plateau::dataset::PredefinedCityModelPackage GetCityModelPackage(const USceneComponent* const InGmlComponent) {
         const auto GmlFileName = GetGmlFileName(InGmlComponent);
         // udxのサブフォルダ名は地物種類名に相当するため、UdxSubFolderの関数を使用してgmlのパッケージ種を取得
-        return UdxSubFolder::getPackage(GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
+        return plateau::dataset::UdxSubFolder::getPackage(plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
     }
 }
 
@@ -110,64 +109,39 @@ plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetCity
     return Packages;
 }
 
-APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bOnlyMaxLod) {
+APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod) {
     bIsFiltering = true;
 
     for (const auto& GmlComponent : GetGmlComponents()) {
-        //一度全てのメッシュを不可視にする
+        // 一度全てのメッシュを不可視にする
         GmlComponent->SetVisibility(false, true);
-
 
         // 選択されていないパッケージを除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if ((Package & InPackage) == plateau::dataset::PredefinedCityModelPackage::None)
             continue;
 
+        TArray<USceneComponent*> LodComponents;
+        GmlComponent->GetChildrenComponents(false, LodComponents);
+
         // 各地物について全てのLODを表示する場合の処理
         if (!bOnlyMaxLod) {
-            for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            for (const auto& LodComponent : LodComponents) {
                 const auto Lod = ParseLodComponent(LodComponent);
-                if (Lod < MinLOD || Lod > MaxLOD)
-                    continue;
-
-                LodComponent->SetVisibility(true, true);
+                if (PackageToLodRangeMap[Package].MinLOD <= Lod && Lod <= PackageToLodRangeMap[Package].MaxLOD)
+                    LodComponent->SetVisibility(true, true);
             }
             continue;
         }
 
-        // 各地物について最大LODのみを表示する場合の処理
-
-        // 後で利用するために各地物の最大LODを保持する。
-        TMap<FString, int> FeatureIDToMaxLodMap;
-        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
-            int Lod = ParseLodComponent(LodComponent);
-            if (Lod < MinLOD || Lod > MaxLOD)
-                continue;
-
-            for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {
-                const auto FeatureID = GetOriginalComponentName(FeatureComponent);
-                if (!FeatureIDToMaxLodMap.Find(FeatureID)) {
-                    FeatureIDToMaxLodMap.Add(FeatureID, Lod);
-                    continue;
-                }
-                FeatureIDToMaxLodMap[FeatureID] = FMath::Max(FeatureIDToMaxLodMap[FeatureID], Lod);
-            }
-        }
-
-        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+        for (const auto& LodComponent : LodComponents) {
             const auto Lod = ParseLodComponent(LodComponent);
-            if (Lod < MinLOD || Lod > MaxLOD)
-                continue;
-
-            TArray<USceneComponent*> FeatureComponents;
-            LodComponent->GetChildrenComponents(true, FeatureComponents);
-            for (const auto& FeatureComponent : FeatureComponents) {
-                auto FeatureID = GetOriginalComponentName(FeatureComponent);
-                if (!FeatureIDToMaxLodMap.Find(FeatureID))
-                    continue;
-
-                if (Lod == FeatureIDToMaxLodMap[FeatureID])
+            if (Lod == PackageToLodRangeMap[Package].MaxLOD) {
+                TArray<USceneComponent*> FeatureComponents;
+                LodComponent->GetChildrenComponents(true, FeatureComponents);
+                for (const auto& FeatureComponent : FeatureComponents) {
                     FeatureComponent->SetVisibility(true, true);
+                }
             }
         }
     }
