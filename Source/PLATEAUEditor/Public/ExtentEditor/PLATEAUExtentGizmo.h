@@ -8,13 +8,14 @@
 /**
  * @brief 範囲選択ギズモを表します。
  */
-class FPLATEAUExtentGizmo {
+class PLATEAUEDITOR_API FPLATEAUExtentGizmo {
 public:
     FPLATEAUExtentGizmo();
 
     void DrawHandle(int Index, FColor Color, const FSceneView* View, FPrimitiveDrawInterface* PDI, double CameraDistance);
     void DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const;
 
+    void InitHandlePosition();
     FVector GetHandlePosition(int Index);
     void SetHandlePosition(const int Index, const FVector& Position);
 

@@ -11,7 +11,7 @@ class APLATEAUCityModelLoader;
 
 
 UCLASS()
-class UPLATEAUImportModelBtn : public UBlueprintFunctionLibrary {
+class PLATEAUEDITORBPLIBRARIES_API UPLATEAUImportModelBtn : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")

@@ -111,7 +111,7 @@ public:
     std::shared_ptr<plateau::network::Client> ClientPtr;
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-        void LoadAsync();
+        void LoadAsync(const bool bAutomationTest=false);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Cancel();

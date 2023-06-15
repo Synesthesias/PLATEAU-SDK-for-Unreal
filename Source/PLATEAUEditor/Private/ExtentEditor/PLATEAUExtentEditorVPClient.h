@@ -25,6 +25,7 @@ public:
     void Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InFileCollection);
     
     FPLATEAUExtent GetExtent() const;
+    void InitHandlePosition() const;
 
     // FEditorViewportClient interface
     virtual void Tick(float DeltaSeconds) override;
@@ -51,8 +52,6 @@ private:
     FVector TrackingStartedPosition;
     FVector TrackingStartedGizmoPosition;
     FVector TrackingStartedCameraPosition;
-    FVector2D DefaultGizmoHandlePosMin;
-    FVector2D DefaultGizmoHandlePosMax;
 
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);

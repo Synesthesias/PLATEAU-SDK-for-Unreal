@@ -142,6 +142,27 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 .Text(LOCTEXT("Cancel Button", "キャンセル"))
                 ]
         ]
+        + SVerticalBox::Slot()
+            .AutoHeight()
+            .Padding(FMargin(0, 0, 0, 15))
+            [
+                SNew(SButton)
+                .VAlign(VAlign_Center)
+            .ForegroundColor(FColor::White)
+            .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+            .OnClicked_Lambda(
+                [this] {
+                    ViewportClient->InitHandlePosition();
+                    return FReply::Handled();
+                })
+            .Content()
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                    .Margin(FMargin(0, 5, 0, 5))
+                    .Text(LOCTEXT("Area Reset Button", "範囲選択リセット"))
+                    ]
+            ]
     + SVerticalBox::Slot()
         .AutoHeight()
         .Padding(FMargin(0, 0, 0, 15))

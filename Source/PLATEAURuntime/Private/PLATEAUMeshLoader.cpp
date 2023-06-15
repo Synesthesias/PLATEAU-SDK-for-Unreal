@@ -300,7 +300,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&]() {
                 Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-                Component->Mobility = EComponentMobility::Static;
+                if (bAutomationTest) {
+                    Component->Mobility = EComponentMobility::Movable;
+                } else {
+                    Component->Mobility = EComponentMobility::Static;
+                }
                 Component->bVisualizeComponent = true;
 
                 // StaticMesh作成
@@ -413,7 +417,12 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
                 Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
                 check(Comp != nullptr);
-                Comp->Mobility = EComponentMobility::Static;
+                if (bAutomationTest) {
+                    Comp->Mobility = EComponentMobility::Movable;
+                } else {
+                    Comp->Mobility = EComponentMobility::Static;
+                }
+
                 Actor.AddInstanceComponent(Comp);
                 Comp->RegisterComponent();
                 Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
