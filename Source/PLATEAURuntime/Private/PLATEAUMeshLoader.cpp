@@ -315,24 +315,26 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
     FMeshDescription* MeshDescription = StaticMesh->CreateMeshDescription(0);
 
     ConvertMesh(InMesh, *MeshDescription);
-    StaticMesh->CommitMeshDescription(0);
+
+    FFunctionGraphTask::CreateAndDispatchWhenReady(
+        [&]() {
+            StaticMesh->CommitMeshDescription(0);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+
     StaticMeshes.Add(StaticMesh);
     StaticMesh->OnPostMeshBuild().AddLambda(
         [Component](UStaticMesh* Mesh) {
             if (Component == nullptr)
                 return;
-            Async(EAsyncExecution::LargeThreadPool,
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
                 [Component, Mesh] {
-                    FFunctionGraphTask::CreateAndDispatchWhenReady(
-                        [Component, Mesh] {
-                            Component->SetStaticMesh(Mesh);
+                    Component->SetStaticMesh(Mesh);
 
-                            // Collision情報設定
-                            Mesh->CreateBodySetup();
-                            Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+                    // Collision情報設定
+                    Mesh->CreateBodySetup();
+                    Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 
-                        }, TStatId(), nullptr, ENamedThreads::GameThread);
-                });
+                }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
         });
 
     FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
