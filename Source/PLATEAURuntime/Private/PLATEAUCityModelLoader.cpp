@@ -179,7 +179,7 @@ namespace {
     }
 }
 
-void APLATEAUCityModelLoader::LoadAsync() {
+void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 #if WITH_EDITOR
 
     Phase = ECityModelLoadingPhase::Start;
@@ -201,6 +201,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
             bImportFromServer = bImportFromServer,
             Client = *ClientPtr,
             OwnerLoader = TWeakObjectPtr<APLATEAUCityModelLoader>(this),
+            bAutomationTest = bAutomationTest,
             bCanceledRef = &bCanceled,
             Phase = &Phase,
             ImportGmlFilesDelegate = ImportGmlFilesDelegate,
@@ -329,8 +330,8 @@ void APLATEAUCityModelLoader::LoadAsync() {
             // TODO: fldでgml名被る
             GmlNames.Add(GmlName);
             Futures.Add(Async(EAsyncExecution::Thread,
-                [InputData, &LoadInputDataArray, Source, ModelActor, GmlName,
-                OwnerLoader, CopiedGmlPath, &LoadMeshSection, &bCanceledRef, Index, ImportGmlProgressDelegate, ImportFailedGmlFileDelegate] {
+                [InputData, &LoadInputDataArray, Source, ModelActor, GmlName, OwnerLoader,
+                CopiedGmlPath, &LoadMeshSection, bAutomationTest, &bCanceledRef, Index, ImportGmlProgressDelegate, ImportFailedGmlFileDelegate] {
 
                     if (bCanceledRef->Load(EMemoryOrder::Relaxed))
                         return false;
@@ -382,7 +383,7 @@ void APLATEAUCityModelLoader::LoadAsync() {
                     
                     {
                         FScopeLock Lock(LoadMeshSection);
-                        FPLATEAUMeshLoader().LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
+                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
                     }
 
                     FFunctionGraphTask::CreateAndDispatchWhenReady(

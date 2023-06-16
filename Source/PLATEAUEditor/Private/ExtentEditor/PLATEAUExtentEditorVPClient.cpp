@@ -5,7 +5,7 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
-#include "PLATEAUExtentGizmo.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentGizmo.h"
 #include "PLATEAUMeshCodeGizmo.h"
 #include "PLATEAUFeatureInfoDisplay.h"
 
@@ -51,8 +51,6 @@ FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(
     , ExtentEditorPtr(InExtentEditor) {
     InPreviewScene->SetFloorVisibility(false);
     ExtentGizmo = MakeUnique<FPLATEAUExtentGizmo>();
-    DefaultGizmoHandlePosMin = ExtentGizmo->GetMin();
-    DefaultGizmoHandlePosMax = ExtentGizmo->GetMax();
 }
 
 FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
@@ -75,17 +73,15 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
     }
-
-    // ウィンドウオープン時にハンドル位置を中央に設定
-    ExtentGizmo->SetMinX(DefaultGizmoHandlePosMin.X);
-    ExtentGizmo->SetMaxX(DefaultGizmoHandlePosMax.X);
-    ExtentGizmo->SetMinY(DefaultGizmoHandlePosMin.Y);
-    ExtentGizmo->SetMaxY(DefaultGizmoHandlePosMax.Y);
 }
 
 FPLATEAUExtent FPLATEAUExtentEditorViewportClient::GetExtent() const {
     auto GeoReference = ExtentEditorPtr.Pin()->GetGeoReference();
     return ExtentGizmo->GetExtent(GeoReference);
+}
+
+void FPLATEAUExtentEditorViewportClient::InitHandlePosition() const {
+    ExtentGizmo->InitHandlePosition();
 }
 
 void FPLATEAUExtentEditorViewportClient::InitCamera() {

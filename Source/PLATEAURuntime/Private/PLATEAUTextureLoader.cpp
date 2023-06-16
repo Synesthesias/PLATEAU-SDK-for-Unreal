@@ -177,7 +177,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
             [&]() {
 
                 FString PackageName = TEXT("/Game/PLATEAU/Textures/");
-                PackageName += FPaths::GetBaseFilename(TexturePath);
+                PackageName += FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
                 UPackage* Package = CreatePackage(*PackageName);
                 Package->FullyLoad();
                 NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());

@@ -1,8 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUImportModelBtn.h"
-
-#include <plateau/dataset/dataset_source.h>
 #include "AssetSelection.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
