@@ -26,25 +26,25 @@ int64 UPLATEAUModelAdjustmentFilter::GetCityModelPackages(const APLATEAUInstance
 }
 
 /**
- * @brief 選択中のPLATEAUInstancedCityModelからLOD情報取得
+ * @brief 選択中のPLATEAUInstancedCityModelからLod情報取得
  * @param TargetCityModel アウトライナー上で選択したPLATEAUInstancedCityModel
- * @param Package LOD取得対象のパッケージ
- * @return 対象パッケージのLOD情報を格納した構造体
+ * @param Package Lod取得対象のパッケージ
+ * @return 対象パッケージのLod情報を格納した構造体
  */
 FPLATEAUPackageLod UPLATEAUModelAdjustmentFilter::GetMinMaxLod(const APLATEAUInstancedCityModel* TargetCityModel, const int64 Package) {
-    const auto [MinLOD, MaxLOD] = TargetCityModel->GetMinMaxLod(static_cast<plateau::dataset::PredefinedCityModelPackage>(Package));
-    return FPLATEAUPackageLod(MinLOD, MaxLOD);
+    const auto [MinLod, MaxLod] = TargetCityModel->GetMinMaxLod(static_cast<plateau::dataset::PredefinedCityModelPackage>(Package));
+    return FPLATEAUPackageLod(MinLod, MaxLod);
 }
 
 /**
  * @brief フィルタリング実行
  * @param TargetCityModel アウトライナー上で選択したPLATEAUInstancedCityModel
  * @param EnablePackage 有効化パッケージ
- * @param PackageToLodRangeMap パッケージごとのLODに関してのユーザー選択結果 
- * @param bShowMultiLOD 重複する地物を非表示にするか？
+ * @param PackageToLodRangeMap パッケージごとのLodに関してのユーザー選択結果 
+ * @param bShowMultiLod 重複する地物を非表示にするか？
  * @param EnableCityObject 有効化オブジェクトタイプ
  */
-void UPLATEAUModelAdjustmentFilter::ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bShowMultiLOD, const int64 EnableCityObject) {
+void UPLATEAUModelAdjustmentFilter::ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bShowMultiLod, const int64 EnableCityObject) {
     // オプションにない地物タイプは全て含める
     auto FilteringFlags = UPLATEAUModelAdjustmentBuilding::GetAllBuildingSettingFlags();
     FilteringFlags.Append(UPLATEAUModelAdjustmentRelief::GetAllReliefSettingFlags());
@@ -58,5 +58,5 @@ void UPLATEAUModelAdjustmentFilter::ApplyFilter(APLATEAUInstancedCityModel* Targ
     for (const auto& Entity : PackageToLodRangeMap) {
         CastPackageToLodRangeMap.Add(static_cast<plateau::dataset::PredefinedCityModelPackage>(Entity.Key), { Entity.Value.MinLod, Entity.Value.MaxLod });
     }
-    TargetCityModel->FilterByLODs(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bShowMultiLOD)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));;
+    TargetCityModel->FilterByLods(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bShowMultiLod)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));;
 }

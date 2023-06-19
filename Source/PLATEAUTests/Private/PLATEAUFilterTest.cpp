@@ -12,6 +12,6 @@ FPLATEAUPackageLod UPLATEAUFilterTest::GetMinMaxLod(const APLATEAUInstancedCityM
     return UPLATEAUModelAdjustmentFilter::GetMinMaxLod(TargetCityModel, Package);
 }
 
-void UPLATEAUFilterTest::ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bShowMultiLOD, const int64 EnableCityObject) {
-    return UPLATEAUModelAdjustmentFilter::ApplyFilter(TargetCityModel, EnablePackage, PackageToLodRangeMap, bShowMultiLOD, EnableCityObject);
+void UPLATEAUFilterTest::ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bShowMultiLod, const int64 EnableCityObject) {
+    return UPLATEAUModelAdjustmentFilter::ApplyFilter(TargetCityModel, EnablePackage, PackageToLodRangeMap, bShowMultiLod, EnableCityObject);
 }

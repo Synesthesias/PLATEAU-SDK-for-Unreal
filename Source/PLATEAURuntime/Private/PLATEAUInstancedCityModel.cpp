@@ -19,7 +19,7 @@ namespace {
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
      * コンポーネント名の末尾に"_{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"_"以降を削除します。
-     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、LOD以外を取得するのには使用しないでください。
+     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
      */
     FString GetOriginalComponentName(const USceneComponent* const InComponent) {
         auto ComponentName = InComponent->GetName();
@@ -33,11 +33,11 @@ namespace {
     }
 
     /**
-     * @brief LODを名前として持つComponentの名前をパースし、LODを数値として返します。
+     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
      */
     int ParseLodComponent(const USceneComponent* const InLodComponent) {
         auto LodString = GetOriginalComponentName(InLodComponent);
-        // "LOD{数字}"から先頭3文字除外することで数字を抜き出す。
+        // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
         LodString = LodString.RightChop(3);
 
         int Lod;
@@ -109,7 +109,7 @@ plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetCity
     return Packages;
 }
 
-APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod) {
+APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod) {
     bIsFiltering = true;
 
     for (const auto& GmlComponent : GetGmlComponents()) {
@@ -124,11 +124,11 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plate
         TArray<USceneComponent*> LodComponents;
         GmlComponent->GetChildrenComponents(false, LodComponents);
 
-        // 各地物について全てのLODを表示する場合の処理
+        // 各地物について全てのLodを表示する場合の処理
         if (!bOnlyMaxLod) {
             for (const auto& LodComponent : LodComponents) {
                 const auto Lod = ParseLodComponent(LodComponent);
-                if (PackageToLodRangeMap[Package].MinLOD <= Lod && Lod <= PackageToLodRangeMap[Package].MaxLOD)
+                if (PackageToLodRangeMap[Package].MinLod <= Lod && Lod <= PackageToLodRangeMap[Package].MaxLod)
                     LodComponent->SetVisibility(true, true);
             }
             continue;
@@ -136,7 +136,7 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plate
 
         for (const auto& LodComponent : LodComponents) {
             const auto Lod = ParseLodComponent(LodComponent);
-            if (Lod == PackageToLodRangeMap[Package].MaxLOD) {
+            if (Lod == PackageToLodRangeMap[Package].MaxLod) {
                 TArray<USceneComponent*> FeatureComponents;
                 LodComponent->GetChildrenComponents(true, FeatureComponents);
                 for (const auto& FeatureComponent : FeatureComponents) {
@@ -221,7 +221,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
             TArray<USceneComponent*> FeatureComponents;
             LodComponent->GetChildrenComponents(true, FeatureComponents);
             for (const auto& FeatureComponent : FeatureComponents) {
-                //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
+                //この時点で不可視状態ならLodフィルタリングで不可視化されたことになるので無視
                 if (!FeatureComponent->IsVisible())
                     continue;
 
