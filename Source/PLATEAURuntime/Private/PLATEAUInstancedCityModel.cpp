@@ -13,14 +13,13 @@
 
 #include "CityGML/PLATEAUCityGmlProxy.h"
 
-using namespace plateau::dataset;
 using namespace UE::Tasks;
 
 namespace {
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
      * コンポーネント名の末尾に"_{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"_"以降を削除します。
-     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、LOD以外を取得するのには使用しないでください。
+     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
      */
     FString GetOriginalComponentName(const USceneComponent* const InComponent) {
         auto ComponentName = InComponent->GetName();
@@ -34,11 +33,11 @@ namespace {
     }
 
     /**
-     * @brief LODを名前として持つComponentの名前をパースし、LODを数値として返します。
+     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
      */
     int ParseLodComponent(const USceneComponent* const InLodComponent) {
         auto LodString = GetOriginalComponentName(InLodComponent);
-        // "LOD{数字}"から先頭3文字除外することで数字を抜き出す。
+        // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
         LodString = LodString.RightChop(3);
 
         int Lod;
@@ -61,7 +60,7 @@ namespace {
     plateau::dataset::PredefinedCityModelPackage GetCityModelPackage(const USceneComponent* const InGmlComponent) {
         const auto GmlFileName = GetGmlFileName(InGmlComponent);
         // udxのサブフォルダ名は地物種類名に相当するため、UdxSubFolderの関数を使用してgmlのパッケージ種を取得
-        return UdxSubFolder::getPackage(GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
+        return plateau::dataset::UdxSubFolder::getPackage(plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
     }
 }
 
@@ -110,64 +109,39 @@ plateau::dataset::PredefinedCityModelPackage APLATEAUInstancedCityModel::GetCity
     return Packages;
 }
 
-APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bOnlyMaxLod) {
+APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod) {
     bIsFiltering = true;
 
     for (const auto& GmlComponent : GetGmlComponents()) {
-        //一度全てのメッシュを不可視にする
+        // 一度全てのメッシュを不可視にする
         GmlComponent->SetVisibility(false, true);
-
 
         // 選択されていないパッケージを除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if ((Package & InPackage) == plateau::dataset::PredefinedCityModelPackage::None)
             continue;
 
-        // 各地物について全てのLODを表示する場合の処理
-        if (!bOnlyMaxLod) {
-            for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
-                const auto Lod = ParseLodComponent(LodComponent);
-                if (Lod < MinLOD || Lod > MaxLOD)
-                    continue;
+        TArray<USceneComponent*> LodComponents;
+        GmlComponent->GetChildrenComponents(false, LodComponents);
 
-                LodComponent->SetVisibility(true, true);
+        // 各地物について全てのLodを表示する場合の処理
+        if (!bOnlyMaxLod) {
+            for (const auto& LodComponent : LodComponents) {
+                const auto Lod = ParseLodComponent(LodComponent);
+                if (PackageToLodRangeMap[Package].MinLod <= Lod && Lod <= PackageToLodRangeMap[Package].MaxLod)
+                    LodComponent->SetVisibility(true, true);
             }
             continue;
         }
 
-        // 各地物について最大LODのみを表示する場合の処理
-
-        // 後で利用するために各地物の最大LODを保持する。
-        TMap<FString, int> FeatureIDToMaxLodMap;
-        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
-            int Lod = ParseLodComponent(LodComponent);
-            if (Lod < MinLOD || Lod > MaxLOD)
-                continue;
-
-            for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {
-                const auto FeatureID = GetOriginalComponentName(FeatureComponent);
-                if (!FeatureIDToMaxLodMap.Find(FeatureID)) {
-                    FeatureIDToMaxLodMap.Add(FeatureID, Lod);
-                    continue;
-                }
-                FeatureIDToMaxLodMap[FeatureID] = FMath::Max(FeatureIDToMaxLodMap[FeatureID], Lod);
-            }
-        }
-
-        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+        for (const auto& LodComponent : LodComponents) {
             const auto Lod = ParseLodComponent(LodComponent);
-            if (Lod < MinLOD || Lod > MaxLOD)
-                continue;
-
-            TArray<USceneComponent*> FeatureComponents;
-            LodComponent->GetChildrenComponents(true, FeatureComponents);
-            for (const auto& FeatureComponent : FeatureComponents) {
-                auto FeatureID = GetOriginalComponentName(FeatureComponent);
-                if (!FeatureIDToMaxLodMap.Find(FeatureID))
-                    continue;
-
-                if (Lod == FeatureIDToMaxLodMap[FeatureID])
+            if (Lod == PackageToLodRangeMap[Package].MaxLod) {
+                TArray<USceneComponent*> FeatureComponents;
+                LodComponent->GetChildrenComponents(true, FeatureComponents);
+                for (const auto& FeatureComponent : FeatureComponents) {
                     FeatureComponent->SetVisibility(true, true);
+                }
             }
         }
     }
@@ -247,7 +221,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
             TArray<USceneComponent*> FeatureComponents;
             LodComponent->GetChildrenComponents(true, FeatureComponents);
             for (const auto& FeatureComponent : FeatureComponents) {
-                //この時点で不可視状態ならLODフィルタリングで不可視化されたことになるので無視
+                //この時点で不可視状態ならLodフィルタリングで不可視化されたことになるので無視
                 if (!FeatureComponent->IsVisible())
                     continue;
 

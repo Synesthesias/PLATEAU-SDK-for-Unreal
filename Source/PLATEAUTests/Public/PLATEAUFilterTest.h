@@ -21,5 +21,5 @@ public:
     static FPLATEAUPackageLod GetMinMaxLod(const APLATEAUInstancedCityModel* TargetCityModel, const int64 Package);
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|Tests|ModelAdjustmentPanel")
-    static void ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const int MinLOD, const int MaxLOD, const bool bShowMultiLOD, const int64 EnableCityObject);
+    static void ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bShowMultiLod, const int64 EnableCityObject);
 };
