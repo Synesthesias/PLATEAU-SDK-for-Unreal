@@ -137,6 +137,9 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
     // FStaticMeshAttributes Attributes(*StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0));
 
+    if (StaticMeshComponent->GetStaticMesh() == nullptr)
+        return;
+
     //渡すためのデータ各種
     std::vector<TVec3d> Vertices;
     std::vector<unsigned int> OutIndices;
