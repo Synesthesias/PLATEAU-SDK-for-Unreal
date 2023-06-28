@@ -36,7 +36,7 @@
 		},
 		{
 			"Name": "PLATEAUTests",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": ["Win64", "Mac"]
 		}

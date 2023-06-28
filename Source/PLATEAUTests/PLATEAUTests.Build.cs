@@ -23,6 +23,7 @@ public class PLATEAUTests : ModuleRules {
 				"PLATEAUEditor",
 				"PLATEAURuntime",
 				"PLATEAUEditorBPLibraries",
+				"UnrealEd",
 			});
 
 		DynamicallyLoadedModuleNames.AddRange(
