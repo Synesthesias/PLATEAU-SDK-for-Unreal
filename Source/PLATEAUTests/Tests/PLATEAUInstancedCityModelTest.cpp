@@ -17,14 +17,14 @@ bool FPLATEAUInstancedCityModelTest::RunTest(const FString& Parameters) {
     Loader->LoadAsync(true);
 
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Loader] {
-        if (Loader->Phase == ECityModelLoadingPhase::Cancelling || Loader->Phase == ECityModelLoadingPhase::Finished) {
-            TArray<AActor*> CityModelActors;
-            UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-            if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
-            
-            return true;
-         }
-         return false;
+        if (Loader->Phase != ECityModelLoadingPhase::Cancelling && Loader->Phase != ECityModelLoadingPhase::Finished)
+            return false;
+        
+        TArray<AActor*> CityModelActors;
+        UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
+        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
+        
+        return true;
     }));
 
     return true;

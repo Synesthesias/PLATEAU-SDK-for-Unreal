@@ -18,33 +18,33 @@ bool FPLATEAUPolygonMeshTest::RunTest(const FString& Parameters) {
     Loader->LoadAsync(true);
 
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Loader] {
-        if (Loader->Phase == ECityModelLoadingPhase::Cancelling || Loader->Phase == ECityModelLoadingPhase::Finished) {
-            bool bExistPolygonMesh = false;
-            TArray<AActor*> CityModelActors;
-            UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-            if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
+        if (Loader->Phase != ECityModelLoadingPhase::Cancelling && Loader->Phase != ECityModelLoadingPhase::Finished)
+            return false;
+            
+        bool bExistPolygonMesh = false;
+        TArray<AActor*> CityModelActors;
+        UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
+        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
 
-            for (const auto& CityModelActor : CityModelActors) {
-                TArray<USceneComponent*> GmlActors;
-                CityModelActor->GetRootComponent()->GetChildrenComponents(false, GmlActors);
-                if (GmlActors.Num() <= 0) AddError("GmlActors.Num() <= 0");
+        for (const auto& CityModelActor : CityModelActors) {
+            TArray<USceneComponent*> GmlActors;
+            CityModelActor->GetRootComponent()->GetChildrenComponents(false, GmlActors);
+            if (GmlActors.Num() <= 0) AddError("GmlActors.Num() <= 0");
 
-                for (const auto& GmlActor : GmlActors) {
-                    TArray<USceneComponent*> LodActors;
-                    GmlActor->GetChildrenComponents(false, LodActors);
-                    
-                    for (const auto& LodActor : LodActors) {
-                        if (LodActor->GetName().Contains("LOD", ESearchCase::CaseSensitive)) {
-                            bExistPolygonMesh = true;
-                        }
+            for (const auto& GmlActor : GmlActors) {
+                TArray<USceneComponent*> LodActors;
+                GmlActor->GetChildrenComponents(false, LodActors);
+                
+                for (const auto& LodActor : LodActors) {
+                    if (LodActor->GetName().Contains("LOD", ESearchCase::CaseSensitive)) {
+                        bExistPolygonMesh = true;
                     }
                 }
             }
-
-            if (!bExistPolygonMesh) AddError("bExistPolygonMesh == false"); 
-            return true;
         }
-        return false;
+
+        if (!bExistPolygonMesh) AddError("bExistPolygonMesh == false"); 
+        return true;
     }));
     
     return true;

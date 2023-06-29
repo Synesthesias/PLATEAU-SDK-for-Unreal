@@ -45,19 +45,19 @@ bool FPLATEAUExportModelTest::RunTest(const FString& Parameters) {
     Loader->LoadAsync(true);
 
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Loader, TestDir] {
-        if (Loader->Phase == ECityModelLoadingPhase::Cancelling || Loader->Phase == ECityModelLoadingPhase::Finished) {
-            TArray<AActor*> CityModelActors;
-            UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-            if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
-            if (!FFileManagerGeneric::Get().MakeDirectory(*TestDir, true)) AddError("Failed to MakeDirectory");
+        if (Loader->Phase != ECityModelLoadingPhase::Cancelling && Loader->Phase != ECityModelLoadingPhase::Finished)
+            return false;
 
-            UPLATEAUExportModelBtn::ExportModel(Cast<APLATEAUInstancedCityModel>(CityModelActors.GetData()[0]), TestDir, 0, false, true, true, 0, 0);
-            const auto FoundFiles = FindFiles(TestDir, "*");
-            if (FoundFiles.Num() <= 0) AddError("Failed to FindFiles");
+        TArray<AActor*> CityModelActors;
+        UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
+        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
+        if (!FFileManagerGeneric::Get().MakeDirectory(*TestDir, true)) AddError("Failed to MakeDirectory");
 
-            return true;
-         }
-         return false;
+        UPLATEAUExportModelBtn::ExportModel(Cast<APLATEAUInstancedCityModel>(CityModelActors.GetData()[0]), TestDir, 0, false, true, true, 0, 0);
+        const auto FoundFiles = FindFiles(TestDir, "*");
+        if (FoundFiles.Num() <= 0) AddError("Failed to FindFiles");
+
+        return true;
     }));
 
     return true;
