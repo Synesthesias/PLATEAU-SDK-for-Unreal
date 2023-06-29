@@ -7,10 +7,11 @@
 #include "Kismet/GameplayStatics.h"
 
 
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUInstancedCityModelTest, FPLATEAUAutomationTestBase, "PLATEAUTest.InstancedCityModel",
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_CityModelLoader_Load_Generates_Actor, FPLATEAUAutomationTestBase,
+                                        "PLATEAUTest.FPLATEAUTest.CityModelLoader.Load_Generates_Actor",
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPLATEAUInstancedCityModelTest::RunTest(const FString& Parameters) {
+bool FPLATEAUTest_CityModelLoader_Load_Generates_Actor::RunTest(const FString& Parameters) {
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());

@@ -30,10 +30,11 @@ namespace {
 }
 
 
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUExportModelTest, FPLATEAUAutomationTestBase, "PLATEAUTest.ExportModel",
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelExporter_Export_Generates_Files, FPLATEAUAutomationTestBase,
+                                        "PLATEAUTest.FPLATEAUTest.ModelExporter.Export_Generates_Files",
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPLATEAUExportModelTest::RunTest(const FString& Parameters) {
+bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& Parameters) {
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const FString TestDir = FPaths::ProjectDir().Append("Tests");

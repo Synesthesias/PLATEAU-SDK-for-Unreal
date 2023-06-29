@@ -32,10 +32,11 @@ namespace {
 }
 
 
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUFilteringTest, FPLATEAUAutomationTestBase, "PLATEAUTest.Filtering",
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility, FPLATEAUAutomationTestBase,
+                                        "PLATEAUTest.FPLATEAUTest.ModelAdjustmentFilter.ApplyFilter_Toggles_Visibility",
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPLATEAUFilteringTest::RunTest(const FString& Parameters) {
+bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(const FString& Parameters) {
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());

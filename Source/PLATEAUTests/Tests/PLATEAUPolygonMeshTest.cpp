@@ -8,10 +8,11 @@
 #include "Kismet/GameplayStatics.h"
 
 
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUPolygonMeshTest, FPLATEAUAutomationTestBase, "PLATEAUTest.PolygonMesh",
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_CityModelLoader_Load_Generates_Components, FPLATEAUAutomationTestBase,
+                                        "PLATEAUTest.FPLATEAUTest.CityModelLoader.Load_Generates_Components",
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FPLATEAUPolygonMeshTest::RunTest(const FString& Parameters) {
+bool FPLATEAUTest_CityModelLoader_Load_Generates_Components::RunTest(const FString& Parameters) {
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
