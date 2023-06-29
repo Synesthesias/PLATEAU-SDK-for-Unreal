@@ -37,6 +37,7 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelAdjustmentFilter_Apply
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(const FString& Parameters) {
+    InitializeTest("ApplyFilter_Toggles_Visibility");
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
@@ -105,6 +106,7 @@ bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(
         
         return true;
     }));
-    
+
+    FinishTest();
     return true;
 }

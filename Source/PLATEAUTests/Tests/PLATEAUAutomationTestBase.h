@@ -2,11 +2,13 @@
 
 #pragma once
 
+#include "Kismet/GameplayStatics.h"
+#include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "HAL/FileManagerGeneric.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUImportModelBtn.h"
 #include "PLATEAUInstancedCityModel.h"
-#include "Kismet/GameplayStatics.h"
-#include "Misc/AutomationTest.h"
 #include "ExtentEditor/PLATEAUExtentGizmo.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
@@ -14,6 +16,8 @@
 
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
+    FString MyTestName;
+    
     struct FGizmoData {
         FGizmoData(): MinX(0), MinY(0), MaxX(0), MaxY(0) {
         }
@@ -27,6 +31,15 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
         double MaxX;
         double MaxY;
     };
+
+    bool WriteToFile(const FString& Path, const FString& Text) const {
+        const FString& DirectoryPath = FPaths::GetPath(Path);
+        if (!FPaths::DirectoryExists(DirectoryPath)) {
+            FFileManagerGeneric::Get().MakeDirectory(*DirectoryPath, true);
+        }
+
+        return FFileHelper::SaveStringToFile(Text, *(DirectoryPath + "/" + FPaths::GetBaseFilename(Path) + ".txt"));
+    }
 
     APLATEAUCityModelLoader* GetLocalCityModelLoader(const int ZoneId, const FVector& ReferencePoint, const int64 PackageMask, const FString& SourcePath, const FGizmoData& GizmoData, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData) const {
         const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
@@ -63,6 +76,14 @@ public:
 		: FAutomationTestBase(InName, bInComplexTask) {
 	}
 protected:
+    void InitializeTest(const FString& TargetTestName) {
+        MyTestName = TargetTestName;
+        const FString TestLogPath = FPaths::ProjectDir().Append("TestLogs/" + MyTestName + ".log");
+        if (FPaths::FileExists(TestLogPath)) {
+            if (!FFileManagerGeneric::Get().Delete(*TestLogPath, true, true)) AddError("Failed to DeleteFile");
+        }
+    }
+    
     UWorld* GetWorld() {
         for (auto WorldContext : GEngine->GetWorldContexts()) {
             if (WorldContext.World() != nullptr) {
@@ -100,5 +121,10 @@ protected:
         
         AddError(TEXT("Loader is nullptr"));
         return nullptr;
+    }
+
+    void FinishTest() {
+        const FString TestLogPath = FPaths::ProjectDir().Append("TestLogs/" + MyTestName + ".log");
+        if (!WriteToFile(TestLogPath, "Succeeded")) AddError("Failed to WriteToFile");
     }
 };

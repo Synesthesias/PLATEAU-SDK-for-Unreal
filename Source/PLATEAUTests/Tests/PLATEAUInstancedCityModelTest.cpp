@@ -12,6 +12,7 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_CityModelLoader_Load_Genera
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_CityModelLoader_Load_Generates_Actor::RunTest(const FString& Parameters) {
+    InitializeTest("Load_Generates_Actor");
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
@@ -28,5 +29,6 @@ bool FPLATEAUTest_CityModelLoader_Load_Generates_Actor::RunTest(const FString& P
         return true;
     }));
 
+    FinishTest();
     return true;
 }

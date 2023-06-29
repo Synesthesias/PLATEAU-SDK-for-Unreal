@@ -35,6 +35,7 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelExporter_Export_Genera
                                         EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& Parameters) {
+    InitializeTest("Export_Generates_Files");
     if (!OpenNewMap()) AddError("Failed to OpenNewMap");
 
     const FString TestDir = FPaths::ProjectDir().Append("Tests");
@@ -61,5 +62,6 @@ bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& P
         return true;
     }));
 
+    FinishTest();
     return true;
 }
