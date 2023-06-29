@@ -9,22 +9,24 @@
 #include "Kismet/GameplayStatics.h"
 
 
-TArray<FString> FindFiles(const FString& Path, const FString& Filter) {
-    TArray<FString> FoundFileArray;
-    FoundFileArray.Empty();
+namespace {
+    TArray<FString> FindFiles(const FString& Path, const FString& Filter) {
+        TArray<FString> FoundFileArray;
+        FoundFileArray.Empty();
 
-    if (FPaths::DirectoryExists(Path)) {
-        if (0 < Filter.Len()) {
-            if (Path.Right(1) == "/") {
-                FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + Filter), true, false);
-            } else {
-                FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + "/" + Filter), true, false);
+        if (FPaths::DirectoryExists(Path)) {
+            if (0 < Filter.Len()) {
+                if (Path.Right(1) == "/") {
+                    FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + Filter), true, false);
+                } else {
+                    FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(Path + "/" + Filter), true, false);
+                }
             }
+            FFileManagerGeneric::Get().FindFiles(FoundFileArray, *Path, true, false);
         }
-        FFileManagerGeneric::Get().FindFiles(FoundFileArray, *Path, true, false);
-    }
 
-    return FoundFileArray;
+        return FoundFileArray;
+    }
 }
 
 

@@ -9,23 +9,25 @@
 #include "Kismet/GameplayStatics.h"
 
 
-void ApplyFilter(APLATEAUInstancedCityModel* CityModel, plateau::dataset::PredefinedCityModelPackage CityModelPackages, bool bShowModels) {
-    for (const auto Package : UPLATEAUImportSettings::GetAllPackages()) {
-        if ((Package & CityModelPackages) == plateau::dataset::PredefinedCityModelPackage::None)
-            continue;
-        if (Package != plateau::dataset::PredefinedCityModelPackage::Building)
-            continue;
+namespace {
+    void ApplyFilter(APLATEAUInstancedCityModel* CityModel, plateau::dataset::PredefinedCityModelPackage CityModelPackages, bool bShowModels) {
+        for (const auto Package : UPLATEAUImportSettings::GetAllPackages()) {
+            if ((Package & CityModelPackages) == plateau::dataset::PredefinedCityModelPackage::None)
+                continue;
+            if (Package != plateau::dataset::PredefinedCityModelPackage::Building)
+                continue;
 
-        int64 CityObjectType = 0;
-        for (const auto BuildingSettingFlag : UPLATEAUModelAdjustmentBuilding::GetAllBuildingSettingFlags()) {
-            CityObjectType |= BuildingSettingFlag;
+            int64 CityObjectType = 0;
+            for (const auto BuildingSettingFlag : UPLATEAUModelAdjustmentBuilding::GetAllBuildingSettingFlags()) {
+                CityObjectType |= BuildingSettingFlag;
+            }
+
+            int64 EnablePackage = bShowModels ? static_cast<int64>(Package) : 0;
+            TMap<int64, FPLATEAUPackageLod> PackageToLodRangeMap;
+            const auto [MinLod, MaxLod] = CityModel->GetMinMaxLod(Package);
+            PackageToLodRangeMap.Add(static_cast<int64>(Package), FPLATEAUPackageLod(MinLod, MaxLod));
+            UPLATEAUModelAdjustmentFilter::ApplyFilter(CityModel, EnablePackage, PackageToLodRangeMap, true, CityObjectType);
         }
-
-        int64 EnablePackage = bShowModels ? static_cast<int64>(Package) : 0;
-        TMap<int64, FPLATEAUPackageLod> PackageToLodRangeMap;
-        const auto [MinLod, MaxLod] = CityModel->GetMinMaxLod(Package);
-        PackageToLodRangeMap.Add(static_cast<int64>(Package), FPLATEAUPackageLod(MinLod, MaxLod));
-        UPLATEAUModelAdjustmentFilter::ApplyFilter(CityModel, EnablePackage, PackageToLodRangeMap, true, CityObjectType);
     }
 }
 
