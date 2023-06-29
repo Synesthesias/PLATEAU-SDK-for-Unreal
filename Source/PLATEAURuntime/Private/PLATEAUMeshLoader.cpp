@@ -2,6 +2,7 @@
 
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUTextureLoader.h"
+#include "PLATEAUInstancedCityModel.h"
 
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
@@ -187,8 +188,8 @@ namespace {
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
 
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
-        
-        if (bCanceled->Load(EMemoryOrder::Relaxed)) 
+
+        if (bCanceled->Load(EMemoryOrder::Relaxed))
             break;
 
         LoadNodeRecursive(ParentComponent, InModel->getRootNodeAt(i), *ModelActor);
@@ -205,86 +206,21 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         StaticMeshes.Reset();
     }
 
-    // TODO: フィルタリング機能に委譲
-    TMap<int, TSet<FString>> NameMap;
-    for (int i = 0; i < InModel->getRootNodeCount(); i++) {
-
-        const auto& RootNode = InModel->getRootNodeAt(i);
-        FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
-        int Key;
-        FDefaultValueHelper::ParseInt(KeyString.RightChop(3), Key);
-        auto& Value = NameMap.Add(Key);
-        for (int j = 0; j < RootNode.getChildCount(); ++j) {
-
-            if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-                break;
-
-            const auto& Node = RootNode.getChildAt(j);
-            Value.Add(UTF8_TO_TCHAR(Node.getName().c_str()));
-        }
-    }
-
+    // 最大LOD以外の形状を非表示化
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [ParentComponent, &NameMap, &bCanceled]() {
-            TArray<USceneComponent*> LodComponents;
-            ParentComponent->GetChildrenComponents(false, LodComponents);
-
-            for (const auto& LodComponent : LodComponents) {
-
-                auto LodComponentName = LodComponent->GetName();
-                int Lod;
-                FString LodString = LodComponentName.RightChop(3);
-                LodString = LodString.LeftChop(LodString.Len() - 1);
-                FDefaultValueHelper::ParseInt(LodString, Lod);
-
-                TArray<USceneComponent*> Components;
-                LodComponent->GetChildrenComponents(true, Components);
-                for (const auto& Component : Components) {
-
-                    auto ComponentName = Component->GetName();
-
-                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-                        break;
-
-                    int Index = 0;
-                    if (ComponentName.FindLastChar('_', Index)) {
-                        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
-                        }
-                    }
-                    TArray<int> Keys;
-                    NameMap.GetKeys(Keys);
-                    for (const auto Key : Keys) {
-                        if (Key <= Lod)
-                            continue;
-                        if (NameMap[Key].Contains(ComponentName))
-                            Component->SetVisibility(false);
-                    }
-                }
-            }
+        [ParentComponent]() {
+            APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
     USceneComponent* Component = LoadNode(ParentComponent, Node, Actor);
 
-    //TArray<TFuture<void>> Results;
     for (int i = 0; i < Node.getChildCount(); i++) {
         const auto& TargetNode = Node.getChildAt(i);
 
-        // TODO: NodeのLifetimeへの依存解消
-        //Results.Add(Async(EAsyncExecution::Thread,
-        //    [this, Comp, &TargetNode, &Actor] {
-        //const auto ChildComponent = LoadNode(Component, &TargetNode, Actor);
-
         LoadNodeRecursive(Component, TargetNode, Actor);
-
-        //}));
     }
-
-    //for (const auto& Result : Results) {
-    //    Result.Wait();
-    //}
 }
 
 
@@ -321,87 +257,80 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
             StaticMesh->CommitMeshDescription(0);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 
-    StaticMeshes.Add(StaticMesh);
-    StaticMesh->OnPostMeshBuild().AddLambda(
-        [Component](UStaticMesh* Mesh) {
-            if (Component == nullptr)
-                return;
-            FFunctionGraphTask::CreateAndDispatchWhenReady(
-                [Component, Mesh] {
-                    Component->SetStaticMesh(Mesh);
+        StaticMeshes.Add(StaticMesh);
+        StaticMesh->OnPostMeshBuild().AddLambda(
+            [Component](UStaticMesh* Mesh) {
+                if (Component == nullptr)
+                    return;
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [Component, Mesh] {
+                        Component->SetStaticMesh(Mesh);
 
-                    // Collision情報設定
-                    Mesh->CreateBodySetup();
-                    Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+                        // Collision情報設定
+                        Mesh->CreateBodySetup();
+                        Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 
-                }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-        });
+                    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            });
 
-    FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
-        //Set the Imported version before calling the build
-        StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
-        {
-            SCOPE_CYCLE_COUNTER(STAT_Mesh_Build);
-            //StaticMesh->Build(true);
+        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+            //Set the Imported version before calling the build
+            StaticMesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
+
+            // TODO: 適切なフラグの設定
+            // https://docs.unrealengine.com/4.26/ja/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Creation/
+            //StaticMesh->SetFlags();
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        Task->Wait();
+
+
+        // テクスチャ読み込み(無ければnullptrを入れる)
+        TArray<UTexture2D*> SubMeshTextures;
+        for (const auto& SubMesh : InMesh.getSubMeshes()) {
+            FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
+            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath);
+            SubMeshTextures.Add(Texture);
         }
 
-        // TODO: 必要ある？
-        //StaticMesh->PostEditChange();
+        const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
+            [&, SubMeshTextures] {
+                // マテリアル作成
+                for (const auto& Texture : SubMeshTextures) {
+                    const auto SourceMaterialPath =
+                        Texture != nullptr
+                        ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
+                        : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
+                    UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                    UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                    if (Texture != nullptr) {
+                        DynMaterial->SetTextureParameterValue("Texture", Texture);
+                    }
+                    DynMaterial->TwoSided = false;
+                    StaticMesh->AddMaterial(DynMaterial);
+                }
 
-        // TODO: 適切なフラグの設定
-        // https://docs.unrealengine.com/4.26/ja/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/Objects/Creation/
-        //StaticMesh->SetFlags();
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
-    Task->Wait();
+                // StaticMeshセットアップ
+                // StaticMesh->NeverStream = true;
+                //StaticMesh->InitResources();
+                //StaticMesh->CalculateExtendedBounds();
+                //StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
 
+                // 名前設定、ヒエラルキー設定など
+                Component->DepthPriorityGroup = SDPG_World;
+                FString NewUniqueName = StaticMesh->GetName();
+                if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
+                }
+                Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+                Actor.AddInstanceComponent(Component);
+                Component->RegisterComponent();
+                Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+                Component->PostEditChange();
+                ComponentRef = Component;
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        ComponentSetupTask->Wait();
 
-    // テクスチャ読み込み(無ければnullptrを入れる)
-    TArray<UTexture2D*> SubMeshTextures;
-    for (const auto& SubMesh : InMesh.getSubMeshes()) {
-        FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
-        const auto Texture = FPLATEAUTextureLoader::Load(TexturePath);
-        SubMeshTextures.Add(Texture);
-    }
-
-    const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&, SubMeshTextures] {
-        // マテリアル作成
-        for (const auto& Texture : SubMeshTextures) {
-            const auto SourceMaterialPath =
-                Texture != nullptr
-                ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
-                : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
-            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-            UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-            if (Texture != nullptr) {
-                DynMaterial->SetTextureParameterValue("Texture", Texture);
-            }
-            DynMaterial->TwoSided = false;
-            StaticMesh->AddMaterial(DynMaterial);
-        }
-
-        // StaticMeshセットアップ
-        // StaticMesh->NeverStream = true;
-        //StaticMesh->InitResources();
-        //StaticMesh->CalculateExtendedBounds();
-        //StaticMesh->GetRenderData()->ScreenSize[0].Default = 1.0f;
-
-        // 名前設定、ヒエラルキー設定など
-        Component->DepthPriorityGroup = SDPG_World;
-        FString NewUniqueName = StaticMesh->GetName();
-        if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
-            NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
-        }
-        Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-        Actor.AddInstanceComponent(Component);
-        Component->RegisterComponent();
-        Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-        Component->PostEditChange();
-        ComponentRef = Component;
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
-    ComponentSetupTask->Wait();
-
-    return ComponentRef;
+        return ComponentRef;
 }
 
 USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
@@ -410,7 +339,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
         //SceneComponentを付与
         FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&,DesiredName] {
+            [&, DesiredName] {
                 Comp = NewObject<USceneComponent>(&Actor, NAME_None);
                 FString NewUniqueName = FString(DesiredName);
                 if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
