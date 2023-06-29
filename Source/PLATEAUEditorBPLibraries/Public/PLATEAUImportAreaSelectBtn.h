@@ -29,26 +29,6 @@ struct FPackageInfo {
     int MaxLod = 3;
 };
 
-USTRUCT(BlueprintType)
-struct FPackageInfoSettings {
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    bool bImport;
-
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    bool bTextureImport;
-
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    int MinLod;
-
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    int MaxLod;
-
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries|ImportPanel")
-    int Granularity;
-};
-
 UCLASS()
 class UPLATEAUImportAreaSelectBtn : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
