@@ -203,6 +203,10 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
         [this, InCityObjectType, GmlComponents = GetGmlComponents()] {
             // 処理が重いため先にCityGMLのパースを行って内部的にキャッシュしておく。
             for (const auto& GmlComponent : GmlComponents) {
+                // BillboardComponentを無視
+                if (GmlComponent.GetName().Contains("BillboardComponent"))
+                    continue;
+
                 // 起伏は重いため意図的に除外
                 const auto Package = GetCityModelPackage(GmlComponent);
                 if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
@@ -258,6 +262,10 @@ const TArray<TObjectPtr<USceneComponent>>& APLATEAUInstancedCityModel::GetGmlCom
 
 void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType) {
     for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+        // BillboardComponentを無視
+        if (GmlComponent.GetName().Contains("BillboardComponent"))
+            continue;
+
         // 起伏は重いため意図的に除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
