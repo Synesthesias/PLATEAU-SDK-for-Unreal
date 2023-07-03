@@ -21,7 +21,10 @@
 #include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "filesystem"
+#include "EditorFramework/AssetImportData.h"
 #include "HAL/FileManager.h"
+
+#if WITH_EDITOR
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
@@ -176,20 +179,29 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         ensureAlwaysMsgf((EndIndex - FirstIndex + 1) % 3 == 0, TEXT("SubMesh indices size should be multiple of 3."));
 
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
-        FString PathName = FString("");
+        FString TextureFilePath = FString("");
+
         if (Option.bExportTexture) {
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
             if (MaterialInstance->TextureParameterValues.Num() > 0) {
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
+                    if (TextureSourceFiles.Num() == 0) {
+                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                        continue;
+                    }
+
                     const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
-                    PathName = BaseDir + Texture->GetName();
+                    const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
+                    const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
+                    TextureFilePath = AssetBasePath / TextureFileRelativePath;
                 }
             }
         }
 
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*PathName), FirstIndex, EndIndex);
+        OutMesh.addSubMesh(TCHAR_TO_UTF8(*TextureFilePath), FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);
@@ -213,3 +225,5 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
     } else
         return ComponentName;
 }
+
+#endif
