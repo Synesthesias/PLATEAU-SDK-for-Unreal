@@ -27,7 +27,7 @@ namespace {
                         GetTransientPackage(),
                         MeshName, RF_Transient);
 
-                const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")));
+                const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
                 const auto DynMat = UMaterialInstanceDynamic::Create(Mat, GetTransientPackage());
                 DynMat->SetTextureParameterValue(TEXT("Texture"), Texture);
                 TileComponent->SetMaterial(0, DynMat);
