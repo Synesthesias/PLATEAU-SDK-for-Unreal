@@ -12,6 +12,7 @@
 #include "StaticMeshResources.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Misc/DefaultValueHelper.h"
 
@@ -205,64 +206,11 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
         StaticMeshes.Reset();
     }
 
-    // TODO: フィルタリング機能に委譲
-    TMap<int, TSet<FString>> NameMap;
-    for (int i = 0; i < InModel->getRootNodeCount(); i++) {
-
-        const auto& RootNode = InModel->getRootNodeAt(i);
-        FString KeyString = UTF8_TO_TCHAR(RootNode.getName().c_str());
-        int Key;
-        FDefaultValueHelper::ParseInt(KeyString.RightChop(3), Key);
-        auto& Value = NameMap.Add(Key);
-        for (int j = 0; j < RootNode.getChildCount(); ++j) {
-
-            if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-                break;
-
-            const auto& Node = RootNode.getChildAt(j);
-            Value.Add(UTF8_TO_TCHAR(Node.getName().c_str()));
-        }
-    }
-
+    // 最大LOD以外の形状を非表示化
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [ParentComponent, &NameMap, &bCanceled]() {
-            TArray<USceneComponent*> LodComponents;
-            ParentComponent->GetChildrenComponents(false, LodComponents);
-
-            for (const auto& LodComponent : LodComponents) {
-
-                auto LodComponentName = LodComponent->GetName();
-                int Lod;
-                FString LodString = LodComponentName.RightChop(3);
-                LodString = LodString.LeftChop(LodString.Len() - 1);
-                FDefaultValueHelper::ParseInt(LodString, Lod);
-
-                TArray<USceneComponent*> Components;
-                LodComponent->GetChildrenComponents(true, Components);
-                for (const auto& Component : Components) {
-
-                    auto ComponentName = Component->GetName();
-
-                    if (bCanceled->Load(EMemoryOrder::Relaxed)) 
-                        break;
-
-                    int Index = 0;
-                    if (ComponentName.FindLastChar('_', Index)) {
-                        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
-                        }
-                    }
-                    TArray<int> Keys;
-                    NameMap.GetKeys(Keys);
-                    for (const auto Key : Keys) {
-                        if (Key <= Lod)
-                            continue;
-                        if (NameMap[Key].Contains(ComponentName))
-                            Component->SetVisibility(false);
-                    }
-                }
-            }
-        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+    [ParentComponent]() {
+        APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
+    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {

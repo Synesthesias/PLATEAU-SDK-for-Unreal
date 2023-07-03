@@ -93,6 +93,57 @@ FPLATEAUCityObjectInfo APLATEAUInstancedCityModel::GetCityObjectInfo(USceneCompo
     return Result;
 }
 
+void APLATEAUInstancedCityModel::FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod, const int MaxLod) {
+    TArray<USceneComponent*> LodComponents;
+    InGmlComponent->GetChildrenComponents(false, LodComponents);
+
+    // 各LODに対して形状データ(コンポーネント)が存在するコンポーネント名を検索
+    TMap<int, TSet<FString>> NameMap;
+    for (const auto& LodComponent : LodComponents) {
+        const auto Lod = ParseLodComponent(LodComponent);
+        auto& Value = NameMap.Add(Lod);
+
+        if (Lod < MinLod || Lod > MaxLod)
+            continue;
+
+        TArray<USceneComponent*> FeatureComponents;
+        LodComponent->GetChildrenComponents(false, FeatureComponents);
+        for (const auto FeatureComponent: FeatureComponents) {
+            Value.Add(GetOriginalComponentName(FeatureComponent));
+        }
+    }
+
+    // フィルタリング実行
+    for (const auto& LodComponent : LodComponents) {
+        const auto Lod = ParseLodComponent(LodComponent);
+
+        if (Lod < MinLod || Lod > MaxLod) {
+            // LOD範囲外のLOD形状は非表示化
+            LodComponent->SetVisibility(false, true);
+            continue;
+        }
+
+        TArray<USceneComponent*> FeatureComponents;
+        LodComponent->GetChildrenComponents(false, FeatureComponents);
+
+        for (const auto& FeatureComponent : FeatureComponents) {
+            auto ComponentName = GetOriginalComponentName(FeatureComponent);
+            TArray<int> Keys;
+            NameMap.GetKeys(Keys);
+            auto bIsMaxLod = true;
+            for (const auto Key : Keys) {
+                if (Key <= Lod)
+                    continue;
+
+                // コンポーネントのLODよりも大きいLODが存在する場合非表示
+                if (NameMap[Key].Contains(ComponentName))
+                    bIsMaxLod = false;
+            }
+            FeatureComponent->SetVisibility(bIsMaxLod, true);
+        }
+    }
+}
+
 void APLATEAUInstancedCityModel::BeginPlay() {
     Super::BeginPlay();
 }
@@ -124,26 +175,21 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
         TArray<USceneComponent*> LodComponents;
         GmlComponent->GetChildrenComponents(false, LodComponents);
 
-        // 各地物について全てのLodを表示する場合の処理
+        const auto MinLod = PackageToLodRangeMap[Package].MinLod;
+        const auto MaxLod = PackageToLodRangeMap[Package].MaxLod;
+
+        // 各地物について全てのLODを表示する場合の処理
         if (!bOnlyMaxLod) {
             for (const auto& LodComponent : LodComponents) {
                 const auto Lod = ParseLodComponent(LodComponent);
-                if (PackageToLodRangeMap[Package].MinLod <= Lod && Lod <= PackageToLodRangeMap[Package].MaxLod)
+                if (MinLod <= Lod && Lod <= MaxLod)
                     LodComponent->SetVisibility(true, true);
             }
             continue;
         }
 
-        for (const auto& LodComponent : LodComponents) {
-            const auto Lod = ParseLodComponent(LodComponent);
-            if (Lod == PackageToLodRangeMap[Package].MaxLod) {
-                TArray<USceneComponent*> FeatureComponents;
-                LodComponent->GetChildrenComponents(true, FeatureComponents);
-                for (const auto& FeatureComponent : FeatureComponents) {
-                    FeatureComponent->SetVisibility(true, true);
-                }
-            }
-        }
+        // 各地物について最大LODのみを表示する場合の処理
+        FilterLowLods(GmlComponent, MinLod, MaxLod);
     }
 
     bIsFiltering = false;
@@ -157,6 +203,10 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
         [this, InCityObjectType, GmlComponents = GetGmlComponents()] {
             // 処理が重いため先にCityGMLのパースを行って内部的にキャッシュしておく。
             for (const auto& GmlComponent : GmlComponents) {
+                // BillboardComponentを無視
+                if (GmlComponent.GetName().Contains("BillboardComponent"))
+                    continue;
+
                 // 起伏は重いため意図的に除外
                 const auto Package = GetCityModelPackage(GmlComponent);
                 if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
@@ -212,6 +262,10 @@ const TArray<TObjectPtr<USceneComponent>>& APLATEAUInstancedCityModel::GetGmlCom
 
 void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType) {
     for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+        // BillboardComponentを無視
+        if (GmlComponent.GetName().Contains("BillboardComponent"))
+            continue;
+
         // 起伏は重いため意図的に除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
