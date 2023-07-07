@@ -22,7 +22,7 @@
 #endif
 
 #ifndef CITYGML_DEPRECATED
-#  define CITYGML_DEPRECATED __declspec(deprecated)
+#  define CITYGML_DEPRECATED __attribute__ ((__deprecated__))
 #endif
 
 #ifndef CITYGML_DEPRECATED_EXPORT

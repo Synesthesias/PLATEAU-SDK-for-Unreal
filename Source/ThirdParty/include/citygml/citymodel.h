@@ -16,7 +16,7 @@ namespace citygml {
     class CityObject;
     class CityGMLFactory;
 
-    typedef std::vector<std::unique_ptr<CityObject> > CityObjects;
+    typedef std::vector<std::shared_ptr<CityObject> > CityObjects;
     typedef std::vector<const CityObject*> ConstCityObjects;
     typedef std::map< CityObject::CityObjectsType, std::vector<const CityObject*> > CityObjectsMap;
     typedef std::map<std::string, const CityObject*> IdToCityObjMap;
@@ -30,7 +30,7 @@ namespace citygml {
         * @brief Return the roots elements of the model.
         */
         const ConstCityObjects getRootCityObjects() const;
-        void addRootObject(CityObject* obj);
+        void addRootObject(std::shared_ptr<CityObject> obj);
 
         unsigned int getNumRootCityObjects() const;
         CityObject& getRootCityObject(int i);
