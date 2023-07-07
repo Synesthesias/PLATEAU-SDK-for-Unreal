@@ -1,6 +1,8 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
+
 #include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
+#include "CoreMinimal.h"
 #include "PLATEAUExtentEditorVPClient.h"
 
 #include <plateau/basemap/tile_projection.h>
@@ -14,6 +16,8 @@
 #include "StaticMeshAttributes.h"
 #include "Engine/StaticMeshActor.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Components/SceneComponent.h"
+#include "Tasks/Task.h"
 
 using namespace plateau::dataset;
 

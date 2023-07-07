@@ -11,8 +11,8 @@
 #include "PLATEAUInstancedCityModel.generated.h"
 
 struct FPLATEAUMinMaxLod {
-    int MinLOD = 0;
-    int MaxLOD = 0;
+    int MinLod = 0;
+    int MaxLod = 0;
 };
 
 USTRUCT(BlueprintType)
@@ -33,11 +33,11 @@ public:
 
 /**
  * @brief インポートされた3D都市モデルを表します。
- * 各地物のLOD、CityGMLファイル名が分かるように、コンポーネント構造が以下のようになっています。
+ * 各地物のLod、CityGMLファイル名が分かるように、コンポーネント構造が以下のようになっています。
  *
  * RootComponent
  * |-{CityGMLファイル名}
- *  |-{LOD}
+ *  |-{Lod}
  *   |-{地物ID}
  * ...
  */
@@ -66,12 +66,11 @@ public:
     /**
      * @brief 3D都市モデル内の各地物について、引数に従って可視化・非可視化します。
      * @param InPackage 可視化するパッケージ
-     * @param MinLOD 可視化する最小LOD
-     * @param MaxLOD 可視化する最大LOD
-     * @param bOnlyMaxLod trueの場合各地物について提供されている最大のLODのみ可視化します。
+     * @param PackageToLodRangeMap パッケージごとのLodに関してのユーザー選択結果
+     * @param bOnlyMaxLod trueの場合各地物について提供されている最大のLodのみ可視化します。
      * @return thisを返します。
      */
-    APLATEAUInstancedCityModel* FilterByLODs(const plateau::dataset::PredefinedCityModelPackage InPackage, const int MinLOD, const int MaxLOD, const bool bOnlyMaxLod);
+    APLATEAUInstancedCityModel* FilterByLods(const plateau::dataset::PredefinedCityModelPackage InPackage, const TMap<plateau::dataset::PredefinedCityModelPackage, FPLATEAUMinMaxLod>& PackageToLodRangeMap, const bool bOnlyMaxLod);
 
     /**
      * @brief 3D都市モデル内の各地物について、引数に従って可視化・非可視化します。
@@ -81,9 +80,9 @@ public:
     APLATEAUInstancedCityModel* FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType);
 
     /**
-     * @brief 3D都市モデル内に含まれるLODを取得します。
+     * @brief 3D都市モデル内に含まれるLodを取得します。
      * @param InPackage 検索対象のパッケージ。フラグによって複数指定可能です。
-     * @return 存在するLODの最小最大値
+     * @return 存在するLodの最小最大値
      */
     FPLATEAUMinMaxLod GetMinMaxLod(const plateau::dataset::PredefinedCityModelPackage InPackage) const;
 
@@ -91,6 +90,14 @@ public:
      * @brief フィルタリング処理を実行中かどうかを返します。
      */
     bool IsFiltering();
+
+    /**
+     * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
+     * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
+     * @param MinLod 可視化される最小のLOD
+     * @param MaxLod 可視化される最大のLOD
+     */
+    static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
 
 protected:
     // Called when the game starts or when spawned

@@ -8,6 +8,9 @@
 #include <plateau/dataset/mesh_code.h>
 #include <plateau/geometry/geo_reference.h>
 
+#include "CanvasTypes.h"
+#include "Engine/Font.h"
+
 FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
     : MinX(-500), MinY(-500), MaxX(500), MaxY(500), IsSelected(false), LineThickness(1.0f) {}
 
@@ -35,17 +38,55 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         return;
 
     for (int i = 1; i < 4; ++i) {
-        FVector	P, Q;
+		const auto x1 = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
+		const auto py1 = Box.Min.Y;
+        const auto qy1 = Box.Max.Y;
+        const auto z = 0.0;
+        const FVector P1(x1, py1, z);
+        const FVector Q1(x1, qy1, z);
+        PDI->DrawLine(P1, Q1, Color, DepthPriority, 1, 0, true);
 
-        P.X = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
-        Q.X = P.X;
-        P.Y = Box.Min.Y; Q.Y = Box.Max.Y;
-        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+        const auto y2 = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
+        const auto px2 = Box.Min.X;
+        const auto qx2 = Box.Max.X;
+        const FVector P2(px2, y2, z);
+        const FVector Q2(qx2, y2, z);
+        PDI->DrawLine(P2, Q2, Color, DepthPriority, 1, 0, true);
+    }
+}
 
-        P.Y = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
-        Q.Y = P.Y;
-        P.X = Box.Min.X; Q.X = Box.Max.X;
-        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance) const {
+    constexpr auto NearOffset = 8000;
+    constexpr auto FarOffset = 100000;
+
+    const auto CenterX = MinX + (MaxX - MinX) / 2;
+    const auto CenterY = MinY + (MaxY - MinY) / 2 * 1.28;
+
+    const auto dpi = Canvas.GetDPIScale();
+    const auto ViewPlane = View.Project(FVector(CenterX, CenterY, 0));
+
+    const auto HalfX = InViewport.GetSizeXY().X / 2 / dpi;
+    const auto HalfY = InViewport.GetSizeXY().Y / 2 / dpi;
+
+    const auto XPos = HalfX + (HalfX * ViewPlane.X);
+    const auto YPos = HalfY + (HalfY * -ViewPlane.Y);
+
+    const UFont* ViewFont = GEngine->GetLargeFont();
+
+    const auto HalfWidth = ViewFont->GetStringSize(*MeshCode) / 2;
+    const auto HalfHeight = ViewFont->GetStringHeightSize(*MeshCode) / 2;
+
+    const auto Color = MeshCodeLevel == 2
+        ? FColor(10, 10, 10)
+        : FColor::Blue;
+
+    if (ViewPlane.W > 0.f) {
+        if ((MeshCodeLevel == 2) && (CameraDistance > NearOffset) && (CameraDistance < FarOffset)) {
+            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
+        }
+        else if ((MeshCodeLevel != 2) && (CameraDistance <= NearOffset)) {
+            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
+        }
     }
 }
 

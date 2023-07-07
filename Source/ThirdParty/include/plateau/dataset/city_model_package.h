@@ -26,6 +26,30 @@ namespace plateau::dataset {
         Relief = 1u << 6,
         //! 災害リスク
         DisasterRisk = 1u << 7,
+        //! 交通(鉄道) : rwy
+        Railway = 1u << 8,
+        //! 交通(航路) : wwy
+        Waterway = 1u << 9,
+        //! 水部 : wtr
+        WaterBody = 1u << 10,
+        //! 橋梁　 : brid
+        Bridge = 1u << 11,
+        //! 徒歩道 : trk
+        Track = 1u << 12,
+        //! 広場 : squr
+        Square = 1u << 13,
+        //! トンネル : tun
+        Tunnel = 1u << 14,
+        //! 地下埋設物 : unf
+        UndergroundFacility = 1u << 15,
+        //! 地下街 : ubld
+        UndergroundBuilding = 1u << 16,
+        //! 区域 : area 
+        Area = 1u << 17,
+        //! その他の構造物 : cons 
+        OtherConstruction = 1u << 18,
+        //! 汎用都市: gen
+        Generic = 1u << 19,
         //! その他
         Unknown = 1u << 31
     };
@@ -50,7 +74,7 @@ namespace plateau::dataset {
         static CityModelPackageInfo getPredefined(PredefinedCityModelPackage predefined) {
             switch (predefined) {
             case PredefinedCityModelPackage::Building:
-                return { true, 0, 3 };
+                return { true, 0, 4 };
             case PredefinedCityModelPackage::DisasterRisk:
                 return { false, 1, 1 };
             case PredefinedCityModelPackage::LandUse:
@@ -65,6 +89,30 @@ namespace plateau::dataset {
                 return { true, 1, 3 };
             case PredefinedCityModelPackage::UrbanPlanningDecision:
                 return { false, 1, 1 };
+            case PredefinedCityModelPackage::Railway:
+                return { true, 0, 3 };
+            case PredefinedCityModelPackage::Waterway:
+                return { true, 0, 2 };
+            case PredefinedCityModelPackage::WaterBody:
+                return { true, 0, 3 };
+            case PredefinedCityModelPackage::Bridge:
+                return { true, 0, 4 };
+            case PredefinedCityModelPackage::Track:
+                return { true, 0, 3 };
+            case PredefinedCityModelPackage::Square:
+                return { true, 0, 3 };
+            case PredefinedCityModelPackage::Tunnel:
+                return { true, 0, 4 };
+            case PredefinedCityModelPackage::UndergroundFacility:
+                return { true, 0, 4 };
+            case PredefinedCityModelPackage::UndergroundBuilding:
+                return { true, 0, 4 };
+            case PredefinedCityModelPackage::Area:
+                return { false, 1, 1 };
+            case PredefinedCityModelPackage::OtherConstruction:
+                return { true, 0, 3 };
+            case PredefinedCityModelPackage::Generic:
+                return { true, 0, 4 };
             case PredefinedCityModelPackage::Unknown:
                 return { true, 0, 3 };
             }

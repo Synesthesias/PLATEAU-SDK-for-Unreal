@@ -73,6 +73,8 @@ namespace citygml {
            	// ADD Buildding model 
 			COT_IntBuildingInstallation		= 1ll<< 34,
 
+            COT_WaterSurface                = 1ll<< 35,
+
             COT_Unknown                     = 1ll<< 40,
 
             COT_All                         = 0xFFFFFFFFFFFFFFFFull
@@ -107,7 +109,7 @@ namespace citygml {
         const CityObject& getChildCityObject( unsigned int i ) const;
         CityObject& getChildCityObject( unsigned int i );
 
-        void addChildCityObject(CityObject* cityObj);
+        void addChildCityObject(std::shared_ptr<CityObject> cityObj);
 
         // Access address
         const Address* address() const;
@@ -130,7 +132,7 @@ namespace citygml {
 
         std::vector<std::unique_ptr<Geometry> > m_geometries;
         std::vector<std::unique_ptr<ImplicitGeometry> > m_implicitGeometries;
-        std::vector<std::unique_ptr<CityObject> > m_children;
+        std::vector<std::shared_ptr<CityObject> > m_children;
         std::unique_ptr<Address> m_address;
         std::unique_ptr<RectifiedGridCoverage> m_rectifiedGridCoverage;
         std::unique_ptr<ExternalReference> m_externalReference;

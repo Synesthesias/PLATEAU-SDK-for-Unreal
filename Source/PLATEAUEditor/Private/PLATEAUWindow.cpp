@@ -2,19 +2,16 @@
 
 #include "PLATEAUWindow.h"
 
+#include "EditorUtilityWidgetBlueprint.h"
 #include "LevelEditor.h"
-#include "SPLATEAUImportPanel.h"
-#include "SPLATEAUMainTab.h"
-#include "SPLATEAUExportPanel.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
-#include "Widgets/Layout/SScrollBox.h"
+#include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Framework/Docking/LayoutExtender.h"
-#include "Widgets/SPLATEAUFilteringPanel.h"
-#include "Widgets/SOverlay.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
+constexpr TCHAR WidgetPath[] = TEXT("/PLATEAU-SDK-for-Unreal/EUW/MainWindow");
 
 const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
 
@@ -40,7 +37,6 @@ void FPLATEAUWindow::Startup() {
 
     IMainFrameModule& MainFrameModule = FModuleManager::LoadModuleChecked<IMainFrameModule>(TEXT("MainFrame"));
     MainFrameModule.OnMainFrameCreationFinished().AddRaw(this, &FPLATEAUWindow::OnMainFrameLoad);
-
 }
 
 void FPLATEAUWindow::Shutdown() {
@@ -62,24 +58,31 @@ void FPLATEAUWindow::Shutdown() {
 }
 
 TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs) {
-    const auto Window = Show();
-    TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
-        .ShouldAutosize(false)
-        .TabRole(ETabRole::NomadTab)[
-            SNew(SBox)
-                .WidthOverride(500)
-                .HeightOverride(700)
-                [
-                    Window.ToSharedRef()
-                ]
-        ];
-    return SpawnedTab;
+    EditorUtilityWidgetBlueprint = LoadObject<UEditorUtilityWidgetBlueprint>(nullptr, WidgetPath);
+    if (EditorUtilityWidgetBlueprint != nullptr) {
+        return EditorUtilityWidgetBlueprint->SpawnEditorUITab(TabSpawnArgs);
+    }
+
+    const FText Title = LOCTEXT("WidgetWarning", "ウィジェット破損");
+    const FText DialogText = LOCTEXT("WidgetWarningDetail", "PLATEAU SDKのウィジェットが破損しています。");
+    FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+    return SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
 }
 
-void FPLATEAUWindow::ConstructTab() {
-    const auto Window = Show();
-    TSharedRef<class FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
-    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab))
+UEditorUtilityWidget* FPLATEAUWindow::GetEditorUtilityWidget() const {
+    return EditorUtilityWidgetBlueprint->GetCreatedWidget();
+}
+
+bool FPLATEAUWindow::CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const {
+    if (!EditorUtilityWidgetBlueprint.IsValid()) {
+        return true;
+    }
+    return EditorUtilityWidgetBlueprint.IsValid() && EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
+}
+
+void FPLATEAUWindow::ConstructTab() {    
+    TSharedRef<FGlobalTabmanager> GTabManager = FGlobalTabmanager::Get();
+    GTabManager->RegisterNomadTabSpawner(TabID, FOnSpawnTab::CreateRaw(this, &FPLATEAUWindow::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUWindow::CanSpawnTab))
         .SetDisplayName(FText::FromString(TEXT("PLATEAU SDK")));
 
     FLevelEditorModule* LevelEditorModule =
@@ -122,62 +125,6 @@ void FPLATEAUWindow::OnMainFrameLoad(TSharedPtr<SWindow> InRootWindow, bool IsNe
     if ((!IsNewProjectWindow) && (InRootWindow.IsValid())) {
         RootWindow = InRootWindow;
     }
-}
-
-TSharedPtr<SVerticalBox> FPLATEAUWindow::Show() {
-    TabReference = SNew(SPLATEAUMainTab, Style.ToSharedRef());
-    return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .AutoHeight()[
-            TabReference.ToSharedRef()
-        ]
-        + SVerticalBox::Slot()[
-            //インポート、編集、エクスポートそれぞれのスクロール部分
-            //TODO:編集画面のUIが出来次第組み込む
-            SNew(SOverlay)
-                + SOverlay::Slot()
-                .HAlign(HAlign_Fill)
-                .VAlign(VAlign_Top)[
-                    SNew(SScrollBox)
-                        .Visibility_Lambda([=]() {
-                        if (TabReference->IsCurrentIndex(1))
-                        return EVisibility::Visible;
-                        else
-                            return EVisibility::Collapsed;
-                            })
-                        + SScrollBox::Slot()[
-                            SNew(SPLATEAUImportPanel, Style.ToSharedRef())
-                        ]
-                ]
-                + SOverlay::Slot()
-                                .HAlign(HAlign_Center)
-                                .VAlign(VAlign_Top)[
-                                    SNew(SScrollBox)
-                                        .Visibility_Lambda([=]() {
-                                        if (TabReference->IsCurrentIndex(2))
-                                        return EVisibility::Visible;
-                                        else
-                                            return EVisibility::Collapsed;
-                                            })
-                                        + SScrollBox::Slot()[
-                                            SNew(SPLATEAUFilteringPanel, Style.ToSharedRef())
-                                        ]
-                                ]
-                                + SOverlay::Slot()
-                                                .HAlign(HAlign_Center)
-                                                .VAlign(VAlign_Top)[
-                                                    SNew(SScrollBox)
-                                                        .Visibility_Lambda([=]() {
-                                                        if (TabReference->IsCurrentIndex(3))
-                                                        return EVisibility::Visible;
-                                                        else
-                                                            return EVisibility::Collapsed;
-                                                            })
-                                                        + SScrollBox::Slot()[
-                                                            SNew(SPLATEAUExportPanel, Style.ToSharedRef())
-                                                        ]
-                                                ]
-        ];
 }
 
 #undef LEVEL_EDITOR_NAME

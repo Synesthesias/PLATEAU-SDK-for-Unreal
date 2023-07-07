@@ -19,6 +19,8 @@
 #include "Engine/Classes/Materials/MaterialInstance.h"
 #include "Engine/Classes/Engine/StaticMesh.h"
 #include "UObject/UObjectBaseUtility.h"
+#include "StaticMeshResources.h"
+#include "HAL/FileManager.h"
 #include "filesystem"
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {

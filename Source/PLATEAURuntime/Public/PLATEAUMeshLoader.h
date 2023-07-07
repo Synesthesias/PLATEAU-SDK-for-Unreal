@@ -15,9 +15,13 @@ namespace plateau::polygonMesh {
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
 public:
+    FPLATEAUMeshLoader(const bool InbAutomationTest) {
+        bAutomationTest = InbAutomationTest;
+    }
     void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled);
 
 private:
+    bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
 
     UStaticMeshComponent* CreateStaticMeshComponent(

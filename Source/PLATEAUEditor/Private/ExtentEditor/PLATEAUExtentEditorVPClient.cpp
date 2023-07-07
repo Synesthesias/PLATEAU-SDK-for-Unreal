@@ -1,11 +1,11 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "PLATEAUExtentEditorVPClient.h"
-#include "PLATEAUExtentEditor.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
-#include "PLATEAUExtentGizmo.h"
+#include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentGizmo.h"
 #include "PLATEAUMeshCodeGizmo.h"
 #include "PLATEAUFeatureInfoDisplay.h"
 
@@ -78,6 +78,10 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
 FPLATEAUExtent FPLATEAUExtentEditorViewportClient::GetExtent() const {
     auto GeoReference = ExtentEditorPtr.Pin()->GetGeoReference();
     return ExtentGizmo->GetExtent(GeoReference);
+}
+
+void FPLATEAUExtentEditorViewportClient::InitHandlePosition() const {
+    ExtentGizmo->InitHandlePosition();
 }
 
 void FPLATEAUExtentEditorViewportClient::InitCamera() {
@@ -207,6 +211,20 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
 
     for (const auto& Gizmo : MeshCodeGizmos) {
         Gizmo.DrawExtent(View, PDI);
+    }
+}
+
+void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) {
+
+    const double CameraDistance = GetViewTransform().GetLocation().Z;
+    const auto& MeshCodes = DatasetAccessor->getMeshCodes();
+    auto Meshptr = MeshCodes.begin();
+
+    check(MeshCodes.size() == MeshCodeGizmos.Num());
+
+    for (const auto& Gizmo : MeshCodeGizmos) {
+        const auto code = (*Meshptr++).get();
+        Gizmo.DrawRegionMeshID(InViewport, View, Canvas, code.c_str(), CameraDistance);
     }
 }
 

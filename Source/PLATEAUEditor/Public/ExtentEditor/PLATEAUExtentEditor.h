@@ -5,17 +5,19 @@
 #include "CoreMinimal.h"
 #include "AdvancedPreviewSceneModule.h"
 #include "PLATEAUGeometry.h"
+#include "PLATEAUEditor/Private/PLATEAUFeatureImportSettingsDetails.h"
 #include <plateau/network/client.h>
 
 class FEditorViewportClient;
 class SDockTab;
 class FViewportTabContent;
+class UPLATEAUSDKEditorUtilityWidget;
 
 /**
  * @brief 範囲選択画面の表示、操作、情報取得、設定を行うためのインスタンスメソッドを提供します。
  *
  */
-class FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
+class PLATEAUEDITOR_API FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
 public:
     FPLATEAUExtentEditor();
     ~FPLATEAUExtentEditor();
@@ -43,9 +45,14 @@ public:
     std::shared_ptr<plateau::network::Client> GetClientPtr() const;
     void SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr);
 
-    const std::string GetServerDatasetID() const;
-    void SetServerDatasetID(const std::string InID);
+    const std::string& GetServerDatasetID() const;
+    void SetServerDatasetID(const std::string& InID);
 
+    const plateau::dataset::PredefinedCityModelPackage& GetLocalPackageMask() const;
+    void SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
+
+    const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
+    void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 private:
     FString SourcePath;
     FPLATEAUGeoReference GeoReference;
@@ -54,6 +61,8 @@ private:
     bool bImportFromServer = false;
     std::shared_ptr<plateau::network::Client> ClientPtr;
     std::string ServerDatasetID;
+    plateau::dataset::PredefinedCityModelPackage LocalPackageMask;
+    plateau::dataset::PredefinedCityModelPackage ServerPackageMask;
 
     FAdvancedPreviewSceneModule::FOnPreviewSceneChanged OnPreviewSceneChangedDelegate;
     TWeakObjectPtr<class APLATEAUCityModelLoader> Loader;

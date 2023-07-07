@@ -15,6 +15,16 @@ public:
      */
     static citygml::CityObject::CityObjectsType getPrimaryTypeMask() {
         return ~(
+                // 水部
+                citygml::CityObject::CityObjectsType::COT_WaterSurface |
+                // LOD4建築物の部品
+                citygml::CityObject::CityObjectsType::COT_IntBuildingInstallation |
+                citygml::CityObject::CityObjectsType::COT_BuildingFurniture |
+                citygml::CityObject::CityObjectsType::COT_Room |
+                citygml::CityObject::CityObjectsType::COT_BuildingInstallation |
+                citygml::CityObject::CityObjectsType::COT_FloorSurface |
+                citygml::CityObject::CityObjectsType::COT_InteriorWallSurface |
+                citygml::CityObject::CityObjectsType::COT_CeilingSurface |
                 // LOD3建築物の部品
                 citygml::CityObject::CityObjectsType::COT_Door |
                 citygml::CityObject::CityObjectsType::COT_Window |
