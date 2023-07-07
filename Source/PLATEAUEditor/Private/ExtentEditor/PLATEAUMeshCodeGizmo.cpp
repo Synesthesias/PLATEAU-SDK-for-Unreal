@@ -38,21 +38,20 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         return;
 
     for (int i = 1; i < 4; ++i) {
-		auto x = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
-		auto py = Box.Min.Y;
-        auto qy = Box.Max.Y;
-        auto z = 0.0;
-        FVector P(x, py, z);
-        FVector Q(x, qy, z);
-        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+		const auto x1 = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
+		const auto py1 = Box.Min.Y;
+        const auto qy1 = Box.Max.Y;
+        const auto z = 0.0;
+        const FVector P1(x1, py1, z);
+        const FVector Q1(x1, qy1, z);
+        PDI->DrawLine(P1, Q1, Color, DepthPriority, 1, 0, true);
 
-        auto y2 = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
-        auto px2 = Box.Min.X;
-        auto qx2 = Box.Max.X;
-        P.Y = y2;
-        Q.Y = y2;
-        P.X = px2; Q.X = qx2;
-        PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
+        const auto y2 = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
+        const auto px2 = Box.Min.X;
+        const auto qx2 = Box.Max.X;
+        const FVector P2(px2, y2, z);
+        const FVector Q2(qx2, y2, z);
+        PDI->DrawLine(P2, Q2, Color, DepthPriority, 1, 0, true);
     }
 }
 
