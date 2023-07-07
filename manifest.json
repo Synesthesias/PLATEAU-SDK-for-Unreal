@@ -39,7 +39,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/AccessCityObject.html",
-          "hash": "q3QUPXpxLtH/zoxcETK5kvJvLseBHHhrguv9HcQfuLI="
+          "hash": "n3PZo998apLcYY0hz2Kr2EzclwHWHek/cIrWqEdTgWY="
         }
       },
       "is_incremental": false,
@@ -51,7 +51,19 @@
       "output": {
         ".html": {
           "relative_path": "manual/ExportCityModels.html",
-          "hash": "kY4e/L8QANX5hFWvqQY39PAaJ7SCQpdOf6/B6GAZZ8Y="
+          "hash": "IArJJihduOwzIgRXMxI45UuEVd6kvEafN/qGesqaHvk="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "manual/FilterCityModels.md",
+      "output": {
+        ".html": {
+          "relative_path": "manual/FilterCityModels.html",
+          "hash": "8s6FS8zb7Ka1t1MrzbaIOzY+LDD/z95qbSloHcxxoLk="
         }
       },
       "is_incremental": false,
@@ -63,7 +75,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/ImportCityModels.html",
-          "hash": "Y5YnJM60HGUFQ/xjjjzM+r7ZzQFbLPeyNV/8SM75AcE="
+          "hash": "Er+y4AWe/WdAVPPzC3lX24kZgKYQnwmjvHRi1/V/U38="
         }
       },
       "is_incremental": false,
@@ -75,7 +87,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/Installation.html",
-          "hash": "ZdIz1tu38zkLpLLfxLC6CacORS9xMKldmcPUR+ATdQQ="
+          "hash": "EWOQ0GyRNK5TJyxl0Jboo7k6Q7RMNqShuLxeopn0EeY="
         }
       },
       "is_incremental": false,
@@ -87,7 +99,7 @@
       "output": {
         ".html": {
           "relative_path": "manual/toc.html",
-          "hash": "2gmbqbsWNPOoqcr2nsNnNx5wiZvPkJmjNqhMfHxO784="
+          "hash": "EezmRjlET5lbSv9n/H2cTKSTxcZ5yjs/XyuyFqA3zzQ="
         }
       },
       "is_incremental": false,
@@ -231,6 +243,17 @@
       "output": {
         "resource": {
           "relative_path": "resources/manual/exportCityModels/exportWindow.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "resources/manual/filterCityModels/filterTab.png",
+      "output": {
+        "resource": {
+          "relative_path": "resources/manual/filterCityModels/filterTab.png"
         }
       },
       "is_incremental": false,
@@ -483,7 +506,7 @@
         "ConceptualDocumentProcessor": {
           "can_incremental": false,
           "incrementalPhase": "build",
-          "total_file_count": 5,
+          "total_file_count": 6,
           "skipped_file_count": 0
         },
         "ResourceDocumentProcessor": {
