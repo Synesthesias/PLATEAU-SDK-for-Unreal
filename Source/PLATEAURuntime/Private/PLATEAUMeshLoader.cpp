@@ -8,6 +8,7 @@
 
 #include "Components/StaticMeshComponent.h"
 #include "StaticMeshResources.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
 #include "StaticMeshAttributes.h"
