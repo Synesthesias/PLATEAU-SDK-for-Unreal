@@ -38,16 +38,20 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         return;
 
     for (int i = 1; i < 4; ++i) {
-        FVector	P, Q;
-
-        P.X = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
-        Q.X = P.X;
-        P.Y = Box.Min.Y; Q.Y = Box.Max.Y;
+		auto x = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
+		auto py = Box.Min.Y;
+        auto qy = Box.Max.Y;
+        auto z = 0.0;
+        FVector P(x, py, z);
+        FVector Q(x, qy, z);
         PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
 
-        P.Y = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
-        Q.Y = P.Y;
-        P.X = Box.Min.X; Q.X = Box.Max.X;
+        auto y2 = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
+        auto px2 = Box.Min.X;
+        auto qx2 = Box.Max.X;
+        P.Y = y2;
+        Q.Y = y2;
+        P.X = px2; Q.X = qx2;
         PDI->DrawLine(P, Q, Color, DepthPriority, 1, 0, true);
     }
 }
