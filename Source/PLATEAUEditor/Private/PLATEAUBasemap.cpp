@@ -97,6 +97,7 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
         Extent.Y = FMath::Abs(Extent.Y);
         Extent.Z = 0.01;
 
+        TileComponent->SetTranslucentSortPriority(plateau::dataset::SortPriority_BaseMap);
         ViewportClient.Pin()->GetPreviewScene()->AddComponent(
             TileComponent,
             FTransform(FRotator(0, 0, 0),

@@ -153,14 +153,14 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
         const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
         // 常にバックパネルより後に描画
-        IconComponent->SetTranslucentSortPriority(1);
+        IconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
         IconComponents.Add(IconComponent);
 
         Key.bDetailed = true;
         const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
         // 常にバックパネルより後に描画
-        DetailedIconComponent->SetTranslucentSortPriority(1);
+        DetailedIconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
         DetailedIconComponents.Add(DetailedIconComponent);
     }
     BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
