@@ -153,14 +153,14 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
         const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
         // 常にバックパネルより後に描画
-        IconComponent->SetTranslucentSortPriority(-1);
+        IconComponent->SetTranslucentSortPriority(1);
         IconComponents.Add(IconComponent);
 
         Key.bDetailed = true;
         const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
         // 常にバックパネルより後に描画
-        DetailedIconComponent->SetTranslucentSortPriority(-1);
+        DetailedIconComponent->SetTranslucentSortPriority(1);
         DetailedIconComponents.Add(DetailedIconComponent);
     }
     BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
@@ -169,8 +169,8 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
 
     if (PreviewScene == nullptr)
         return;
-
-    // シーンにパネルを配置
+    
+    // アイコン配置
     check(IconComponents.Num() == DetailedIconComponents.Num());
     for (int i = 0; i < IconComponents.Num(); ++i) {
         const auto Transform = CalculateIconTransform(Box, i, IconComponents.Num());
@@ -178,6 +178,7 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
         PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
     }
 
+    // パネル配置
     const auto BackPanelTransform = CalculateBackPanelTransform(Box, IconComponents.Num());
     PreviewScene->AddComponent(BackPanelComponent, BackPanelTransform);
 }
