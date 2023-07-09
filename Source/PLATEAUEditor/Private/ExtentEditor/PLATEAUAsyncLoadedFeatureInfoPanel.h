@@ -68,7 +68,7 @@ private:
     FBox Box;
     TArray<USceneComponent*> IconComponents;
     TArray<USceneComponent*> DetailedIconComponents;
-    USceneComponent* BackPanelComponent;
+    UStaticMeshComponent* BackPanelComponent;
 
     void ApplyVisibility() const;
     void CreatePanelComponents(const TMap<plateau::dataset::PredefinedCityModelPackage, int>& MaxLods);

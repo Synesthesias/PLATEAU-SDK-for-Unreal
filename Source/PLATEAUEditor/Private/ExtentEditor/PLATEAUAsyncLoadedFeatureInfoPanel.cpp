@@ -164,6 +164,7 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
         DetailedIconComponents.Add(DetailedIconComponent);
     }
     BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
+    BackPanelComponent->SetTranslucentSortPriority(SortPriority_IconBackPanelComponent);
 
     const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
 
