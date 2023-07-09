@@ -17,12 +17,8 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
 
-    const auto Color = MeshCodeLevel == 2
-        ? FColor(10, 10, 10)
-        : FColor(10, 10, 130);
-    const auto DepthPriority = IsSelected
-        ? 1
-        : 0;
+    const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor(10, 10, 130);
+    const auto DepthPriority = IsSelected ? SDPG_Foreground : SDPG_World;
 
     DrawWireBox(
         PDI,
