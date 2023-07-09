@@ -2,6 +2,8 @@
 
 
 #include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
+
+#include "MathUtil.h"
 #include "CoreMinimal.h"
 #include "PLATEAUExtentEditorVPClient.h"
 
@@ -45,18 +47,22 @@ namespace {
         return PanelComponent;
     }
 
-    FTransform CalculateIconTransform(const FBox& Box, const int IconIndex, const int IconCount) {
+    FTransform CalculateIconTransform(const FBox& Box, const int ColIndex, const int RowIndex, const int IconCount) {
         FTransform Transform{};
         Transform.SetIdentity();
 
         const auto Center = Box.GetCenter();
+        const auto ColCount = 0 < (IconCount - RowIndex * 4) / 4 ? 4 : (IconCount - RowIndex * 4) % 4;
+        const auto RowCount = 4 < IconCount ? 2 : 1;
+        // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
+        // 中心座標を考慮するため50fを計算に追加している。
+        const auto XOffset = 4 < IconCount && IconCount < 8 && 0 < RowIndex
+                                ? 100.0f * ColIndex - 100.0f * ColCount - 50.0f
+                                : 100.0f * ColIndex - 100.0f * ColCount / 2.0f + 50.0f;
         FVector Offset{
-            // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
-            // 中心座標を指定するため50f足している。
-            100.0f * IconIndex - 100.0f * IconCount / 2.0f + 50.0f,
-            0.0f,
-            // バックパネルより手前に表示
-            2.0f
+            XOffset,
+            100.0f * RowIndex - 100.0f * RowCount / 2.0f + 50.0f,
+            0.0f
         };
         Offset *= PanelScaleMultiplier;
         Transform.SetTranslation(Center + Offset);
@@ -66,16 +72,12 @@ namespace {
         return Transform;
     }
 
-    FTransform CalculateBackPanelTransform(const FBox& Box, const int IconCount) {
+    FTransform CalculateBackPanelTransform(const int IconCount) {
         FTransform Transform{};
         Transform.SetIdentity();
-
-        auto Translation = Box.GetCenter();
-        // ベースマップより手前に表示
-        Translation.Z += 1.0f;
-        Transform.SetTranslation(Translation);
-
-        Transform.SetScale3D(FVector3d(IconCount + 0.4, 1.5, 1.0) * PanelScaleMultiplier);
+        const auto ColCount = 4 < IconCount ? 4 : IconCount;
+        const auto RowCount = 4 < IconCount ? 2 : 1;
+        Transform.SetScale3D(FVector3d(ColCount + 0.4, 1.5 * RowCount, 1.0) * PanelScaleMultiplier);
 
         return Transform;
     }
@@ -173,14 +175,15 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
     
     // アイコン配置
     check(IconComponents.Num() == DetailedIconComponents.Num());
-    for (int i = 0; i < IconComponents.Num(); ++i) {
-        const auto Transform = CalculateIconTransform(Box, i, IconComponents.Num());
+    const auto IconMaxCnt = TMathUtil<int>::Clamp(IconComponents.Num(), 1, 8);
+    for (int i = 0; i < IconMaxCnt; ++i) {
+        const auto Transform = CalculateIconTransform(Box, i % 4, i / 4, IconComponents.Num());
         PreviewScene->AddComponent(IconComponents[i], Transform);
         PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
     }
-
+    
     // パネル配置
-    const auto BackPanelTransform = CalculateBackPanelTransform(Box, IconComponents.Num());
+    const auto BackPanelTransform = CalculateBackPanelTransform(IconComponents.Num());
     PreviewScene->AddComponent(BackPanelComponent, BackPanelTransform);
 }
 
@@ -217,7 +220,6 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::Tick() {
         return;
 
     CreatePanelComponents(GetMaxLodTask.GetResult());
-
     ApplyVisibility();
 
     Status = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
