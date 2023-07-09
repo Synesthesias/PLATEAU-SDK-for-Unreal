@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
 
 #include "PLATEAUGeometry.h"
 
@@ -68,6 +69,13 @@ public:
     void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
 
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetDisplayedPackages();
+
+    int GetItemCount(const FString& MeshCode) {
+        if (AsyncLoadedPanels.Contains(MeshCode)) {
+            return AsyncLoadedPanels[MeshCode].Get()->GetIconCount();
+        }
+        return 0;
+    }
 
 private:
     FPLATEAUGeoReference GeoReference;

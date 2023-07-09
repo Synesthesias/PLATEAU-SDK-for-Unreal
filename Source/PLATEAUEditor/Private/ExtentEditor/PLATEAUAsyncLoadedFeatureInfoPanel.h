@@ -57,6 +57,9 @@ public:
 
     void Tick();
 
+    int GetIconCount() const {
+        return IconComponents.Num();
+    }
 private:
     TWeakPtr<FPLATEAUFeatureInfoDisplay> Owner;
     TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient;
