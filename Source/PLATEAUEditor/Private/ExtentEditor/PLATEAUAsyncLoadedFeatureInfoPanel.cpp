@@ -57,7 +57,7 @@ namespace {
         // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
         // 中心座標を考慮するため50fを計算に追加している。
         const auto XOffset = 4 < IconCount && IconCount < 8 && 0 < RowIndex
-                                ? 100.0f * ColIndex - 100.0f * ColCount - 50.0f
+                                ? 100.0f * ColIndex - 100.0f * 1 - 50.0f
                                 : 100.0f * ColIndex - 100.0f * ColCount / 2.0f + 50.0f;
         FVector Offset{
             XOffset,
