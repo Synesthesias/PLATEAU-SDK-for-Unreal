@@ -8,6 +8,8 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/SavePackage.h"
 #include <filesystem>
+
+#include "EditorFramework/AssetImportData.h"
 namespace fs = std::filesystem;
 
 #if WITH_EDITOR
@@ -157,11 +159,12 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
     if(TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
-    // 引数のパスのセパレーターはOSによって "/" か "¥" なので "/" に統一します。
-    const auto TexturePath_NotNormalized = TexturePath_SlashOrBackSlash.Replace(*FString("\\"), *FString("/"));
+    
     // パスに ".." が含まれる場合は、std::filesystem の機能を使って適用します。
-    fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_NotNormalized)).lexically_normal();
-    const FString TexturePath = TexturePathCpp.c_str();
+    fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_SlashOrBackSlash)).lexically_normal();
+    const FString TexturePath_Normalized = TexturePathCpp.c_str();
+    // 引数のパスのセパレーターはOSによって "/" か "¥" なので "/" に統一します。
+    const auto TexturePath = TexturePath_Normalized.Replace(*FString("\\"), *FString("/"));
 
     if (!TryLoadAndUncompressImageFile(TexturePath, UncompressedData, Width, Height, PixelFormat))
         return nullptr;
@@ -174,10 +177,9 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&]() {
-                auto DesiredTextureName = FPaths::GetBaseFilename(TexturePath);
 
                 FString PackageName = TEXT("/Game/PLATEAU/Textures/");
-                PackageName += FPaths::GetBaseFilename(TexturePath);
+                PackageName += FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
                 UPackage* Package = CreatePackage(*PackageName);
                 Package->FullyLoad();
                 NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());
@@ -187,20 +189,20 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
                 NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
-                // テクスチャ名が正しくキャッシュフォルダからの相対パスになるよう変更
-                FString TextureRelativePathPrefix;
-                const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
-                auto TextureRelativePath = TexturePath.Replace(*BaseDir, *FString(""));
-                DesiredTextureName = TextureRelativePath;
-                FString NewUniqueName = DesiredTextureName;
-                if (!NewTexture->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(DesiredTextureName)).ToString();
+                const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + FString("PLATEAU/")));
+                // アセットからテクスチャファイルへの相対パス
+                auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
+                NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
+
+                // テクスチャのアセット名設定
+                // "."はパッケージの階層とみなされるためリプレース
+                FString TextureName = FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
+                if (!NewTexture->Rename(*TextureName, nullptr, REN_Test)) {
+                    TextureName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(TextureName)).ToString();
                 }
+                NewTexture->Rename(*TextureName, nullptr, REN_DontCreateRedirectors);
 
-                NewTexture->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-
-                // TODO: Streaming有効化
-                NewTexture->NeverStream = true;
+                NewTexture->NeverStream = false;
 
                 if (GRHISupportsAsyncTextureCreation)
                     UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
@@ -214,17 +216,21 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
                 NewTexture->AddToRoot();
                 NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
-
                 // TODO: 関数化(SaveTexturePackage)
-                //Package->MarkPackageDirty();
-                //FAssetRegistryModule::AssetCreated(NewTexture);
+                Package->MarkPackageDirty();
 
-                //const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
-                //FSavePackageArgs Args;
-                //Args.SaveFlags = SAVE_NoError;
-                //Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
-                //Args.Error = GError;
-                //UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
+                // 3Dファイルエクスポート用にテクスチャファイルのパスを保持
+                const auto ContentPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir()));
+                auto TextureFilePath = TexturePath.Replace(*ContentPath, TEXT("")).Replace(*FString("\\"), *FString("/"));
+                Package->SetLoadedPath(FPackagePath::FromLocalPath(TexturePath));
+
+                FAssetRegistryModule::AssetCreated(NewTexture);
+                const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
+                FSavePackageArgs Args;
+                Args.SaveFlags = SAVE_NoError;
+                Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
+                Args.Error = GError;
+                UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
 
             }, TStatId(), nullptr, ENamedThreads::GameThread)
             ->Wait();
