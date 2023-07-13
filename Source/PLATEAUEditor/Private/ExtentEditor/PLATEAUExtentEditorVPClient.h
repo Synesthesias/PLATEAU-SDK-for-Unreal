@@ -12,7 +12,6 @@ namespace plateau::dataset {
     UENUM()
     enum ETranslucentSortPriority : int {
         SortPriority_BaseMap = -1,
-        SortPriority_IconBackPanelComponent = 0,
         SortPriority_IconComponent = 1,
     };
 }

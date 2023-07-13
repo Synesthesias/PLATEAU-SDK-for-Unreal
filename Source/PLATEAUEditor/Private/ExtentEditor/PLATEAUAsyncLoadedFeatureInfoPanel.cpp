@@ -3,7 +3,6 @@
 
 #include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
 
-#include "MathUtil.h"
 #include "CoreMinimal.h"
 #include "PLATEAUExtentEditorVPClient.h"
 
@@ -47,18 +46,39 @@ namespace {
         return PanelComponent;
     }
 
-    FTransform CalculateIconTransform(const FBox& Box, const int ColIndex, const int RowIndex, const int IconCount) {
+    FTransform CalculateIconTransform(const FBox& Box, const int ColIndex, const int RowIndex, const int MaxIconCount) {
         FTransform Transform{};
         Transform.SetIdentity();
 
         const auto Center = Box.GetCenter();
-        const auto ColCount = 0 < (IconCount - RowIndex * 4) / 4 ? 4 : (IconCount - RowIndex * 4) % 4;
-        const auto RowCount = 4 < IconCount ? 2 : 1;
+
+        // 表示するアイコン数に応じて現在の行において最大何個のアイコンを表示するか求める
+        int ColCount;
+        if (0 < (MaxIconCount - RowIndex * plateau::Feature::MaxIconCol) / plateau::Feature::MaxIconCol) {
+            ColCount = plateau::Feature::MaxIconCol;
+        } else {
+            ColCount = (MaxIconCount - RowIndex * plateau::Feature::MaxIconCol) % plateau::Feature::MaxIconCol;
+        }
+
+        // 表示するアイコン数に応じて最大の行数を求める
+        int RowCount;
+        if (plateau::Feature::MaxIconCol < MaxIconCount) {
+            RowCount = plateau::Feature::MaxIconRow;
+        } else {
+            RowCount = 1;
+        }
+        
         // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
         // 中心座標を考慮するため50fを計算に追加している。
-        const auto XOffset = 4 < IconCount && IconCount <= 8 && 0 < RowIndex
-                                ? 100.0f * ColIndex - 100.0f * 1 - 50.0f
-                                : 100.0f * ColIndex - 100.0f * ColCount * 0.5f + 50.0f;
+        float XOffset;
+        if (plateau::Feature::MaxIconCol < MaxIconCount && MaxIconCount <= plateau::Feature::MaxIcon && 0 < RowIndex) {
+            // 2行目のオフセット値
+            XOffset = 100.0f * ColIndex - 100.0f * 1 - 50.0f;
+        } else {
+            // 1行目のオフセット値
+            XOffset = 100.0f * ColIndex - 100.0f * ColCount * 0.5f + 50.0f;
+        }
+        
         FVector Offset{
             XOffset,
             100.0f * RowIndex - 100.0f * RowCount / 2.0f + 50.0f,
@@ -66,9 +86,7 @@ namespace {
         };
         Offset *= PanelScaleMultiplier;
         Transform.SetTranslation(Center + Offset);
-
         Transform.SetScale3D(PanelScaleMultiplier * FVector3d::One());
-
         return Transform;
     }
 
@@ -139,52 +157,54 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
     if (MaxLods.IsEmpty())
         return;
 
+    TMap<FString, FPLATEAUFeatureInfoMaterialKey> FeatureInfoMaterialMap;
     const auto OwnerStrongPtr = Owner.Pin();
-
-    // パネルコンポーネント生成
     for (const auto& Package : FPLATEAUFeatureInfoDisplay::GetDisplayedPackages()) {
-        FPLATEAUFeatureInfoMaterialKey Key = {};
-        Key.bDetailed = false;
-        Key.Package = Package;
-
         if (!MaxLods.Find(Package))
             continue;
-
+        
+        FPLATEAUFeatureInfoMaterialKey Key;
+        Key.bDetailed = false;
+        Key.Package = Package;
         Key.Lod = MaxLods[Package];
 
-        const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
+        // アイコンはパッケージ毎に割当てられているが、同名のアイコンファイルが利用されるのは防ぐ
+        const auto IconFileName = FPLATEAUFeatureInfoDisplay::GetIconFileName(Package);
+        if (FeatureInfoMaterialMap.Contains(IconFileName)) {
+            if (FeatureInfoMaterialMap[IconFileName].Lod < Key.Lod) {
+                FeatureInfoMaterialMap[IconFileName] = Key;
+            }
+        } else {
+            FeatureInfoMaterialMap.Emplace(IconFileName, Key);
+        }
+    }
+
+    for (const auto& FeatureInfoMaterial : FeatureInfoMaterialMap) {
+        const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(FeatureInfoMaterial.Value);
         const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
-        // 常にバックパネルより後に描画
         IconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
         IconComponents.Add(IconComponent);
 
+        auto Key = FeatureInfoMaterial.Value;
         Key.bDetailed = true;
         const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
-        // 常にバックパネルより後に描画
         DetailedIconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
         DetailedIconComponents.Add(DetailedIconComponent);
     }
-    BackPanelComponent = CreatePanelMeshComponent(OwnerStrongPtr->GetBackPanelMaterial());
-    BackPanelComponent->SetTranslucentSortPriority(SortPriority_IconBackPanelComponent);
-
+    
     const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
-
     if (PreviewScene == nullptr)
         return;
     
     // アイコン配置
     check(IconComponents.Num() == DetailedIconComponents.Num());
-    const auto IconMaxCnt = TMathUtil<int>::Clamp(IconComponents.Num(), 1, 8);
+    const auto IconMaxCnt = FMath::Min(IconComponents.Num(), plateau::Feature::MaxIcon);
     for (int i = 0; i < IconMaxCnt; ++i) {
-        const auto Transform = CalculateIconTransform(Box, i % 4, i / 4, IconComponents.Num());
+        const auto Transform = CalculateIconTransform(Box, i % plateau::Feature::MaxIconCol, i / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(IconComponents[i], Transform);
         PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
     }
-    
-    // パネル配置
-    const auto BackPanelTransform = CalculateBackPanelTransform(IconComponents.Num());
-    PreviewScene->AddComponent(BackPanelComponent, BackPanelTransform);
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox) {

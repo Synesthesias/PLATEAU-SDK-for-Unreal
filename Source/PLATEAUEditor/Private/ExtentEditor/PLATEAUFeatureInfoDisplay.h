@@ -7,6 +7,14 @@
 
 #include "PLATEAUGeometry.h"
 
+namespace plateau::Feature {
+    constexpr int MinLod = 0;
+    constexpr int MaxLod = 4;
+    constexpr int MaxIconCol = 4;
+    constexpr int MaxIconRow = 2;
+    constexpr int MaxIcon = 8;
+}
+
 namespace plateau::dataset {
     class MeshCode;
     class GmlFile;
@@ -69,6 +77,7 @@ public:
     void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
 
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetDisplayedPackages();
+    static FString GetIconFileName(const plateau::dataset::PredefinedCityModelPackage Package);
 
     int GetItemCount(const FString& MeshCode) {
         if (AsyncLoadedPanels.Contains(MeshCode)) {
