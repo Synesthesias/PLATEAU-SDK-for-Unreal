@@ -4,6 +4,7 @@
 #include "sub_mesh.h"
 #include "mesh_extract_options.h"
 #include "citygml/cityobject.h"
+#include "plateau/polygon_mesh/city_object_list.h"
 #include <libplateau_api.h>
 #include <optional>
 
@@ -27,25 +28,19 @@ namespace plateau::polygonMesh {
     class LIBPLATEAU_EXPORT Mesh {
         // TODO できれば libcitygml に依存したくないですが、今は簡易的に libcitygml の TVec3d を使っています。
         //      今後は座標の集合の表現として独自の型を使うことになるかもしれません。
-        
+
     public:
         Mesh();
-        Mesh(std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1, std::vector<SubMesh>&& sub_meshes);
 
-        /// コピーを禁止します。
-        Mesh(const Mesh& mesh) = delete;
-        Mesh& operator=(const Mesh&) = delete;
-        Mesh(Mesh&& mesh) = default;
-        Mesh& operator=(Mesh&& mesh) = default;
+        Mesh(std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1,
+            std::vector<SubMesh>&& sub_meshes, CityObjectList&& city_object_list);
 
         std::vector<TVec3d>& getVertices();
         const std::vector<TVec3d>& getVertices() const;
 
         const std::vector<unsigned>& getIndices() const;
-        void setUV2(const UV& uv2);
         const UV& getUV1() const;
-        const UV& getUV2() const;
-        const UV& getUV3() const;
+        const UV& getUV4() const;
         const std::vector<SubMesh>& getSubMeshes() const;
         void reserve(long long vertex_count);
 
@@ -56,8 +51,10 @@ namespace plateau::polygonMesh {
                             bool invert_mesh_front_back);
         /// UV1を追加します。追加した結果、UV1の要素数が頂点数に足りなければ、足りない分を 0 で埋めます。
         void addUV1(const std::vector<TVec2f>& other_uv_1, unsigned long long other_vertices_size);
-        void addUV2WithSameVal(const TVec2f& uv_2_val, unsigned num_adding_vertices);
-        void addUV3WithSameVal(const TVec2f& uv_3_val, unsigned num_adding_vertices);
+
+        void addUV4(const std::vector<TVec2f>& other_uv_4, unsigned long long other_vertices_size);
+
+        void addUV4WithSameVal(const TVec2f& uv_4_val, const long long size);
 
         /**
          * SubMesh を追加し、そのテクスチャパスには 引数のものを指定します。
@@ -80,13 +77,17 @@ namespace plateau::polygonMesh {
 
         /// メッシュとサブメッシュに関する情報を stringstream に書き込みます。
         void debugString(std::stringstream& ss, int indent) const;
+
+        const CityObjectList& getCityObjectList() const;
+
     private:
+        friend class MeshFactory;
         std::vector<TVec3d> vertices_;
         std::vector<unsigned> indices_;
         UV uv1_;
-        UV uv2_;
-        UV uv3_;
+        UV uv4_;
         std::vector<SubMesh> sub_meshes_;
+        CityObjectList city_object_list_;
     };
 }
 
