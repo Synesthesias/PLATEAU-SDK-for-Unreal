@@ -125,9 +125,8 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
             continue;
 
         auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
-        auto& Mesh = Node.getMesh();
-        Mesh.emplace();
-        CreateMesh(Mesh.value(), Component, Option);
+        const auto Mesh = Node.getMesh();
+        CreateMesh(*Mesh, Component, Option);
     }
 }
 
@@ -210,8 +209,6 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
-    OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
-    OutMesh.addUV3WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
     ensureAlwaysMsgf(OutMesh.getIndices().size() % 3 == 0, TEXT("Indice size should be multiple of 3."));
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }

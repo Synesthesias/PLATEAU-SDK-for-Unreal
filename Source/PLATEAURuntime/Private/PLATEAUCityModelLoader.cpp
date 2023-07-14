@@ -58,10 +58,10 @@ public:
                 ExtractOptions.extent = Extent.GetNativeData();
                 if (Package == plateau::dataset::PredefinedCityModelPackage::Relief || Package == plateau::dataset::PredefinedCityModelPackage::DisasterRisk) {
                     ExtractOptions.exclude_city_object_outside_extent = false;
-                    ExtractOptions.exclude_triangles_outside_extent = true;
+                    ExtractOptions.exclude_polygons_outside_extent = true;
                 } else {
                     ExtractOptions.exclude_city_object_outside_extent = true;
-                    ExtractOptions.exclude_triangles_outside_extent = false;
+                    ExtractOptions.exclude_polygons_outside_extent = false;
                 }
             }
         }
