@@ -55,10 +55,22 @@ FPLATEAUEditorStyle::FPLATEAUEditorStyle()
         new IMAGE_BRUSH("round-button", Icon256x256));
     Set("PLATEAUEditor.TabBackground",
         new IMAGE_BRUSH("round-window-wide", TabBackground));
+    Set("PLATEAUEditor.Lod01",
+        new IMAGE_BRUSH("lod01", Icon30x30));
+    Set("PLATEAUEditor.Lod02",
+        new IMAGE_BRUSH("lod02", Icon30x30));
+    Set("PLATEAUEditor.Lod03",
+        new IMAGE_BRUSH("lod03", Icon30x30));
+    Set("PLATEAUEditor.Lod04",
+        new IMAGE_BRUSH("lod04", Icon30x30));    
     Set("PLATEAUEditor.LogoBackground",
         new FSlateColorBrush(FLinearColor::FromSRGBColor(FColor(0xFF676767))));
     Set("PLATEAUEditor.LogoBorder",
         new FSlateColorBrush(FLinearColor::FromSRGBColor(FColor(0xFFD2D2D2))));
+
+	const FTextBlockStyle NormalText = FAppStyle::GetWidgetStyle<FTextBlockStyle>("NormalText");
+    Set("PLATEAUEditor.Bold.14", FTextBlockStyle(NormalText).SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 14)));
+    Set("PLATEAUEditor.Bold.13", FTextBlockStyle(NormalText).SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 13)));
 
     Set(
         "PLATEAUEditor.Heading1",
