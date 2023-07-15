@@ -89,16 +89,6 @@ namespace {
         Transform.SetScale3D(PanelScaleMultiplier * FVector3d::One());
         return Transform;
     }
-
-    FTransform CalculateBackPanelTransform(const int IconCount) {
-        FTransform Transform{};
-        Transform.SetIdentity();
-        const auto ColCount = 4 < IconCount ? 4 : IconCount;
-        const auto RowCount = 4 < IconCount ? 2 : 1;
-        Transform.SetScale3D(FVector3d(ColCount + 0.4, 1.5 * RowCount, 1.0) * PanelScaleMultiplier);
-
-        return Transform;
-    }
 }
 
 FPLATEAUAsyncLoadedFeatureInfoPanel::FPLATEAUAsyncLoadedFeatureInfoPanel(
