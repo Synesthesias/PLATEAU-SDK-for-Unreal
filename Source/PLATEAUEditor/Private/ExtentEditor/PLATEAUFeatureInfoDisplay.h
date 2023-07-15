@@ -12,7 +12,7 @@ namespace plateau::Feature {
     constexpr int MaxLod = 4;
     constexpr int MaxIconCol = 4;
     constexpr int MaxIconRow = 2;
-    constexpr int MaxIcon = 8;
+    constexpr int MaxIconCnt = 8;
 }
 
 namespace plateau::dataset {

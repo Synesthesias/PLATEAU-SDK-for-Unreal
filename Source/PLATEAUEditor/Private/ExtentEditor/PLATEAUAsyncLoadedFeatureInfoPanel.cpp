@@ -46,7 +46,7 @@ namespace {
         return PanelComponent;
     }
 
-    FTransform CalculateIconTransform(const FBox& Box, const int ColIndex, const int RowIndex, const int MaxIconCount) {
+    FTransform CalculateIconTransform(const FBox& Box, const int ColIndex, const int RowIndex, const int IconCount) {
         FTransform Transform{};
         Transform.SetIdentity();
 
@@ -54,15 +54,15 @@ namespace {
 
         // 表示するアイコン数に応じて現在の行において最大何個のアイコンを表示するか求める
         int ColCount;
-        if (0 < (MaxIconCount - RowIndex * plateau::Feature::MaxIconCol) / plateau::Feature::MaxIconCol) {
+        if (0 < (IconCount - RowIndex * plateau::Feature::MaxIconCol) / plateau::Feature::MaxIconCol) {
             ColCount = plateau::Feature::MaxIconCol;
         } else {
-            ColCount = (MaxIconCount - RowIndex * plateau::Feature::MaxIconCol) % plateau::Feature::MaxIconCol;
+            ColCount = (IconCount - RowIndex * plateau::Feature::MaxIconCol) % plateau::Feature::MaxIconCol;
         }
 
         // 表示するアイコン数に応じて最大の行数を求める
         int RowCount;
-        if (plateau::Feature::MaxIconCol < MaxIconCount) {
+        if (plateau::Feature::MaxIconCol < IconCount) {
             RowCount = plateau::Feature::MaxIconRow;
         } else {
             RowCount = 1;
@@ -71,7 +71,7 @@ namespace {
         // アイコン1つの横幅は100fなため、-100f * {アイコン数}/2が左端のx座標になる。
         // 中心座標を考慮するため50fを計算に追加している。
         float XOffset;
-        if (plateau::Feature::MaxIconCol < MaxIconCount && MaxIconCount <= plateau::Feature::MaxIcon && 0 < RowIndex) {
+        if (plateau::Feature::MaxIconCol < IconCount && IconCount <= plateau::Feature::MaxIconCnt && 0 < RowIndex) {
             // 2行目のオフセット値
             XOffset = 100.0f * ColIndex - 100.0f * 1 - 50.0f;
         } else {
@@ -199,8 +199,8 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
     
     // アイコン配置
     check(IconComponents.Num() == DetailedIconComponents.Num());
-    const auto IconMaxCnt = FMath::Min(IconComponents.Num(), plateau::Feature::MaxIcon);
-    for (int i = 0; i < IconMaxCnt; ++i) {
+    const auto IconCnt = FMath::Min(IconComponents.Num(), plateau::Feature::MaxIconCnt);
+    for (int i = 0; i < IconCnt; ++i) {
         const auto Transform = CalculateIconTransform(Box, i % plateau::Feature::MaxIconCol, i / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(IconComponents[i], Transform);
         PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
