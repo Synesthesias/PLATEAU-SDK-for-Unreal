@@ -182,7 +182,7 @@ namespace {
     }
 }
 
-void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
+void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<const citygml::CityModel> InCityModel, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
 
     for (int i = 0; i < InModel->getRootNodeCount(); i++) {
 

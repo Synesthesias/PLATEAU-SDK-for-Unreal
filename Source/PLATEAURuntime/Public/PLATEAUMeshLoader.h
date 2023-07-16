@@ -6,6 +6,10 @@
 
 #include "PLATEAUGeometry.h"
 
+namespace citygml {
+    class CityModel;
+}
+
 namespace plateau::polygonMesh {
     class Model;
     class Node;
@@ -18,7 +22,7 @@ public:
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
     }
-    void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled);
+    void LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<const citygml::CityModel> InCityModel, std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled);
 
 private:
     bool bAutomationTest;

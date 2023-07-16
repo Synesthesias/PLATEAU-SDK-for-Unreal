@@ -383,7 +383,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                     
                     {
                         FScopeLock Lock(LoadMeshSection);
-                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
+                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, CityModel, Model, bCanceledRef);
                     }
 
                     FFunctionGraphTask::CreateAndDispatchWhenReady(
