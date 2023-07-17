@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "PLATEAUGeometry.h"
 
 namespace citygml {
@@ -17,6 +16,8 @@ namespace plateau::polygonMesh {
     class Mesh;
 }
 
+class PLATEAUCityObjectGroup;
+
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
 public:
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
@@ -28,10 +29,7 @@ private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
 
-    UStaticMeshComponent* CreateStaticMeshComponent(
-        AActor& Actor, USceneComponent& ParentComponent,
-        const plateau::polygonMesh::Mesh& InMesh,
-        FString Name);
-    USceneComponent* LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor);
+    PLATEAUCityObjectGroup* CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh, FString Name);
+    PLATEAUCityObjectGroup* LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor);
     void LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor);
 };

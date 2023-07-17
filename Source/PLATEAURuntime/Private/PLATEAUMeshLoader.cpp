@@ -6,13 +6,13 @@
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
 
-#include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Misc/DefaultValueHelper.h"
@@ -211,7 +211,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
-    USceneComponent* Component = LoadNode(ParentComponent, Node, Actor);
+    PLATEAUCityObjectGroup* Component = LoadNode(ParentComponent, Node, Actor);
 
     for (int i = 0; i < Node.getChildCount(); i++) {
         const auto& TargetNode = Node.getChildAt(i);
@@ -221,19 +221,16 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, con
 }
 
 
-UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
-    AActor& Actor, USceneComponent& ParentComponent,
-    const plateau::polygonMesh::Mesh& InMesh,
-    FString Name) {
+PLATEAUCityObjectGroup* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh, FString Name) {
     // コンポーネント作成
     UStaticMesh* StaticMesh;
-    UStaticMeshComponent* Component;
-    UStaticMeshComponent* ComponentRef = nullptr;
+    PLATEAUCityObjectGroup* Component;
+    PLATEAUCityObjectGroup* ComponentRef = nullptr;
     FMeshDescription* MeshDescription;
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&]() {
-                Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                Component = NewObject<PLATEAUCityObjectGroup>(&Actor, NAME_None);
                 if (bAutomationTest) {
                     Component->Mobility = EComponentMobility::Movable;
                 } else {
@@ -311,7 +308,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
                 Component->DepthPriorityGroup = SDPG_World;
                 FString NewUniqueName = StaticMesh->GetName();
                 if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
+                    NewUniqueName = MakeUniqueObjectName(&Actor, PLATEAUCityObjectGroup::StaticClass(), FName(StaticMesh->GetName())).ToString();
                 }
                 Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
                 Actor.AddInstanceComponent(Component);
@@ -325,17 +322,17 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         return ComponentRef;
 }
 
-USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
+PLATEAUCityObjectGroup* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
     if (Node.getMesh() == nullptr) {
-        USceneComponent* Comp = nullptr;
+        PLATEAUCityObjectGroup* Comp = nullptr;
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
-        //SceneComponentを付与
+        // PLATEAUCityObjectGroupを付与
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&, DesiredName] {
-                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
+                Comp = NewObject<PLATEAUCityObjectGroup>(&Actor, NAME_None);
                 FString NewUniqueName = FString(DesiredName);
                 if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
+                    NewUniqueName = MakeUniqueObjectName(&Actor, PLATEAUCityObjectGroup::StaticClass(), FName(DesiredName)).ToString();
                 }
                 Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
@@ -359,10 +356,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
         return nullptr;
 
     const FString CompName = UTF8_TO_TCHAR(Node.getName().c_str());
-    return CreateStaticMeshComponent(
-        Actor, *ParentComponent,
-        *Node.getMesh(),
-        CompName);
+    return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), CompName);
 }
 
 #endif
