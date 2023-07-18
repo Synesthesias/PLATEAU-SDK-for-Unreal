@@ -20,6 +20,7 @@
 #include "Misc/FileHelper.h"
 #include "IImageWrapperModule.h"
 #include "PLATEAUEditor.h"
+#include "PLATEAUEditorStyle.h"
 #include "PLATEAUWindow.h"
 #include "Async/Async.h"
 #include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
@@ -27,8 +28,10 @@
 
 #define LOCTEXT_NAMESPACE "SPLATEAUExtentEditorViewport"
 
-SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport()
-    : PreviewScene(MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))) {}
+
+SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport() : PreviewScene(
+    MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))) {
+}
 
 SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
     if (ViewportClient.IsValid()) {
@@ -55,16 +58,14 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
             try {
                 const auto DatasetSource = plateau::dataset::DatasetSource::createServer(ID, *ClientRef);
                 DatasetAccessor = DatasetSource.getAccessor();
-            }
-            catch (...) {
+            } catch (...) {
                 UE_LOG(LogTemp, Error, TEXT("Failed to open source ID: %s"), *ID.c_str());
             }
         } else {
             try {
                 const auto DatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
                 DatasetAccessor = DatasetSource.getAccessor();
-            }
-            catch (...) {
+            } catch (...) {
                 UE_LOG(LogTemp, Error, TEXT("Failed to open udx source path: %s"), *SourcePath);
             }
         }
@@ -93,11 +94,7 @@ bool SPLATEAUExtentEditorViewport::IsVisible() const {
 
 TSharedRef<FEditorViewportClient> SPLATEAUExtentEditorViewport::MakeEditorViewportClient() {
     // Construct a new viewport client instance.
-    ViewportClient = MakeShareable(
-        new FPLATEAUExtentEditorViewportClient(
-            ExtentEditorPtr,
-            SharedThis(this),
-            PreviewScene.ToSharedRef()));
+    ViewportClient = MakeShareable(new FPLATEAUExtentEditorViewportClient(ExtentEditorPtr, SharedThis(this), PreviewScene.ToSharedRef()));
     ViewportClient->SetRealtime(true);
     ViewportClient->bSetListenerPosition = false;
     ViewportClient->VisibilityDelegate.BindSP(this, &SPLATEAUExtentEditorViewport::IsVisible);
@@ -106,108 +103,124 @@ TSharedRef<FEditorViewportClient> SPLATEAUExtentEditorViewport::MakeEditorViewpo
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
 void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOverlay> Overlay) {
     SEditorViewport::PopulateViewportOverlays(Overlay);
 
-    // add the feature level display widget
-    Overlay->AddSlot()
-        .VAlign(VAlign_Top)
-        .HAlign(HAlign_Left)
-        .Padding(5.0f)
-        [
-            SNew(SBorder)
-            .BorderImage(FAppStyle::Get().GetBrush("FloatingBorder"))
-        .Padding(4.0f)
+    Overlay->AddSlot().VAlign(VAlign_Top).HAlign(HAlign_Left).Padding(5.f)
+    [
+        SNew(SBorder).BorderImage(FAppStyle::Get().GetBrush("FloatingBorder")).Padding(10.f)
         [
             SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda(
-            [this]() {
-                if (GetOwnerTab())
-                    GetOwnerTab()->RequestCloseTab();
-                return FReply::Handled();
-            })
-        .Content()
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("Cancel Button", "キャンセル"))
-                ]
-        ]
-        + SVerticalBox::Slot()
-            .AutoHeight()
-            .Padding(FMargin(0, 0, 0, 15))
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f, 5.f, 5.f, 8.f))
             [
-                SNew(SButton)
-                .VAlign(VAlign_Center)
-            .ForegroundColor(FColor::White)
-            .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-            .OnClicked_Lambda(
-                [this] {
+                SNew(STextBlock).Text(LOCTEXT("OverlayAreaSelectionText", "範囲選択")).
+                TextStyle(ExtentEditorPtr.Pin()->GetEditorStyle(), "PLATEAUEditor.Bold.13").ColorAndOpacity(FLinearColor::White)                
+            ]
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255)).
+                OnClicked_Lambda([this]() {
+                    if (GetOwnerTab())
+                        GetOwnerTab()->RequestCloseTab();
+                    return FReply::Handled();
+                }).Content()
+                [
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("Cancel Button", "キャンセル"))
+                ]
+            ]
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255))
+                .OnClicked_Lambda([this] {
                     ViewportClient->InitHandlePosition();
                     return FReply::Handled();
-                })
-            .Content()
-                    [
-                        SNew(STextBlock)
-                        .Justification(ETextJustify::Center)
-                    .Margin(FMargin(0, 5, 0, 5))
-                    .Text(LOCTEXT("Area Reset Button", "範囲選択リセット"))
-                    ]
-            ]
-    + SVerticalBox::Slot()
-        .AutoHeight()
-        .Padding(FMargin(0, 0, 0, 15))
-        [
-            SNew(SButton)
-            .VAlign(VAlign_Center)
-        .ForegroundColor(FColor::White)
-        .ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-        .OnClicked_Lambda(
-            [this]() {
-                const auto Extent = ViewportClient->GetExtent();
-                ExtentEditorPtr.Pin()->SetExtent(Extent);
-                const auto ReferencePoint = GetReferencePoint(ViewportClient->GetExtent().GetNativeData(), ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
-                const auto PackageMask = GetPackageMask();
-                const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
-                if (EditorUtilityWidget != nullptr) {
-                    const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
-                    if (PLATEAUSDKEditorUtilityWidget != nullptr) {
-                        PLATEAUSDKEditorUtilityWidget->AreaSelectSuccessInvoke(ReferencePoint, PackageMask);
-                    }
-                } else {
-                    UE_LOG(LogTemp, Warning, TEXT("PLATEAU SDK Widget Error"));
-                    const FText Title = LOCTEXT("Warning", "警告");
-                    const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
-                    FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
-                }
-
-                if (GetOwnerTab())
-                    GetOwnerTab()->RequestCloseTab();
-                return FReply::Handled();
-            })
-        .Content()
+                }).Content()
                 [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                .Margin(FMargin(0, 5, 0, 5))
-                .Text(LOCTEXT("OK Button", "決定"))
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("Area Reset Button", "範囲選択リセット"))
                 ]
+            ]
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255)).
+                OnClicked_Lambda([this]() {
+                    const auto Extent = ViewportClient->GetExtent();
+                    ExtentEditorPtr.Pin()->SetExtent(Extent);
+                    const auto ReferencePoint = GetReferencePoint(ViewportClient->GetExtent().GetNativeData(), ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
+                    const auto PackageMask = GetPackageMask();
+                    const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
+                    if (EditorUtilityWidget != nullptr) {
+                        const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
+                        if (PLATEAUSDKEditorUtilityWidget != nullptr) {
+                            PLATEAUSDKEditorUtilityWidget->AreaSelectSuccessInvoke(ReferencePoint, PackageMask);
+                        }
+                    } else {
+                        UE_LOG(LogTemp, Warning, TEXT("PLATEAU SDK Widget Error"));
+                        const FText Title = LOCTEXT("Warning", "警告");
+                        const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
+                        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+                    }                                               
+                    if (GetOwnerTab())
+                        GetOwnerTab()->RequestCloseTab();
+                    return FReply::Handled();
+                }).Content()
+                [
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("OK Button", "決定"))
+                ]
+            ]
         ]
+    ];
+
+    Overlay->AddSlot().VAlign(VAlign_Bottom).HAlign(HAlign_Left).Padding(5.f)
+    [
+        SNew(SBorder).BorderImage(FAppStyle::Get().GetBrush("FloatingBorder")).Padding(10.f)
+        [
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SVerticalBox)
+                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).AutoHeight().Padding(FMargin(5.f))
+                [
+                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "LOD")).
+                    TextStyle(ExtentEditorPtr.Pin()->GetEditorStyle(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
+                ]
+                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod01"))
+                    ]
+                ]
+                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod02"))
+                    ]
+                ]
+                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod03"))
+                    ]
+                ]
+                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod04"))
+                    ]
+                ]                
+            ]
         ]
-        ];
+    ];
 }
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SPLATEAUExtentEditorViewport::BindCommands() {}
+void SPLATEAUExtentEditorViewport::BindCommands() {
+}
 
 void SPLATEAUExtentEditorViewport::SetOwnerTab(TSharedRef<SDockTab> Tab) {
     OwnerTab = Tab;
@@ -235,11 +248,11 @@ int64 SPLATEAUExtentEditorViewport::GetPackageMask() const {
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(ExtentEditorPtr.Pin()->GetServerDatasetID(), *ClientRef);
         const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
-        const auto PackageMask = FilteredDatasetAccessor->getPackages(); 
+        const auto PackageMask = FilteredDatasetAccessor->getPackages();
         ExtentEditorPtr.Pin()->SetServerPackageMask(PackageMask);
         return static_cast<int64>(PackageMask);
     }
-    
+
     const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()));
     const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
     const auto PackageMask = FilteredDatasetAccessor->getPackages();

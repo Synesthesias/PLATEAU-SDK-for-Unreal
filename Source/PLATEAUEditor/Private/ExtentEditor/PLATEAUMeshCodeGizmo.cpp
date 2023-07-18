@@ -17,12 +17,8 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
 
-    const auto Color = MeshCodeLevel == 2
-        ? FColor(10, 10, 10)
-        : FColor(10, 10, 130);
-    const auto DepthPriority = IsSelected
-        ? 1
-        : 0;
+    const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor(10, 10, 130);
+    const auto DepthPriority = IsSelected ? SDPG_Foreground : SDPG_World;
 
     DrawWireBox(
         PDI,
@@ -55,12 +51,13 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     }
 }
 
-void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance) const {
+void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance, int IconCount) const {
     constexpr auto NearOffset = 8000;
     constexpr auto FarOffset = 100000;
 
     const auto CenterX = MinX + (MaxX - MinX) / 2;
-    const auto CenterY = MinY + (MaxY - MinY) / 2 * 1.28;
+    const auto Coef = 4 < IconCount ? 1.52 : 1.28;
+    const auto CenterY = MinY + (MaxY - MinY) / 2 * Coef;
 
     const auto dpi = Canvas.GetDPIScale();
     const auto ViewPlane = View.Project(FVector(CenterX, CenterY, 0));
@@ -81,10 +78,10 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const 
         : FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
-        if ((MeshCodeLevel == 2) && (CameraDistance > NearOffset) && (CameraDistance < FarOffset)) {
+        if (MeshCodeLevel == 2 && CameraDistance > NearOffset && CameraDistance < FarOffset) {
             Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
         }
-        else if ((MeshCodeLevel != 2) && (CameraDistance <= NearOffset)) {
+        else if (MeshCodeLevel != 2 && CameraDistance <= NearOffset) {
             Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
         }
     }

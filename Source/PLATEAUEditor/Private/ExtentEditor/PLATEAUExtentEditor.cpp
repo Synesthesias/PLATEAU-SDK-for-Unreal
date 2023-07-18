@@ -23,7 +23,9 @@ void FPLATEAUExtentEditor::UnregisterTabSpawner(const TSharedRef<class FTabManag
     InTabManager->UnregisterTabSpawner(TabId);
 }
 
-FPLATEAUExtentEditor::FPLATEAUExtentEditor() {}
+FPLATEAUExtentEditor::FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle)
+: Style(InStyle) {
+}
 
 FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
 
@@ -69,6 +71,10 @@ void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
 
 void FPLATEAUExtentEditor::ResetExtent() {
     Extent.Reset();
+}
+
+TSharedRef<FPLATEAUEditorStyle> FPLATEAUExtentEditor::GetEditorStyle() const {
+    return Style.ToSharedRef();
 }
 
 const bool FPLATEAUExtentEditor::IsImportFromServer() const {

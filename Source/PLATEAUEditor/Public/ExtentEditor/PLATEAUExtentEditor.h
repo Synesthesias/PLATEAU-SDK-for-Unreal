@@ -19,7 +19,7 @@ class UPLATEAUSDKEditorUtilityWidget;
  */
 class PLATEAUEDITOR_API FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
 public:
-    FPLATEAUExtentEditor();
+    FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
     ~FPLATEAUExtentEditor();
 
     static const FName TabId;
@@ -39,6 +39,8 @@ public:
     void SetExtent(const FPLATEAUExtent& InExtent);
     void ResetExtent();
 
+    TSharedRef<FPLATEAUEditorStyle> GetEditorStyle() const;
+
     const bool IsImportFromServer() const;
     void SetImportFromServer(bool InBool);
 
@@ -57,6 +59,7 @@ private:
     FString SourcePath;
     FPLATEAUGeoReference GeoReference;
     TOptional<FPLATEAUExtent> Extent;
+    TSharedPtr<FPLATEAUEditorStyle> Style;
 
     bool bImportFromServer = false;
     std::shared_ptr<plateau::network::Client> ClientPtr;
