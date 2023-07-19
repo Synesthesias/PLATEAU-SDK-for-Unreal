@@ -78,6 +78,7 @@ public:
 
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetDisplayedPackages();
     static FString GetIconFileName(const plateau::dataset::PredefinedCityModelPackage Package);
+    static TArray<FString> GetIconFileNameList();
 
     int GetItemCount(const FString& MeshCode) {
         if (AsyncLoadedPanels.Contains(MeshCode)) {

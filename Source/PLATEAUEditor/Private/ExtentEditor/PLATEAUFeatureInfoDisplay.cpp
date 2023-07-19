@@ -212,6 +212,13 @@ FString FPLATEAUFeatureInfoDisplay::GetIconFileName(const PredefinedCityModelPac
     }
 }
 
+/**
+ * @brief 範囲選択画面に表示する順番でアイコンファイル名リストを取得
+ */
+TArray<FString> FPLATEAUFeatureInfoDisplay::GetIconFileNameList() {
+    return TArray<FString> { "building.png", "plants.png", "props.png", "traffic.png", "underground.png", "bridge.png", "terrain.png", "other.png" };
+}
+
 void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     const auto BaseMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
 
