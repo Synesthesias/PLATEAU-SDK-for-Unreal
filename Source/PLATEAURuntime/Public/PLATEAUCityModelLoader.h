@@ -23,6 +23,10 @@ namespace citygml {
 
 class FPLATEAUMeshLoader;
 enum class MeshGranularity;
+struct FLoadInputData {
+    plateau::polygonMesh::MeshExtractOptions ExtractOptions;
+    FString GmlPath;
+};
 
 UENUM(BlueprintType)
 enum class EBuildingTypeMask : uint8 {

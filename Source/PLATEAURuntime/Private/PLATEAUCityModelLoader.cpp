@@ -18,11 +18,6 @@ using namespace plateau::udx;
 using namespace plateau::polygonMesh;
 
 
-struct FLoadInputData {
-    plateau::polygonMesh::MeshExtractOptions ExtractOptions;
-    FString GmlPath;
-};
-
 class FCityModelLoaderImpl {
 public:
     static TArray<FLoadInputData> PrepareInputData(
@@ -383,7 +378,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                     
                     {
                         FScopeLock Lock(LoadMeshSection);
-                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, CityModel, Model, bCanceledRef);
+                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, bCanceledRef);
                     }
 
                     FFunctionGraphTask::CreateAndDispatchWhenReady(
