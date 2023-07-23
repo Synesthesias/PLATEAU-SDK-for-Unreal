@@ -27,6 +27,18 @@ namespace {
     constexpr int MaxParallelCount = 8;
 
     /**
+     * @brief 範囲選択画面に表示する画像名
+     */
+    constexpr TCHAR BuildingIcon[]      = TEXT("building.png");
+    constexpr TCHAR TrafficIcon[]       = TEXT("traffic.png");
+    constexpr TCHAR PropsIcon[]         = TEXT("props.png");
+    constexpr TCHAR BridgeIcon[]        = TEXT("bridge.png");
+    constexpr TCHAR PlantsIcon[]        = TEXT("plants.png");
+    constexpr TCHAR UndergroundIcon[]   = TEXT("underground.png");
+    constexpr TCHAR TerrainIcon[]       = TEXT("terrain.png");
+    constexpr TCHAR OtherIcon[]         = TEXT("other.png");
+    
+    /**
      * @brief キーに対応するテクスチャのパスを取得します。
      * @return
      */
@@ -185,38 +197,35 @@ TArray<PredefinedCityModelPackage> FPLATEAUFeatureInfoDisplay::GetDisplayedPacka
  */
 FString FPLATEAUFeatureInfoDisplay::GetIconFileName(const PredefinedCityModelPackage Package) {
     switch (Package) {
-    case PredefinedCityModelPackage::Building: return "building.png";
-    case PredefinedCityModelPackage::Road: return "traffic.png";
-    case PredefinedCityModelPackage::UrbanPlanningDecision: return "other.png";
-    case PredefinedCityModelPackage::LandUse: return "other.png";
-    case PredefinedCityModelPackage::CityFurniture: return "props.png";
-    case PredefinedCityModelPackage::Vegetation: return "plants.png";
-    case PredefinedCityModelPackage::Relief: return "terrain.png";
-    case PredefinedCityModelPackage::DisasterRisk: return "other.png";
-    case PredefinedCityModelPackage::Railway: return "traffic.png";
-    case PredefinedCityModelPackage::Waterway: return "traffic.png";
-    case PredefinedCityModelPackage::WaterBody: return "other.png";
-    case PredefinedCityModelPackage::Bridge: return "bridge.png";
-    case PredefinedCityModelPackage::Track: return "traffic.png";
-    case PredefinedCityModelPackage::Square: return "traffic.png";
-    case PredefinedCityModelPackage::Tunnel: return "bridge.png";
-    case PredefinedCityModelPackage::UndergroundFacility: return "underground.png";
-    case PredefinedCityModelPackage::UndergroundBuilding: return "underground.png";
-    case PredefinedCityModelPackage::Area: return "other.png";
-    case PredefinedCityModelPackage::OtherConstruction: return "other.png";
-    case PredefinedCityModelPackage::Generic: return "other.png";
-    case PredefinedCityModelPackage::Unknown: return "other.png";
+    case PredefinedCityModelPackage::Building:              return BuildingIcon;
+    case PredefinedCityModelPackage::Road:                  return TrafficIcon;
+    case PredefinedCityModelPackage::UrbanPlanningDecision: return OtherIcon;
+    case PredefinedCityModelPackage::LandUse:               return OtherIcon;
+    case PredefinedCityModelPackage::CityFurniture:         return PropsIcon;
+    case PredefinedCityModelPackage::Vegetation:            return PlantsIcon;
+    case PredefinedCityModelPackage::Relief:                return TerrainIcon;
+    case PredefinedCityModelPackage::DisasterRisk:          return OtherIcon;
+    case PredefinedCityModelPackage::Railway:               return TrafficIcon;
+    case PredefinedCityModelPackage::Waterway:              return TrafficIcon;
+    case PredefinedCityModelPackage::WaterBody:             return OtherIcon;
+    case PredefinedCityModelPackage::Bridge:                return BridgeIcon;
+    case PredefinedCityModelPackage::Track:                 return TrafficIcon;
+    case PredefinedCityModelPackage::Square:                return TrafficIcon;
+    case PredefinedCityModelPackage::Tunnel:                return BridgeIcon;
+    case PredefinedCityModelPackage::UndergroundFacility:   return UndergroundIcon;
+    case PredefinedCityModelPackage::UndergroundBuilding:   return UndergroundIcon;
+    case PredefinedCityModelPackage::Area:                  return OtherIcon;
+    case PredefinedCityModelPackage::OtherConstruction:     return OtherIcon;
+    case PredefinedCityModelPackage::Generic:               return OtherIcon;
+    case PredefinedCityModelPackage::Unknown:               return OtherIcon;
     default:
         UE_LOG(LogTemp, Error, TEXT("An icon for an unregistered package was requested."));
-        return "other.png";
+        return OtherIcon;
     }
 }
 
-/**
- * @brief 範囲選択画面に表示する順番でアイコンファイル名リストを取得
- */
 TArray<FString> FPLATEAUFeatureInfoDisplay::GetIconFileNameList() {
-    return TArray<FString> { "building.png", "plants.png", "props.png", "traffic.png", "underground.png", "bridge.png", "terrain.png", "other.png" };
+    return TArray<FString> {BuildingIcon, TrafficIcon, PropsIcon, BridgeIcon, PlantsIcon, UndergroundIcon, TerrainIcon, OtherIcon};
 }
 
 void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {

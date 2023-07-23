@@ -171,8 +171,8 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
 
     // 範囲選択画面に表示する順番に並び替える
     TArray<FPLATEAUFeatureInfoMaterialKey> FeatureInfoMaterialMapArray; 
-    const auto IconFIleNameList = FPLATEAUFeatureInfoDisplay::GetIconFileNameList();
-    for (const auto& IconFileName : IconFIleNameList) {
+    const auto IconFileNameList = FPLATEAUFeatureInfoDisplay::GetIconFileNameList();
+    for (const auto& IconFileName : IconFileNameList) {
         if (FeatureInfoMaterialMap.Contains(IconFileName)) {
             FeatureInfoMaterialMapArray.Add(FeatureInfoMaterialMap[IconFileName]);
         }
