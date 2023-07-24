@@ -169,13 +169,22 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
         }
     }
 
-    for (const auto& FeatureInfoMaterial : FeatureInfoMaterialMap) {
-        const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(FeatureInfoMaterial.Value);
+    // 範囲選択画面に表示する順番に並び替える
+    TArray<FPLATEAUFeatureInfoMaterialKey> FeatureInfoMaterialMapArray; 
+    const auto IconFileNameList = FPLATEAUFeatureInfoDisplay::GetIconFileNameList();
+    for (const auto& IconFileName : IconFileNameList) {
+        if (FeatureInfoMaterialMap.Contains(IconFileName)) {
+            FeatureInfoMaterialMapArray.Add(FeatureInfoMaterialMap[IconFileName]);
+        }
+    }
+
+    for (const auto& FeatureInfoMaterial : FeatureInfoMaterialMapArray) {
+        const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(FeatureInfoMaterial);
         const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
         IconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
         IconComponents.Add(IconComponent);
 
-        auto Key = FeatureInfoMaterial.Value;
+        auto Key = FeatureInfoMaterial;
         Key.bDetailed = true;
         const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
         const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
