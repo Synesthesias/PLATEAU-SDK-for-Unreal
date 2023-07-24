@@ -43,16 +43,16 @@ private:
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
         const std::string& InNodeName);
-    UPLATEAUCityObjectGroup* LoadNode(
+    UStaticMeshComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
         AActor& Actor);
     void LoadNodeRecursive(
-        USceneComponent* ParentComponent,
-        const plateau::polygonMesh::Node& Node,
-        const FLoadInputData& LoadInputData,
-        const std::shared_ptr<const citygml::CityModel> CityModel,
-        AActor& Actor);
+        USceneComponent* InParentComponent,
+        const plateau::polygonMesh::Node& InNode,
+        const FLoadInputData& InLoadInputData,
+        const std::shared_ptr<const citygml::CityModel> InCityModel,
+        AActor& InActor);
 };

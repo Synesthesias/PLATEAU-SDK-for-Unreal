@@ -2,6 +2,7 @@
 #pragma once
 #include <memory>
 #include <plateau/polygon_mesh/city_object_list.h>
+#include <plateau/polygon_mesh/node.h>
 #include "PLATEAUCityObjectGroup.generated.h"
 
 namespace plateau::polygonMesh {
@@ -10,56 +11,47 @@ namespace plateau::polygonMesh {
 
 namespace citygml {
     class CityModel;
+    class CityObject;
 }
 
-class CityObject;
 class FPLATEAUCityObject;
 struct FLoadInputData;
 
-// USTRUCT()
-// struct FPLATEAUAttribute {
-//     GENERATED_USTRUCT_BODY()
-//
-//     FPLATEAUAttribute() {}
-//     FString Key;
-//     FString Type;
-//     FString Value;
-// };
-
-USTRUCT()
-struct FPLATEAUCityJsonObject {
-    GENERATED_USTRUCT_BODY()
-
-    FPLATEAUCityJsonObject() {}
-
-    UPROPERTY(EditAnywhere, Category = "PLATEAU")
-    FString GmlId;
-
-    UPROPERTY(EditAnywhere, Category = "PLATEAU")
-    TArray<int> CityObjectIndex;
-
-    UPROPERTY(EditAnywhere, Category = "PLATEAU")
-    int64 CityObjectType;
-    // TArray<FPLATEAUAttribute> Attributes;
-};
 
 UCLASS()
 class UPLATEAUCityObjectGroup : public UStaticMeshComponent {
     GENERATED_BODY()
 public:
-    void SetNodeName(const std::string& InNodeName);
-    void InitializeSerializedCityObjects(
-        const plateau::polygonMesh::Mesh& Mesh,
-        const FLoadInputData& LoadInputData,
-        const std::shared_ptr<const citygml::CityModel> CityModel);
-    FPLATEAUCityObject GetCityObjectByRaycast();
-    FPLATEAUCityObject GetCityObject(FVector2d UV);
-    FPLATEAUCityObject GetCityObject(plateau::polygonMesh::CityObjectIndex Index);
-    TArray<FPLATEAUCityObject> GetALlCityObjects();
+    /**
+     * @brief メッシュを持たないがCityObjectを持つノードをシリアライズ
+     * @param InNode シリアライズ対象ノード
+     * @param InCityObject CityModelから得られるシティオブジェクト情報
+     */
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject);
+
+    /**
+     * @brief 
+     * @param InNodeName 
+     * @param InMesh 
+     * @param InLoadInputData 
+     * @param InCityModel GMLをパースして得られたモデル
+     */
+    void SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, std::shared_ptr<const citygml::CityModel> InCityModel);
+    TSharedPtr<FPLATEAUCityObject> GetPrimaryCityObjectByRaycast();
+    TSharedPtr<FPLATEAUCityObject> GetAtomicCityObjectByRaycast();
+    TSharedPtr<FPLATEAUCityObject> GetCityObjectByUV(FVector2d UV);
+    TSharedPtr<FPLATEAUCityObject> GetCityObjectByIndex(plateau::polygonMesh::CityObjectIndex Index);
+    TSharedPtr<FPLATEAUCityObject> GetCityObjectByID(FString GmlId);
+    TArray<TSharedPtr<FPLATEAUCityObject>> GetAllRootCityObjects();
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU")
     FString SerializedCityObjects;
+    UPROPERTY()
+    FString OutsideParent;
+    UPROPERTY()
+    TArray<FString> OutsideChildren;
 private:
     std::string NodeName;
     TArray<FPLATEAUCityObject> DeserializedCityObjects;
+    TArray<TSharedPtr<FPLATEAUCityObject>> RootCityObjects;
 };

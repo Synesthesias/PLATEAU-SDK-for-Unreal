@@ -3,39 +3,9 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "citygml/attributesmap.h"
+#include <citygml/attributesmap.h>
+#include <citygml/cityobject.h>
 #include "PLATEAUAttributeValue.generated.h"
-
-
-/*
- * 都市オブジェクト属性値のBlueprint向けラッパーです。
- */
-USTRUCT(BlueprintType)
-struct PLATEAURUNTIME_API FPLATEAUAttributeValue {
-    GENERATED_USTRUCT_BODY()
-
-public:
-    FPLATEAUAttributeValue() {}
-
-    FPLATEAUAttributeValue(const citygml::AttributeValue* const Data)
-        : Data(const_cast<citygml::AttributeValue*>(Data)) {};
-
-private:
-    friend class UPLATEAUAttributeValueBlueprintLibrary;
-
-    citygml::AttributeValue* Data;
-    TSharedPtr<struct FPLATEAUAttributeMap> AttributeMapCache;
-};
-
-
-USTRUCT(BlueprintType,
-Category = "PLATEAU|CityGML")
-struct FPLATEAUAttributeMap
-{
-    GENERATED_USTRUCT_BODY();
-    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    TMap<FString, FPLATEAUAttributeValue> value;
-};
 
 UENUM(BlueprintType,
 Category = "PLATEAU|CityGML")
@@ -50,6 +20,44 @@ enum class EPLATEAUAttributeType : uint8 {
     Boolean
 };
 
+/*
+ * 都市オブジェクト属性値のBlueprint向けラッパーです。
+ */
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FPLATEAUAttributeValue {
+    GENERATED_USTRUCT_BODY()
+
+    FPLATEAUAttributeValue() {}
+    FPLATEAUAttributeValue(const citygml::AttributeValue* const Data)
+        : Data(const_cast<citygml::AttributeValue*>(Data)) {};
+    EPLATEAUAttributeType GetType();
+    void SetType(EPLATEAUAttributeType InType);
+    FString GetString();
+    void SetString(FString InValue);
+    int GetInt();
+    void SetInt(int InValue);
+    double GetDouble();
+    void SetDouble(double InValue);
+    TMap<FString, FPLATEAUAttributeValue> GetAttributes();
+    void SetAttribute(TMap<FString, FPLATEAUAttributeValue> InValue);
+private:
+    friend class UPLATEAUAttributeValueBlueprintLibrary;
+
+    citygml::AttributeValue* Data;
+    TSharedPtr<struct FPLATEAUAttributeMap> AttributeMapCache;
+    citygml::CityObject::CityObjectsType Type;
+    FString StringValue;
+    // TMap<FString, FPLATEAUAttributeValue> MapAttributeValue;
+};
+
+USTRUCT(BlueprintType,
+Category = "PLATEAU|CityGML")
+struct FPLATEAUAttributeMap
+{
+    GENERATED_USTRUCT_BODY();
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    TMap<FString, FPLATEAUAttributeValue> value;
+};
 
 UCLASS()
 class PLATEAURUNTIME_API UPLATEAUAttributeValueBlueprintLibrary : public UBlueprintFunctionLibrary {

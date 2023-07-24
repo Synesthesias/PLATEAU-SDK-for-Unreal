@@ -212,17 +212,17 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(
-    USceneComponent* ParentComponent,
-    const plateau::polygonMesh::Node& Node,
-    const FLoadInputData& LoadInputData,
-    const std::shared_ptr<const citygml::CityModel> CityModel,
-    AActor& Actor) {
-    UPLATEAUCityObjectGroup* Component = LoadNode(ParentComponent, Node, LoadInputData, CityModel, Actor);
+    USceneComponent* InParentComponent,
+    const plateau::polygonMesh::Node& InNode,
+    const FLoadInputData& InLoadInputData,
+    const std::shared_ptr<const citygml::CityModel> InCityModel,
+    AActor& InActor) {
+    UStaticMeshComponent* Component = LoadNode(InParentComponent, InNode, InLoadInputData, InCityModel, InActor);
 
-    for (int i = 0; i < Node.getChildCount(); i++) {
-        const auto& TargetNode = Node.getChildAt(i);
+    for (int i = 0; i < InNode.getChildCount(); i++) {
+        const auto& TargetNode = InNode.getChildAt(i);
 
-        LoadNodeRecursive(Component, TargetNode, LoadInputData, CityModel, Actor);
+        LoadNodeRecursive(Component, TargetNode, InLoadInputData, InCityModel, InActor);
     }
 }
 
@@ -324,29 +324,37 @@ UPLATEAUCityObjectGroup* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& A
                 Component->RegisterComponent();
                 Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
                 Component->PostEditChange();
+                Component->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
                 ComponentRef = Component;
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         ComponentSetupTask->Wait();
 
-        ComponentRef->SetNodeName(InNodeName);
-        ComponentRef->InitializeSerializedCityObjects(InMesh, LoadInputData, CityModel);
         return ComponentRef;
 }
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node,
-                                                      const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
-                                                      AActor& Actor) {
+UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node,
+                                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
+                                                   AActor& Actor) {
     if (Node.getMesh() == nullptr) {
-        UE_LOG(LogTemp, Log, TEXT("Node.getMesh() == nullptr"));
-        UPLATEAUCityObjectGroup* Comp = nullptr;
+        const auto& CityObject = CityModel->getCityObjectById(Node.getName());
+        UStaticMeshComponent* Comp = nullptr;
+        UClass* StaticClass;
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
-        // PLATEAUCityObjectGroupを付与
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&, DesiredName] {
-                Comp = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                // CityObjectがある場合はUPLATEAUCityObjectGroupとする
+                if (CityObject != nullptr) {
+                    StaticClass = UPLATEAUCityObjectGroup::StaticClass();
+                    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                    PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                    Comp = PLATEAUCityObjectGroup;
+                } else {
+                    StaticClass = UStaticMeshComponent::StaticClass();
+                    Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                 }                
                 FString NewUniqueName = FString(DesiredName);
                 if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, UPLATEAUCityObjectGroup::StaticClass(), FName(DesiredName)).ToString();
+                    NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
                 }
                 Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
