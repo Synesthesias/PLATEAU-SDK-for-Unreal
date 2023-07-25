@@ -30,13 +30,14 @@ public:
     void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject);
 
     /**
-     * @brief 
-     * @param InNodeName 
-     * @param InMesh 
-     * @param InLoadInputData 
+     * @brief メッシュを持つノードをシリアライズ
+     * @param InNodeName ノード名
+     * @param InMesh メッシュ情報
+     * @param InLoadInputData メッシュの結合単位を確認するために用いる
      * @param InCityModel GMLをパースして得られたモデル
      */
     void SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, std::shared_ptr<const citygml::CityModel> InCityModel);
+
     TSharedPtr<FPLATEAUCityObject> GetPrimaryCityObjectByRaycast();
     TSharedPtr<FPLATEAUCityObject> GetAtomicCityObjectByRaycast();
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByUV(FVector2d UV);
