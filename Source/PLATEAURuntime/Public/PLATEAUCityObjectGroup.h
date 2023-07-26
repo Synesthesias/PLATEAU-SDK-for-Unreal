@@ -19,7 +19,7 @@ struct FLoadInputData;
 
 
 UCLASS()
-class UPLATEAUCityObjectGroup : public UStaticMeshComponent {
+class PLATEAURUNTIME_API UPLATEAUCityObjectGroup : public UStaticMeshComponent {
     GENERATED_BODY()
 public:
     /**
