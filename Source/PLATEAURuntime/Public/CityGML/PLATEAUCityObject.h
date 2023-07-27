@@ -21,8 +21,11 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
         : Data(const_cast<citygml::CityObject*>(Data)) {}
     TMap<FString, FPLATEAUAttributeValue> GetAttributes();
     void SetAttribute(TMap<FString, FPLATEAUAttributeValue> InAttributes);
-    FString GetGmlID();
-    void SetGmlID(FString InGmlID);
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    FString GmlID;
+
+    void SetGmlID(const FString& InGmlID);
     citygml::CityObject::CityObjectsType GetType();
     void SetCityObjectsType(citygml::CityObject::CityObjectsType InType);
     plateau::polygonMesh::CityObjectIndex GetCityObjectIndex();
@@ -34,25 +37,8 @@ private:
 
     citygml::CityObject* Data;
     TSharedPtr<FPLATEAUAttributeMap> AttributeMapCache;
-    FString GmlID;
     TMap<FString, FPLATEAUAttributeValue> Attributes;
     citygml::CityObject::CityObjectsType Type;
     plateau::polygonMesh::CityObjectIndex CityObjectIndex;
     TArray<TSharedPtr<FPLATEAUCityObject>> Children;
-};
-
-UCLASS()
-class PLATEAURUNTIME_API UPLATEAUCityObjectBlueprintLibrary : public UBlueprintFunctionLibrary {
-    GENERATED_BODY()
-
-public:
-    /*
-     * 都市オブジェクトが保持する属性情報を取得します。
-     */
-    UFUNCTION(
-        BlueprintCallable,
-        BlueprintPure,
-        Category = "PLATEAU|CityGML")
-        static FPLATEAUAttributeMap& GetAttributeMap(
-            UPARAM(ref) FPLATEAUCityObject& CityObject);
 };

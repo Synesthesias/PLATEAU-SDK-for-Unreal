@@ -3,6 +3,7 @@
 #include <memory>
 #include <plateau/polygon_mesh/city_object_list.h>
 #include <plateau/polygon_mesh/node.h>
+#include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
 namespace plateau::polygonMesh {
@@ -43,7 +44,9 @@ public:
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByUV(FVector2d UV);
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByIndex(plateau::polygonMesh::CityObjectIndex Index);
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByID(FString GmlId);
-    TArray<TSharedPtr<FPLATEAUCityObject>> GetAllRootCityObjects();
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    TArray<FPLATEAUCityObject> GetAllRootCityObjects();
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU")
     FString SerializedCityObjects;
@@ -52,7 +55,5 @@ public:
     UPROPERTY()
     TArray<FString> OutsideChildren;
 private:
-    std::string NodeName;
-    TArray<FPLATEAUCityObject> DeserializedCityObjects;
-    TArray<TSharedPtr<FPLATEAUCityObject>> RootCityObjects;
+    TArray<FPLATEAUCityObject> RootCityObjects;
 };

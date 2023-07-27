@@ -62,6 +62,26 @@ namespace {
         // udxのサブフォルダ名は地物種類名に相当するため、UdxSubFolderの関数を使用してgmlのパッケージ種を取得
         return plateau::dataset::UdxSubFolder::getPackage(plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlFileName)).getFeatureType());
     }
+
+    /**
+     * @brief 指定コンポーネントを基準として子階層のCityObjectを取得
+     * @param SceneComponent CityObject取得の基準となるコンポーネント
+     * @param RootCityObjects 取得されたCityObject配列
+     */
+    void GetRootCityObjectsRecursive(USceneComponent* SceneComponent, TArray<FPLATEAUCityObject>& RootCityObjects) {
+        if (const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(SceneComponent)) {
+            UE_LOG(LogTemp, Log, TEXT("CityObjectGroup Name: %s"), *CityObjectGroup->GetName());
+            const auto& AllRootCityObjects = CityObjectGroup->GetAllRootCityObjects();
+            for (const auto& CityObject : AllRootCityObjects) {
+                RootCityObjects.Add(CityObject);
+            }
+        }
+
+        for (const auto& AttachedComponent : SceneComponent->GetAttachChildren()) {
+            UE_LOG(LogTemp, Log, TEXT("Name: %s"), *AttachedComponent->GetName());
+            GetRootCityObjectsRecursive(AttachedComponent, RootCityObjects);
+        }
+    }
 }
 
 // Sets default values
@@ -91,6 +111,15 @@ FPLATEAUCityObjectInfo APLATEAUInstancedCityModel::GetCityObjectInfo(USceneCompo
     Result.GmlName = GetGmlFileName(GmlComponent);
 
     return Result;
+}
+
+TArray<FPLATEAUCityObject>& APLATEAUInstancedCityModel::GetAllRootCityObjects() {
+    if (0 < RootCityObjects.Num()) {
+        return RootCityObjects;
+    }
+
+    GetRootCityObjectsRecursive(GetRootComponent(), RootCityObjects);
+    return RootCityObjects;
 }
 
 void APLATEAUInstancedCityModel::FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod, const int MaxLod) {
