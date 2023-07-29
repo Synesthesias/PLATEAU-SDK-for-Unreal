@@ -2,43 +2,52 @@
 
 #pragma once
 
-#include "Kismet/BlueprintFunctionLibrary.h"
 #include "PLATEAUAttributeValue.h"
-#include <citygml/cityobject.h>
 #include <plateau/polygon_mesh/city_object_list.h>
 #include "PLATEAUCityObject.generated.h"
 
-/*
- * 都市オブジェクトのBlueprint向けラッパーです。
- */
-USTRUCT(BlueprintType)
-struct PLATEAURUNTIME_API FPLATEAUCityObject {
+
+USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
+struct FPLATEAUCityObjectIndex {
     GENERATED_USTRUCT_BODY()
 
-    FPLATEAUCityObject()
-        : Data(nullptr) {}
-    FPLATEAUCityObject(const citygml::CityObject* const Data)
-        : Data(const_cast<citygml::CityObject*>(Data)) {}
-    TMap<FString, FPLATEAUAttributeValue> GetAttributes();
-    void SetAttribute(TMap<FString, FPLATEAUAttributeValue> InAttributes);
+    FPLATEAUCityObjectIndex() : PrimaryIndex(0), AtomicIndex(0) {
+    }
+
+    FPLATEAUCityObjectIndex(const int InPrimaryIndex, const int InAtomicIndex) : PrimaryIndex(InPrimaryIndex), AtomicIndex(InAtomicIndex) {
+    }
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    int PrimaryIndex;
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    int AtomicIndex;
+};
+
+USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
+struct PLATEAURUNTIME_API FPLATEAUCityObject {
+    GENERATED_USTRUCT_BODY()
 
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
     FString GmlID;
 
-    void SetGmlID(const FString& InGmlID);
-    citygml::CityObject::CityObjectsType GetType();
-    void SetCityObjectsType(citygml::CityObject::CityObjectsType InType);
-    plateau::polygonMesh::CityObjectIndex GetCityObjectIndex();
-    void SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex InIndex);
-    TArray<TSharedPtr<FPLATEAUCityObject>> GetChildren();
-    void GetChildren(TArray<TSharedPtr<FPLATEAUCityObject>> InCityObjectObjects);
-private:
-    friend class UPLATEAUCityObjectBlueprintLibrary;
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    FPLATEAUCityObjectIndex CityObjectIndex;
 
-    citygml::CityObject* Data;
-    TSharedPtr<FPLATEAUAttributeMap> AttributeMapCache;
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    int64 Type;
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
     TMap<FString, FPLATEAUAttributeValue> Attributes;
-    citygml::CityObject::CityObjectsType Type;
-    plateau::polygonMesh::CityObjectIndex CityObjectIndex;
-    TArray<TSharedPtr<FPLATEAUCityObject>> Children;
+
+    // UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    // TArray<FPLATEAUCityObject> Children;
+
+    void SetGmlID(const FString& InGmlID);
+    void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
+    void SetCityObjectsType(const int64 InType);
+    void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
+    // void GetChildren(TArray<TSharedPtr<FPLATEAUCityObject>> InCityObjectObjects);
+private:
+    plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
 };

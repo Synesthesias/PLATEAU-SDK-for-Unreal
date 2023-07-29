@@ -6,6 +6,20 @@
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
+namespace plateau::CityObject {
+    constexpr TCHAR GmlIdFieldName[]            = TEXT("gmlID");
+    constexpr TCHAR CityObjectIndexFieldName[]  = TEXT("cityObjectIndex");
+    constexpr TCHAR CityObjectTypeFieldName[]   = TEXT("cityObjectType");
+    constexpr TCHAR AttributesFieldName[]       = TEXT("attributes");
+    constexpr TCHAR KeyFieldName[]              = TEXT("key");
+    constexpr TCHAR TypeFieldName[]             = TEXT("type");
+    constexpr TCHAR ValueFieldName[]            = TEXT("value");
+    constexpr TCHAR OutsideParentFieldName[]    = TEXT("outsideParent");
+    constexpr TCHAR OutsideChildrenFieldName[]  = TEXT("outsideChildren");
+    constexpr TCHAR CityObjectsFieldName[]      = TEXT("cityObjects");
+    constexpr TCHAR ChildrenFieldName[]         = TEXT("children");    
+}
+
 namespace plateau::polygonMesh {
     class Mesh;
 }

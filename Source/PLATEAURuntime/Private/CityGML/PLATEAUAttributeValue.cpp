@@ -1,38 +1,87 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
-
-
 #include "CityGML/PLATEAUAttributeValue.h"
-#include "citygml/attributesmap.h"
+#include "PLATEAUCityObjectGroup.h"
 
+
+namespace {
+    constexpr TCHAR EPLATEAUAttributeTypePath[] = TEXT("/Script/PLATEAURuntime.EPLATEAUAttributeType");
+}
+
+void FPLATEAUAttributeValue::SetType(const FString& InType) {
+    if (const UEnum* EnumPtr = FindObject<UEnum>(nullptr, EPLATEAUAttributeTypePath)) {
+        const auto EnumValue = EnumPtr->GetValueByName(FName(*InType));
+        Type = static_cast<EPLATEAUAttributeType>(EnumValue);
+    } else {
+        UE_LOG(LogTemp, Error, TEXT("Enum pointer not found: %s"), *InType);
+    }
+}
+
+void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const TSharedPtr<FJsonObject>& InValue) {
+    UE_LOG(LogTemp, Log, TEXT("InType: %d"), InType);
+    if (EPLATEAUAttributeType::AttributeSets == InType) {
+        UE_LOG(LogTemp, Log, TEXT("AttributeSet"));
+        const auto& AttributeValue = InValue->GetArrayField(plateau::CityObject::ValueFieldName);
+        SetValue(AttributeValue);
+    } else {
+        const auto& AttributeValue = InValue->GetStringField(plateau::CityObject::ValueFieldName);
+        SetValue(InType, AttributeValue);
+    }
+}
+
+void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const FString& InValue) {
+    switch (InType) {
+    case EPLATEAUAttributeType::String:
+        StringValue = InValue;
+        break;
+    case EPLATEAUAttributeType::Double:
+        StringValue = InValue;
+        DoubleValue = FCString::Atod(*InValue);
+        break;
+    case EPLATEAUAttributeType::Integer:
+        StringValue = InValue;
+        IntValue = FCString::Atoi(*InValue);
+        break;
+    default: UE_LOG(LogTemp, Log, TEXT("Error InType: %d"), InType);
+    }
+}
+
+void FPLATEAUAttributeValue::SetValue(const TArray<TSharedPtr<FJsonValue>>& InValue) {
+    Attributes = MakeShared<FPLATEAUAttributeMap>();
+    for (const auto& AttributeJsonValue : InValue) {
+        const auto& AttributeJsonObject = AttributeJsonValue->AsObject();
+        const auto& AttributeKey = AttributeJsonObject->GetStringField(plateau::CityObject::KeyFieldName);
+        const auto& AttributeType = AttributeJsonObject->GetStringField(plateau::CityObject::TypeFieldName);
+
+        FPLATEAUAttributeValue PLATEAUAttributeValue;
+        PLATEAUAttributeValue.SetType(AttributeType);
+        if (EPLATEAUAttributeType::AttributeSets == PLATEAUAttributeValue.Type) {
+            const auto& AttributeValue = AttributeJsonObject->GetArrayField(plateau::CityObject::ValueFieldName);
+            PLATEAUAttributeValue.SetValue(AttributeValue);
+        } else {
+            const auto& AttributeValue = AttributeJsonObject->GetStringField(plateau::CityObject::ValueFieldName);
+            PLATEAUAttributeValue.SetValue(PLATEAUAttributeValue.Type, AttributeValue);
+        }
+
+        Attributes->AttributeMap.Add(AttributeKey, PLATEAUAttributeValue);
+    }
+}
 
 EPLATEAUAttributeType UPLATEAUAttributeValueBlueprintLibrary::GetType(const FPLATEAUAttributeValue& Value) {
-    if (Value.Data == nullptr)
-        return EPLATEAUAttributeType::String;
+    return Value.Type;
+}
 
-    return static_cast<EPLATEAUAttributeType>(Value.Data->getType());
+int UPLATEAUAttributeValueBlueprintLibrary::GetInt(const FPLATEAUAttributeValue& Value) {
+    return Value.IntValue;
+}
+
+double UPLATEAUAttributeValueBlueprintLibrary::GetDouble(const FPLATEAUAttributeValue& Value) {
+    return Value.DoubleValue;
 }
 
 FString UPLATEAUAttributeValueBlueprintLibrary::GetString(const FPLATEAUAttributeValue& Value) {
-    if (Value.Data == nullptr)
-        return "";
-
-    return UTF8_TO_TCHAR(Value.Data->asString().c_str());
+    return Value.StringValue;
 }
 
-FPLATEAUAttributeMap& UPLATEAUAttributeValueBlueprintLibrary::GetAttributeMap(FPLATEAUAttributeValue& Value) {
-    if (Value.AttributeMapCache != nullptr)
-        return *Value.AttributeMapCache;
-
-    Value.AttributeMapCache = MakeShared<FPLATEAUAttributeMap>();
-
-    if (Value.Data == nullptr)
-        return *Value.AttributeMapCache;
-
-    const auto& AttributeMapData = Value.Data->asAttributeSet();
-
-    for (const auto& [Key, Val] : AttributeMapData) {
-        Value.AttributeMapCache->value[UTF8_TO_TCHAR(Key.c_str())] = FPLATEAUAttributeValue(&Val);
-    }
-    return *Value.AttributeMapCache;
+FPLATEAUAttributeMap UPLATEAUAttributeValueBlueprintLibrary::GetAttributes(const FPLATEAUAttributeValue& Value) {
+    return Value.Attributes->AttributeMap;
 }
-
