@@ -28,26 +28,35 @@ USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct PLATEAURUNTIME_API FPLATEAUCityObject {
     GENERATED_USTRUCT_BODY()
 
-    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
     FString GmlID;
-
-    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    FPLATEAUCityObjectIndex CityObjectIndex;
-
-    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    int64 Type;
-
-    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    TMap<FString, FPLATEAUAttributeValue> Attributes;
-
-    // UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    // TArray<FPLATEAUCityObject> Children;
+    plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
+    int64 Type = 0;
+    FPLATEAUAttributeMap Attributes;
+    TArray<FPLATEAUCityObject> Children;
 
     void SetGmlID(const FString& InGmlID);
     void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
     void SetCityObjectsType(const int64 InType);
     void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
-    // void GetChildren(TArray<TSharedPtr<FPLATEAUCityObject>> InCityObjectObjects);
-private:
-    plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
+};
+
+UCLASS()
+class PLATEAURUNTIME_API UPLATEAUCityObjectBlueprintLibrary : public UBlueprintFunctionLibrary {
+    GENERATED_BODY()
+
+public:
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FString GetGmlID(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FPLATEAUCityObjectIndex GetCityObjectIndex(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static int64 GetType(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FPLATEAUAttributeMap GetAttributes(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static TArray<FPLATEAUCityObject> GetChildren(UPARAM(ref) const FPLATEAUCityObject& Value);
 };

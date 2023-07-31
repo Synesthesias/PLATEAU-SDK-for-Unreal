@@ -1,6 +1,5 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 #pragma once
-
 #include "PLATEAUAttributeValue.generated.h"
 
 
@@ -20,9 +19,9 @@ USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct PLATEAURUNTIME_API FPLATEAUAttributeValue {
     GENERATED_USTRUCT_BODY()
 
-    EPLATEAUAttributeType Type;
-    int IntValue;
-    double DoubleValue;
+    EPLATEAUAttributeType Type = EPLATEAUAttributeType::String;
+    int IntValue = 0;
+    double DoubleValue = 0;
     FString StringValue;
     TSharedPtr<struct FPLATEAUAttributeMap> Attributes;
 

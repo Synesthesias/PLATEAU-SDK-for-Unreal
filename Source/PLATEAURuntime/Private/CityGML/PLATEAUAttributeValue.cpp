@@ -17,9 +17,7 @@ void FPLATEAUAttributeValue::SetType(const FString& InType) {
 }
 
 void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const TSharedPtr<FJsonObject>& InValue) {
-    UE_LOG(LogTemp, Log, TEXT("InType: %d"), InType);
     if (EPLATEAUAttributeType::AttributeSets == InType) {
-        UE_LOG(LogTemp, Log, TEXT("AttributeSet"));
         const auto& AttributeValue = InValue->GetArrayField(plateau::CityObject::ValueFieldName);
         SetValue(AttributeValue);
     } else {
@@ -41,7 +39,11 @@ void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const
         StringValue = InValue;
         IntValue = FCString::Atoi(*InValue);
         break;
-    default: UE_LOG(LogTemp, Log, TEXT("Error InType: %d"), InType);
+    case EPLATEAUAttributeType::Measure:
+        StringValue = InValue;
+        DoubleValue = FCString::Atod(*InValue);
+        break;
+    default: UE_LOG(LogTemp, Error, TEXT("Error InType: %d"), InType);
     }
 }
 

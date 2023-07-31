@@ -70,7 +70,6 @@ namespace {
      */
     void GetRootCityObjectsRecursive(USceneComponent* SceneComponent, TArray<FPLATEAUCityObject>& RootCityObjects) {
         if (const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(SceneComponent)) {
-            UE_LOG(LogTemp, Log, TEXT("CityObjectGroup Name: %s"), *CityObjectGroup->GetName());
             const auto& AllRootCityObjects = CityObjectGroup->GetAllRootCityObjects();
             for (const auto& CityObject : AllRootCityObjects) {
                 RootCityObjects.Add(CityObject);
@@ -78,7 +77,6 @@ namespace {
         }
 
         for (const auto& AttachedComponent : SceneComponent->GetAttachChildren()) {
-            UE_LOG(LogTemp, Log, TEXT("Name: %s"), *AttachedComponent->GetName());
             GetRootCityObjectsRecursive(AttachedComponent, RootCityObjects);
         }
     }

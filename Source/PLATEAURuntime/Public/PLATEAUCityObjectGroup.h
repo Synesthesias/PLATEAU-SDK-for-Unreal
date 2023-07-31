@@ -57,7 +57,9 @@ public:
     TSharedPtr<FPLATEAUCityObject> GetAtomicCityObjectByRaycast();
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByUV(FVector2d UV);
     TSharedPtr<FPLATEAUCityObject> GetCityObjectByIndex(plateau::polygonMesh::CityObjectIndex Index);
-    TSharedPtr<FPLATEAUCityObject> GetCityObjectByID(FString GmlId);
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    FPLATEAUCityObject GetCityObjectByID(const FString& GmlID);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     TArray<FPLATEAUCityObject> GetAllRootCityObjects();
