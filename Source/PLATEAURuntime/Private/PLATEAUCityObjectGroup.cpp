@@ -188,7 +188,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     }
 
     if (plateau::polygonMesh::MeshGranularity::PerCityModelArea == InLoadInputData.ExtractOptions.mesh_granularity) {
-        TSharedRef<FJsonObject> CityJsonObjectParent;
+        TSharedPtr<FJsonObject> CityJsonObjectParent = MakeShareable(new FJsonObject);
         TArray<TSharedPtr<FJsonValue>> CityObjectsChildrenJsonArray;
         const TArray<TSharedPtr<FJsonValue>>* TempJsonArray;
         for (const auto& CityObjectIndex : CityObjectIndices) {
