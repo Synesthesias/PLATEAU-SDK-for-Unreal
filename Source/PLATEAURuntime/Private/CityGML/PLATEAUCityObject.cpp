@@ -10,8 +10,16 @@ void FPLATEAUCityObject::SetCityObjectIndex(const plateau::polygonMesh::CityObje
     InternalCityObjectIndex = InIndex;
 }
 
-void FPLATEAUCityObject::SetCityObjectsType(const int64 InType) {
-    Type = InType;
+void FPLATEAUCityObject::SetCityObjectsType(const double InType) {
+    if (InType <= MAX_int64) {
+        Type = static_cast<int64>(InType);
+        return;
+    }
+    // int64 の最大値より大きければ int64 の最大値+1 の値を引き int64 へ変換
+    const int64 Temp = InType - (MAX_int64 + 1UL);
+    // 最上位ビットを反転することで引いた int64 の最大値+1 分を足したのと同じにする
+    Type = Temp ^ ((int64)1UL << 63);
+    IsMsbReversed = true;
 }
 
 void FPLATEAUCityObject::SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes) {
@@ -28,6 +36,10 @@ FPLATEAUCityObjectIndex UPLATEAUCityObjectBlueprintLibrary::GetCityObjectIndex(c
 
 int64 UPLATEAUCityObjectBlueprintLibrary::GetType(const FPLATEAUCityObject& Value) {
     return Value.Type;
+}
+
+bool UPLATEAUCityObjectBlueprintLibrary::IsMsbReversed(const FPLATEAUCityObject& Value) {
+    return Value.IsMsbReversed;
 }
 
 FPLATEAUAttributeMap UPLATEAUCityObjectBlueprintLibrary::GetAttributes(const FPLATEAUCityObject& Value) {

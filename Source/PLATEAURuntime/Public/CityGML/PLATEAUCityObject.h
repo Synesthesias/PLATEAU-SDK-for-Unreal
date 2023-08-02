@@ -31,12 +31,13 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
     FString GmlID;
     plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
     int64 Type = 0;
+    bool IsMsbReversed = false;
     FPLATEAUAttributeMap Attributes;
     TArray<FPLATEAUCityObject> Children;
 
     void SetGmlID(const FString& InGmlID);
     void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
-    void SetCityObjectsType(const int64 InType);
+    void SetCityObjectsType(const double InType);
     void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
 };
 
@@ -53,6 +54,9 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static int64 GetType(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static bool IsMsbReversed(UPARAM(ref) const FPLATEAUCityObject& Value);
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static FPLATEAUAttributeMap GetAttributes(UPARAM(ref) const FPLATEAUCityObject& Value);
