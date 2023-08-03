@@ -1,11 +1,58 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
-
 #pragma once
 
 #include "PLATEAUAttributeValue.h"
 #include <plateau/polygon_mesh/city_object_list.h>
+#include <citygml/cityobject.h>
 #include "PLATEAUCityObject.generated.h"
 
+
+UENUM(BlueprintType, meta = (Bitflags))
+enum class EPLATEAUCityObjectsType : uint8 {
+    COT_GenericCityObject           = 0,
+    COT_Building                    = 1,
+    COT_Room                        = 2,
+    COT_BuildingInstallation        = 3,
+    COT_BuildingFurniture           = 4,
+    COT_Door                        = 5,
+    COT_Window                      = 6,
+    COT_CityFurniture               = 7,
+    COT_Track                       = 8,
+    COT_Road                        = 9,
+    COT_Railway                     = 10,
+    COT_Square                      = 11,
+    COT_PlantCover                  = 12,
+    COT_SolitaryVegetationObject    = 13,
+    COT_WaterBody                   = 14,
+    COT_ReliefFeature               = 15,
+    COT_ReliefComponent             = 35,
+    COT_TINRelief                   = 36,
+    COT_MassPointRelief             = 37,
+    COT_BreaklineRelief             = 38,
+    COT_RasterRelief                = 39,
+    COT_LandUse                     = 16,
+    COT_Tunnel                      = 17,
+    COT_Bridge                      = 18,
+    COT_BridgeConstructionElement   = 19,
+    COT_BridgeInstallation          = 20,
+    COT_BridgePart                  = 21,
+    COT_BuildingPart                = 22,
+    COT_WallSurface                 = 23,
+    COT_RoofSurface                 = 24,
+    COT_GroundSurface               = 25,
+    COT_ClosureSurface              = 26,
+    COT_FloorSurface                = 27,
+    COT_InteriorWallSurface         = 28,
+    COT_CeilingSurface              = 29,
+    COT_CityObjectGroup             = 30,
+    COT_OuterCeilingSurface         = 31,
+    COT_OuterFloorSurface           = 32,
+    COT_TransportationObject        = 33,
+    COT_IntBuildingInstallation     = 34,
+    COT_WaterSurface                = 35,
+    COT_Unknown                     = 40,
+    COT_All                         = 63
+};
 
 USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct FPLATEAUCityObjectIndex {
@@ -30,14 +77,14 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
 
     FString GmlID;
     plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
-    int64 Type = 0;
+    EPLATEAUCityObjectsType Type;
     bool IsMsbReversed = false;
     FPLATEAUAttributeMap Attributes;
     TArray<FPLATEAUCityObject> Children;
 
     void SetGmlID(const FString& InGmlID);
     void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
-    void SetCityObjectsType(const double InType);
+    void SetCityObjectsType(const citygml::CityObject::CityObjectsType InType);
     void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
 };
 
@@ -53,10 +100,7 @@ public:
     static FPLATEAUCityObjectIndex GetCityObjectIndex(UPARAM(ref) const FPLATEAUCityObject& Value);
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
-    static int64 GetType(UPARAM(ref) const FPLATEAUCityObject& Value);
-
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
-    static bool IsMsbReversed(UPARAM(ref) const FPLATEAUCityObject& Value);
+    static EPLATEAUCityObjectsType GetType(UPARAM(ref) const FPLATEAUCityObject& Value);
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static FPLATEAUAttributeMap GetAttributes(UPARAM(ref) const FPLATEAUCityObject& Value);

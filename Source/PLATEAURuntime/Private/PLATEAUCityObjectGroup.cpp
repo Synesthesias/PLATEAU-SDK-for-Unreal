@@ -120,7 +120,7 @@ namespace {
         };
         CityObject.SetCityObjectIndex(CityObjectIndex);
 
-        CityObject.SetCityObjectsType(CityJsonObject->GetNumberField(plateau::CityObject::CityObjectTypeFieldName));
+        CityObject.SetCityObjectsType(static_cast<citygml::CityObject::CityObjectsType>(CityJsonObject->GetNumberField(plateau::CityObject::CityObjectTypeFieldName)));
 
         TMap<FString, FPLATEAUAttributeValue> AttributeMap;
         const auto& AttributesJsonValueArray = CityJsonObject->GetArrayField(plateau::CityObject::AttributesFieldName);
