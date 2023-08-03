@@ -1,7 +1,6 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 #pragma once
 #include <memory>
-#include <plateau/polygon_mesh/city_object_list.h>
 #include <plateau/polygon_mesh/node.h>
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
@@ -53,10 +52,17 @@ public:
      */
     void SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, std::shared_ptr<const citygml::CityModel> InCityModel);
 
-    TSharedPtr<FPLATEAUCityObject> GetPrimaryCityObjectByRaycast();
-    TSharedPtr<FPLATEAUCityObject> GetAtomicCityObjectByRaycast();
-    TSharedPtr<FPLATEAUCityObject> GetCityObjectByUV(FVector2d UV);
-    TSharedPtr<FPLATEAUCityObject> GetCityObjectByIndex(plateau::polygonMesh::CityObjectIndex Index);
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    FPLATEAUCityObject GetAtomicCityObjectByRaycast(const FHitResult& HitResult);
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    FPLATEAUCityObject GetCityObjectByUV(const FVector2D& UV);
+
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+    FPLATEAUCityObject GetCityObjectByIndex(FPLATEAUCityObjectIndex Index);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetCityObjectByID(const FString& GmlID);

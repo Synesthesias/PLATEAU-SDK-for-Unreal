@@ -42,7 +42,7 @@ void FPLATEAUCityObject::SetGmlID(const FString& InGmlID) {
 }
 
 void FPLATEAUCityObject::SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex) {
-    InternalCityObjectIndex = InIndex;
+    CityObjectIndex = FPLATEAUCityObjectIndex(InIndex.primary_index, InIndex.atomic_index);
 }
 
 void FPLATEAUCityObject::SetCityObjectsType(const citygml::CityObject::CityObjectsType InType) {
@@ -60,7 +60,7 @@ FString UPLATEAUCityObjectBlueprintLibrary::GetGmlID(const FPLATEAUCityObject& V
 }
 
 FPLATEAUCityObjectIndex UPLATEAUCityObjectBlueprintLibrary::GetCityObjectIndex(const FPLATEAUCityObject& Value) {
-    return FPLATEAUCityObjectIndex(Value.InternalCityObjectIndex.primary_index, Value.InternalCityObjectIndex.atomic_index);
+    return Value.CityObjectIndex;
 }
 
 EPLATEAUCityObjectsType UPLATEAUCityObjectBlueprintLibrary::GetType(const FPLATEAUCityObject& Value) {

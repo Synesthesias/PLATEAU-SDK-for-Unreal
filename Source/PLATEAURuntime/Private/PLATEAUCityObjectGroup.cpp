@@ -4,6 +4,7 @@
 #include "PLATEAUMeshExporter.h"
 #include "PLATEAUCityModelLoader.h"
 #include "CityGML/PLATEAUCityObject.h"
+#include "Kismet/GameplayStatics.h"
 #include <citygml/cityobject.h>
 
 
@@ -237,6 +238,56 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
+FPLATEAUCityObject UPLATEAUCityObjectGroup::GetPrimaryCityObjectByRaycast(const FHitResult& HitResult) {
+    if (RootCityObjects.Num() <= 0) {
+        GetAllRootCityObjects();
+    }
+
+    if (OutsideParent.IsEmpty()) {
+        FVector2d UV;
+        UGameplayStatics::FindCollisionUV(HitResult, 3, UV);
+        UV.Y = -1;
+        return GetCityObjectByUV(UV);
+    }
+
+    // 親を探す
+    USceneComponent* ParentIterator = GetAttachParent();
+    while (ParentIterator != nullptr) {
+        if (const auto& Parent = Cast<UPLATEAUCityObjectGroup>(ParentIterator); Parent->GetName().Contains(OutsideParent)) {
+            return Parent->GetCityObjectByID(OutsideParent);
+        }
+        ParentIterator = ParentIterator->GetAttachParent();
+    }
+
+    UE_LOG(LogTemp, Error, TEXT("There is no %s."), *OutsideParent);
+    return FPLATEAUCityObject();
+}
+
+FPLATEAUCityObject UPLATEAUCityObjectGroup::GetAtomicCityObjectByRaycast(const FHitResult& HitResult) {
+    FVector2d UV;
+    UGameplayStatics::FindCollisionUV(HitResult, 3, UV);
+    return GetCityObjectByUV(UV);
+}
+
+FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByUV(const FVector2d& UV) {
+    return GetCityObjectByIndex(FPLATEAUCityObjectIndex(static_cast<int>(UV.X), static_cast<int>(UV.Y)));
+}
+
+FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByIndex(FPLATEAUCityObjectIndex Index) {
+    if (RootCityObjects.Num() <= 0) {
+        GetAllRootCityObjects();
+    }
+
+    for (const auto& RootCityObject : RootCityObjects) {
+        if (RootCityObject.CityObjectIndex == Index) {
+            return RootCityObject;
+        }
+    }
+
+    UE_LOG(LogTemp, Error, TEXT("There is no index (%d, %d)."), Index.PrimaryIndex, Index.AtomicIndex);
+    return FPLATEAUCityObject();
+}
+
 FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByID(const FString& GmlID) {
     if (RootCityObjects.Num() <= 0) {
         GetAllRootCityObjects();
@@ -264,6 +315,8 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectGroup::GetAllRootCityObjects() {
     for (const auto& CityJsonValue : CityObjectsJsonArray) {
         RootCityObjects.Emplace(GetCityObject(CityJsonValue));
     }
+
+    OutsideParent = JsonRootObject->GetStringField(plateau::CityObject::OutsideParentFieldName);
 
     // 最小地物単位
     const auto& OutsideChildrenJsonArray = JsonRootObject->GetArrayField(plateau::CityObject::OutsideChildrenFieldName);

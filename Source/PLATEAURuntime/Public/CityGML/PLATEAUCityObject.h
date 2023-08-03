@@ -69,6 +69,10 @@ struct FPLATEAUCityObjectIndex {
 
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
     int AtomicIndex;
+
+    bool operator==(const FPLATEAUCityObjectIndex& Other) const {
+        return PrimaryIndex == Other.PrimaryIndex && AtomicIndex == Other.AtomicIndex;
+    }
 };
 
 USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
@@ -76,7 +80,7 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
     GENERATED_USTRUCT_BODY()
 
     FString GmlID;
-    plateau::polygonMesh::CityObjectIndex InternalCityObjectIndex;
+    FPLATEAUCityObjectIndex CityObjectIndex;
     EPLATEAUCityObjectsType Type;
     bool IsMsbReversed = false;
     FPLATEAUAttributeMap Attributes;
