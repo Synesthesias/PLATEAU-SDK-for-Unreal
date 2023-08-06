@@ -65,6 +65,7 @@ void UPLATEAUSDKEditorUtilityWidget::SetEnableSelectionChangedEvent(const ETopMe
         break;
     case ETopMenuPanel::ModelAdjustmentPanel:
     case ETopMenuPanel::ExportPanel:
+    case ETopMenuPanel::AttrInfoPanel:
         if (!SelectionChangedEventHandle.IsValid()) {
             SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddUObject(this, &UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged);
         }
@@ -82,7 +83,25 @@ void UPLATEAUSDKEditorUtilityWidget::SetEnableSelectionChangedEvent(const ETopMe
  * @param InSelection 選択されたオブジェクト
  */
 void UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged(UObject* InSelection) {
-    if (Cast<USelection>(InSelection)) {
-        OnEditorSelectionChanged();
+    if (GEditor) {
+        if (GEditor->GetSelectedActors()->Num() <= 0 && GEditor->GetSelectedComponents()->Num() <= 0) {
+            OnSelectionChangedDelegate.Broadcast(nullptr, nullptr, true);
+            SelectionActor = nullptr;
+            SelectionComponent = nullptr;
+            return;
+        }
+
+        if (const auto& BottomActor = GEditor->GetSelectedActors()->GetBottom<AActor>(); BottomActor && SelectionActor != BottomActor) {
+            SelectionActor = BottomActor;
+            OnSelectionChangedDelegate.Broadcast(BottomActor, SelectionComponent, true);
+        }
+
+        if (const auto& BottomComponent = GEditor->GetSelectedComponents()->GetBottom<USceneComponent>(); BottomComponent && SelectionComponent !=
+            BottomComponent) {
+            SelectionComponent = BottomComponent;
+            OnSelectionChangedDelegate.Broadcast(SelectionActor, BottomComponent, false);
+        }
+    }
+}
     }
 }

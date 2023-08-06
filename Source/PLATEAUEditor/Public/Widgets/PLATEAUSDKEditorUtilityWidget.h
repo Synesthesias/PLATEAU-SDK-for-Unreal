@@ -13,7 +13,8 @@ enum class ETopMenuPanel : uint8 {
     None,
     ImportPanel,
     ModelAdjustmentPanel,
-    ExportPanel
+    ExportPanel,
+    AttrInfoPanel
 };
 
 USTRUCT(BlueprintType)
@@ -43,6 +44,7 @@ struct FServerDatasetMetadataMap {
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAreaSelectSuccessDelegate, FVector3d, ReferencePoint, int64, PackageMask);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetDatasetMetaDataAsyncSuccessDelegate, const TArray<FServerDatasetMetadataMap>&, PLATEAUServerDatasetMetadataMap);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSelectionChangedDelegate, AActor*, SelectionActor, USceneComponent*, SelectionComponent, bool, IsActorChanged);
 
 UCLASS(Blueprintable)
 class PLATEAUEDITOR_API UPLATEAUSDKEditorUtilityWidget : public UEditorUtilityWidget {
@@ -66,8 +68,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
     void SetEnableSelectionChangedEvent(const ETopMenuPanel TopMenuPanel);
 
-    UFUNCTION(BlueprintImplementableEvent, CallInEditor, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
-    void OnEditorSelectionChanged();
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnSelectionChangedDelegate OnSelectionChangedDelegate;
 private:
     bool bGettingNativeDatasetMetadata;
     std::shared_ptr<plateau::network::Client> ClientPtr;
@@ -75,4 +77,6 @@ private:
 
     void OnSelectionChanged(UObject* InSelection);
     FDelegateHandle SelectionChangedEventHandle;
+    AActor* SelectionActor;
+    USceneComponent* SelectionComponent;
 };

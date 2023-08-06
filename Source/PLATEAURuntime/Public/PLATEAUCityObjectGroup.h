@@ -73,10 +73,10 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU")
     FString SerializedCityObjects;
 
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU")
     FString OutsideParent;
 
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU")
     TArray<FString> OutsideChildren;
 private:
     TArray<FPLATEAUCityObject> RootCityObjects;
