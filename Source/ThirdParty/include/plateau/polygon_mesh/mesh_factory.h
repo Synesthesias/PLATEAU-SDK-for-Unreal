@@ -60,6 +60,8 @@ namespace plateau::polygonMesh {
             const std::list<const citygml::CityObject*>& city_objects,
             unsigned lod, const std::string& gml_path);
 
+        void incrementPrimaryIndex();
+
         /**
          * city_obj に含まれるポリゴンをすべて検索し、リストで返します。
          * 子の CityObject は検索しません。
