@@ -50,7 +50,7 @@ namespace plateau::polygonMesh {
             };
         }
 
-        CityObjectIndex nextPrimary() const {
+        CityObjectIndex getPrimary() const {
             return {
                 primary_index,
                 invalidIndex()
