@@ -6,7 +6,9 @@ using System.IO;
 
 
 public class PLATEAUEditorBPLibraries : ModuleRules {
-    public PLATEAUEditorBPLibraries(ReadOnlyTargetRules Target) : base(Target) {
+    public PLATEAUEditorBPLibraries(ReadOnlyTargetRules Target) : base(Target)
+    {
+        bEnableExceptions = true;
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
