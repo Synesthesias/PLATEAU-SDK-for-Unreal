@@ -12,6 +12,7 @@ std::shared_ptr<PlateauDllLogger> PLATEAUDllLoggerUnreal::GetLogger()
 
 void PLATEAUDllLoggerUnreal::LogInfo(const char* Char)
 {
+    // 共通ライブラリで発生したログメッセージをUnreal Engineに渡します
     const FString Str = FString(UTF8_TO_TCHAR(Char));
     UE_LOG(LogTemp, Log, TEXT("libplateau: %s"), *Str);
 }

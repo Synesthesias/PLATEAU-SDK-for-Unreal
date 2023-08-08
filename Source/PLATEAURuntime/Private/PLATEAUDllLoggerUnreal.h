@@ -16,7 +16,19 @@ public:
     std::shared_ptr<PlateauDllLogger> GetLogger();
 private:
     std::shared_ptr<PlateauDllLogger> DllLogger;
-    static void LogInfo(const char* Char);
+
+    /**
+     * @brief 共通ライブラリでInfoレベルのログが発生したときにコールバックで呼ばれます。
+     */
+     static void LogInfo(const char* Char);
+
+    /**
+     * @brief 共通ライブラリでWarningレベルのログが発生したときにコールバックで呼ばれます 
+     */
     static void LogWarning(const char* Char);
+    
+    /**
+     * @brief 共通ライブラリでErrorレベルのログが発生したときにコールバックで呼ばれます 
+     */
     static void LogError(const char* Char);
 };
