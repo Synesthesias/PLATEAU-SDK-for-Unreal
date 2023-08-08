@@ -8,6 +8,7 @@ public class PLATEAUEditor : ModuleRules
 {
     public PLATEAUEditor(ReadOnlyTargetRules Target) : base(Target)
     {
+        bEnableExceptions = true;
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicIncludePaths.AddRange(

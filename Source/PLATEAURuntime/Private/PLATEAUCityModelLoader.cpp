@@ -3,6 +3,7 @@
 
 #include "PLATEAUCityModelLoader.h"
 
+#include "PLATEAUDllLoggerUnreal.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "plateau/dataset/dataset_source.h"
 #include "plateau/dataset/city_model_package.h"
@@ -99,9 +100,11 @@ public:
         try {
             citygml::ParserParams ParserParams;
             ParserParams.tesselate = true;
-            CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams);
+            const auto Logger = std::make_shared<PLATEAUDllLoggerUnreal>(citygml::CityGMLLogger::LOGLEVEL::LL_INFO);
+            CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams, Logger->GetLogger());
         }
-        catch (...) {
+        catch (std::exception& e) {
+            UE_LOG(LogTemp, Error, TEXT("Error parsing gml file. Path=%s, What=%s"), *GmlPath, e.what());
             CityModel = nullptr;
         }
         if (CityModel == nullptr)
