@@ -103,5 +103,3 @@ void UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged(UObject* InSelection) {
         }
     }
 }
-    }
-}
