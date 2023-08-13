@@ -273,7 +273,10 @@ UPLATEAUCityObjectGroup* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& A
                         // Collision情報設定
                         Mesh->CreateBodySetup();
                         Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-
+                        // レイキャスト時にブロック状態ではマルチヒットしない
+                        // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
+                        Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
+                        
                     }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
             });
 
