@@ -7,6 +7,7 @@
 #include "Blutility/Classes/EditorUtilityWidget.h"
 #include "PLATEAUSDKEditorUtilityWidget.generated.h"
 
+class UPLATEAUCityObjectGroup;
 
 UENUM(BlueprintType)
 enum class ETopMenuPanel : uint8 {
@@ -50,24 +51,52 @@ UCLASS(Blueprintable)
 class PLATEAUEDITOR_API UPLATEAUSDKEditorUtilityWidget : public UEditorUtilityWidget {
     GENERATED_BODY()
 public:
+    /**
+     * @brief 範囲選択完了通知
+     * @param ReferencePoint リファレンス位置 
+     * @param PackageMask パッケージマスク
+     */
     void AreaSelectSuccessInvoke(const FVector3d& ReferencePoint, const int64& PackageMask) const;
 
+    /**
+     * @brief クライアントポインタ取得
+     * @return クライアントポインタ
+     */
     std::shared_ptr<plateau::network::Client> GetClientPtr() {
         return ClientPtr;
     }
 
+    /**
+     * @brief 範囲選択成功デリゲート
+     */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
     FAreaSelectSuccessDelegate AreaSelectSuccessDelegate;
 
+    /**
+     * @brief サーバのメタデータ受信成功デリゲート
+     */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
     FGetDatasetMetaDataAsyncSuccessDelegate GetDatasetMetaDataAsyncSuccessDelegate;
 
+    /**
+     * @brief サーバから非同期でデータセット情報を取得
+     * @param InServerURL サーバURL
+     * @param InToken トークン
+     */
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
     void GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken);
 
+    /**
+     * @brief 選択イベント通知の実行制御
+     * @param TopMenuPanel イベント通知するパネル
+     */
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentPanel")
     void SetEnableSelectionChangedEvent(const ETopMenuPanel TopMenuPanel);
 
+    /**
+     * @brief 選択が変更された時に通知
+     * @param InSelection 選択されたオブジェクト
+     */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnSelectionChangedDelegate OnSelectionChangedDelegate;
 private:
@@ -79,4 +108,53 @@ private:
     FDelegateHandle SelectionChangedEventHandle;
     AActor* SelectionActor;
     USceneComponent* SelectionComponent;
+};
+
+USTRUCT(BlueprintType)
+struct FVectorMap {
+    GENERATED_BODY()
+
+    FVectorMap() {
+    }
+
+    FVectorMap(const FVertexID InVertexID, const FVector InVertexPos) : VertexID(InVertexID), VertexPos(InVertexPos) {
+    }
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries")
+    FVertexID VertexID;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries")
+    FVector VertexPos;
+};
+
+UCLASS()
+class PLATEAUEDITOR_API UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary : public UBlueprintFunctionLibrary {
+    GENERATED_BODY()
+
+public:
+    /**
+     * @brief 対象のコンポーネントを線で囲む
+     * @param WorldContextObject 現在のワールド
+     * @param SceneComponent 線で囲むシーンコンポーネント
+     */    
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
+    static void DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const USceneComponent* SceneComponent);
+
+    /**
+     * @brief 親と子のコンポーネントを線で囲む
+     * @param WorldContextObject 現在のワールド
+     * @param ChildSceneComponents 線で囲む親の持つ全ての子のシーンコンポーネント
+     * @param ChildSceneComponent 線で囲む子のシーンコンポーネント
+     */    
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
+    static void DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject, const TArray<USceneComponent*> ChildSceneComponents,
+                                           const USceneComponent* ChildSceneComponent);
+
+    /**
+     * @brief 対象コンポーネントの親スタティックメッシュを取得
+     * @param SceneComponent 親を持つか確認するシーンコンポーネント
+     * @return 親のスタティックメッシュコンポーネント
+     */    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|BPLibraries")
+    static UStaticMeshComponent* GetParentStaticMeshComponent(USceneComponent* SceneComponent);
 };
