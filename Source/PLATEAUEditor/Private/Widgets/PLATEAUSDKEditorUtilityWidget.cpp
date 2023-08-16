@@ -14,12 +14,12 @@ namespace {
     // 描画ボックスでオブジェクトを囲むためのオフセット値
     constexpr double DrawBoxXYZOffset = 100;
 
-    // ラインパラメータ
+    // 線パラメータ
     constexpr bool GBPersistentLines = true;
     constexpr float Thickness = 20;
     constexpr float LineLifeTime = -1;
     constexpr uint8 DepthPriority = SDPG_World;
-    
+
     /**
      * @brief 入力されたメッシュのポリゴンから全ポリゴンを囲むエッジとなる頂点を求める    
      * @return 全ポリゴンを囲むエッジとなる頂点情報を持つ構造体の配列
@@ -200,13 +200,14 @@ void UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged(UObject* InSelection) {
     }
 }
 
-void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const USceneComponent* SceneComponent) {
+void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult,
+                                                                         USceneComponent* SceneComponent) {
     const auto& StaticMeshComponent = Cast<UStaticMeshComponent>(SceneComponent);
     if (StaticMeshComponent == nullptr) {
         UE_LOG(LogTemp, Error, TEXT("StaticMeshComponent == nullptr"));
         return;
     }
-    
+
     const auto& WorldLocation = StaticMeshComponent->GetComponentLocation();
     const auto& MeshDescription = StaticMeshComponent->GetStaticMesh()->GetMeshDescription(0);
     const auto& VectorMapArray = GetVectorMapArray(MeshDescription);
@@ -216,7 +217,7 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAttrInfo(const U
         VertexPos.Z = 0;
         PointArray.Add(VertexPos);
     }
-    
+
     FVector OutRectCenter;
     FRotator OutRectRotation = FRotator::ZeroRotator;
     float OutRectLengthX;
@@ -225,14 +226,32 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAttrInfo(const U
     const auto VertexMapHalfZ = GetVertexMapHalfZ(VectorMapArray);
     OutRectCenter.Z = VertexMapHalfZ + WorldLocation.Z;
     if (const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull)) {
-        DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset,
-                     OutRectRotation.Quaternion(), FColor::Red, GBPersistentLines, LineLifeTime, DepthPriority, Thickness);
+        // 線描画
+        DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset, OutRectRotation.Quaternion(),
+                     FColor::Purple, GBPersistentLines, LineLifeTime, DepthPriority, Thickness);
+
+        const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(SceneComponent);
+        if (CityObjectGroup == nullptr)
+            return;
+
+        // 属性情報表示
+        const auto& [GmlID, CityObjectIndex, Type, Attributes, Children] = CityObjectGroup->GetPrimaryCityObjectByRaycast(HitResult);
+        OutRectCenter.Z = VertexMapHalfZ * 2 + WorldLocation.Z;
+        FString AttrInfoString;
+        for (const auto& AttributeMap : Attributes.AttributeMap) {
+            if (AttributeMap.Value.Type == EPLATEAUAttributeType::String) {
+                AttrInfoString = FString::Format(TEXT("Key: {0}, Value: {1}"), {AttributeMap.Key, AttributeMap.Value.StringValue});
+                break;
+            }
+        }
+        const FString DrawString = FString::Format(TEXT("{0}\n{1}"), {GmlID, AttrInfoString});
+        DrawDebugString(World, OutRectCenter, DrawString, nullptr, FColor::Magenta, -1);
     }
 }
 
-void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject,
-                                                                                const TArray<USceneComponent*> ChildSceneComponents,
-                                                                                const USceneComponent* ChildSceneComponent) {
+void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult,
+                                                                                USceneComponent* ChildSceneComponent,
+                                                                                const TArray<USceneComponent*> ChildSceneComponents) {
     if (ChildSceneComponents.Num() <= 0) {
         UE_LOG(LogTemp, Error, TEXT("ChildSceneComponents.Num() <= 0"));
         return;
@@ -276,8 +295,24 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAndAtomAttrInfo(
     OutRectCenter.Z = VertexMapHalfZ + WorldLocation.Z;
 
     // 親を描画
-    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset,
-                 OutRectRotation.Quaternion(), FColor::Red, GBPersistentLines, LineLifeTime, DepthPriority, Thickness);
+    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset, OutRectRotation.Quaternion(),
+                 FColor::Magenta, GBPersistentLines, LineLifeTime, DepthPriority, Thickness);
+
+    // 親の属性情報表示
+    const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(ChildSceneComponent);
+    if (CityObjectGroup != nullptr) {
+        const auto& [GmlID, CityObjectIndex, Type, Attributes, Children] = CityObjectGroup->GetPrimaryCityObjectByRaycast(HitResult);
+        OutRectCenter.Z = VertexMapHalfZ * 2 + WorldLocation.Z;
+        FString AttrInfoString;
+        for (const auto& AttributeMap : Attributes.AttributeMap) {
+            if (AttributeMap.Value.Type == EPLATEAUAttributeType::String) {
+                AttrInfoString = FString::Format(TEXT("Key: {0}, Value: {1}"), {AttributeMap.Key, AttributeMap.Value.StringValue});
+                break;
+            }
+        }
+        const FString DrawString = FString::Format(TEXT("{0}\n{1}"), {GmlID, AttrInfoString});
+        DrawDebugString(World, OutRectCenter, DrawString, nullptr, FColor::Magenta, -1);
+    }
 
     // 子を描画
     if (GEngine->GetNetMode(World) != NM_DedicatedServer) {
@@ -287,6 +322,23 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawPrimaryAndAtomAttrInfo(
         for (int32 Vert0 = InVertsNum - 1, Vert1 = 0; Vert1 < InVertsNum; Vert0 = Vert1++) {
             LineBatch->DrawLine(VectorMapPerimeterArray[Vert0].VertexPos, VectorMapPerimeterArray[Vert1].VertexPos, FColor::Green, DepthPriority, Thickness, LineLifeTime);
         }
+
+        // 子の属性情報表示
+        const auto& [GmlID, CityObjectIndex, Type, Attributes, Children] = CityObjectGroup->GetAtomicCityObjectByRaycast(HitResult);
+        FString AttrInfoString;
+        for (const auto& AttributeMap : Attributes.AttributeMap) {
+            if (AttributeMap.Value.Type == EPLATEAUAttributeType::String) {
+                AttrInfoString = FString::Format(TEXT("Key: {0}, Value: {1}"), {AttributeMap.Key, AttributeMap.Value.StringValue});
+                break;
+            }
+        }
+        FVector SumVertPos;
+        for (int32 Vert0 = 0; Vert0 < InVertsNum; Vert0++) {
+            SumVertPos += VectorMapPerimeterArray[Vert0].VertexPos;
+        }
+        SumVertPos /= InVertsNum;
+        const FString DrawString = FString::Format(TEXT("{0}\n{1}"), {GmlID, AttrInfoString});
+        DrawDebugString(World, SumVertPos + WorldLocation, DrawString, nullptr, FColor::Green, -1);
     }
 }
 

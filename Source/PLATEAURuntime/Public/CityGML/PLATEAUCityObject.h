@@ -82,7 +82,6 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
     FString GmlID;
     FPLATEAUCityObjectIndex CityObjectIndex;
     EPLATEAUCityObjectsType Type;
-    bool IsMsbReversed = false;
     FPLATEAUAttributeMap Attributes;
     TArray<FPLATEAUCityObject> Children;
 

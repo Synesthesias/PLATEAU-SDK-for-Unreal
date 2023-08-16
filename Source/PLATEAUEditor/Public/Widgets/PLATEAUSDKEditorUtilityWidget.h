@@ -135,26 +135,28 @@ public:
     /**
      * @brief 対象のコンポーネントを線で囲む
      * @param WorldContextObject 現在のワールド
+     * @param HitResult レイキャスト結果
      * @param SceneComponent 線で囲むシーンコンポーネント
-     */    
+     */
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
-    static void DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const USceneComponent* SceneComponent);
+    static void DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult, USceneComponent* SceneComponent);
 
     /**
      * @brief 親と子のコンポーネントを線で囲む
      * @param WorldContextObject 現在のワールド
-     * @param ChildSceneComponents 線で囲む親の持つ全ての子のシーンコンポーネント
+     * @param HitResult レイキャスト結果
      * @param ChildSceneComponent 線で囲む子のシーンコンポーネント
-     */    
+     * @param ChildSceneComponents 線で囲む親の持つ全ての子のシーンコンポーネント
+     */
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
-    static void DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject, const TArray<USceneComponent*> ChildSceneComponents,
-                                           const USceneComponent* ChildSceneComponent);
+    static void DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult, USceneComponent* ChildSceneComponent,
+                                           const TArray<USceneComponent*> ChildSceneComponents);
 
     /**
      * @brief 対象コンポーネントの親スタティックメッシュを取得
      * @param SceneComponent 親を持つか確認するシーンコンポーネント
      * @return 親のスタティックメッシュコンポーネント
-     */    
+     */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|BPLibraries")
     static UStaticMeshComponent* GetParentStaticMeshComponent(USceneComponent* SceneComponent);
 };
