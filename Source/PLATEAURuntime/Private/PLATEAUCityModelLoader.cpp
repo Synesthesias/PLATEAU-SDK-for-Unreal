@@ -101,7 +101,7 @@ public:
             citygml::ParserParams ParserParams;
             ParserParams.tesselate = true;
             const auto Logger = std::make_shared<PLATEAUDllLoggerUnreal>(
-                citygml::CityGMLLogger::LOGLEVEL::LL_WARNING);
+                citygml::CityGMLLogger::LOGLEVEL::LL_INFO);
             CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams, Logger->GetLogger());
         }
         catch (std::exception& e) {
