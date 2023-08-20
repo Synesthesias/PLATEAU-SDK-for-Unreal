@@ -111,13 +111,13 @@ private:
 };
 
 USTRUCT(BlueprintType)
-struct FVectorMap {
+struct FVertexData {
     GENERATED_BODY()
 
-    FVectorMap() {
+    FVertexData() {
     }
 
-    FVectorMap(const FVertexID InVertexID, const FVector InVertexPos) : VertexID(InVertexID), VertexPos(InVertexPos) {
+    FVertexData(const FVertexID InVertexID, const FVector InVertexPos) : VertexID(InVertexID), VertexPos(InVertexPos) {
     }
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|BPLibraries")
@@ -127,30 +127,40 @@ struct FVectorMap {
     FVector VertexPos;
 };
 
+struct FEdgeData {
+    FEdgeData() {
+    }
+
+    FEdgeData(const FVector InVertexPos0, const FVector InVertexPos1) : VertexPos0(InVertexPos0), VertexPos1(InVertexPos1) {
+    }
+
+    FVector VertexPos0;
+    FVector VertexPos1;
+};
+
 UCLASS()
 class PLATEAUEDITOR_API UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
 
 public:
     /**
-     * @brief 対象のコンポーネントを線で囲む
+     * @brief 親と子のコンポーネントを線で囲む
      * @param WorldContextObject 現在のワールド
      * @param HitResult レイキャスト結果
-     * @param SceneComponent 線で囲むシーンコンポーネント
+     * @param LodIndex LOD
      */
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
-    static void DrawPrimaryAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult, USceneComponent* SceneComponent);
+    static void DrawAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult, const int32 LodIndex = 0);
 
     /**
      * @brief 親と子のコンポーネントを線で囲む
      * @param WorldContextObject 現在のワールド
      * @param HitResult レイキャスト結果
-     * @param ChildSceneComponent 線で囲む子のシーンコンポーネント
      * @param ChildSceneComponents 線で囲む親の持つ全ての子のシーンコンポーネント
+     * @param LodIndex LOD
      */
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries")
-    static void DrawPrimaryAndAtomAttrInfo(const UWorld* WorldContextObject, const FHitResult& HitResult, USceneComponent* ChildSceneComponent,
-                                           const TArray<USceneComponent*> ChildSceneComponents);
+    static void DrawAttrInfoWithChildSceneComponents(const UWorld* WorldContextObject, const FHitResult& HitResult, const TArray<USceneComponent*> ChildSceneComponents, const int32 LodIndex = 0);
 
     /**
      * @brief 対象コンポーネントの親スタティックメッシュを取得

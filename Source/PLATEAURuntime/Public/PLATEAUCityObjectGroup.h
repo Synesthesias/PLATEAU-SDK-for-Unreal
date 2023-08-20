@@ -37,6 +37,14 @@ class PLATEAURUNTIME_API UPLATEAUCityObjectGroup : public UStaticMeshComponent {
     GENERATED_BODY()
 public:
     /**
+     * @brief レイキャストヒットした位置のUVを取得
+     * @param HitResult レイキャストヒット結果
+     * @param UV 取得したい位置のUV
+     * @param UVChannel 対象のUVチャンネル
+     */
+    static void FindCollisionUV(const FHitResult& HitResult, FVector2D& UV, const int32 UVChannel = 3);
+    
+    /**
      * @brief メッシュを持たないがCityObjectを持つノードをシリアライズ
      * @param InNode シリアライズ対象ノード
      * @param InCityObject CityModelから得られるシティオブジェクト情報
