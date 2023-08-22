@@ -40,6 +40,9 @@ public:
         bool bImportTexture = true;
 
     UPROPERTY(EditAnywhere, Category = "Import Settings")
+        bool bIncludeAttrInfo = true;
+    
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
         bool bSetCollider = true;
 
     UPROPERTY(EditAnywhere, Category = "Import Settings")

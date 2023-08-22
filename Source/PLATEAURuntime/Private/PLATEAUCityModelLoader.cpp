@@ -48,6 +48,7 @@ public:
                 ExtractOptions.max_lod = Settings.MaxLod;
                 ExtractOptions.min_lod = Settings.MinLod;
                 ExtractOptions.export_appearance = Settings.bImportTexture;
+                ExtractOptions.include_attr_info = Settings.bIncludeAttrInfo;
                 ExtractOptions.grid_count_of_side = 10;
                 ExtractOptions.unit_scale = 0.01f;
                 ExtractOptions.extent = Extent.GetNativeData();

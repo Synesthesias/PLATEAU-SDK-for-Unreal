@@ -36,7 +36,7 @@ private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
 
-    UPLATEAUCityObjectGroup* CreateStaticMeshComponent(
+    UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,

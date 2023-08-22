@@ -12,6 +12,7 @@
 #include "PhysicsEngine/BodySetup.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUCityModelLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
@@ -226,32 +227,36 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(
     }
 }
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent,
-                                                                       const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
-                                                                       const std::shared_ptr<const citygml::CityModel> CityModel,
-                                                                       const std::string& InNodeName) {
+UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh,
+                                                                    const FLoadInputData& LoadInputData,
+                                                                    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     UStaticMesh* StaticMesh;
-    UPLATEAUCityObjectGroup* Component;
-    UPLATEAUCityObjectGroup* ComponentRef = nullptr;
+    UStaticMeshComponent* Component = nullptr;
+    UStaticMeshComponent* ComponentRef = nullptr;
     FMeshDescription* MeshDescription;
     {
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&]() {
-                Component = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                if (bAutomationTest) {
-                    Component->Mobility = EComponentMobility::Movable;
-                } else {
-                    Component->Mobility = EComponentMobility::Static;
-                }
-                Component->bVisualizeComponent = true;
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            if (LoadInputData.ExtractOptions.include_attr_info) {
+                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
+                Component = PLATEAUCityObjectGroup;
+            } else {
+                Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+            }
 
-                // StaticMesh作成
-                StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
-                MeshDescription = StaticMesh->CreateMeshDescription(0);
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
+            if (bAutomationTest) {
+                Component->Mobility = EComponentMobility::Movable;
+            } else {
+                Component->Mobility = EComponentMobility::Static;
+            }
+            Component->bVisualizeComponent = true;
+
+            // StaticMesh作成
+            StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
+            MeshDescription = StaticMesh->CreateMeshDescription(0);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
     ConvertMesh(InMesh, *MeshDescription);
@@ -327,7 +332,6 @@ UPLATEAUCityObjectGroup* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& A
                 Component->RegisterComponent();
                 Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
                 Component->PostEditChange();
-                Component->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
                 ComponentRef = Component;
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         ComponentSetupTask->Wait();
@@ -343,35 +347,34 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
-        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&, DesiredName] {
-                // CityObjectがある場合はUPLATEAUCityObjectGroupとする
-                if (CityObject != nullptr) {
-                    StaticClass = UPLATEAUCityObjectGroup::StaticClass();
-                    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
-                    Comp = PLATEAUCityObjectGroup;
-                } else {
-                    StaticClass = UStaticMeshComponent::StaticClass();
-                    Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-                 }                
-                FString NewUniqueName = FString(DesiredName);
-                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
-                }
-                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
+            // CityObjectがある場合はUPLATEAUCityObjectGroupとする
+            if (CityObject != nullptr && LoadInputData.ExtractOptions.include_attr_info) {
+                StaticClass = UPLATEAUCityObjectGroup::StaticClass();
+                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                Comp = PLATEAUCityObjectGroup;
+            } else {
+                StaticClass = UStaticMeshComponent::StaticClass();
+                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+            }
+            FString NewUniqueName = FString(DesiredName);
+            if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
+            }
+            Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
-                check(Comp != nullptr);
-                if (bAutomationTest) {
-                    Comp->Mobility = EComponentMobility::Movable;
-                } else {
-                    Comp->Mobility = EComponentMobility::Static;
-                }
+            check(Comp != nullptr);
+            if (bAutomationTest) {
+                Comp->Mobility = EComponentMobility::Movable;
+            } else {
+                Comp->Mobility = EComponentMobility::Static;
+            }
 
-                Actor.AddInstanceComponent(Comp);
-                Comp->RegisterComponent();
-                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            Actor.AddInstanceComponent(Comp);
+            Comp->RegisterComponent();
+            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
         return Comp;
     }
