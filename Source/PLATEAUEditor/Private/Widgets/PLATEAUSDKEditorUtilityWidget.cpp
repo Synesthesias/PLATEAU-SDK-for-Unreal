@@ -14,9 +14,6 @@
 
 
 namespace {
-    // 描画ボックスでオブジェクトを囲むためのオフセット値
-    constexpr double DrawBoxXYZOffset = 100;
-
     // 線パラメータ
     constexpr float DrawLineThickness = 20;
     constexpr float DrawLineLifeTime = -1;
@@ -137,28 +134,27 @@ namespace {
     }
 
     /**
-     * @brief Z軸の最大最小頂点の差分からその高さの半分を取得
+     * @brief Z軸の最大最小値取得
      * @param VectorMapArray 頂点情報を格納したマップ
-     * @return Z軸の最大最小頂点の差分からその高さを半分にした値
+     * @param MinValue Z軸の最大値
+     * @param MaxValue Z軸の最小値
      */
-    double GetVertexMapHalfZ(const TArray<FVertexData>& VectorMapArray) {
+    void GetMinMaxZ(const TArray<FVertexData>& VectorMapArray, int32& MinValue, int32& MaxValue) {
         if (VectorMapArray.Num() <= 0) {
-            return 0;
+            MinValue = 0;
+            MaxValue = 0;
+            return;
         }
 
-        double MaxZ = VectorMapArray[0].VertexPos.Z;
         double MinZ = VectorMapArray[0].VertexPos.Z;
+        double MaxZ = VectorMapArray[0].VertexPos.Z;
         const auto InVertsNum = VectorMapArray.Num();
         for (int32 i = 1; i < InVertsNum; i++) {
-            if (MaxZ < VectorMapArray[i].VertexPos.Z) {
-                MaxZ = VectorMapArray[i].VertexPos.Z;
-            }
-            if (VectorMapArray[i].VertexPos.Z < MinZ) {
-                MinZ = VectorMapArray[i].VertexPos.Z;
-            }
+            MinZ = std::min(MinZ, VectorMapArray[i].VertexPos.Z);
+            MaxZ = std::max(MaxZ, VectorMapArray[i].VertexPos.Z);
         }
-
-        return MaxZ - (MaxZ - MinZ) * 0.5;
+        MinValue = MinZ;
+        MaxValue = MaxZ;
     }
 
     /**
@@ -357,18 +353,20 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawAttrInfo(const UWorld* 
     float OutRectLengthY;
     UKismetMathLibrary::MinAreaRectangle(nullptr, ParentVerticesArray, FVector(0, 0, 1), OutRectCenter, OutRectRotation, OutRectLengthX, OutRectLengthY);
     const auto& WorldLocation = StaticMeshComponent->GetComponentLocation();
-    const auto VertexMapHalfZ = GetVertexMapHalfZ(VectorMapArray);
-    OutRectCenter.Z = VertexMapHalfZ + WorldLocation.Z;
+    int32 MinZ;
+    int32 MaxZ;
+    GetMinMaxZ(VectorMapArray, MinZ, MaxZ);
+    OutRectCenter.Z = MinZ + (MaxZ - MinZ) * 0.5 + WorldLocation.Z;
     
     // 親のバウンディングボックス描画
-    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset, OutRectRotation.Quaternion(),
-                 FColor::Purple, GBPersistentLines, DrawLineLifeTime, DepthPriority, DrawLineThickness);
+    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, MaxZ - MinZ) * 0.5, OutRectRotation.Quaternion(),
+                 FColor::Magenta, GBPersistentLines, DrawLineLifeTime, DepthPriority, DrawLineThickness);
 
     // 親の属性情報表示
     const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(StaticMeshComponent);
     if (CityObjectGroup != nullptr) {
         const auto& [GmlID, CityObjectIndex, Type, Attributes, Children] = CityObjectGroup->GetPrimaryCityObjectByRaycast(HitResult);
-        OutRectCenter.Z = VertexMapHalfZ * 2 + WorldLocation.Z;
+    OutRectCenter.Z = MaxZ + WorldLocation.Z;
         FString AttrInfoString;
         for (const auto& AttributeMap : Attributes.AttributeMap) {
             if (AttributeMap.Value.Type == EPLATEAUAttributeType::String) {
@@ -450,18 +448,20 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawAttrInfoWithChildSceneC
     float OutRectLengthY;
     UKismetMathLibrary::MinAreaRectangle(nullptr, ChildVerticesArray, FVector(0, 0, 1), OutRectCenter, OutRectRotation, OutRectLengthX, OutRectLengthY);
     const auto& WorldLocation = StaticMeshComponent->GetComponentLocation();
-    const auto VertexMapHalfZ = GetVertexMapHalfZ(ChildrenVectorMap);
-    OutRectCenter.Z = VertexMapHalfZ + WorldLocation.Z;
+    int32 MinZ;
+    int32 MaxZ;
+    GetMinMaxZ(ChildrenVectorMap, MinZ, MaxZ);
+    OutRectCenter.Z = MinZ + (MaxZ - MinZ) * 0.5 + WorldLocation.Z;
 
     // 親のバウンディングボックス描画
-    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, VertexMapHalfZ) * 0.5 + DrawBoxXYZOffset, OutRectRotation.Quaternion(),
+    DrawDebugBox(World, OutRectCenter, FVector(OutRectLengthX, OutRectLengthY, MaxZ - MinZ) * 0.5, OutRectRotation.Quaternion(),
                  FColor::Magenta, GBPersistentLines, DrawLineLifeTime, DepthPriority, DrawLineThickness);
 
     // 親の属性情報表示
     const auto& CityObjectGroup = Cast<UPLATEAUCityObjectGroup>(StaticMeshComponent);
     if (CityObjectGroup != nullptr) {
         const auto& [GmlID, CityObjectIndex, Type, Attributes, Children] = CityObjectGroup->GetPrimaryCityObjectByRaycast(HitResult);
-        OutRectCenter.Z = VertexMapHalfZ * 2 + WorldLocation.Z;
+        OutRectCenter.Z = MaxZ + WorldLocation.Z;
         FString AttrInfoString;
         for (const auto& AttributeMap : Attributes.AttributeMap) {
             if (AttributeMap.Value.Type == EPLATEAUAttributeType::String) {
