@@ -240,6 +240,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
         TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
         TSharedPtr<FJsonObject> CityJsonObjectParent = MakeShareable(new FJsonObject);
         TArray<TSharedPtr<FJsonValue>> CityJsonObjectChildren;
+        int CurrentPrimaryIndex = -1;
         for (int i = 0; i < CityObjectIndices.size(); i++) {
             const auto& CityObjectIndex = CityObjectIndices[i];
             const auto& AtomicGmlId = CityObjectList.getAtomicGmlID(CityObjectIndex);
@@ -247,8 +248,9 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
             if (CityObject == nullptr)
                 continue;
 
-            if (CityObjectIndex.primary_index == 0 && CityObjectIndex.atomic_index == -1) {
+            if (CityObjectIndex.primary_index != CurrentPrimaryIndex) {
                 // 主要地物
+                CurrentPrimaryIndex = CityObjectIndex.primary_index;
                 CityJsonObjectParent = GetCityJsonObject(CityObject, CityObjectIndex);
                 CityObjectJsonArray.Emplace(MakeShared<FJsonValueObject>(CityJsonObjectParent));
                 CityJsonObjectChildren.Empty();
@@ -257,8 +259,8 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
                 CityJsonObjectChildren.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(CityObject, CityObjectIndex)));
             }
 
-            // データ区切りか？
-            if (i + 1 == CityObjectIndices.size() || CityObjectIndices[i + 1].primary_index == 0 && CityObjectIndices[i + 1].atomic_index == -1) {
+            // データの区切りか？
+            if (i + 1 == CityObjectIndices.size() || CityObjectIndices[i + 1].primary_index != CurrentPrimaryIndex) {
                 CityJsonObjectParent->SetArrayField(plateau::CityObject::ChildrenFieldName, CityJsonObjectChildren);
             }
         }
