@@ -8,6 +8,12 @@
 
 namespace plateau::dataset {
     class IDatasetAccessor;
+
+    UENUM()
+    enum ETranslucentSortPriority : int {
+        SortPriority_BaseMap = -1,
+        SortPriority_IconComponent = 1,
+    };
 }
 
 /** Viewport Client for the preview viewport */

@@ -11,10 +11,10 @@
  * @param bExportAsBinary バイナリとして出力するか？
  * @param bExportHiddenModel 非表示モデルを出力するか？
  * @param bExportTexture テクスチャを出力するか？
- * @param CoordinateSystem 座標設定
- * @param TransformType 座標系の設定
+ * @param TransformType 座標設定
+ * @param CoordinateSystem 座標系設定
  */
-void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityModel, const FString& ExportPath, const uint8 FileFormat, const bool bExportAsBinary, const bool bExportHiddenModel, const bool bExportTexture, const uint8 CoordinateSystem, const uint8 TransformType) {
+void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityModel, const FString& ExportPath, const uint8 FileFormat, const bool bExportAsBinary, const bool bExportHiddenModel, const bool bExportTexture, const uint8 TransformType, const uint8 CoordinateSystem) {
     MeshExportOptions Options;
     Options.FileFormat = static_cast<EMeshFileFormat>(FileFormat);
     plateau::meshWriter::GltfWriteOptions GltfOptions;
@@ -25,8 +25,8 @@ void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityM
     Options.FbxWriteOptions = FbxOptions;
     Options.bExportHiddenObjects = bExportHiddenModel;
     Options.bExportTexture = bExportTexture;
-    Options.CoordinateSystem = static_cast<ECoordinateSystem>(CoordinateSystem);
     Options.TransformType = static_cast<EMeshTransformType>(TransformType);
+    Options.CoordinateSystem = static_cast<ECoordinateSystem>(CoordinateSystem);
     FPLATEAUMeshExporter MeshExporter;
     MeshExporter.Export(ExportPath, TargetCityModel, Options);
 }

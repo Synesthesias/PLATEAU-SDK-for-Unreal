@@ -27,7 +27,7 @@ public:
     virtual void StartupModule() override {
         Style = MakeShareable(new FPLATEAUEditorStyle());
         Window = MakeShareable(new FPLATEAUWindow(Style.ToSharedRef()));
-        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor());
+        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor(Style.ToSharedRef()));
 
         FAutoReimportWildcard WildcardToInject1;
         WildcardToInject1.Wildcard = TEXT("PLATEAU/Datasets/*");

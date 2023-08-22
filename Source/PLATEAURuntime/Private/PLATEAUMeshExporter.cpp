@@ -125,8 +125,9 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
             continue;
 
         auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
-        const auto Mesh = Node.getMesh();
-        CreateMesh(*Mesh, Component, Option);
+        auto Mesh = plateau::polygonMesh::Mesh();
+        CreateMesh(Mesh, Component, Option);
+        Node.setMesh(std::move(std::make_unique<plateau::polygonMesh::Mesh>(Mesh)));
     }
 }
 
@@ -201,8 +202,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 }
             }
         }
-
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*TextureFilePath), FirstIndex, EndIndex);
+        std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
+        OutMesh.addSubMesh(TextureFilePathStr, FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);

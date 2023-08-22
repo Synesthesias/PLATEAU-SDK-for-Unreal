@@ -8,6 +8,7 @@ public class PLATEAURuntime : ModuleRules
 {
     public PLATEAURuntime(ReadOnlyTargetRules Target) : base(Target)
     {
+        bEnableExceptions = true;
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         CppStandard = CppStandardVersion.Cpp17;
 
