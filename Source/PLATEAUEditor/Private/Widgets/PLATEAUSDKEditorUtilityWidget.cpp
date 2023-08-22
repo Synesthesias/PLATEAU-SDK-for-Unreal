@@ -86,7 +86,7 @@ namespace {
         // 同じエッジは取り除く
         TArray<FEdgeData> DistinctEdgeDataArray;
         for (const auto& EdgeData : EdgeDataArray) {
-            if (int ExistingIndex; IsExistingEdge(DistinctEdgeDataArray, EdgeData, ExistingIndex)) {
+            if (int32 ExistingIndex; IsExistingEdge(DistinctEdgeDataArray, EdgeData, ExistingIndex)) {
                 DistinctEdgeDataArray.RemoveAt(ExistingIndex);
             } else {
                 DistinctEdgeDataArray.Emplace(EdgeData);
@@ -94,15 +94,15 @@ namespace {
         }
 
         // エッジ同士を結ぶ順番にソート
-        for (int i = 0; i < DistinctEdgeDataArray.Num(); i++) {
-            for (int j = 0; j < DistinctEdgeDataArray.Num(); j++) {
+        for (int32 i = 0; i < DistinctEdgeDataArray.Num(); i++) {
+            for (int32 j = 0; j < DistinctEdgeDataArray.Num(); j++) {
                 // 自分自身との比較は行わない
                 if (DistinctEdgeDataArray[i].VertexPos0 == DistinctEdgeDataArray[j].VertexPos0 && DistinctEdgeDataArray[i].VertexPos1 == DistinctEdgeDataArray[j].VertexPos1)
                     continue;
 
                 // エッジの結び先か？
                 if (DistinctEdgeDataArray[i].VertexPos1 == DistinctEdgeDataArray[j].VertexPos0) {
-                    int SwapIndex = i + 1;
+                    int32 SwapIndex = i + 1;
                     if (DistinctEdgeDataArray.Num() <= SwapIndex)
                         SwapIndex = 0;
 
@@ -234,7 +234,7 @@ namespace {
                 // Use to blend UVs
                 const auto& TargetUV = BaryCoords.X * UV0 + BaryCoords.Y * UV1 + BaryCoords.Z * UV2;
                 // 同じUVを持つ頂点取得
-                if (static_cast<int>(TargetUV.X) == static_cast<int>(UV.X) && static_cast<int>(TargetUV.Y) == static_cast<int>(UV.Y)) {
+                if (static_cast<int32>(TargetUV.X) == static_cast<int32>(UV.X) && static_cast<int32>(TargetUV.Y) == static_cast<int32>(UV.Y)) {
                     EdgeDataArray.Emplace(Pos0, Pos1);
                     EdgeDataArray.Emplace(Pos1, Pos2);
                     EdgeDataArray.Emplace(Pos2, Pos0);
@@ -386,7 +386,7 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawAttrInfo(const UWorld* 
     const auto& ChildEdgeArray = GetEdgesByUV(HitResult, UV);
     const auto& EdgePerimeterArray = GetEdgeDataPerimeterArray(ChildEdgeArray);
     ULineBatchComponent* const LineBatch = GetDebugLineBatch(World, GBPersistentLines, DrawLineLifeTime, false);
-    for (int i = 0; i < EdgePerimeterArray.Num(); i++) {
+    for (int32 i = 0; i < EdgePerimeterArray.Num(); i++) {
         LineBatch->DrawLine(EdgePerimeterArray[i].VertexPos0, EdgePerimeterArray[i].VertexPos1, FColor::Green, DepthPriority, DrawLineThickness, DrawLineLifeTime);
     }
     
@@ -400,7 +400,7 @@ void UPLATEAUSDKEditorUtilityWidgetBlueprintLibrary::DrawAttrInfo(const UWorld* 
         }
     }
     FVector SumVertPos;
-    for (int i = 0; i < EdgePerimeterArray.Num(); i++) {
+    for (int32 i = 0; i < EdgePerimeterArray.Num(); i++) {
         SumVertPos += EdgePerimeterArray[i].VertexPos0;
     }
     SumVertPos /= EdgePerimeterArray.Num();
