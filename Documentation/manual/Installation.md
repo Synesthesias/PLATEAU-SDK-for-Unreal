@@ -12,6 +12,7 @@
 ## PLATEAU SDK for Unrealの導入
  - [リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)から提供されている`PLATEAU-SDK-for-Unreal-{バージョン名}.zip`をダウンロードします。
  - 作成したプロジェクトのフォルダに`Plugins`という名前のフォルダを作成し、先程ダウンロードしたSDKを解凍しコピーします。
+ (`Plugins`フォルダの作成は、`Unreal Engine` のコンテンツブラウザからではなく、エクスプローラで作成してください。)
  - `Plugins/PLATEAU-SDK-for-Unreal/PLATEAU-SDK-for-Unreal.uplugin`が存在することを確認します。
  - プロジェクトを開きます。既にプロジェクトを開いている場合は一度閉じてから再度プロジェクトを開いてください。
  - プロジェクトを開く際に以下の画面が表示される場合は`はい`を押して完了です。
