@@ -26,6 +26,7 @@ enum class MeshGranularity;
 struct FLoadInputData {
     plateau::polygonMesh::MeshExtractOptions ExtractOptions;
     FString GmlPath;
+    bool bIncludeAttrInfo;
 };
 
 UENUM(BlueprintType)
@@ -91,6 +92,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         UPLATEAUImportSettings* ImportSettings;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        bool bIncludeAttrInfo;
+    
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUCityModelLoadStatus Status;
 

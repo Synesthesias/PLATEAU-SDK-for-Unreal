@@ -41,6 +41,7 @@ public:
             for (const auto& GmlFile : *GmlFiles) {
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
+                LoadInputData.bIncludeAttrInfo = Settings.bIncludeAttrInfo;
                 auto& ExtractOptions = LoadInputData.ExtractOptions;
                 ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
                 ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
@@ -49,7 +50,6 @@ public:
                 ExtractOptions.max_lod = Settings.MaxLod;
                 ExtractOptions.min_lod = Settings.MinLod;
                 ExtractOptions.export_appearance = Settings.bImportTexture;
-                ExtractOptions.include_attr_info = Settings.bIncludeAttrInfo;
                 ExtractOptions.grid_count_of_side = 10;
                 ExtractOptions.unit_scale = 0.01f;
                 ExtractOptions.extent = Extent.GetNativeData();
@@ -215,8 +215,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
             ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
         TArray<FString> GmlFiles;
-        for (const auto& [ExtractOptions, GmlPath] : LoadInputDataArray) {
-            const auto GmlName = FPaths::GetCleanFilename(GmlPath);
+        for (const auto& LoadInputData : LoadInputDataArray) {
+            const auto GmlName = FPaths::GetCleanFilename(LoadInputData.GmlPath);
             GmlFiles.Add(GmlName);
         }
             

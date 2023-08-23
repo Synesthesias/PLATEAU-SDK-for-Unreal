@@ -238,7 +238,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     FMeshDescription* MeshDescription;
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
-            if (LoadInputData.ExtractOptions.include_attr_info) {
+            if (LoadInputData.bIncludeAttrInfo) {
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
                 Component = PLATEAUCityObjectGroup;
@@ -349,7 +349,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             // CityObjectがある場合はUPLATEAUCityObjectGroupとする
-            if (CityObject != nullptr && LoadInputData.ExtractOptions.include_attr_info) {
+            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
                 StaticClass = UPLATEAUCityObjectGroup::StaticClass();
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
