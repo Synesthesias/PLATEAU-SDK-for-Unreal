@@ -67,8 +67,8 @@ namespace {
 
         // UVチャンネル数を3に設定
         const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
-        if (VertexInstanceUVs.GetNumChannels() < 3) {
-            VertexInstanceUVs.SetNumChannels(3);
+        if (VertexInstanceUVs.GetNumChannels() < 4) {
+            VertexInstanceUVs.SetNumChannels(4);
         }
 
         const auto& InVertices = InMesh.getVertices();
@@ -125,7 +125,10 @@ namespace {
                 const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
                 const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
-                // TODO: UV2, UV3
+
+                const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
+                const auto UV4 = FVector2f(InUV4.x, InUV4.y);
+                VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
 
                 UsedVertexIDs.Add(VertexID);
             }
@@ -323,11 +326,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
 }
 
 USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
-    USceneComponent* Comp = nullptr;
-    if (Node.getMesh() == std::nullopt) {
+    if (Node.getMesh() == nullptr) {
+        USceneComponent* Comp = nullptr;
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
         //SceneComponentを付与
-        FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
+        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&, DesiredName] {
                 Comp = NewObject<USceneComponent>(&Actor, NAME_None);
                 FString NewUniqueName = FString(DesiredName);
@@ -358,7 +361,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
     const FString CompName = UTF8_TO_TCHAR(Node.getName().c_str());
     return CreateStaticMeshComponent(
         Actor, *ParentComponent,
-        Node.getMesh().value(),
+        *Node.getMesh(),
         CompName);
 }
 

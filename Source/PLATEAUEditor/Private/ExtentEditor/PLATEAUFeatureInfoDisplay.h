@@ -3,8 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
 
 #include "PLATEAUGeometry.h"
+
+namespace plateau::Feature {
+    constexpr int MinLod = 0;
+    constexpr int MaxLod = 4;
+    constexpr int MaxIconCol = 4;
+    constexpr int MaxIconRow = 2;
+    constexpr int MaxIconCnt = 8;
+}
 
 namespace plateau::dataset {
     class MeshCode;
@@ -67,7 +76,27 @@ public:
      */
     void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
 
+    /**
+     * @brief 範囲選択画面に表示する各パッケージリストを取得
+     */    
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetDisplayedPackages();
+
+    /**
+     * @brief 各パッケージの範囲選択画面に表示するアイコンファイル名リストを取得
+     */
+    static FString GetIconFileName(const plateau::dataset::PredefinedCityModelPackage Package);
+
+    /**
+     * @brief 範囲選択画面に表示する順番でアイコンファイル名リストを取得
+     */  
+    static TArray<FString> GetIconFileNameList();
+
+    int GetItemCount(const FString& MeshCode) {
+        if (AsyncLoadedPanels.Contains(MeshCode)) {
+            return AsyncLoadedPanels[MeshCode].Get()->GetIconCount();
+        }
+        return 0;
+    }
 
 private:
     FPLATEAUGeoReference GeoReference;

@@ -6,7 +6,9 @@ using System.IO;
 
 
 public class PLATEAUTests : ModuleRules {
-	public PLATEAUTests(ReadOnlyTargetRules Target) : base(Target) {
+	public PLATEAUTests(ReadOnlyTargetRules Target) : base(Target)
+	{
+		bEnableExceptions = true;
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(

@@ -30,7 +30,7 @@ void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* 
         GetHandlePosition(Index),
         FRotator(),
         FVector(Radius),
-        24, 6, SphereMaterial->GetRenderProxy(), 9
+        24, 6, SphereMaterial->GetRenderProxy(), SDPG_Foreground
     );
 
     DrawSphere(
@@ -38,7 +38,7 @@ void FPLATEAUExtentGizmo::DrawHandle(int Index, FColor Color, const FSceneView* 
         GetHandlePosition(Index),
         FRotator(),
         FVector(Radius),
-        24, 6, SphereMaterial->GetRenderProxy(), 9
+        24, 6, SphereMaterial->GetRenderProxy(), SDPG_Foreground
     );
 }
 
@@ -49,20 +49,21 @@ void FPLATEAUExtentGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInter
         PDI,
         Box,
         FColor(255, 127, 80),
-        9, 2, 0, true
+        SDPG_World, 2, 0, true
     );
 
     FMatrix ObjectToWorld = FMatrix::Identity;
     ObjectToWorld.SetAxis(0, FVector((MaxX-MinX)/2, 0, 0));
     ObjectToWorld.SetAxis(1, FVector(0, (MaxY-MinY)/2, 0));
     ObjectToWorld.SetOrigin(FVector((MinX + MaxX)/2, (MinY + MaxY) / 2, 0));
-    AreaMaterial.Get()->SetVectorParameterValue(FName("Color"), FColor(255, 204, 153,100));
+    AreaMaterial.Get()->SetVectorParameterValue(FName("Color"), FColor(255, 204, 153, 100));
 
     DrawPlane10x10(PDI,
         ObjectToWorld,
         1.0f,
         FVector2D::Zero(), FVector2D::One(),
-        AreaMaterial->GetRenderProxy(), 0);
+        AreaMaterial->GetRenderProxy(),
+        SDPG_World);
 }
 
 void FPLATEAUExtentGizmo::InitHandlePosition() {

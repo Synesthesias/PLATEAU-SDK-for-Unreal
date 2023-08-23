@@ -125,9 +125,9 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
             continue;
 
         auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
-        auto& Mesh = Node.getMesh();
-        Mesh.emplace();
-        CreateMesh(Mesh.value(), Component, Option);
+        auto Mesh = plateau::polygonMesh::Mesh();
+        CreateMesh(Mesh, Component, Option);
+        Node.setMesh(std::move(std::make_unique<plateau::polygonMesh::Mesh>(Mesh)));
     }
 }
 
@@ -202,16 +202,14 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 }
             }
         }
-
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*TextureFilePath), FirstIndex, EndIndex);
+        std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
+        OutMesh.addSubMesh(TextureFilePathStr, FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);
 
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
-    OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
-    OutMesh.addUV3WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
     ensureAlwaysMsgf(OutMesh.getIndices().size() % 3 == 0, TEXT("Indice size should be multiple of 3."));
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }
