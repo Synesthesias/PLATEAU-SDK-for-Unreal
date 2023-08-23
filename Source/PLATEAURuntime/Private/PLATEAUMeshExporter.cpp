@@ -127,7 +127,8 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
         auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
         auto Mesh = plateau::polygonMesh::Mesh();
         CreateMesh(Mesh, Component, Option);
-        Node.setMesh(std::move(std::make_unique<plateau::polygonMesh::Mesh>(Mesh)));
+        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+        Node.setMesh(std::move(MeshPtr));
     }
 }
 
