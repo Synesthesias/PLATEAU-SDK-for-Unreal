@@ -135,7 +135,7 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
 void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
     const auto StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
 
-    if (StaticMeshComponent->GetStaticMesh() == nullptr)
+    if (StaticMeshComponent == nullptr || StaticMeshComponent->GetStaticMesh() == nullptr)
         return;
 
     //渡すためのデータ各種
@@ -193,6 +193,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                        OutMesh.addSubMesh("", FirstIndex, EndIndex);
                         continue;
                     }
 
