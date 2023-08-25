@@ -48,6 +48,7 @@ APLATEAUCityModelLoader* UPLATEAUImportModelBtn::GetCityModelLoader(const int Zo
         auto& Feature = ImportSettings->GetFeatureSettingsRef(Package);
         Feature.bImport = PackageInfoSettings.bImport;
         Feature.bImportTexture = PackageInfoSettings.bTextureImport;
+        Feature.bIncludeAttrInfo = PackageInfoSettings.bIncludeAttrInfo;
         Feature.MeshGranularity = static_cast<EPLATEAUMeshGranularity>(PackageInfoSettings.Granularity);
         Feature.MinLod = PackageInfoSettings.MinLod;
         Feature.MaxLod = PackageInfoSettings.MaxLod;
