@@ -21,23 +21,35 @@ namespace {
     bool TryLoadAndUncompressImageFile(const FString& TexturePath,
         TArray64<uint8>& OutUncompressedData, int32& OutWidth, int32& OutHeight, EPixelFormat& OutPixelFormat) {
         if (TexturePath.IsEmpty())
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to load texture : path is empty."));
             return false;
+        }
 
         IImageWrapperModule& ImageWrapperModule = FModuleManager::Get().LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
 
         TArray64<uint8> Buffer;
         if (!FFileHelper::LoadFileToArray(Buffer, *TexturePath)) {
+            UE_LOG(LogTemp, Error, TEXT("Failed to load texture file : %s"), *TexturePath);
             return false;
         }
 
         const EImageFormat Format = ImageWrapperModule.DetectImageFormat(Buffer.GetData(), Buffer.Num());
 
         if (Format == EImageFormat::Invalid)
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Texture format is invalid : %s"), *TexturePath);
             return false;
+        }
+            
         const auto ImageWrapper = ImageWrapperModule.CreateImageWrapper(Format);
 
         if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num()))
+        {
+            UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Could not set compressed : %s"), *TexturePath);
             return false;
+        }
+            
 
         ERGBFormat RGBFormat;
         const int32 BitDepth = ImageWrapper->GetBitDepth();
@@ -51,12 +63,13 @@ namespace {
             OutPixelFormat = PF_B8G8R8A8;
             RGBFormat = ERGBFormat::BGRA;
         } else {
-            //UE_LOG(LogImageUtils, Warning, TEXT("Error creating texture. Bit depth is unsupported. (%d)"), BitDepth);
+            UE_LOG(LogTemp, Error, TEXT("Error creating texture. Bit depth is unsupported. (%d), %s"), BitDepth, *TexturePath);
             return false;
         }
 
         if(!ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData))
         {
+            UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Failed on GetRaw : %s"), *TexturePath);
             return false;
         }
 
