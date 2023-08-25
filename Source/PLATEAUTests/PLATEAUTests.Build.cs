@@ -6,7 +6,9 @@ using System.IO;
 
 
 public class PLATEAUTests : ModuleRules {
-	public PLATEAUTests(ReadOnlyTargetRules Target) : base(Target) {
+	public PLATEAUTests(ReadOnlyTargetRules Target) : base(Target)
+	{
+		bEnableExceptions = true;
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(
@@ -23,6 +25,7 @@ public class PLATEAUTests : ModuleRules {
 				"PLATEAUEditor",
 				"PLATEAURuntime",
 				"PLATEAUEditorBPLibraries",
+				"UnrealEd",
 			});
 
 		DynamicallyLoadedModuleNames.AddRange(

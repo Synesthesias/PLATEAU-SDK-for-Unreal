@@ -32,7 +32,7 @@ namespace plateau::polygonMesh {
                 unit_scale(1.0),
                 coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
                 exclude_city_object_outside_extent(true),
-                exclude_triangles_outside_extent(false),
+                exclude_polygons_outside_extent(false),
                 extent(geometry::Extent::all()) // 全範囲をデフォルトとします。
                 {}
 
@@ -71,7 +71,7 @@ namespace plateau::polygonMesh {
          * その方法とは、メッシュ操作によって、範囲外に存在するポリゴンを除外します。
          * この方法であれば 10km×10km の地形など巨大なオブジェクトにも対応できます。
          */
-        bool exclude_triangles_outside_extent;
+        bool exclude_polygons_outside_extent;
 
         geometry::Extent extent;
     };

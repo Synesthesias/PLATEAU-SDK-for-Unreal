@@ -215,16 +215,22 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
 }
 
 void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) {
-
     const double CameraDistance = GetViewTransform().GetLocation().Z;
+    // 範囲選択ウィンドウ表示中にクラッシュした場合、次回起動時に範囲選択ウィンドウが表示されてしまいクラッシュするのでNULLチェック
+    if (DatasetAccessor == nullptr)
+        return;
+
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     auto Meshptr = MeshCodes.begin();
 
     check(MeshCodes.size() == MeshCodeGizmos.Num());
 
     for (const auto& Gizmo : MeshCodeGizmos) {
-        const auto code = (*Meshptr++).get();
-        Gizmo.DrawRegionMeshID(InViewport, View, Canvas, code.c_str(), CameraDistance);
+        const auto Code = (*Meshptr++).get();
+        const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(Code.c_str());
+        if (0 < ItemCount) {
+            Gizmo.DrawRegionMeshID(InViewport, View, Canvas, Code.c_str(), CameraDistance, ItemCount);
+        }
     }
 }
 
