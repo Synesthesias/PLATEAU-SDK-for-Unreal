@@ -74,7 +74,7 @@ public:
     }
 
     static FString CopyGmlFile(const FString& Source, const FString& GmlPath, const bool bImportFromServer) {
-        const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
+        const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())+ "PLATEAU/Datasets";
 
         // ファイルコピー
         try {
