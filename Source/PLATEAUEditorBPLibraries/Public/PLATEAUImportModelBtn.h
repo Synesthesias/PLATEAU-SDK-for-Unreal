@@ -7,7 +7,7 @@
 #include "PLATEAUImportModelBtn.generated.h"
 
 class APLATEAUCityModelLoader;
-
+enum class EPLATEAUTexturePackingResolution : uint8;
 
 USTRUCT(BlueprintType)
 struct FPackageInfoSettings {
@@ -28,6 +28,12 @@ struct FPackageInfoSettings {
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     bool bIncludeAttrInfo;    
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    bool bEnableTexturePacking;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    EPLATEAUTexturePackingResolution TexturePackingResolution;
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int MinLod;

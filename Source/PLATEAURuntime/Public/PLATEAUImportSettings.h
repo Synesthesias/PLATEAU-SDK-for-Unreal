@@ -28,6 +28,13 @@ enum class EPLATEAUMeshGranularity : uint8 {
     PerCityModelArea = 2
 };
 
+UENUM(BlueprintType)
+enum class EPLATEAUTexturePackingResolution : uint8 {
+    H2048W2048 = 0 UMETA(DisplayName = "2048x2048"),
+    H4096W4096 = 1 UMETA(DisplayName = "4096x4096"),
+    H8192W8192 = 2 UMETA(DisplayName = "8192x8192")
+};
+
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureImportSettings {
     GENERATED_USTRUCT_BODY()
@@ -47,6 +54,12 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Import Settings")
         EPLATEAUMeshGranularity MeshGranularity = EPLATEAUMeshGranularity::PerPrimaryFeatureObject;
+
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
+        bool bEnableTexturePacking = true;
+
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
+        EPLATEAUTexturePackingResolution TexturePackingResolution = EPLATEAUTexturePackingResolution::H4096W4096;
 
     UPROPERTY(EditAnywhere, Category = "Import Settings", meta = (ClampMin = 0, UIMin = 0, ClamMax = 3, UIMax = 3))
         int MinLod = 0;

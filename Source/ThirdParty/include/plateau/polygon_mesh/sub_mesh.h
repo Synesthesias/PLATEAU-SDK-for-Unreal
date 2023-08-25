@@ -27,6 +27,8 @@ namespace plateau::polygonMesh {
         /// テクスチャパスを取得します。 テクスチャがないときは空文字とします。
         const std::string& getTexturePath() const;
 
+        void setTexturePath(std::string file_path);
+
         void setEndIndex(int end_index);
 
         /// SubMesh の情報を stringstream に書き込みます。
