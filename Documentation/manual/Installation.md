@@ -12,14 +12,21 @@
 ## PLATEAU SDK for Unrealの導入
  - [リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)から提供されている`PLATEAU-SDK-for-Unreal-{バージョン名}.zip`をダウンロードします。
  - 作成したプロジェクトのフォルダに`Plugins`という名前のフォルダを作成し、先程ダウンロードしたSDKを解凍しコピーします。
- (`Plugins`フォルダの作成は、`Unreal Engine` のコンテンツブラウザからではなく、エクスプローラで作成してください。)
+(`Plugins`フォルダの作成は、`Unreal Engine` のコンテンツブラウザからではなく、エクスプローラで作成してください。)
  - `Plugins/PLATEAU-SDK-for-Unreal/PLATEAU-SDK-for-Unreal.uplugin`が存在することを確認します。
  - プロジェクトを開きます。既にプロジェクトを開いている場合は一度閉じてから再度プロジェクトを開いてください。
  - プロジェクトを開く際に以下の画面が表示される場合は`はい`を押して完了です。
 
 ![](../resources/manual/installation/pluginBuild.png)
 
-# エディタ設定の変更(推奨)
+# エディタ設定の変更
+## 自動保存の無効化
+3D都市モデルのインポート中にマップの自動保存が実行された際エディタがクラッシュしてしまう場合があるため、以下の手順で自動保存を無効化してください。
+1. `エディタの環境設定`から`ロード＆保存中`を選択します。
+2. `自動保存`内の`マップを保存`のチェックを外します。
+![](../resources/manual/installation/disableAutoMapSave.png)
+
+
 ## 自動再インポート対象の除外
 1. `エディタの環境設定`から`ロード＆保存中`→`監査するディレクトリ`→`インデックス[0]`を選択します。
 2. 除外対象として`PLATEAU/Datasets/*`を追加します。

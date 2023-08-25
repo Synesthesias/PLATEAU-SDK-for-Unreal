@@ -8,6 +8,7 @@ public class PLATEAURuntime : ModuleRules
 {
     public PLATEAURuntime(ReadOnlyTargetRules Target) : base(Target)
     {
+        bEnableExceptions = true;
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
         CppStandard = CppStandardVersion.Cpp17;
 
@@ -29,7 +30,7 @@ public class PLATEAURuntime : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore",
+                "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities"
             }
         );
 
@@ -47,6 +48,8 @@ public class PLATEAURuntime : ModuleRules
                 "RenderCore",
                 "OpenGL",
                 "Projects",
+                "Json",
+                "JsonUtilities"
                 // ... add private dependencies that you statically link with here ...	
             }
         );
@@ -62,7 +65,7 @@ public class PLATEAURuntime : ModuleRules
         IncludeLibPlateau();
     }
 
-    // 注意 : PLATEAUEditor.Build.cs にも同じものを書いてください
+    // 注意 : 他の PLATEAU*.Build.cs にも同じものを書いてください
     public void IncludeLibPlateau()
     {
 
@@ -83,8 +86,9 @@ public class PLATEAURuntime : ModuleRules
         }
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
+            libPlateauPath = libPlateauPath + "/macos/arm64/libplateau_combined.a";
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/liblzma.tbd");
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         }
         else if (Target.Platform == UnrealTargetPlatform.Linux)

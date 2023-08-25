@@ -125,16 +125,17 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
             continue;
 
         auto& Node = OutNode.addEmptyChildNode(TCHAR_TO_UTF8(*Component->GetName()));
-        auto& Mesh = Node.getMesh();
-        Mesh.emplace();
-        CreateMesh(Mesh.value(), Component, Option);
+        auto Mesh = plateau::polygonMesh::Mesh();
+        CreateMesh(Mesh, Component, Option);
+        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+        Node.setMesh(std::move(MeshPtr));
     }
 }
 
 void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
     const auto StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
 
-    if (StaticMeshComponent->GetStaticMesh() == nullptr)
+    if (StaticMeshComponent == nullptr || StaticMeshComponent->GetStaticMesh() == nullptr)
         return;
 
     //渡すためのデータ各種
@@ -192,6 +193,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                        OutMesh.addSubMesh("", FirstIndex, EndIndex);
                         continue;
                     }
 
@@ -202,16 +204,14 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                 }
             }
         }
-
-        OutMesh.addSubMesh(TCHAR_TO_UTF8(*TextureFilePath), FirstIndex, EndIndex);
+        std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
+        OutMesh.addSubMesh(TextureFilePathStr, FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);
 
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
-    OutMesh.addUV2WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
-    OutMesh.addUV3WithSameVal(TVec2f(0.0f, 0.0f), Vertices.size());
     ensureAlwaysMsgf(OutMesh.getIndices().size() % 3 == 0, TEXT("Indice size should be multiple of 3."));
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }

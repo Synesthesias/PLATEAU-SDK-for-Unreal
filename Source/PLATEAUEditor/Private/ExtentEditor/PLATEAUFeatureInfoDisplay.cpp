@@ -14,7 +14,6 @@
 
 #include "PLATEAURuntime.h"
 #include "StaticMeshAttributes.h"
-#include "StaticMeshResources.h"
 #include "PLATEAUTextureLoader.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
@@ -27,21 +26,18 @@ namespace {
      */
     constexpr int MaxParallelCount = 8;
 
-     /**
-      * @brief Packageに対応するアイコンのファイル名を取得します。
-      */
-    FString GetIconFileName(const PredefinedCityModelPackage Package) {
-        switch (Package) {
-        case PredefinedCityModelPackage::Building: return "3dicon_Building.png";
-        case PredefinedCityModelPackage::CityFurniture: return "3dicon_CityFurniture.png";
-        case PredefinedCityModelPackage::Road: return "3dicon_Road.png";
-        case PredefinedCityModelPackage::Vegetation: return "3dicon_Vegetation.png";
-        default:
-            UE_LOG(LogTemp, Error, TEXT("An icon for an unregistered package was requested."));
-            return "";
-        }
-    }
-
+    /**
+     * @brief 範囲選択画面に表示する画像名
+     */
+    constexpr TCHAR BuildingIcon[]      = TEXT("building.png");
+    constexpr TCHAR TrafficIcon[]       = TEXT("traffic.png");
+    constexpr TCHAR PropsIcon[]         = TEXT("props.png");
+    constexpr TCHAR BridgeIcon[]        = TEXT("bridge.png");
+    constexpr TCHAR PlantsIcon[]        = TEXT("plants.png");
+    constexpr TCHAR UndergroundIcon[]   = TEXT("underground.png");
+    constexpr TCHAR TerrainIcon[]       = TEXT("terrain.png");
+    constexpr TCHAR OtherIcon[]         = TEXT("other.png");
+    
     /**
      * @brief キーに対応するテクスチャのパスを取得します。
      * @return
@@ -49,18 +45,14 @@ namespace {
     FString GetTexturePath(const FPLATEAUFeatureInfoMaterialKey& MaterialKey) {
         const FString WithTextDirName = "AreaIcon_WithText/";
         const FString NoTextDirName = "AreaIcon_NoText/";
-        const TArray<FString> LodDirNames =
-        { "LOD01/", "LOD01/", "LOD2/", "LOD3/" };
+        const TArray<FString> LodDirNames = { "LOD01/", "LOD01/", "LOD2/", "LOD3/", "LOD4/" };
 
         FString Path = FPLATEAURuntimeModule::GetContentDir() + "/";
-        Path += MaterialKey.bDetailed
-            ? WithTextDirName
-            : NoTextDirName;
+        Path += MaterialKey.bDetailed ? WithTextDirName : NoTextDirName;
 
-        const auto Lod = FMath::Clamp(MaterialKey.Lod, 0, 3);
+        const auto Lod = FMath::Clamp(MaterialKey.Lod, plateau::Feature::MinLod, plateau::Feature::MaxLod);
         Path += LodDirNames[Lod];
-
-        Path += GetIconFileName(MaterialKey.Package);
+        Path += FPLATEAUFeatureInfoDisplay::GetIconFileName(MaterialKey.Package);
 
         return Path;
     }
@@ -98,7 +90,8 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {
+    , ViewportClient(InViewportClient)
+{
     InitializeMaterials();
 }
 
@@ -130,6 +123,8 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, con
         AsyncLoadedPanels.Add(MeshCode, AsyncLoadedTile);
 
         FPLATEAUFeatureInfoPanelInput Input;
+        const auto Packages = GetDisplayedPackages();
+
         for (const auto& Package : GetDisplayedPackages()) {
             Input.Add(Package, FindGmlFiles(InDatasetAccessor, RawMeshCode, Package));
         }
@@ -174,11 +169,61 @@ TArray<PredefinedCityModelPackage> FPLATEAUFeatureInfoDisplay::GetDisplayedPacka
     static TArray DisplayedPackages = {
         PredefinedCityModelPackage::Building,
         PredefinedCityModelPackage::Road,
+        PredefinedCityModelPackage::UrbanPlanningDecision,
+        PredefinedCityModelPackage::LandUse,
         PredefinedCityModelPackage::CityFurniture,
-        PredefinedCityModelPackage::Vegetation
+        PredefinedCityModelPackage::Vegetation,
+        PredefinedCityModelPackage::Relief,
+        PredefinedCityModelPackage::DisasterRisk,
+        PredefinedCityModelPackage::Railway,
+        PredefinedCityModelPackage::Waterway,
+        PredefinedCityModelPackage::WaterBody,
+        PredefinedCityModelPackage::Bridge,
+        PredefinedCityModelPackage::Track,
+        PredefinedCityModelPackage::Square,
+        PredefinedCityModelPackage::Tunnel,
+        PredefinedCityModelPackage::UndergroundFacility,
+        PredefinedCityModelPackage::UndergroundBuilding,
+        PredefinedCityModelPackage::Area,
+        PredefinedCityModelPackage::OtherConstruction,
+        PredefinedCityModelPackage::Generic,
+        PredefinedCityModelPackage::Unknown,
     };
 
     return DisplayedPackages;
+}
+
+FString FPLATEAUFeatureInfoDisplay::GetIconFileName(const PredefinedCityModelPackage Package) {
+    switch (Package) {
+    case PredefinedCityModelPackage::Building:              return BuildingIcon;
+    case PredefinedCityModelPackage::Road:                  return TrafficIcon;
+    case PredefinedCityModelPackage::UrbanPlanningDecision: return OtherIcon;
+    case PredefinedCityModelPackage::LandUse:               return OtherIcon;
+    case PredefinedCityModelPackage::CityFurniture:         return PropsIcon;
+    case PredefinedCityModelPackage::Vegetation:            return PlantsIcon;
+    case PredefinedCityModelPackage::Relief:                return TerrainIcon;
+    case PredefinedCityModelPackage::DisasterRisk:          return OtherIcon;
+    case PredefinedCityModelPackage::Railway:               return TrafficIcon;
+    case PredefinedCityModelPackage::Waterway:              return TrafficIcon;
+    case PredefinedCityModelPackage::WaterBody:             return OtherIcon;
+    case PredefinedCityModelPackage::Bridge:                return BridgeIcon;
+    case PredefinedCityModelPackage::Track:                 return TrafficIcon;
+    case PredefinedCityModelPackage::Square:                return TrafficIcon;
+    case PredefinedCityModelPackage::Tunnel:                return BridgeIcon;
+    case PredefinedCityModelPackage::UndergroundFacility:   return UndergroundIcon;
+    case PredefinedCityModelPackage::UndergroundBuilding:   return UndergroundIcon;
+    case PredefinedCityModelPackage::Area:                  return OtherIcon;
+    case PredefinedCityModelPackage::OtherConstruction:     return OtherIcon;
+    case PredefinedCityModelPackage::Generic:               return OtherIcon;
+    case PredefinedCityModelPackage::Unknown:               return OtherIcon;
+    default:
+        UE_LOG(LogTemp, Error, TEXT("An icon for an unregistered package was requested."));
+        return OtherIcon;
+    }
+}
+
+TArray<FString> FPLATEAUFeatureInfoDisplay::GetIconFileNameList() {
+    return TArray<FString> {BuildingIcon, TrafficIcon, PropsIcon, BridgeIcon, PlantsIcon, UndergroundIcon, TerrainIcon, OtherIcon};
 }
 
 void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
@@ -189,7 +234,7 @@ void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     // パッケージ、LOD等、地物情報アイコンを全種類列挙
     TArray<FPLATEAUFeatureInfoMaterialKey> Keys;
     for (const auto& Package : GetDisplayedPackages()) {
-        for (int Lod = 0; Lod < 4; ++Lod) {
+        for (int Lod = 0; Lod <= plateau::Feature::MaxLod; ++Lod) {
             Keys.Add({ Package, Lod, false });
             Keys.Add({ Package, Lod, true });
         }

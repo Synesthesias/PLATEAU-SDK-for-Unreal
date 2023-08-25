@@ -3,6 +3,7 @@
 
 #include "PLATEAUCityModelLoader.h"
 
+#include "PLATEAUDllLoggerUnreal.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "plateau/dataset/dataset_source.h"
 #include "plateau/dataset/city_model_package.h"
@@ -17,11 +18,6 @@
 using namespace plateau::udx;
 using namespace plateau::polygonMesh;
 
-
-struct FLoadInputData {
-    plateau::polygonMesh::MeshExtractOptions ExtractOptions;
-    FString GmlPath;
-};
 
 class FCityModelLoaderImpl {
 public:
@@ -45,6 +41,7 @@ public:
             for (const auto& GmlFile : *GmlFiles) {
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
+                LoadInputData.bIncludeAttrInfo = Settings.bIncludeAttrInfo;
                 auto& ExtractOptions = LoadInputData.ExtractOptions;
                 ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
                 ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
@@ -53,15 +50,28 @@ public:
                 ExtractOptions.max_lod = Settings.MaxLod;
                 ExtractOptions.min_lod = Settings.MinLod;
                 ExtractOptions.export_appearance = Settings.bImportTexture;
+                ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
+                switch (Settings.TexturePackingResolution)
+                {
+                case EPLATEAUTexturePackingResolution::H2048W2048:
+                    ExtractOptions.texture_packing_resolution = 2048;
+                    break;
+                case EPLATEAUTexturePackingResolution::H4096W4096:
+                    ExtractOptions.texture_packing_resolution = 4096;
+                    break;
+                case EPLATEAUTexturePackingResolution::H8192W8192:
+                    ExtractOptions.texture_packing_resolution = 8192;
+                    break;
+                }
                 ExtractOptions.grid_count_of_side = 10;
                 ExtractOptions.unit_scale = 0.01f;
                 ExtractOptions.extent = Extent.GetNativeData();
                 if (Package == plateau::dataset::PredefinedCityModelPackage::Relief || Package == plateau::dataset::PredefinedCityModelPackage::DisasterRisk) {
                     ExtractOptions.exclude_city_object_outside_extent = false;
-                    ExtractOptions.exclude_triangles_outside_extent = true;
+                    ExtractOptions.exclude_polygons_outside_extent = true;
                 } else {
                     ExtractOptions.exclude_city_object_outside_extent = true;
-                    ExtractOptions.exclude_triangles_outside_extent = false;
+                    ExtractOptions.exclude_polygons_outside_extent = false;
                 }
             }
         }
@@ -77,7 +87,7 @@ public:
     }
 
     static FString CopyGmlFile(const FString& Source, const FString& GmlPath, const bool bImportFromServer) {
-        const auto Destination = FPaths::ProjectContentDir() + "PLATEAU/Datasets";
+        const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir())+ "PLATEAU/Datasets";
 
         // ファイルコピー
         try {
@@ -99,9 +109,12 @@ public:
         try {
             citygml::ParserParams ParserParams;
             ParserParams.tesselate = true;
-            CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams);
+            const auto Logger = std::make_shared<PLATEAUDllLoggerUnreal>(
+                citygml::CityGMLLogger::LOGLEVEL::LL_INFO);
+            CityModel = citygml::load(TCHAR_TO_UTF8(*GmlPath), ParserParams, Logger->GetLogger());
         }
-        catch (...) {
+        catch (std::exception& e) {
+            UE_LOG(LogTemp, Error, TEXT("Error parsing gml file. Path=%s, What=%s"), *GmlPath, e.what());
             CityModel = nullptr;
         }
         if (CityModel == nullptr)
@@ -215,8 +228,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
             ImportSettings, Source, Extent, GeoReference, bImportFromServer, Client);
 
         TArray<FString> GmlFiles;
-        for (const auto& [ExtractOptions, GmlPath] : LoadInputDataArray) {
-            const auto GmlName = FPaths::GetCleanFilename(GmlPath);
+        for (const auto& LoadInputData : LoadInputDataArray) {
+            const auto GmlName = FPaths::GetCleanFilename(LoadInputData.GmlPath);
             GmlFiles.Add(GmlName);
         }
             
@@ -383,7 +396,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                     
                     {
                         FScopeLock Lock(LoadMeshSection);
-                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, bCanceledRef);
+                        FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, bCanceledRef);
                     }
 
                     FFunctionGraphTask::CreateAndDispatchWhenReady(

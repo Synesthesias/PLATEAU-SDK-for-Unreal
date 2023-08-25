@@ -2,6 +2,8 @@
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUCityModelLoader.h"
+#include "PLATEAUCityObjectGroup.h"
+#include "PLATEAUCityObjectGroupDetails.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditorStyle.h"
 #include "PLATEAUInstancedCityModelDetails.h"
@@ -25,7 +27,7 @@ public:
     virtual void StartupModule() override {
         Style = MakeShareable(new FPLATEAUEditorStyle());
         Window = MakeShareable(new FPLATEAUWindow(Style.ToSharedRef()));
-        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor());
+        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor(Style.ToSharedRef()));
 
         FAutoReimportWildcard WildcardToInject1;
         WildcardToInject1.Wildcard = TEXT("PLATEAU/Datasets/*");
@@ -74,7 +76,11 @@ public:
             APLATEAUInstancedCityModel::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUInstancedCityModelDetails::MakeInstance)
         );
-
+        PropertyModule.RegisterCustomClassLayout(
+            UPLATEAUCityObjectGroup::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUCityObjectGroupDetails::MakeInstance)
+        );
+        
         RegisterExtentEditorTabSpawner();
     }
 
@@ -85,7 +91,10 @@ public:
         PropertyModule.UnregisterCustomPropertyTypeLayout(
             APLATEAUCityModelLoader::StaticClass()->GetFName()
         );
-
+        PropertyModule.UnregisterCustomPropertyTypeLayout(
+            UPLATEAUCityObjectGroup::StaticClass()->GetFName()
+        );
+        
         const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
         ExtentEditor->UnregisterTabSpawner(GlobalTabManager);
     }
