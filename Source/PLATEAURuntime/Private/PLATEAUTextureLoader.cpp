@@ -55,7 +55,10 @@ namespace {
             return false;
         }
 
-        ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData);
+        if(!ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData))
+        {
+            return false;
+        }
 
         return true;
     }
