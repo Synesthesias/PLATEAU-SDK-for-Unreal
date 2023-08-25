@@ -23,6 +23,11 @@ namespace citygml {
 
 class FPLATEAUMeshLoader;
 enum class MeshGranularity;
+struct FLoadInputData {
+    plateau::polygonMesh::MeshExtractOptions ExtractOptions;
+    FString GmlPath;
+    bool bIncludeAttrInfo;
+};
 
 UENUM(BlueprintType)
 enum class EBuildingTypeMask : uint8 {
@@ -87,6 +92,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         UPLATEAUImportSettings* ImportSettings;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        bool bIncludeAttrInfo;
+    
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUCityModelLoadStatus Status;
 

@@ -219,6 +219,11 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
     // 範囲選択ウィンドウ表示中にクラッシュした場合、次回起動時に範囲選択ウィンドウが表示されてしまいクラッシュするのでNULLチェック
     if (DatasetAccessor == nullptr)
         return;
+    if(FeatureInfoDisplay.Get() == nullptr)
+    {
+        UE_LOG(LogTemp, Error, TEXT("FeatureInfoDisplay is null in PLATEAUExtentEditorViewportClient."));
+        return;
+    }
 
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     auto Meshptr = MeshCodes.begin();

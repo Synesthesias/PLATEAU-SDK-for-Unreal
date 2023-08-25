@@ -1,8 +1,8 @@
 ﻿#include "PLATEAUDllLoggerUnreal.h"
 
-PLATEAUDllLoggerUnreal::PLATEAUDllLoggerUnreal(citygml::CityGMLLogger::LOGLEVEL LogLevel)
+PLATEAUDllLoggerUnreal::PLATEAUDllLoggerUnreal(citygml::CityGMLLogger::LOGLEVEL LogLevelArg)
 {
-    DllLogger = std::make_shared<PlateauDllLogger>(LogLevel, &LogError, &LogWarning, &LogInfo);
+    DllLogger = std::make_shared<PlateauDllLogger>(LogLevelArg, &LogError, &LogWarning, &LogInfo);
 }
 
 std::shared_ptr<PlateauDllLogger> PLATEAUDllLoggerUnreal::GetLogger()

@@ -110,7 +110,7 @@ protected:
             constexpr int64 PackageMask = static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building);
             const FString SourcePath = UKismetSystemLibrary::GetProjectContentDirectory().Append("data");
             const FGizmoData GizmoData(4486.303033, 4728.534916, 6486.303033, 6728.534916);
-            const FPackageInfoSettings PackageInfoSettings(true, true, 0, 4, 1);
+            const FPackageInfoSettings PackageInfoSettings(true, true, true, 0, 4, 1);
             TMap<int64, FPackageInfoSettings> PackageInfoSettingsData;
             PackageInfoSettingsData.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), PackageInfoSettings);
             const auto& Loader = GetLocalCityModelLoader(ZoneId, ReferencePoint, PackageMask, SourcePath, GizmoData, PackageInfoSettingsData);
