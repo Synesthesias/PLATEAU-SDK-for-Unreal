@@ -48,6 +48,8 @@ public class PLATEAURuntime : ModuleRules
                 "RenderCore",
                 "OpenGL",
                 "Projects",
+                "Json",
+                "JsonUtilities"
                 // ... add private dependencies that you statically link with here ...	
             }
         );

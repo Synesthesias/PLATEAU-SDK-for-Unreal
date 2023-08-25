@@ -1,34 +1,94 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
-
 #pragma once
 
-#include "Kismet/BlueprintFunctionLibrary.h"
 #include "PLATEAUAttributeValue.h"
+#include <plateau/polygon_mesh/city_object_list.h>
+#include <citygml/cityobject.h>
 #include "PLATEAUCityObject.generated.h"
 
-namespace citygml {
-    class CityObject;
-}
 
-/*
- * 都市オブジェクトのBlueprint向けラッパーです。
- */
-USTRUCT(BlueprintType)
+UENUM(BlueprintType, meta = (Bitflags))
+enum class EPLATEAUCityObjectsType : uint8 {
+    COT_GenericCityObject           = 0,
+    COT_Building                    = 1,
+    COT_Room                        = 2,
+    COT_BuildingInstallation        = 3,
+    COT_BuildingFurniture           = 4,
+    COT_Door                        = 5,
+    COT_Window                      = 6,
+    COT_CityFurniture               = 7,
+    COT_Track                       = 8,
+    COT_Road                        = 9,
+    COT_Railway                     = 10,
+    COT_Square                      = 11,
+    COT_PlantCover                  = 12,
+    COT_SolitaryVegetationObject    = 13,
+    COT_WaterBody                   = 14,
+    COT_ReliefFeature               = 15,
+    COT_ReliefComponent             = 35,
+    COT_TINRelief                   = 36,
+    COT_MassPointRelief             = 37,
+    COT_BreaklineRelief             = 38,
+    COT_RasterRelief                = 39,
+    COT_LandUse                     = 16,
+    COT_Tunnel                      = 17,
+    COT_Bridge                      = 18,
+    COT_BridgeConstructionElement   = 19,
+    COT_BridgeInstallation          = 20,
+    COT_BridgePart                  = 21,
+    COT_BuildingPart                = 22,
+    COT_WallSurface                 = 23,
+    COT_RoofSurface                 = 24,
+    COT_GroundSurface               = 25,
+    COT_ClosureSurface              = 26,
+    COT_FloorSurface                = 27,
+    COT_InteriorWallSurface         = 28,
+    COT_CeilingSurface              = 29,
+    COT_CityObjectGroup             = 30,
+    COT_OuterCeilingSurface         = 31,
+    COT_OuterFloorSurface           = 32,
+    COT_TransportationObject        = 33,
+    COT_IntBuildingInstallation     = 34,
+    COT_WaterSurface                = 35,
+    COT_Unknown                     = 40,
+    COT_All                         = 63
+};
+
+USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
+struct FPLATEAUCityObjectIndex {
+    GENERATED_USTRUCT_BODY()
+
+    FPLATEAUCityObjectIndex() : PrimaryIndex(0), AtomicIndex(0) {
+    }
+
+    FPLATEAUCityObjectIndex(const int InPrimaryIndex, const int InAtomicIndex) : PrimaryIndex(InPrimaryIndex), AtomicIndex(InAtomicIndex) {
+    }
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    int PrimaryIndex;
+
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
+    int AtomicIndex;
+
+    bool operator==(const FPLATEAUCityObjectIndex& Other) const {
+        return PrimaryIndex == Other.PrimaryIndex && AtomicIndex == Other.AtomicIndex;
+    }
+};
+
+USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct PLATEAURUNTIME_API FPLATEAUCityObject {
     GENERATED_USTRUCT_BODY()
 
-public:
-    FPLATEAUCityObject()
-        : Data(nullptr) {}
+    FString GmlID;
+    FPLATEAUCityObjectIndex CityObjectIndex;
+    EPLATEAUCityObjectsType Type;
+    FPLATEAUAttributeMap Attributes;
+    TArray<FPLATEAUCityObject> Children;
 
-    FPLATEAUCityObject(const citygml::CityObject* const Data)
-        : Data(const_cast<citygml::CityObject*>(Data)) {}
-
-private:
-    friend class UPLATEAUCityObjectBlueprintLibrary;
-
-    citygml::CityObject* Data;
-    TSharedPtr<FPLATEAUAttributeMap> AttributeMapCache;
+    void SetGmlID(const FString& InGmlID);
+    void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
+    void SetCityObjectsType(const citygml::CityObject::CityObjectsType InType);
+    void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
 };
 
 UCLASS()
@@ -36,13 +96,18 @@ class PLATEAURUNTIME_API UPLATEAUCityObjectBlueprintLibrary : public UBlueprintF
     GENERATED_BODY()
 
 public:
-    /*
-     * 都市オブジェクトが保持する属性情報を取得します。
-     */
-    UFUNCTION(
-        BlueprintCallable,
-        BlueprintPure,
-        Category = "PLATEAU|CityGML")
-        static FPLATEAUAttributeMap& GetAttributeMap(
-            UPARAM(ref) FPLATEAUCityObject& CityObject);
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FString GetGmlID(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FPLATEAUCityObjectIndex GetCityObjectIndex(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static EPLATEAUCityObjectsType GetType(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FPLATEAUAttributeMap GetAttributes(UPARAM(ref) const FPLATEAUCityObject& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static TArray<FPLATEAUCityObject> GetChildren(UPARAM(ref) const FPLATEAUCityObject& Value);
 };

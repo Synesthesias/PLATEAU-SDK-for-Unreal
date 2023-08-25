@@ -13,26 +13,29 @@ USTRUCT(BlueprintType)
 struct FPackageInfoSettings {
     GENERATED_BODY()
 
-    FPackageInfoSettings(): bImport(false), bTextureImport(false), MinLod(0), MaxLod(0), Granularity(0) {
+    FPackageInfoSettings(): bImport(false), bTextureImport(false), bIncludeAttrInfo(true), MinLod(0), MaxLod(0), Granularity(0) {
     }
 
-    FPackageInfoSettings(const bool InbImport, const bool InbTextureImport, const int InMinLod, const int InMaxLod, const int InGranularity):
-        bImport(InbImport), bTextureImport(InbTextureImport), MinLod(InMinLod), MaxLod(InMaxLod), Granularity(InGranularity) {
+    FPackageInfoSettings(const bool InbImport, const bool InbTextureImport, const bool InbIncludeAttrInfo, const int InMinLod, const int InMaxLod, const int InGranularity):
+        bImport(InbImport), bTextureImport(InbTextureImport), bIncludeAttrInfo(InbIncludeAttrInfo), MinLod(InMinLod), MaxLod(InMaxLod), Granularity(InGranularity) {
     }
 
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|Tests")
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     bool bImport;
 
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|Tests")
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     bool bTextureImport;
 
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|Tests")
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    bool bIncludeAttrInfo;    
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int MinLod;
 
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|Tests")
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int MaxLod;
 
-    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|Tests")
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int Granularity;
 };
 

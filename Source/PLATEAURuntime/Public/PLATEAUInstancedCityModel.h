@@ -5,11 +5,13 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
+#include "PLATEAUCityObjectGroup.h"
 
 #include <plateau/dataset/city_model_package.h>
 
 #include "PLATEAUInstancedCityModel.generated.h"
 
+class FPLATEAUCityObject;
 struct FPLATEAUMinMaxLod {
     int MinLod = 0;
     int MaxLod = 0;
@@ -58,6 +60,9 @@ public:
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
 
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+        TArray<FPLATEAUCityObject>& GetAllRootCityObjects();
+
     /**
      * @brief 3D都市モデル内に含まれるパッケージ種を返します。
      */
@@ -98,7 +103,6 @@ public:
      * @param MaxLod 可視化される最大のLOD
      */
     static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
-
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -114,6 +118,7 @@ public:
 
 private:
     TAtomic<bool> bIsFiltering;
+    TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
 };
