@@ -30,7 +30,7 @@ public class PLATEAURuntime : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore",
+                "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities"
             }
         );
 
