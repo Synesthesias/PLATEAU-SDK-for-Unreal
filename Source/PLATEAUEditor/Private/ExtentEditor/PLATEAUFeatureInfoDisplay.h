@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUAsyncLoadedFeatureInfoPanel.h"
-
 #include "PLATEAUGeometry.h"
+#include "PLATEAUMeshCodeGizmo.h"
 
 namespace plateau::Feature {
     constexpr int MinLod = 0;
@@ -61,7 +61,8 @@ public:
     FPLATEAUFeatureInfoDisplay(const FPLATEAUGeoReference& InGeoReference, const TSharedPtr<class FPLATEAUExtentEditorViewportClient> InViewportClient);
     ~FPLATEAUFeatureInfoDisplay();
 
-    void UpdateAsync(const FPLATEAUExtent& InExtent, const plateau::dataset::IDatasetAccessor& InDatasetAccessor);
+    void UpdateAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const plateau::dataset::IDatasetAccessor& InDatasetAccessor);
+    bool AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
 
     UMaterialInstanceDynamic* GetFeatureInfoIconMaterial(const FPLATEAUFeatureInfoMaterialKey& Key);
     UMaterialInstanceDynamic* GetBackPanelMaterial() const;
@@ -74,7 +75,7 @@ public:
     /**
      * @brief 地物情報パネルの可視性を設定します。
      */
-    void SetVisibility(const EPLATEAUFeatureInfoVisibility Value);
+    void SetVisibility(const FPLATEAUMeshCodeGizmo& Gizmo, const EPLATEAUFeatureInfoVisibility Value);
 
     /**
      * @brief 範囲選択画面に表示する各パッケージリストを取得
@@ -91,22 +92,23 @@ public:
      */  
     static TArray<FString> GetIconFileNameList();
 
-    int GetItemCount(const FString& MeshCode) {
-        if (AsyncLoadedPanels.Contains(MeshCode)) {
-            return AsyncLoadedPanels[MeshCode].Get()->GetIconCount();
+    int GetItemCount(const FString& RegionMeshID) {
+        if (AsyncLoadedPanels.Contains(RegionMeshID)) {
+            return AsyncLoadedPanels[RegionMeshID].Get()->GetIconCount();
         }
         return 0;
     }
 
+    void SwitchFeatureInfoDisplay(const TArray<FPLATEAUMeshCodeGizmo>& MeshCodeGizmos, const int Lod, const bool bCheck);
 private:
     FPLATEAUGeoReference GeoReference;
     TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
 
     EPLATEAUFeatureInfoVisibility Visibility;
-    TMap<FString, TSharedPtr<class FPLATEAUAsyncLoadedFeatureInfoPanel>> AsyncLoadedPanels;
+    TMap<FString, TSharedPtr<FPLATEAUAsyncLoadedFeatureInfoPanel>> AsyncLoadedPanels;
     TMap<FPLATEAUFeatureInfoMaterialKey, UMaterialInstanceDynamic*> FeatureInfoMaterials;
     UMaterialInstanceDynamic* BackPanelMaterial;
+    TArray<int> ShowLods;
 
     void InitializeMaterials();
-    int CountLoadingPanels();
 };

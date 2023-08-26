@@ -30,8 +30,7 @@ APLATEAUCityModelLoader* UPLATEAUImportModelBtn::GetCityModelLoader(const int Zo
         Loader->Source = ExtentEditor->GetSourcePath();
     }
 
-    const auto& Extent = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
-    Loader->Extent = Extent.GetValue();
+    Loader->Extent = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
     Loader->Extent.Min.Height = -100000;
     Loader->Extent.Max.Height = 100000;
 

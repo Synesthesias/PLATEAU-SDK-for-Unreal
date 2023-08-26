@@ -9,6 +9,7 @@
 #include <plateau/basemap/tile_projection.h>
 #include <plateau/basemap/vector_tile_downloader.h>
 
+#include <numeric>
 #include <Async/Async.h>
 #include <plateau/dataset/i_dataset_accessor.h>
 
@@ -23,6 +24,11 @@
 using namespace plateau::dataset;
 
 namespace {
+    /**
+     * @brief コンポーネント追加間隔
+     */
+    constexpr float AddPanelComponentSleepTime = 0.03f;
+
     constexpr float PanelScaleMultiplier = 2.0f;
 
     UStaticMeshComponent* CreatePanelMeshComponent(UMaterialInstanceDynamic* Material) {
@@ -96,54 +102,51 @@ FPLATEAUAsyncLoadedFeatureInfoPanel::FPLATEAUAsyncLoadedFeatureInfoPanel(
     const TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient)
     : Owner(Owner)
     , ViewportClient(ViewportClient)
-    , Status(EPLATEAUFeatureInfoPanelStatus::Idle)
-    , Visibility(EPLATEAUFeatureInfoVisibility::Hidden)
-    , BackPanelComponent(nullptr) {}
+    , MaxLodTaskStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
+    , CreateComponentStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
+    , AddComponentStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
+    , FeatureInfoVisibility(EPLATEAUFeatureInfoVisibility::Hidden)
+    , DeltaTime(0)
+    , AddedIconComponentCnt(0)
+    , AddedDetailedIconComponentCnt(0) {}
 
-EPLATEAUFeatureInfoPanelStatus FPLATEAUAsyncLoadedFeatureInfoPanel::GetStatus() const {
-    return Status;
+EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetFeatureInfoVisibility() const {
+    return FeatureInfoVisibility;
 }
 
-EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetVisibility() const {
-    return Visibility;
-}
-
-void FPLATEAUAsyncLoadedFeatureInfoPanel::SetVisibility(const EPLATEAUFeatureInfoVisibility Value) {
-    if (Visibility == Value)
+void FPLATEAUAsyncLoadedFeatureInfoPanel::SetFeatureInfoVisibility(const TArray<int>& ShowLods, const EPLATEAUFeatureInfoVisibility Value, const bool bForce) {
+    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
         return;
 
-    Visibility = Value;
-    ApplyVisibility();
-}
-
-void FPLATEAUAsyncLoadedFeatureInfoPanel::ApplyVisibility() const {
-    TArray<USceneComponent*> Components;
-    Components.Append(IconComponents);
-    Components.Append(DetailedIconComponents);
-    Components.Add(BackPanelComponent);
-
-    for (const auto Component : IconComponents) {
-        if (Component == nullptr)
-            continue;
-
-        Component->SetVisibility(Visibility == EPLATEAUFeatureInfoVisibility::Visible);
-    }
-
-    for (const auto Component : DetailedIconComponents) {
-        if (Component == nullptr)
-            continue;
-
-        Component->SetVisibility(Visibility == EPLATEAUFeatureInfoVisibility::Detailed);
-    }
-
-    if (BackPanelComponent == nullptr)
+    if (FeatureInfoVisibility == Value && !bForce)
         return;
 
-    BackPanelComponent->SetVisibility(Visibility != EPLATEAUFeatureInfoVisibility::Hidden);
+    FeatureInfoVisibility = Value;
+    ApplyFeatureInfoVisibility(ShowLods);
 }
 
-void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<PredefinedCityModelPackage, int>& MaxLods)
-{
+void FPLATEAUAsyncLoadedFeatureInfoPanel::ApplyFeatureInfoVisibility(const TArray<int>& ShowLods) const {
+    const auto NumIcon = FeatureInfoMaterialMaps.Num();
+    for (int i = 0; i < NumIcon; i++) {
+        if (const auto& IconMaterialInstanceDynamic = IconMaterialInstanceDynamics[i]; IconMaterialInstanceDynamic != nullptr) {
+            if (const auto& MaterialKey = FeatureInfoMaterialMaps[i]; ShowLods.Contains(MaterialKey.Lod)) {
+                IconMaterialInstanceDynamic->SetScalarParameterValue(FName("Opacity"), FeatureInfoVisibility == EPLATEAUFeatureInfoVisibility::Visible ? 1.0 : 0);
+            } else {
+                IconMaterialInstanceDynamic->SetScalarParameterValue(FName("Opacity"), 0);
+            }
+        }
+
+        if (const auto& DetailedIconMaterialInstanceDynamic = DetailedIconMaterialInstanceDynamics[i]; DetailedIconMaterialInstanceDynamic != nullptr) {
+            if (const auto& MaterialKey = FeatureInfoMaterialMaps[i]; ShowLods.Contains(MaterialKey.Lod)) {
+                DetailedIconMaterialInstanceDynamic->SetScalarParameterValue(FName("Opacity"), FeatureInfoVisibility == EPLATEAUFeatureInfoVisibility::Detailed ? 1.0 : 0);
+            } else {
+                DetailedIconMaterialInstanceDynamic->SetScalarParameterValue(FName("Opacity"), 0);
+            }
+        }
+    }
+}
+
+void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<PredefinedCityModelPackage, int>& MaxLods) {
     if (MaxLods.IsEmpty())
         return;
 
@@ -152,7 +155,7 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
     for (const auto& Package : FPLATEAUFeatureInfoDisplay::GetDisplayedPackages()) {
         if (!MaxLods.Find(Package))
             continue;
-        
+
         FPLATEAUFeatureInfoMaterialKey Key;
         Key.bDetailed = false;
         Key.Package = Package;
@@ -170,77 +173,130 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::CreatePanelComponents(const TMap<Prede
     }
 
     // 範囲選択画面に表示する順番に並び替える
-    TArray<FPLATEAUFeatureInfoMaterialKey> FeatureInfoMaterialMapArray; 
+    FeatureInfoMaterialMaps.Reset();
     const auto IconFileNameList = FPLATEAUFeatureInfoDisplay::GetIconFileNameList();
     for (const auto& IconFileName : IconFileNameList) {
         if (FeatureInfoMaterialMap.Contains(IconFileName)) {
-            FeatureInfoMaterialMapArray.Add(FeatureInfoMaterialMap[IconFileName]);
+            FeatureInfoMaterialMaps.Add(FeatureInfoMaterialMap[IconFileName]);
         }
     }
 
-    for (const auto& FeatureInfoMaterial : FeatureInfoMaterialMapArray) {
+    for (const auto& FeatureInfoMaterial : FeatureInfoMaterialMaps) {
         const auto IconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(FeatureInfoMaterial);
+        IconMaterial->SetScalarParameterValue(FName("Opacity"), 0);
         const auto IconComponent = CreatePanelMeshComponent(IconMaterial);
+        IconMaterialInstanceDynamics.Emplace(IconMaterial);
         IconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
-        IconComponents.Add(IconComponent);
+        IconComponents.Emplace(IconComponent);
 
         auto Key = FeatureInfoMaterial;
         Key.bDetailed = true;
         const auto DetailedIconMaterial = OwnerStrongPtr->GetFeatureInfoIconMaterial(Key);
+        DetailedIconMaterial->SetScalarParameterValue(FName("Opacity"), 0);
         const auto DetailedIconComponent = CreatePanelMeshComponent(DetailedIconMaterial);
+        DetailedIconMaterialInstanceDynamics.Emplace(DetailedIconMaterial);
         DetailedIconComponent->SetTranslucentSortPriority(SortPriority_IconComponent);
-        DetailedIconComponents.Add(DetailedIconComponent);
-    }
-    
-    const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
-    if (PreviewScene == nullptr)
-        return;
-    
-    // アイコン配置
-    check(IconComponents.Num() == DetailedIconComponents.Num());
-    const auto IconCnt = FMath::Min(IconComponents.Num(), plateau::Feature::MaxIconCnt);
-    for (int i = 0; i < IconCnt; ++i) {
-        const auto Transform = CalculateIconTransform(Box, i % plateau::Feature::MaxIconCol, i / plateau::Feature::MaxIconCol, IconComponents.Num());
-        PreviewScene->AddComponent(IconComponents[i], Transform);
-        PreviewScene->AddComponent(DetailedIconComponents[i], Transform);
+        DetailedIconComponents.Emplace(DetailedIconComponent);
     }
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureInfoPanelInput& Input, const FBox& InBox) {
     Box = InBox;
-    Status = EPLATEAUFeatureInfoPanelStatus::Loading;
+    MaxLodTaskStatus = EPLATEAUFeatureInfoPanelStatus::Loading;
 
-    GetMaxLodTask = UE::Tasks::Launch(TEXT("GetMaxLODTask"),
-        [Input]() mutable {
-            TMap<PredefinedCityModelPackage, int> MaxLods;
+    GetMaxLodTask = UE::Tasks::Launch(TEXT("GetMaxLODTask"), [Input]() mutable {
+        TMap<PredefinedCityModelPackage, int> MaxLods;
 
-            for (const auto& Entry : Input) {
-                if (Entry.Value->empty())
-                    continue;
+        for (const auto& Entry : Input) {
+            if (Entry.Value->empty())
+                continue;
 
-                int MaxLod = 0;
-                for (auto& GmlFile : *Entry.Value) {
-                    // GMLファイル内を検索して最大LODを取得
-                    MaxLod = FMath::Max(GmlFile.getMaxLod(), MaxLod);
-                }
-
-                MaxLods.Add(Entry.Key, MaxLod);
+            int MaxLod = 0;
+            for (auto& GmlFile : *Entry.Value) {
+                // GMLファイル内を検索して最大LODを取得
+                MaxLod = FMath::Max(GmlFile.getMaxLod(), MaxLod);
             }
 
-            return MaxLods;
-        }, LowLevelTasks::ETaskPriority::BackgroundHigh);
+            MaxLods.Add(Entry.Key, MaxLod);
+        }
+
+        return MaxLods;
+    }, LowLevelTasks::ETaskPriority::BackgroundHigh);
+
+    GetMaxLodTask.Wait();
+    MaxLodTaskStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 }
 
-void FPLATEAUAsyncLoadedFeatureInfoPanel::Tick() {
-    if (Status == EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
-        return;
+bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeconds) {
+    if (AddComponentStatus == EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
+        return false;
 
-    if (!GetMaxLodTask.IsCompleted())
-        return;
+    if (!GetMaxLodTask.IsValid() || !GetMaxLodTask.IsCompleted())
+        return false;
 
-    CreatePanelComponents(GetMaxLodTask.GetResult());
-    ApplyVisibility();
+    const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
+    if (PreviewScene == nullptr)
+        return false;
 
-    Status = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
+    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded) {
+        CreatePanelComponents(GetMaxLodTask.GetResult());
+        CreateComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
+    }
+
+    AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::Loading;
+    DeltaTime = DeltaSeconds + DeltaTime;
+    if (AddPanelComponentSleepTime < DeltaTime && AddedIconComponentCnt < IconComponents.Num()) {
+        DeltaTime = 0;
+
+        check(IconComponents.Num() == DetailedIconComponents.Num());
+        const auto Transform = CalculateIconTransform(Box, AddedIconComponentCnt % plateau::Feature::MaxIconCol, AddedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
+        PreviewScene->AddComponent(IconComponents[AddedIconComponentCnt], Transform);
+        AddedIconComponentCnt++;
+
+        return true;
+    }
+
+    if (AddPanelComponentSleepTime < DeltaTime && AddedDetailedIconComponentCnt < DetailedIconComponents.Num()) {
+        DeltaTime = 0;
+
+        const auto Transform = CalculateIconTransform(Box, AddedDetailedIconComponentCnt % plateau::Feature::MaxIconCol, AddedDetailedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
+        PreviewScene->AddComponent(DetailedIconComponents[AddedDetailedIconComponentCnt], Transform);
+        const auto IconCnt = FMath::Min(DetailedIconComponents.Num(), plateau::Feature::MaxIconCnt);
+        if (IconCnt - 1 <= AddedDetailedIconComponentCnt++)
+            AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
+
+        return true;
+    }
+
+    return false;
 }
 
+void FPLATEAUAsyncLoadedFeatureInfoPanel::RecalculateIconTransform(const TArray<int>& ShowLods) {
+    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
+        return;
+
+    const int NumFilteredIconComponents = std::accumulate(FeatureInfoMaterialMaps.begin(), FeatureInfoMaterialMaps.end(), 0, [ShowLods](const int Sum, const FPLATEAUFeatureInfoMaterialKey MaterialKey) {
+        return Sum + (ShowLods.Contains(MaterialKey.Lod) ? 1 : 0);
+    });
+    
+    int ColIndex = 0;
+    const auto NumIcon = FeatureInfoMaterialMaps.Num();
+    for (int i = 0; i < NumIcon; i++) {
+        if (const auto& MaterialKey = FeatureInfoMaterialMaps[i]; ShowLods.Contains(MaterialKey.Lod)) {
+            const auto Transform = CalculateIconTransform(Box, ColIndex % plateau::Feature::MaxIconCol, ColIndex / plateau::Feature::MaxIconCol, NumFilteredIconComponents);
+            const auto& IconComponent = IconComponents[i];
+            USceneComponent* SceneComp = Cast<USceneComponent>(IconComponent);
+            if (SceneComp && SceneComp->GetAttachParent() == nullptr) {
+                SceneComp->SetRelativeTransform(Transform);
+            }
+
+            const auto& DetailedIconComponent = DetailedIconComponents[i];
+            SceneComp = Cast<USceneComponent>(DetailedIconComponent);
+            if (SceneComp && SceneComp->GetAttachParent() == nullptr) {
+                SceneComp->SetRelativeTransform(Transform);
+            }
+
+            ColIndex++;
+        }
+    }
+}

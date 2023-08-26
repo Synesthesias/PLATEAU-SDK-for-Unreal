@@ -7,6 +7,7 @@
 #include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
 
+class FPLATEAUEditorStyle;
 
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
@@ -40,4 +41,6 @@ private:
     TSharedPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
+    // エディタースタイル
+    TSharedPtr<FPLATEAUEditorStyle> Style;
 };

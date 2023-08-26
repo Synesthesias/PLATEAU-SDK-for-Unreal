@@ -7,7 +7,9 @@
 
 #include "Widgets/Docking/SDockTab.h"
 #include "EditorViewportTabContent.h"
+#include "PLATEAUMeshCodeGizmo.h"
 #include "Engine/Selection.h"
+#include "Algo/AnyOf.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEUExtentEditor"
 
@@ -23,8 +25,8 @@ void FPLATEAUExtentEditor::UnregisterTabSpawner(const TSharedRef<class FTabManag
     InTabManager->UnregisterTabSpawner(TabId);
 }
 
-FPLATEAUExtentEditor::FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle)
-: Style(InStyle) {
+FPLATEAUExtentEditor::FPLATEAUExtentEditor() {
+    AreaMeshCodeMap.Reset();
 }
 
 FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
@@ -53,6 +55,32 @@ void FPLATEAUExtentEditor::SetSourcePath(const FString& Path) {
     SourcePath = Path;
 }
 
+const FString& FPLATEAUExtentEditor::GetAreaSourcePath() const {
+    return AreaSourcePath;
+}
+
+void FPLATEAUExtentEditor::SetAreaSourcePath(const FString& InAreaSourcePath) {
+    AreaSourcePath = InAreaSourcePath;
+}
+
+bool FPLATEAUExtentEditor::bSelectedArea() const {
+    return Algo::AnyOf(GetAreaMeshCodeMap(), [](const TTuple<FString, FPLATEAUMeshCodeGizmo>& MeshCodeGizmoTuple) {
+        return MeshCodeGizmoTuple.Value.bSelectedArea();
+    });
+}
+
+TMap<FString, FPLATEAUMeshCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
+    return AreaMeshCodeMap;
+}
+
+void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
+    AreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+}
+
+void FPLATEAUExtentEditor::ResetAreaMeshCodeMap() {
+    AreaMeshCodeMap.Reset();
+}
+
 FPLATEAUGeoReference FPLATEAUExtentEditor::GetGeoReference() const {
     return GeoReference;
 }
@@ -61,20 +89,26 @@ void FPLATEAUExtentEditor::SetGeoReference(const FPLATEAUGeoReference& InGeoRefe
     GeoReference = InGeoReference;
 }
 
-const TOptional<FPLATEAUExtent>& FPLATEAUExtentEditor::GetExtent() const {
-    return Extent;
-}
+FPLATEAUExtent FPLATEAUExtentEditor::GetExtent() const {
+    
+    for (auto ItemIter = AreaMeshCodeMap.CreateConstIterator(); ItemIter; ++ItemIter) {
+        // const auto& MeshCodeGizmo = ItemIter->Value;
+        // if (!MeshCodeGizmo.GetbSelected())
+        //     continue;
+        //
+        // const TVec3d Min(MeshCodeGizmo.GetMin().X, MeshCodeGizmo.GetMin().Y, 0);
+        // const TVec3d Max(MeshCodeGizmo.GetMax().X, MeshCodeGizmo.GetMax().Y, 0);
+        // auto RawMin = GetGeoReference().GetData().unproject(Min);
+        // auto RawMax = GetGeoReference().GetData().unproject(Max);
+        //
+        // // 座標系変換時に緯度の大小が逆転するので再設定を行う。
+        // const auto Tmp = RawMin.latitude;
+        // RawMin.latitude = FMath::Min(RawMin.latitude, RawMax.latitude);
+        // RawMax.latitude = FMath::Max(Tmp, RawMax.latitude);
+    }
 
-void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
-    Extent = InExtent;
-}
-
-void FPLATEAUExtentEditor::ResetExtent() {
-    Extent.Reset();
-}
-
-TSharedRef<FPLATEAUEditorStyle> FPLATEAUExtentEditor::GetEditorStyle() const {
-    return Style.ToSharedRef();
+    return FPLATEAUExtent(plateau::geometry::Extent(plateau::geometry::GeoCoordinate(), plateau::geometry::GeoCoordinate()));
+    // return FPLATEAUExtent(plateau::geometry::Extent(RawMin, RawMax));
 }
 
 const bool FPLATEAUExtentEditor::IsImportFromServer() const {
