@@ -37,6 +37,7 @@ public class PLATEAUEditorBPLibraries : ModuleRules {
         IncludeLibPlateau();
     }
 
+    // 注意 : 他の PLATEAU*.Build.cs にも同じものを書いてください
     public void IncludeLibPlateau() {
         bEnableExceptions = true;
 
@@ -55,6 +56,7 @@ public class PLATEAUEditorBPLibraries : ModuleRules {
             libPlateauPath = libPlateauPath + "/macos/arm64/libplateau_combined.a";
             PublicAdditionalLibraries.Add(
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
+            PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/liblzma.tbd");
             PublicAdditionalLibraries.Add(
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {

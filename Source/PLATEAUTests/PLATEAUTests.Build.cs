@@ -35,6 +35,7 @@ public class PLATEAUTests : ModuleRules {
 		IncludeLibPlateau();
 	}
 
+	// 注意 : 他の PLATEAU*.Build.cs にも同じものを書いてください
 	public void IncludeLibPlateau() {
 		bEnableExceptions = true;
 
@@ -50,9 +51,10 @@ public class PLATEAUTests : ModuleRules {
 			PublicAdditionalLibraries.Add("glu32.lib");
 			PublicAdditionalLibraries.Add("opengl32.lib");
 		} else if (Target.Platform == UnrealTargetPlatform.Mac) {
-			libPlateauPath = libPlateauPath + "/macos/libplateau_combined.a";
+			libPlateauPath = libPlateauPath + "/macos/arm64/libplateau_combined.a";
 			PublicAdditionalLibraries.Add(
 				"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
+			PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/liblzma.tbd");
 			PublicAdditionalLibraries.Add(
 				"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
 		} else if (Target.Platform == UnrealTargetPlatform.Linux) {
