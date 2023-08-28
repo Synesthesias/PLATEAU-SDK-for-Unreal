@@ -6,13 +6,14 @@
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
 
-#include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "ImageUtils.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUCityModelLoader.h"
+#include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Misc/DefaultValueHelper.h"
@@ -182,14 +183,15 @@ namespace {
     }
 }
 
-void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> InModel, TAtomic<bool>* bCanceled) {
-
-    for (int i = 0; i < InModel->getRootNodeCount(); i++) {
+void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> Model,
+                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
+    UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
+    for (int i = 0; i < Model->getRootNodeCount(); i++) {
 
         if (bCanceled->Load(EMemoryOrder::Relaxed))
             break;
 
-        LoadNodeRecursive(ParentComponent, InModel->getRootNodeAt(i), *ModelActor);
+        LoadNodeRecursive(ParentComponent, Model->getRootNodeAt(i), LoadInputData, CityModel, *ModelActor);
 
         // メッシュをワールド内にビルド
         const auto CopiedStaticMeshes = StaticMeshes;
@@ -210,42 +212,51 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
-void FPLATEAUMeshLoader::LoadNodeRecursive(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
-    USceneComponent* Component = LoadNode(ParentComponent, Node, Actor);
+void FPLATEAUMeshLoader::LoadNodeRecursive(
+    USceneComponent* InParentComponent,
+    const plateau::polygonMesh::Node& InNode,
+    const FLoadInputData& InLoadInputData,
+    const std::shared_ptr<const citygml::CityModel> InCityModel,
+    AActor& InActor) {
+    UStaticMeshComponent* Component = LoadNode(InParentComponent, InNode, InLoadInputData, InCityModel, InActor);
 
-    for (int i = 0; i < Node.getChildCount(); i++) {
-        const auto& TargetNode = Node.getChildAt(i);
+    for (int i = 0; i < InNode.getChildCount(); i++) {
+        const auto& TargetNode = InNode.getChildAt(i);
 
-        LoadNodeRecursive(Component, TargetNode, Actor);
+        LoadNodeRecursive(Component, TargetNode, InLoadInputData, InCityModel, InActor);
     }
 }
 
-
-UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
-    AActor& Actor, USceneComponent& ParentComponent,
-    const plateau::polygonMesh::Mesh& InMesh,
-    FString Name) {
+UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh,
+                                                                    const FLoadInputData& LoadInputData,
+                                                                    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
     // コンポーネント作成
+    const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     UStaticMesh* StaticMesh;
-    UStaticMeshComponent* Component;
+    UStaticMeshComponent* Component = nullptr;
     UStaticMeshComponent* ComponentRef = nullptr;
     FMeshDescription* MeshDescription;
     {
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&]() {
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            if (LoadInputData.bIncludeAttrInfo) {
+                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
+                Component = PLATEAUCityObjectGroup;
+            } else {
                 Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-                if (bAutomationTest) {
-                    Component->Mobility = EComponentMobility::Movable;
-                } else {
-                    Component->Mobility = EComponentMobility::Static;
-                }
-                Component->bVisualizeComponent = true;
+            }
 
-                // StaticMesh作成
-                StaticMesh = CreateStaticMesh(InMesh, Component, FName(Name));
-                MeshDescription = StaticMesh->CreateMeshDescription(0);
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
+            if (bAutomationTest) {
+                Component->Mobility = EComponentMobility::Movable;
+            } else {
+                Component->Mobility = EComponentMobility::Static;
+            }
+            Component->bVisualizeComponent = true;
+
+            // StaticMesh作成
+            StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
+            MeshDescription = StaticMesh->CreateMeshDescription(0);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
     ConvertMesh(InMesh, *MeshDescription);
@@ -267,7 +278,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
                         // Collision情報設定
                         Mesh->CreateBodySetup();
                         Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-
+                        // レイキャスト時にブロック状態ではマルチヒットしない
+                        // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
+                        Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
+                        
                     }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
             });
 
@@ -311,7 +325,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
                 Component->DepthPriorityGroup = SDPG_World;
                 FString NewUniqueName = StaticMesh->GetName();
                 if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(StaticMesh->GetName())).ToString();
+                    NewUniqueName = MakeUniqueObjectName(&Actor, UPLATEAUCityObjectGroup::StaticClass(), FName(StaticMesh->GetName())).ToString();
                 }
                 Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
                 Actor.AddInstanceComponent(Component);
@@ -325,31 +339,42 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(
         return ComponentRef;
 }
 
-USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node, AActor& Actor) {
+UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node,
+                                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
+                                                   AActor& Actor) {
     if (Node.getMesh() == nullptr) {
-        USceneComponent* Comp = nullptr;
+        const auto& CityObject = CityModel->getCityObjectById(Node.getName());
+        UStaticMeshComponent* Comp = nullptr;
+        UClass* StaticClass;
         FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
-        //SceneComponentを付与
-        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&, DesiredName] {
-                Comp = NewObject<USceneComponent>(&Actor, NAME_None);
-                FString NewUniqueName = FString(DesiredName);
-                if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                    NewUniqueName = MakeUniqueObjectName(&Actor, USceneComponent::StaticClass(), FName(DesiredName)).ToString();
-                }
-                Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
+            // CityObjectがある場合はUPLATEAUCityObjectGroupとする
+            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
+                StaticClass = UPLATEAUCityObjectGroup::StaticClass();
+                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                Comp = PLATEAUCityObjectGroup;
+            } else {
+                StaticClass = UStaticMeshComponent::StaticClass();
+                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+            }
+            FString NewUniqueName = FString(DesiredName);
+            if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
+            }
+            Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
 
-                check(Comp != nullptr);
-                if (bAutomationTest) {
-                    Comp->Mobility = EComponentMobility::Movable;
-                } else {
-                    Comp->Mobility = EComponentMobility::Static;
-                }
+            check(Comp != nullptr);
+            if (bAutomationTest) {
+                Comp->Mobility = EComponentMobility::Movable;
+            } else {
+                Comp->Mobility = EComponentMobility::Static;
+            }
 
-                Actor.AddInstanceComponent(Comp);
-                Comp->RegisterComponent();
-                Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            Actor.AddInstanceComponent(Comp);
+            Comp->RegisterComponent();
+            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
         return Comp;
     }
@@ -358,11 +383,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, 
     if (Node.getMesh()->getVertices().size() == 0)
         return nullptr;
 
-    const FString CompName = UTF8_TO_TCHAR(Node.getName().c_str());
-    return CreateStaticMeshComponent(
-        Actor, *ParentComponent,
-        *Node.getMesh(),
-        CompName);
+    return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel, Node.getName());
 }
 
 #endif

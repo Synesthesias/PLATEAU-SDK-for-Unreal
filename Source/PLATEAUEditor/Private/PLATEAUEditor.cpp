@@ -2,6 +2,8 @@
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUCityModelLoader.h"
+#include "PLATEAUCityObjectGroup.h"
+#include "PLATEAUCityObjectGroupDetails.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditorStyle.h"
 #include "PLATEAUInstancedCityModelDetails.h"
@@ -74,7 +76,11 @@ public:
             APLATEAUInstancedCityModel::StaticClass()->GetFName(),
             FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUInstancedCityModelDetails::MakeInstance)
         );
-
+        PropertyModule.RegisterCustomClassLayout(
+            UPLATEAUCityObjectGroup::StaticClass()->GetFName(),
+            FOnGetDetailCustomizationInstance::CreateStatic(&FPLATEAUCityObjectGroupDetails::MakeInstance)
+        );
+        
         RegisterExtentEditorTabSpawner();
     }
 
@@ -85,7 +91,10 @@ public:
         PropertyModule.UnregisterCustomPropertyTypeLayout(
             APLATEAUCityModelLoader::StaticClass()->GetFName()
         );
-
+        PropertyModule.UnregisterCustomPropertyTypeLayout(
+            UPLATEAUCityObjectGroup::StaticClass()->GetFName()
+        );
+        
         const TSharedRef<FGlobalTabmanager> GlobalTabManager = FGlobalTabmanager::Get();
         ExtentEditor->UnregisterTabSpawner(GlobalTabManager);
     }

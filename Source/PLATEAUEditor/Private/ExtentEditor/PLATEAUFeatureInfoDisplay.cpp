@@ -90,7 +90,8 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
     : GeoReference(InGeoReference)
-    , ViewportClient(InViewportClient) {
+    , ViewportClient(InViewportClient)
+{
     InitializeMaterials();
 }
 
