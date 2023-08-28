@@ -2,6 +2,7 @@
 #pragma once
 #include <memory>
 #include <plateau/polygon_mesh/node.h>
+#include "Components/StaticMeshComponent.h"
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
