@@ -80,6 +80,34 @@ namespace {
             GetRootCityObjectsRecursive(AttachedComponent, RootCityObjects);
         }
     }
+
+    /**
+     * @brief 対象コンポーネントとその子コンポーネントのコリジョン設定変更
+     * @param ParentComponent コリジョン設定変更対象コンポーネント
+     * @param bCollisionResponseBlock コリジョンをブロック設定に変更するか？
+     * @param bPropagateToChildren 子コンポーネントのコリジョン設定を変更するか？
+     */
+    void ApplyCollisionResponseBlockToChannel(USceneComponent* ParentComponent, const bool bCollisionResponseBlock, const bool bPropagateToChildren=false) {
+        if (const auto& ParentStaticMeshComponent = Cast<UStaticMeshComponent>(ParentComponent); ParentStaticMeshComponent != nullptr) {
+            ParentStaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, bCollisionResponseBlock ? ECR_Block : ECR_Ignore);
+        }
+
+        if (!bPropagateToChildren)
+            return;
+        
+        if (const TArray<USceneComponent*>& AttachedChildren = ParentComponent->GetAttachChildren(); 0 < AttachedChildren.Num()) {
+            TInlineComponentArray<USceneComponent*, NumInlinedActorComponents> ComponentStack;
+            ComponentStack.Append(AttachedChildren);
+            while (0 < ComponentStack.Num()) {
+                if (const auto& CurrentComp = ComponentStack.Pop(/*bAllowShrinking=*/ false); CurrentComp != nullptr) {
+                    ComponentStack.Append(CurrentComp->GetAttachChildren());
+                    if (const auto& StaticMeshComponent = Cast<UStaticMeshComponent>(CurrentComp); StaticMeshComponent != nullptr) {
+                        StaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, bCollisionResponseBlock ? ECR_Block : ECR_Ignore);
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Sets default values
@@ -121,12 +149,11 @@ TArray<FPLATEAUCityObject>& APLATEAUInstancedCityModel::GetAllRootCityObjects() 
 }
 
 void APLATEAUInstancedCityModel::FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod, const int MaxLod) {
-    TArray<USceneComponent*> LodComponents;
-    InGmlComponent->GetChildrenComponents(false, LodComponents);
+    const TArray<USceneComponent*>& AttachedLodChildren = InGmlComponent->GetAttachChildren();
 
     // 各LODに対して形状データ(コンポーネント)が存在するコンポーネント名を検索
     TMap<int, TSet<FString>> NameMap;
-    for (const auto& LodComponent : LodComponents) {
+    for (const auto& LodComponent : AttachedLodChildren) {
         const auto Lod = ParseLodComponent(LodComponent);
         auto& Value = NameMap.Add(Lod);
 
@@ -141,19 +168,20 @@ void APLATEAUInstancedCityModel::FilterLowLods(const USceneComponent* const InGm
     }
 
     // フィルタリング実行
-    for (const auto& LodComponent : LodComponents) {
+    for (const auto& LodComponent : AttachedLodChildren) {
+        const TArray<USceneComponent*>& AttachedFeatureChildren = LodComponent->GetAttachChildren();
         const auto Lod = ParseLodComponent(LodComponent);
 
         if (Lod < MinLod || Lod > MaxLod) {
             // LOD範囲外のLOD形状は非表示化
-            LodComponent->SetVisibility(false, true);
+            for (const auto& FeatureComponent : AttachedFeatureChildren) {
+                ApplyCollisionResponseBlockToChannel(FeatureComponent, false, true);
+                FeatureComponent->SetVisibility(false, true);
+            }
             continue;
         }
 
-        TArray<USceneComponent*> FeatureComponents;
-        LodComponent->GetChildrenComponents(false, FeatureComponents);
-
-        for (const auto& FeatureComponent : FeatureComponents) {
+        for (const auto& FeatureComponent : AttachedFeatureChildren) {
             auto ComponentName = GetOriginalComponentName(FeatureComponent);
             TArray<int> Keys;
             NameMap.GetKeys(Keys);
@@ -166,6 +194,8 @@ void APLATEAUInstancedCityModel::FilterLowLods(const USceneComponent* const InGm
                 if (NameMap[Key].Contains(ComponentName))
                     bIsMaxLod = false;
             }
+
+            ApplyCollisionResponseBlockToChannel(FeatureComponent, bIsMaxLod, true);
             FeatureComponent->SetVisibility(bIsMaxLod, true);
         }
     }
@@ -191,26 +221,29 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
     bIsFiltering = true;
 
     for (const auto& GmlComponent : GetGmlComponents()) {
-        // 一度全てのメッシュを不可視にする
-        GmlComponent->SetVisibility(false, true);
-
         // 選択されていないパッケージを除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if ((Package & InPackage) == plateau::dataset::PredefinedCityModelPackage::None)
             continue;
-
-        TArray<USceneComponent*> LodComponents;
-        GmlComponent->GetChildrenComponents(false, LodComponents);
 
         const auto MinLod = PackageToLodRangeMap[Package].MinLod;
         const auto MaxLod = PackageToLodRangeMap[Package].MaxLod;
 
         // 各地物について全てのLODを表示する場合の処理
         if (!bOnlyMaxLod) {
-            for (const auto& LodComponent : LodComponents) {
+            for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
                 const auto Lod = ParseLodComponent(LodComponent);
-                if (MinLod <= Lod && Lod <= MaxLod)
-                    LodComponent->SetVisibility(true, true);
+                if (MinLod <= Lod && Lod <= MaxLod) {
+                    for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {
+                        ApplyCollisionResponseBlockToChannel(FeatureComponent, true, true);
+                        FeatureComponent->SetVisibility(true, true);
+                    }
+                } else {
+                    for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {
+                        ApplyCollisionResponseBlockToChannel(FeatureComponent, false, true);
+                        FeatureComponent->SetVisibility(false, true);
+                    }
+                }
             }
             continue;
         }
@@ -337,6 +370,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
                 if (static_cast<uint64_t>(InCityObjectType & CityObjectType))
                     continue;
 
+                ApplyCollisionResponseBlockToChannel(FeatureComponent, false);
                 FeatureComponent->SetVisibility(false);
             }
         }
