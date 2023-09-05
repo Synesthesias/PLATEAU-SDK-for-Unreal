@@ -2,7 +2,7 @@
 #pragma once
 
 #include <plateau/polygon_mesh/model.h>
-#include <plateau/texture/texture_image.h>
+#include <plateau/texture/texture_image_base.h>
 
 #include <memory>
 #include <string>
@@ -14,9 +14,15 @@ namespace plateau::texture {
     class AtlasInfo {
     public:
 
-        explicit AtlasInfo() : valid_(false), left_(0), top_(0), width_(0), height_(0), u_pos_(0), v_pos_(0), u_factor_(0), v_factor_(0) {
+        explicit AtlasInfo(const bool valid, const size_t left, const size_t top,
+                           const size_t width, const size_t height,
+                           double u_pos, double v_pos, double u_factor, double v_factor) :
+                valid_(valid), left_(left), top_(top), width_(width), height_(height),
+                u_pos_(u_pos), v_pos_(v_pos), u_factor_(u_factor), v_factor_(v_factor) {
         }
-        ~AtlasInfo() {
+
+        static AtlasInfo empty() {
+            return AtlasInfo(false, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         size_t getLeft() const {
@@ -45,11 +51,6 @@ namespace plateau::texture {
         }
 
         bool getValid() const;
-        void clear();
-        void setAtlasInfo(
-            const bool valid, const size_t left, const size_t top,
-            const size_t width, const size_t height,
-            double u_pos, double v_pos, double u_factor, double v_factor);
 
     private:
         bool valid_;     // パッキングが成功したかどうか
@@ -67,8 +68,6 @@ namespace plateau::texture {
     public:
 
         explicit AtlasContainer(const size_t _gap, const size_t _horizontal_range, const size_t _vertical_range);
-        ~AtlasContainer() {
-        }
 
         size_t getGap() const {
             return gap;
@@ -93,29 +92,22 @@ namespace plateau::texture {
 
     class TextureAtlasCanvas {
     public:
-        const unsigned char gray = 80;
 
-        explicit TextureAtlasCanvas() : canvas_width_(0), canvas_height_(0), vertical_range_(0), capacity_(0), coverage_(0) {
+
+        explicit TextureAtlasCanvas(size_t width, size_t height) :
+                vertical_range_(0), capacity_(0), coverage_(0),
+                canvas_(TextureImageBase::createNewTexture(width, height)),
+                canvas_width_(width), canvas_height_(height) {
         }
 
-        explicit TextureAtlasCanvas(size_t width, size_t height) : vertical_range_(0), capacity_(0), coverage_(0) {
-            canvas_width_ = width;
-            canvas_height_ = height;
-            canvas_.init(width, height, gray);
-        }
-
-        ~TextureAtlasCanvas() {
-        }
 
         void setSaveFilePathIfEmpty(const std::string& original_file_path);
         const std::string& getSaveFilePath() const;
 
-        TextureImage& getCanvas() {
-            return canvas_;
+        TextureImageBase& getCanvas() {
+            return *canvas_;
         }
 
-        void init(size_t width, size_t height);
-        void clear();
         void flush();
 
         /**
@@ -135,7 +127,7 @@ namespace plateau::texture {
         size_t vertical_range_;
         size_t capacity_;
         double coverage_;
-        TextureImage canvas_;
+        std::unique_ptr<TextureImageBase> canvas_;
         std::string save_file_path_;
     };
 
@@ -144,18 +136,15 @@ namespace plateau::texture {
     /// TexturePacker にAPIを増やすとき、変更が必要なのは texture_packer.cpp に加えて texture_packer_dummy.cpp もであることに注意してください。
     class LIBPLATEAU_EXPORT TexturePacker {
     public:
-        const int default_resolution = 2048;
 
         explicit TexturePacker(size_t width, size_t height, const int internal_canvas_count = 8);
-
-        ~TexturePacker();
 
         void process(plateau::polygonMesh::Model& model);
         void processNodeRecursive(const plateau::polygonMesh::Node& node);
         void processMesh(plateau::polygonMesh::Mesh* mesh);
 
     private:
-        std::vector<TextureAtlasCanvas> canvases_;
+        std::vector<std::shared_ptr<TextureAtlasCanvas>> canvases_;
         size_t canvas_width_;
         size_t canvas_height_;
     };
