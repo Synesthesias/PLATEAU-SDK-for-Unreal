@@ -193,7 +193,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        OutMesh.addSubMesh("", FirstIndex, EndIndex);
+                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
                         continue;
                     }
 
@@ -205,7 +205,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
-        OutMesh.addSubMesh(TextureFilePathStr, FirstIndex, EndIndex);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);

@@ -63,7 +63,7 @@ namespace {
         }
     }
 
-    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription) {
+    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription, TArray<FSubMeshValueSet>& SubMeshMaterialSets) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -79,10 +79,13 @@ namespace {
         // 同じ頂点は複数の面に利用されないように複製されるため、頂点数はインデックス数と同じサイズになる。
         const auto VertexCount = InIndices.size();
 
+        const auto SubMeshCount = InMesh.getSubMeshes().size();
+
         OutMeshDescription.ReserveNewVertices(VertexCount);
         OutMeshDescription.ReserveNewPolygons(FaceCount);
         OutMeshDescription.ReserveNewVertexInstances(VertexCount);
         OutMeshDescription.ReserveNewEdges(VertexCount);
+        OutMeshDescription.ReserveNewPolygonGroups(SubMeshCount); //暫定的にSubMesh数
 
         const auto VertexPositions = Attributes.GetVertexPositions();
         for (const auto& Vertex : InVertices) {
@@ -93,18 +96,61 @@ namespace {
         // 頂点の再利用を防ぐため使用済みの頂点を保持
         TSet<unsigned> UsedVertexIDs;
 
+        //TSet<FSubMeshValueSet> localSubMeshMaterialSet;
+        TArray<FSubMeshValueSet> localSubMeshMaterialSet;
+
         const auto PolygonGroupImportedMaterialSlotNames = Attributes.GetPolygonGroupMaterialSlotNames();
 
         for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            const auto PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
-
-            // マテリアル設定
-            FString MaterialName = "DefaultMaterial";
             const auto& TexturePath = SubMesh.getTexturePath();
-            if (TexturePath != "") {
-                MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+            const auto MaterialValue = SubMesh.getMaterial();
+            FSubMeshValueSet Value(MaterialValue, TexturePath.empty() ? FString() : FString(TexturePath.c_str()));
+
+            FPolygonGroupID PolygonGroupID = 0;
+
+            //なぜか最後に設定したPolygonGroupIDしかMaterialが反映されない
+            /*  */
+            //auto PolygonGroupID = !localSubMeshMaterialSet.Contains(Value) ? OutMeshDescription.CreatePolygonGroup() : Value.PolygonGroupID;
+            if (!localSubMeshMaterialSet.Contains(Value))     
+            {
+                PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
+                // マテリアル設定
+                FString MaterialName = "DefaultMaterial";
+                if (TexturePath != "") {
+                    MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+                }
+                else if (MaterialValue != nullptr) {
+                    MaterialName = FString(MaterialValue->getId().c_str());
+                }
+                PolygonGroupImportedMaterialSlotNames[PolygonGroupID] = FName(MaterialName);
+
+                //BPのUStaticMeshDescriptionのSetPolygonGroupMaterialSlotNameと同様の処理
+                /* */
+                const FName& SlotName = *Value.MaterialSlot;
+                OutMeshDescription.PolygonGroupAttributes().SetAttribute(PolygonGroupID, MeshAttribute::PolygonGroup::ImportedMaterialSlotName, 0, SlotName);
+                
+
+                Value.PolygonGroupIndex = OutMeshDescription.PolygonGroups().Num();
+                Value.PolygonGroupID = PolygonGroupID;
+                Value.MaterialSlot = MaterialName;
+                localSubMeshMaterialSet.Add(Value);
+
+                //Attaribute Name 確認用
+                TArray<FName> attrNames;
+                //OutMeshDescription.PolygonGroupAttributes().GetAttributeNames(attrNames);
+                for (auto attrName : attrNames) {
+                    UE_LOG(LogTemp, Log, TEXT("Attr Name : %s"), *attrName.ToString());
+                }
             }
-            PolygonGroupImportedMaterialSlotNames[PolygonGroupID] = FName(MaterialName);
+            else {    
+                //Arrayからセット済み要素を取り出して使用
+                for (auto v : localSubMeshMaterialSet)
+                {
+                    if (v.Equals(Value))
+                        Value = v;
+                }
+                PolygonGroupID = Value.PolygonGroupID;
+            }
 
             // インデックス、UV設定
             const auto& StartIndex = SubMesh.getStartIndex();
@@ -145,9 +191,16 @@ namespace {
                 // Invert winding order for triangles
                 VertexInstanceIDsCache.Swap(0, 2);
 
-                const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
+                const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon( PolygonGroupID, VertexInstanceIDsCache);
                 // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
                 OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
+
+                //Polygon Group IDチェック
+                /*
+                if (OutMeshDescription.GetPolygonPolygonGroup(NewPolygonID) != PolygonGroupID) {
+                    UE_LOG(LogTemp, Error, TEXT("PolyGroup ID wrong: %d "), PolygonGroupID.GetValue() );
+                }
+                */
             }
         }
 
@@ -156,7 +209,23 @@ namespace {
         //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
         FElementIDRemappings ElementIDRemappings;
         OutMeshDescription.Compact(ElementIDRemappings);
-        return OutMeshDescription.Polygons().Num() > 0;
+
+        auto result = OutMeshDescription.Polygons().Num() > 0;
+        if (result) {
+            /*
+            for (auto val : localSubMeshMaterialSet)                 
+            {
+                const auto orig = val.PolygonGroupID;
+                val.PolygonGroupID = ElementIDRemappings.GetRemappedPolygonGroupID(val.PolygonGroupID);
+                if(orig != val.PolygonGroupID )
+                    UE_LOG(LogTemp, Error, TEXT("PolyGroup ID changed : %d => %d "), orig.GetValue(), val.PolygonGroupID.GetValue() );
+            }
+            */
+
+            //SubMeshMaterialSets.Append(localSubMeshMaterialSet.Array());
+            SubMeshMaterialSets.Append(localSubMeshMaterialSet);
+        }
+        return result;
     }
 
     UStaticMesh* CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name) {
@@ -259,7 +328,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription);
+    //TSet<FSubMeshValueSet> SubMeshMaterialSets;
+    TArray<FSubMeshValueSet> SubMeshMaterialSets;
+
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets);
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&]() {
@@ -295,30 +367,100 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
 
-
         // テクスチャ読み込み(無ければnullptrを入れる)
-        TArray<UTexture2D*> SubMeshTextures;
-        for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
-            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath);
-            SubMeshTextures.Add(Texture);
+        TMap<FString, UTexture2D*> SubMeshTextureMap;
+        for (const auto& val : SubMeshMaterialSets) {
+            FString TexturePath = val.TexturePath;
+            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath); //Texture読み込み(無ければnullptrを入れる)
+            SubMeshTextureMap.Add(TexturePath, Texture);
         }
 
+        //PolygonGroupのSort 
+        SubMeshMaterialSets.StableSort([](const FSubMeshValueSet& A, const FSubMeshValueSet& B) {
+            //return A.PolygonGroupID < B.PolygonGroupID;
+            return A.PolygonGroupIndex < B.PolygonGroupIndex;
+            });
+
+        //PolygonGroup数の整合性チェック
+        if (SubMeshMaterialSets.Num() != MeshDescription->PolygonGroups().GetArraySize())
+            UE_LOG(LogTemp, Error, TEXT("PolyGroup Num Wrong: %d  => %d"), SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().GetArraySize());
+
+    
+        //SubMesh数を1000以下にする実験 (ShadowMapを無効化しないとクラッシュする）
+        //SubMeshMaterialSets.RemoveAll([](FSubMeshValueSet Element) { return Element.PolygonGroupIndex > 1000; });
+
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&, SubMeshTextures] {
+            [&, SubMeshMaterialSets, SubMeshTextureMap] {
+
                 // マテリアル作成
-                for (const auto& Texture : SubMeshTextures) {
-                    const auto SourceMaterialPath =
-                        Texture != nullptr
-                        ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
-                        : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
-                    UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                    UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-                    if (Texture != nullptr) {
-                        DynMaterial->SetTextureParameterValue("Texture", Texture);
+                for (const auto SubMeshValue : SubMeshMaterialSets) {
+
+                    if (!MeshDescription->IsPolygonGroupValid(FPolygonGroupID(SubMeshValue.PolygonGroupID)))
+                        continue;
+
+                    TSharedRef<UMaterialInstanceDynamic*>* SharedMatPtr = CachedMaterials.Find(SubMeshValue);
+                    if (SharedMatPtr == nullptr) {
+                        UMaterialInstanceDynamic* DynMaterial;
+                        const auto Texture = *SubMeshTextureMap.Find(SubMeshValue.TexturePath);
+
+                        if (SubMeshValue.hasMaterial) {
+                            //Material情報が存在する場合
+
+                            const auto SourceMaterialPath = SubMeshValue.Transparency > 0
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/PLATEAUX3DMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/PLATEAUX3DMaterial_Transparent");
+
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+
+                            DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
+                            DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
+                            DynMaterial->SetVectorParameterValue("SpecularColor", SubMeshValue.Specular);
+                            DynMaterial->SetScalarParameterValue("Ambient", SubMeshValue.Ambient);
+                            DynMaterial->SetScalarParameterValue("Shininess", SubMeshValue.Shininess);
+                            DynMaterial->SetScalarParameterValue("Transparency", SubMeshValue.Transparency);
+
+                            //base color とスペキュラの R:G:B の比率がほぼ同じ場合
+                            if (FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Y)
+                                && FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Z)
+                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
+                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
+                                DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
+                        }
+                        else {
+
+                            const auto SourceMaterialPath =
+                                Texture != nullptr
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                        }
+                        //Textureが存在する場合
+                        if (Texture != nullptr)
+                            DynMaterial->SetTextureParameterValue("Texture", Texture);
+
+                        DynMaterial->TwoSided = false;
+
+                        FName SlotName = StaticMesh->AddMaterial(DynMaterial);
+
+                        CachedMaterials.Add(SubMeshValue, MakeShared<UMaterialInstanceDynamic*>(DynMaterial));
+
+                        //SubMeshのPolygonGroupID と　MeshDescriptionの　PolygonGroupID　の整合性チェック
+                        FMeshDescription desc = *StaticMesh->GetMeshDescription(0);
+                        TAttributesSet<FPolygonGroupID> PolygonGroupAttributes = MeshDescription->PolygonGroupAttributes();
+                        if (PolygonGroupAttributes.HasAttribute(FName("ImportedMaterialSlotName"))) {
+                            FName AttributeValue = PolygonGroupAttributes.GetAttribute<FName>(FPolygonGroupID(SubMeshValue.PolygonGroupID), FName("ImportedMaterialSlotName"), 0);
+
+                            if (SubMeshValue.MaterialSlot != AttributeValue.ToString())
+                                UE_LOG(LogTemp, Error, TEXT("Wrong Material: %s => %s"), *SubMeshValue.MaterialSlot, *AttributeValue.ToString());
+                            //UE_LOG(LogTemp, Error, TEXT("ImportedMaterialSlotName: %s  index: %d"), *AttributeValue.ToString(), StaticMesh->GetMaterialIndexFromImportedMaterialSlotName(AttributeValue));
+                        }
+
                     }
-                    DynMaterial->TwoSided = false;
-                    StaticMesh->AddMaterial(DynMaterial);
+                    else {
+                        FName SlotName = StaticMesh->AddMaterial(SharedMatPtr->Get());
+                    }
                 }
 
                 // 名前設定、ヒエラルキー設定など

@@ -28,7 +28,7 @@ struct FSubMeshValueSet {
     bool isSmooth;
     FString TexturePath;
 
-    int32 PolygonGroupID = 0;
+    FPolygonGroupID PolygonGroupID = 0;
     int PolygonGroupIndex = 0;
     FString MaterialSlot = FString("");
 
@@ -55,7 +55,7 @@ struct FSubMeshValueSet {
     }
 
     bool Equals(const FSubMeshValueSet& Other) const {
-        float tl = 0.001f;
+        float tl = 0.0001f;
         return Diffuse.Equals(Other.Diffuse, tl) &&
             Specular.Equals(Other.Specular, tl) &&
             Emissive.Equals(Other.Emissive, tl) &&
@@ -70,7 +70,6 @@ struct FSubMeshValueSet {
 
 FORCEINLINE uint32 GetTypeHash(const FSubMeshValueSet& Value) {
     //uint32 Hash = FCrc::MemCrc32(&Value, sizeof(FSubMeshValueSet));
-
     TArray<uint32> HashArray;
     HashArray.Add(FCrc::MemCrc32(&Value.Diffuse, sizeof(FVector3f)));
     HashArray.Add(FCrc::MemCrc32(&Value.Specular, sizeof(FVector3f)));
@@ -80,12 +79,10 @@ FORCEINLINE uint32 GetTypeHash(const FSubMeshValueSet& Value) {
     HashArray.Add(FCrc::MemCrc32(&Value.Ambient, sizeof(float)));
     HashArray.Add(FCrc::MemCrc32(&Value.isSmooth, sizeof(bool)));
     HashArray.Add(FCrc::MemCrc32(&Value.TexturePath, sizeof(FString)));
-
     uint32 Hash = 0;
     for (auto h : HashArray) {
         Hash = HashCombine(Hash, h);
     }
-
     return Hash;
 }
 
@@ -108,6 +105,7 @@ public:
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
+    TMap<FSubMeshValueSet, TSharedRef<UMaterialInstanceDynamic*>> CachedMaterials;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
