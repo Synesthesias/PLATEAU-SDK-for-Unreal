@@ -11,6 +11,10 @@
 struct jpeg_error_mgr;
 
 namespace plateau::texture {
+
+    /**
+     * Tiff画像を扱うクラスです。
+     */
     class TiffTextureImage : public TextureImageBase {
     public:
 
@@ -33,6 +37,7 @@ namespace plateau::texture {
         };
 
         bool save(const std::string& file_path) override{
+            // 未実装です。詳しくは親クラスのコメントを参照してください。
             throw std::runtime_error("Outputting tiff file is not supported.");
             return false;
         };
@@ -47,7 +52,7 @@ namespace plateau::texture {
             return load_succeed_;
         };
 
-        std::vector<std::vector<uint8_t>>& getBitmapData();
+        std::vector<uint8_t>& getBitmapData() override;
 
     private:
         bool init(const std::string& fileName);

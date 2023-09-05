@@ -13,6 +13,17 @@
 struct jpeg_error_mgr;
 
 namespace plateau::texture {
+    /**
+     * jpeg画像を扱うクラスです。
+     *
+     * 重要：
+     * このクラスではjpegの読込はできますが、書き込みにはバグがあります。
+     * このクラスでMacで書き込んだjpegファイルは、MacのUnrealで7割くらいの確率で読込に失敗します。
+     * 書き込んだjpegに問題があるようです。
+     * 問題の画像(7割の確率で問題画像になる)はMacの標準ビューワーでは開くので一見すると大丈夫そうですが、Gimpで開くと警告ダイアログが出現し、Unrealではインポートできません。
+     * 私はこのバグの解決に20時間以上を費やしましたが解決せず、結局pngで実装し直すことで事なきを得ました。
+     * 画像の出力にはPngTextureImageを利用してください。
+     */
     class JpegTextureImage : public TextureImageBase {
     public:
 
@@ -43,7 +54,7 @@ namespace plateau::texture {
             return filePath;
         };
 
-        std::vector<uint8_t>& getBitmapData() {
+        std::vector<uint8_t>& getBitmapData() override {
             return bitmap_data_;
         };
 
