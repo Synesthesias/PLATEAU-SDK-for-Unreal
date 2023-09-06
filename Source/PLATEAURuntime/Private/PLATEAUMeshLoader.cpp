@@ -63,7 +63,7 @@ namespace {
         }
     }
 
-    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription, TArray<FSubMeshValueSet>& SubMeshMaterialSets) {
+    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription, TSet<FSubMeshValueSet>& SubMeshMaterialSets) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -96,8 +96,8 @@ namespace {
         // 頂点の再利用を防ぐため使用済みの頂点を保持
         TSet<unsigned> UsedVertexIDs;
 
-        //TSet<FSubMeshValueSet> localSubMeshMaterialSet;
-        TArray<FSubMeshValueSet> localSubMeshMaterialSet;
+        TSet<FSubMeshValueSet> localSubMeshMaterialSet;
+        //TArray<FSubMeshValueSet> localSubMeshMaterialSet;
 
         const auto PolygonGroupImportedMaterialSlotNames = Attributes.GetPolygonGroupMaterialSlotNames();
 
@@ -150,6 +150,11 @@ namespace {
                         Value = v;
                 }
                 PolygonGroupID = Value.PolygonGroupID;
+
+                /*
+                FSubMeshValueSet* Found = localSubMeshMaterialSet.Find(Value);
+                PolygonGroupID = Found->PolygonGroupID;
+                */
             }
 
             // インデックス、UV設定
@@ -328,8 +333,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    //TSet<FSubMeshValueSet> SubMeshMaterialSets;
-    TArray<FSubMeshValueSet> SubMeshMaterialSets;
+    TSet<FSubMeshValueSet> SubMeshMaterialSets;
+    //TArray<FSubMeshValueSet> SubMeshMaterialSets;
 
     ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets);
 
