@@ -89,7 +89,7 @@ void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstan
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 
-            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder.Replace(TEXT("/"), TEXT("\\"))));
+            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
             Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions);
         }
     }
