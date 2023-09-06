@@ -16,7 +16,7 @@ namespace plateau::polygonMesh {
     class Mesh;
 }
 
-struct FSubMeshValueSet {
+struct FSubMeshMaterialSet {
 
     bool hasMaterial;
     FVector3f Diffuse;
@@ -29,11 +29,10 @@ struct FSubMeshValueSet {
     FString TexturePath;
 
     FPolygonGroupID PolygonGroupID = 0;
-    int PolygonGroupIndex = 0;
     FString MaterialSlot = FString("");
 
-    FSubMeshValueSet() {}
-    FSubMeshValueSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
+    FSubMeshMaterialSet() {}
+    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
         hasMaterial = mat != nullptr;
         if (hasMaterial) {
             auto dif = mat->getDiffuse();
@@ -50,11 +49,11 @@ struct FSubMeshValueSet {
         TexturePath = texPath;
     }
 
-    bool operator==(const FSubMeshValueSet& Other) const {
+    bool operator==(const FSubMeshMaterialSet& Other) const {
         return Equals(Other);
     }
 
-    bool Equals(const FSubMeshValueSet& Other) const {
+    bool Equals(const FSubMeshMaterialSet& Other) const {
         float tl = 0.0001f;
         return Diffuse.Equals(Other.Diffuse, tl) &&
             Specular.Equals(Other.Specular, tl) &&
@@ -68,8 +67,7 @@ struct FSubMeshValueSet {
     }
 };
 
-FORCEINLINE uint32 GetTypeHash(const FSubMeshValueSet& Value) {
-    //uint32 Hash = FCrc::MemCrc32(&Value, sizeof(FSubMeshValueSet));
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
     TArray<uint32> HashArray;
     HashArray.Add(FCrc::MemCrc32(&Value.Diffuse, sizeof(FVector3f)));
     HashArray.Add(FCrc::MemCrc32(&Value.Specular, sizeof(FVector3f)));
@@ -105,7 +103,7 @@ public:
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
-    TMap<FSubMeshValueSet, TSharedRef<UMaterialInstanceDynamic*>> CachedMaterials;
+    TMap<FSubMeshMaterialSet, TSharedRef<UMaterialInstanceDynamic*>> CachedMaterials;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
