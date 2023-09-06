@@ -194,6 +194,9 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
                         OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
+
+                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex);
                         continue;
                     }
 
@@ -205,6 +208,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
+
+        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
         OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex);
     }
 
