@@ -343,8 +343,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         if (SubMeshValue.hasMaterial) {
                             //Material情報が存在する場合
                             const auto SourceMaterialPath = SubMeshValue.Transparency > 0
-                                ? TEXT("/PLATEAU-SDK-for-Unreal/PLATEAUX3DMaterial")
-                                : TEXT("/PLATEAU-SDK-for-Unreal/PLATEAUX3DMaterial_Transparent");
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent");
 
                             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
                             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
@@ -367,8 +367,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             //デフォルトマテリアル設定
                             const auto SourceMaterialPath =
                                 Texture != nullptr
-                                ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
-                                : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
                             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
                             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
                         }
