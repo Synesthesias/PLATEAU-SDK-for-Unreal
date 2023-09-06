@@ -24,7 +24,6 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Mesh.Build"), STAT_Mesh_Build, STATGROUP_PLATEAUMeshLoader);
 
-
 FSubMeshMaterialSet::FSubMeshMaterialSet() {}
 FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
     hasMaterial = mat != nullptr;
@@ -100,7 +99,6 @@ namespace {
             VertexIndices[2] = Indices[FaceOffset + 2];
             VertexPositions[2] = Vertices[VertexIndices[2]];
 
-
             // Calculate normal for triangle face			
             FVector3f N = FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
             N.Normalize();
@@ -151,11 +149,10 @@ namespace {
             const auto MaterialValue = SubMesh.getMaterial();
             FPolygonGroupID PolygonGroupID = 0;
             FSubMeshMaterialSet MaterialSet(MaterialValue, TexturePath.empty() ? FString() : FString(TexturePath.c_str()));
-            
-            if (!SubMeshMaterialSets.Contains(MaterialSet))
-            {
+
+            if (!SubMeshMaterialSets.Contains(MaterialSet)) {
                 // マテリアル設定
-                PolygonGroupID = OutMeshDescription.CreatePolygonGroup();            
+                PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
                 FString MaterialName = "DefaultMaterial";
                 if (TexturePath != "") {
                     MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
@@ -167,9 +164,9 @@ namespace {
                 MaterialSet.MaterialSlot = MaterialName;
                 SubMeshMaterialSets.Add(MaterialSet);
             }
-            else {    
+            else {
                 FSubMeshMaterialSet* Found = SubMeshMaterialSets.Find(MaterialSet);
-                check( Found != nullptr );
+                check(Found != nullptr);
                 PolygonGroupID = Found->PolygonGroupID;
                 MaterialSet = *Found;
             }
@@ -219,7 +216,7 @@ namespace {
                 // Invert winding order for triangles
                 VertexInstanceIDsCache.Swap(0, 2);
 
-                const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon( PolygonGroupID, VertexInstanceIDsCache);
+                const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
                 // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
                 OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
 
@@ -261,7 +258,7 @@ namespace {
 }
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> Model,
-                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
+    const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
     UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
 
@@ -284,9 +281,9 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
 
     // 最大LOD以外の形状を非表示化
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-    [ParentComponent]() {
-        APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
-    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+        [ParentComponent]() {
+            APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(
@@ -305,8 +302,8 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh,
-                                                                    const FLoadInputData& LoadInputData,
-                                                                    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
+    const FLoadInputData& LoadInputData,
+    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     UStaticMesh* StaticMesh;
@@ -320,13 +317,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
                 Component = PLATEAUCityObjectGroup;
-            } else {
+            }
+            else {
                 Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
             }
 
             if (bAutomationTest) {
                 Component->Mobility = EComponentMobility::Movable;
-            } else {
+            }
+            else {
                 Component->Mobility = EComponentMobility::Static;
             }
             Component->bVisualizeComponent = true;
@@ -334,9 +333,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             // StaticMesh作成
             StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
             MeshDescription = StaticMesh->CreateMeshDescription(0);
-        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
-    
+
     ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets);
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
@@ -359,7 +358,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         // レイキャスト時にブロック状態ではマルチヒットしない
                         // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
                         Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
-                        
+
                     }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
             });
 
@@ -382,7 +381,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         }
 
         //PolygonGroup数の整合性チェック
-        check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().GetArraySize());
+        check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&, SubMeshMaterialSets, SubMeshTextureMap] {
@@ -466,8 +465,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node,
-                                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
-                                                   AActor& Actor) {
+    const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
+    AActor& Actor) {
     if (Node.getMesh() == nullptr) {
         const auto& CityObject = CityModel->getCityObjectById(Node.getName());
         UStaticMeshComponent* Comp = nullptr;
@@ -480,7 +479,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
                 Comp = PLATEAUCityObjectGroup;
-            } else {
+            }
+            else {
                 StaticClass = UStaticMeshComponent::StaticClass();
                 Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
             }
@@ -493,14 +493,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
             check(Comp != nullptr);
             if (bAutomationTest) {
                 Comp->Mobility = EComponentMobility::Movable;
-            } else {
+            }
+            else {
                 Comp->Mobility = EComponentMobility::Static;
             }
 
             Actor.AddInstanceComponent(Comp);
             Comp->RegisterComponent();
             Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
         return Comp;
     }
