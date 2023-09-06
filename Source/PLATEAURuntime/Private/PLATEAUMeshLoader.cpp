@@ -24,6 +24,59 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Mesh.Build"), STAT_Mesh_Build, STATGROUP_PLATEAUMeshLoader);
 
+
+FSubMeshMaterialSet::FSubMeshMaterialSet() {}
+FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
+    hasMaterial = mat != nullptr;
+    if (hasMaterial) {
+        auto dif = mat->getDiffuse();
+        Diffuse = FVector3f(dif.x, dif.y, dif.z);
+        auto spc = mat->getSpecular();
+        Specular = FVector3f(spc.x, spc.y, spc.z);
+        auto ems = mat->getEmissive();
+        Emissive = FVector3f(ems.x, ems.y, ems.z);
+        Shininess = mat->getShininess();
+        Transparency = mat->getTransparency();
+        Ambient = mat->getAmbientIntensity();
+        isSmooth = mat->isSmooth();
+    }
+    TexturePath = texPath;
+}
+
+bool FSubMeshMaterialSet::operator==(const FSubMeshMaterialSet& Other) const {
+    return Equals(Other);
+}
+
+bool FSubMeshMaterialSet::Equals(const FSubMeshMaterialSet& Other) const {
+    float tl = 0.0001f;
+    return Diffuse.Equals(Other.Diffuse, tl) &&
+        Specular.Equals(Other.Specular, tl) &&
+        Emissive.Equals(Other.Emissive, tl) &&
+        FMath::IsNearlyEqual(Shininess, Other.Shininess, tl) &&
+        FMath::IsNearlyEqual(Transparency, Other.Transparency, tl) &&
+        FMath::IsNearlyEqual(Ambient, Other.Ambient, tl) &&
+        isSmooth == Other.isSmooth &&
+        hasMaterial == Other.hasMaterial &&
+        TexturePath.Equals(Other.TexturePath);
+}
+
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
+    TArray<uint32> HashArray;
+    HashArray.Add(FCrc::MemCrc32(&Value.Diffuse, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Specular, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Emissive, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Shininess, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Transparency, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Ambient, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.isSmooth, sizeof(bool)));
+    HashArray.Add(FCrc::MemCrc32(&Value.TexturePath, sizeof(FString)));
+    uint32 Hash = 0;
+    for (auto h : HashArray) {
+        Hash = HashCombine(Hash, h);
+    }
+    return Hash;
+}
+
 namespace {
     void ComputeNormals(FStaticMeshAttributes& Attributes) {
         const auto Normals = Attributes.GetVertexInstanceNormals();
@@ -389,7 +442,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         }
                     }
                     else {
-                        //キャッシュのMaterialをセット
+                        //キャッシュのMaterialを使用
                         StaticMesh->AddMaterial(SharedMatPtr->Get());
                     }
                 }
