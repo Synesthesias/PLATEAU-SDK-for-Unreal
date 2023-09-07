@@ -50,6 +50,19 @@ public:
                 ExtractOptions.max_lod = Settings.MaxLod;
                 ExtractOptions.min_lod = Settings.MinLod;
                 ExtractOptions.export_appearance = Settings.bImportTexture;
+                ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
+                switch (Settings.TexturePackingResolution)
+                {
+                case EPLATEAUTexturePackingResolution::H2048W2048:
+                    ExtractOptions.texture_packing_resolution = 2048;
+                    break;
+                case EPLATEAUTexturePackingResolution::H4096W4096:
+                    ExtractOptions.texture_packing_resolution = 4096;
+                    break;
+                case EPLATEAUTexturePackingResolution::H8192W8192:
+                    ExtractOptions.texture_packing_resolution = 8192;
+                    break;
+                }
                 ExtractOptions.grid_count_of_side = 10;
                 ExtractOptions.unit_scale = 0.01f;
                 ExtractOptions.extent = Extent.GetNativeData();

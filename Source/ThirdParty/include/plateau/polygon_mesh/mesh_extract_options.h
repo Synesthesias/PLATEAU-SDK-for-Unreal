@@ -22,19 +22,21 @@ namespace plateau::polygonMesh {
     struct MeshExtractOptions {
         /// 設定をデフォルト値にするコンストラクタです。
         MeshExtractOptions() :
-                reference_point(TVec3d(0, 0, 0)),
-                mesh_axes(geometry::CoordinateSystem::EUN),
-                mesh_granularity(MeshGranularity::PerPrimaryFeatureObject),
-                max_lod(PolygonMeshUtils::max_lod_in_specification_), // 仕様上ありえる最大LODをデフォルトとします。
-                min_lod(0), // 仕様上ありえる最小LODをデフォルトとします。
-                export_appearance(true),
-                grid_count_of_side(10),
-                unit_scale(1.0),
-                coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
-                exclude_city_object_outside_extent(true),
-                exclude_polygons_outside_extent(false),
-                extent(geometry::Extent::all()) // 全範囲をデフォルトとします。
-                {}
+            reference_point(TVec3d(0, 0, 0)),
+            mesh_axes(geometry::CoordinateSystem::EUN),
+            mesh_granularity(MeshGranularity::PerPrimaryFeatureObject),
+            max_lod(PolygonMeshUtils::max_lod_in_specification_), // 仕様上ありえる最大LODをデフォルトとします。
+            min_lod(0), // 仕様上ありえる最小LODをデフォルトとします。
+            export_appearance(true),
+            grid_count_of_side(10),
+            unit_scale(1.0),
+            coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
+            exclude_city_object_outside_extent(true),
+            exclude_polygons_outside_extent(false),
+            extent(geometry::Extent::all()), // 全範囲をデフォルトとします。
+            enable_texture_packing(false),
+            texture_packing_resolution(2048)
+            {}
 
     public:
         TVec3d reference_point;
@@ -73,6 +75,15 @@ namespace plateau::polygonMesh {
          */
         bool exclude_polygons_outside_extent;
 
+        /**
+         * テクスチャ結合（複数のテクスチャ画像を結合する機能）を有効にするかどうかを bool で指定します。
+         */
+        bool enable_texture_packing;
+
+        /**
+         * テクスチャ結合時の結合先のテクスチャ画像の解像度（縦：texture_packing_resolution x 横:texture_packing_resolution）
+         */
+        unsigned texture_packing_resolution;
         geometry::Extent extent;
     };
 }

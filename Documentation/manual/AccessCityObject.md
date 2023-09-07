@@ -1,11 +1,35 @@
 # 属性情報へのアクセス
 このページではブループリントを利用して3D都市モデルの属性情報にアクセスする方法を記載します。
 
-## 3D都市モデルのロード
+## 属性情報を確認する(PLATEAU SDKのエディタ機能)
+SDK画面から各地物の属性情報を確認いただけます。
 
-サンプルとしてマウスをクリックした際にカメラの中心に位置する都市オブジェクトの属性情報を画面に表示するスクリプトを紹介します。
+1. PLATEAU SDKウィンドウの「属性情報」タブを開きます。
+2. `ウィンドウ/ワールドセッティング`の`GameMode/ゲームモードオーバーライド`を`ClickEventGameMode`に指定します。
+    - PlayerControllerで左クリック入力を受け付けるように設定している場合はこの手順は行っていただく必要はありません。
+3. レベルをプレイします。
+4. 地物をクリックすると、その地物IDと属性情報が表示されます。
 
-### ブループリントの利用
+![](../resources/manual/accessCityObject/editor.png)
+
+- ビュー上のピンク色の線は、選択中の主要地物の範囲を示します。
+- ビュー上の緑色の線は、選択中の最小地物の範囲を示します。
+- 地物IDがビュー中の文字で表示され、属性情報は属性情報ウィンドウのテキストボックスに表示されます。
+
+### 主要地物と最小地物について
+- 例えば、建物を主要地物単位でインポートした場合は、1つのComponentおよび1つのStaticMeshで1つの建物を表します。  
+  その1つのメッシュを分解すると、「壁」「屋根」などのパーツになります。  
+  この場合、建物全体が主要地物であり、壁、屋根などのパーツが最小地物に該当します。  
+  ここで建物をクリックして属性情報を表示すると、主要地物（建物全体、1つのメッシュ）としての属性情報と、最小地物（壁や屋根など、メッシュの一部分）としての属性情報が両方表示されます。
+- 建物を最小地物単位でインポートした場合、壁や屋根ごとにゲームオブジェクトおよびメッシュが分かれます。  
+  この場合、最小地物ゲームオブジェクトの親ゲームオブジェクトから主要地物の情報を取得します。
+- 建物を地域単位でインポートした場合、複数の主要地物が結合されます。  
+  この場合、メッシュの一部分として主要地物および最小地物の情報を取得できます。
+
+## 属性情報へアクセスするブループリント
+
+> [!CAUTION]
+> SDK画面を開いている状態では以下のスクリプトは動作しないため、SDK画面を閉じてから実行してください。
 
 SDKにはサンプルのブループリントが含まれています。  
 確認するには、コンテンツブラウザで `設定 → プラグインコンテンツを表示`　にチェックを入れ、次の場所にあるブループリントを開いてください：  
@@ -13,9 +37,6 @@ SDKにはサンプルのブループリントが含まれています。
   
 このブループリントを利用するには次のようにします：
 - 都市モデルをインポートしたレベルに `ClickToGetAttribute` を配置します。  
-- 配置した`ClickToGetAttribute`の詳細パネルから以下を設定します。
-  - CityModel 欄にインポートした都市モデルを割り当て
-  - `Auto Receive Input`を`Player 0`に設定
 - `ウィンドウ/ワールドセッティング`の`GameMode/ゲームモードオーバーライド`を`ClickEventGameMode`に指定します。
 - 再生して都市オブジェクトをクリックすると属性情報が表示されます。
 
@@ -25,63 +46,28 @@ SDKにはサンプルのブループリントが含まれています。
 
 ![](../resources/manual/accessCityObject/blueprint.png)
 
-#### マウスクリックに LineTrace を飛ばす
+#### キー入力受付の有効化
+![](../resources/manual/accessCityObject/blueprintSetup.png)
 
-![](../resources/manual/accessCityObject/blueprintSection1.png)
+- レベルの開始時に`EnableInput`関数を呼び出し、このBPがキー入力を受け取れるようにします。
 
 
-#### クリック位置の CityObjectID を取得する
+#### クリックされた地物を取得する
 
-![](../resources/manual/accessCityObject/blueprintSection2.png)
+![](../resources/manual/accessCityObject/blueprintLineTrace.png)
 
-- `CityModel`変数には属性情報を取得したい`PLATEAUInstancedCityModel`アクタを設定します。
-  - `PLATEAUInstancedCityModel`アクタは都市モデルをインポートすることによって生成されます。
-- `GetCityObjectInfo`ノードは`Component`を受け取って都市オブジェクトにアクセスするために必要な情報 `PLATEAUCityObjectInfo` を出力します。
-- `PLATEAUCityObjectInfo` の `ID` から、個々の都市オブジェクトのIDを取得できます。
+- 左ボタンクリック時にカーソル位置にLineTraceを行い、クリックされた地物(CityObject)を取得します。
+- LineTraceはSDKで提供している`LineTraceCityObject`関数を利用します。
 
-#### GMLファイルをパースし、CityObjectIDに対応する属性情報を取得する
-- `LoadAsync`ノードは非同期でCityGMLのパースを行い、`CityModel`インスタンスを出力します。
-- `GetCityObjectByID`ノードは`CityModel`インスタンスと`FeatureID`を受け取り、対応する`CityObject`インスタンスを出力します。
-- `CityObject` は属性情報を持ちます。属性情報はキーと値のペアのセットです。
-- `GetAttributeMap`ノードは`CityObject`インスタンスを受け取り、都市オブジェクトが持つ属性情報を`AttributeMap`インスタンスとして出力します。
-![](../resources/manual/accessCityObject/blueprintSection3.png)
+#### 地物の属性情報を取得する
+
+![](../resources/manual/accessCityObject/blueprintGetAttributes.png)
+
+- 取得されたCityObjectの`GetAttributes`関数を呼び出し、属性情報のTMapを取得します。
 
 #### 都市オブジェクトの属性情報の表示
-![](../resources/manual/accessCityObject/blueprintSection4.png)
 
+![](../resources/manual/accessCityObject/blueprintPrintAttributes.png)
 
-## 属性とは
-
-都市オブジェクトの情報は「属性」として取得できます。  
-属性は例えば  
-  
-```text
-(String) 大字・町コード => 42,
-(String) 防火及び準防火地域 => 準防火地域
-```
-  
-のように、キーと値のペアからなる辞書形式の情報です。  
-属性辞書は `CityObject.AttributesSet` メソッドで取得できます。  
-`AttributesSet.ToString()` をコールすると、属性情報をすべて文字列にして返します。　　
-`AttributesSet.GetValueOrNull("key")` によってキーに対応する`AttributeValue` を取得できます。  
-`AttributeValue` の具体的な値は文字列型として取得できるか、または  
-子の属性（属性は入れ子になることもあります）として取得できるかのいずれかです。  
-属性が入れ子になっている例は次のとおりです。
-
-```text
- (AttributeSet) 多摩水系多摩川、浅川、大栗川洪水浸水想定区域（想定最大規模） => 
-    [ { (String) 浸水ランク => 2 }
-    { (Measure) 浸水深 => 0.990 }
-    { (Measure) 継続時間 => 0.68 }
-    { (String) 規模 => L2 } ]
-```
-
-上の例において、(括弧)内の文字は属性の型を示します。  
-属性値は次の型があります。:  
-`AttributeSet, String, Double, Integer, Data, Uri, Measure`  
-AttributeSet以外の型はすべて内部的には文字列型であり、  
-`AttributeValue.AsString` で値を取得できます。  
-入れ子AttributeSetの値は `AsString` ではなく `AttributeValue.AsAttrSet`で取得できます。  
-属性値の型は `AttributeValue.Type` で取得でき、この値が `AttributeSet` である場合は　　
-`AttributeValue.AsAttrSet`で子の `AttributesMap` を取得できます。  
-`AttributeValue.Type` がそれ以外 (String, Doubleなど) である場合は `AttributeValue.AsString` で文字列を取得できます。
+- TMapから各属性情報値を取得し、`GetString`関数で文字列として内容を取り出します。
+- `PrintString`関数で文字列を画面内に表示します。
