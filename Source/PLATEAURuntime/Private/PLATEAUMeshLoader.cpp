@@ -387,7 +387,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             [&, SubMeshMaterialSets, SubMeshTextureMap] {
 
                 for (const auto& SubMeshValue : SubMeshMaterialSets) {
-                    TSharedRef<UMaterialInstanceDynamic*>* SharedMatPtr = CachedMaterials.Find(SubMeshValue);
+                    UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
                     if (SharedMatPtr == nullptr) {
                         // マテリアル作成
                         UMaterialInstanceDynamic* DynMaterial;
@@ -431,7 +431,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
                         //Materialをキャッシュに保存
-                        CachedMaterials.Add(SubMeshValue, MakeShared<UMaterialInstanceDynamic*>(DynMaterial));
+                        CachedMaterials.Add(SubMeshValue, DynMaterial);
 
                         //SubMeshのPolygonGroupIDとMeshDescriptionのPolygonGroupIDの整合性チェック
                         TAttributesSet<FPolygonGroupID> PolygonGroupAttributes = MeshDescription->PolygonGroupAttributes();
@@ -442,7 +442,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                     }
                     else {
                         //キャッシュのMaterialを使用
-                        StaticMesh->AddMaterial(SharedMatPtr->Get());
+                        StaticMesh->AddMaterial(*SharedMatPtr);
                     }
                 }
 

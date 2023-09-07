@@ -58,7 +58,7 @@ public:
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
-    TMap<FSubMeshMaterialSet, TSharedRef<UMaterialInstanceDynamic*>> CachedMaterials;
+    TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
