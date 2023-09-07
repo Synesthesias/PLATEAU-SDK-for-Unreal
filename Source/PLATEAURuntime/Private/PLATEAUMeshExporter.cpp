@@ -193,6 +193,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
 
                         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
                         OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex);
