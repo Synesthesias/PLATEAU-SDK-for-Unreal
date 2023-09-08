@@ -24,6 +24,58 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Mesh.Build"), STAT_Mesh_Build, STATGROUP_PLATEAUMeshLoader);
 
+FSubMeshMaterialSet::FSubMeshMaterialSet() {}
+FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
+    hasMaterial = mat != nullptr;
+    if (hasMaterial) {
+        auto dif = mat->getDiffuse();
+        Diffuse = FVector3f(dif.x, dif.y, dif.z);
+        auto spc = mat->getSpecular();
+        Specular = FVector3f(spc.x, spc.y, spc.z);
+        auto ems = mat->getEmissive();
+        Emissive = FVector3f(ems.x, ems.y, ems.z);
+        Shininess = mat->getShininess();
+        Transparency = mat->getTransparency();
+        Ambient = mat->getAmbientIntensity();
+        isSmooth = mat->isSmooth();
+    }
+    TexturePath = texPath;
+}
+
+bool FSubMeshMaterialSet::operator==(const FSubMeshMaterialSet& Other) const {
+    return Equals(Other);
+}
+
+bool FSubMeshMaterialSet::Equals(const FSubMeshMaterialSet& Other) const {
+    float tl = 0.0001f;
+    return Diffuse.Equals(Other.Diffuse, tl) &&
+        Specular.Equals(Other.Specular, tl) &&
+        Emissive.Equals(Other.Emissive, tl) &&
+        FMath::IsNearlyEqual(Shininess, Other.Shininess, tl) &&
+        FMath::IsNearlyEqual(Transparency, Other.Transparency, tl) &&
+        FMath::IsNearlyEqual(Ambient, Other.Ambient, tl) &&
+        isSmooth == Other.isSmooth &&
+        hasMaterial == Other.hasMaterial &&
+        TexturePath.Equals(Other.TexturePath);
+}
+
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
+    TArray<uint32> HashArray;
+    HashArray.Add(FCrc::MemCrc32(&Value.Diffuse, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Specular, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Emissive, sizeof(FVector3f)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Shininess, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Transparency, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.Ambient, sizeof(float)));
+    HashArray.Add(FCrc::MemCrc32(&Value.isSmooth, sizeof(bool)));
+    HashArray.Add(FCrc::MemCrc32(&Value.TexturePath, sizeof(FString)));
+    uint32 Hash = 0;
+    for (auto h : HashArray) {
+        Hash = HashCombine(Hash, h);
+    }
+    return Hash;
+}
+
 namespace {
     void ComputeNormals(FStaticMeshAttributes& Attributes) {
         const auto Normals = Attributes.GetVertexInstanceNormals();
@@ -47,7 +99,6 @@ namespace {
             VertexIndices[2] = Indices[FaceOffset + 2];
             VertexPositions[2] = Vertices[VertexIndices[2]];
 
-
             // Calculate normal for triangle face			
             FVector3f N = FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]), (VertexPositions[0] - VertexPositions[2]));
             N.Normalize();
@@ -63,7 +114,7 @@ namespace {
         }
     }
 
-    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription) {
+    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription, TSet<FSubMeshMaterialSet>& SubMeshMaterialSets) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -93,18 +144,38 @@ namespace {
         // 頂点の再利用を防ぐため使用済みの頂点を保持
         TSet<unsigned> UsedVertexIDs;
 
-        const auto PolygonGroupImportedMaterialSlotNames = Attributes.GetPolygonGroupMaterialSlotNames();
-
         for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            const auto PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
-
-            // マテリアル設定
-            FString MaterialName = "DefaultMaterial";
             const auto& TexturePath = SubMesh.getTexturePath();
-            if (TexturePath != "") {
-                MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+            const auto MaterialValue = SubMesh.getMaterial();
+            FPolygonGroupID PolygonGroupID = 0;
+            FSubMeshMaterialSet MaterialSet(MaterialValue, TexturePath.empty() ? FString() : FString(TexturePath.c_str()));
+
+            if (!SubMeshMaterialSets.Contains(MaterialSet)) {
+                // マテリアル設定
+                PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
+                FString MaterialName = "DefaultMaterial";
+                if (TexturePath != "") {
+                    MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+                }
+                else if (MaterialValue != nullptr) {
+                    MaterialName = FString(MaterialValue->getId().c_str());
+                }
+                MaterialSet.PolygonGroupID = PolygonGroupID;
+                MaterialSet.MaterialSlot = MaterialName;
+                SubMeshMaterialSets.Add(MaterialSet);
             }
-            PolygonGroupImportedMaterialSlotNames[PolygonGroupID] = FName(MaterialName);
+            else {
+                FSubMeshMaterialSet* Found = SubMeshMaterialSets.Find(MaterialSet);
+                check(Found != nullptr);
+                PolygonGroupID = Found->PolygonGroupID;
+                MaterialSet = *Found;
+            }
+
+            //BPのUStaticMeshDescriptionのSetPolygonGroupMaterialSlotNameと同様の処理
+            if (OutMeshDescription.IsPolygonGroupValid(PolygonGroupID)) {
+                const FName& SlotName = *MaterialSet.MaterialSlot;
+                OutMeshDescription.PolygonGroupAttributes().SetAttribute(PolygonGroupID, MeshAttribute::PolygonGroup::ImportedMaterialSlotName, 0, SlotName);
+            }
 
             // インデックス、UV設定
             const auto& StartIndex = SubMesh.getStartIndex();
@@ -148,6 +219,8 @@ namespace {
                 const FPolygonID NewPolygonID = OutMeshDescription.CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
                 // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
                 OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
+
+                check(OutMeshDescription.GetPolygonPolygonGroup(NewPolygonID) == PolygonGroupID); //Polygon Group IDチェック
             }
         }
 
@@ -156,6 +229,7 @@ namespace {
         //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
         FElementIDRemappings ElementIDRemappings;
         OutMeshDescription.Compact(ElementIDRemappings);
+
         return OutMeshDescription.Polygons().Num() > 0;
     }
 
@@ -184,7 +258,7 @@ namespace {
 }
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> Model,
-                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
+    const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
     UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
 
@@ -207,9 +281,9 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
 
     // 最大LOD以外の形状を非表示化
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-    [ParentComponent]() {
-        APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
-    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+        [ParentComponent]() {
+            APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
 void FPLATEAUMeshLoader::LoadNodeRecursive(
@@ -228,13 +302,14 @@ void FPLATEAUMeshLoader::LoadNodeRecursive(
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Actor, USceneComponent& ParentComponent, const plateau::polygonMesh::Mesh& InMesh,
-                                                                    const FLoadInputData& LoadInputData,
-                                                                    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
+    const FLoadInputData& LoadInputData,
+    const std::shared_ptr<const citygml::CityModel> CityModel, const std::string& InNodeName) {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     UStaticMesh* StaticMesh;
     UStaticMeshComponent* Component = nullptr;
     UStaticMeshComponent* ComponentRef = nullptr;
+    TSet<FSubMeshMaterialSet> SubMeshMaterialSets;
     FMeshDescription* MeshDescription;
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
@@ -242,13 +317,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
                 Component = PLATEAUCityObjectGroup;
-            } else {
+            }
+            else {
                 Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
             }
 
             if (bAutomationTest) {
                 Component->Mobility = EComponentMobility::Movable;
-            } else {
+            }
+            else {
                 Component->Mobility = EComponentMobility::Static;
             }
             Component->bVisualizeComponent = true;
@@ -256,10 +333,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             // StaticMesh作成
             StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
             MeshDescription = StaticMesh->CreateMeshDescription(0);
-        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription);
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets);
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&]() {
@@ -278,6 +355,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         // Collision情報設定
                         Mesh->CreateBodySetup();
                         Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+                        // レイキャスト時にブロック状態ではマルチヒットしない
+                        // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
+                        Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
+
                     }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
             });
 
@@ -291,30 +372,78 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
 
-
         // テクスチャ読み込み(無ければnullptrを入れる)
-        TArray<UTexture2D*> SubMeshTextures;
-        for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
-            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath);
-            SubMeshTextures.Add(Texture);
+        TMap<FString, UTexture2D*> SubMeshTextureMap;
+        for (const auto& val : SubMeshMaterialSets) {
+            FString TexturePath = val.TexturePath;
+            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath); //Texture読み込み(無ければnullptrを入れる)
+            SubMeshTextureMap.Add(TexturePath, Texture);
         }
 
+        //PolygonGroup数の整合性チェック
+        check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
+
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&, SubMeshTextures] {
-                // マテリアル作成
-                for (const auto& Texture : SubMeshTextures) {
-                    const auto SourceMaterialPath =
-                        Texture != nullptr
-                        ? TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial")
-                        : TEXT("/PLATEAU-SDK-for-Unreal/DefaultMaterial_No_Texture");
-                    UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                    UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-                    if (Texture != nullptr) {
-                        DynMaterial->SetTextureParameterValue("Texture", Texture);
+            [&, SubMeshMaterialSets, SubMeshTextureMap] {
+
+                for (const auto& SubMeshValue : SubMeshMaterialSets) {
+                    UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
+                    if (SharedMatPtr == nullptr) {
+                        // マテリアル作成
+                        UMaterialInstanceDynamic* DynMaterial;
+                        const auto Texture = *SubMeshTextureMap.Find(SubMeshValue.TexturePath);
+                        if (SubMeshValue.hasMaterial) {
+                            //Material情報が存在する場合
+                            const auto SourceMaterialPath = SubMeshValue.Transparency > 0
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent");
+
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+
+                            DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
+                            DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
+                            DynMaterial->SetVectorParameterValue("SpecularColor", SubMeshValue.Specular);
+                            DynMaterial->SetScalarParameterValue("Ambient", SubMeshValue.Ambient);
+                            DynMaterial->SetScalarParameterValue("Shininess", SubMeshValue.Shininess);
+                            DynMaterial->SetScalarParameterValue("Transparency", SubMeshValue.Transparency);
+
+                            //base color とスペキュラの R:G:B の比率がほぼ同じ場合
+                            if (FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Y)
+                                && FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Z)
+                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
+                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
+                                DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
+                        }
+                        else {
+                            //デフォルトマテリアル設定
+                            const auto SourceMaterialPath =
+                                Texture != nullptr
+                                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
+                                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                        }
+                        //Textureが存在する場合
+                        if (Texture != nullptr)
+                            DynMaterial->SetTextureParameterValue("Texture", Texture);
+
+                        DynMaterial->TwoSided = false;
+                        StaticMesh->AddMaterial(DynMaterial);
+                        //Materialをキャッシュに保存
+                        CachedMaterials.Add(SubMeshValue, DynMaterial);
+
+                        //SubMeshのPolygonGroupIDとMeshDescriptionのPolygonGroupIDの整合性チェック
+                        TAttributesSet<FPolygonGroupID> PolygonGroupAttributes = MeshDescription->PolygonGroupAttributes();
+                        if (PolygonGroupAttributes.HasAttribute(MeshAttribute::PolygonGroup::ImportedMaterialSlotName)) {
+                            FName AttributeValue = PolygonGroupAttributes.GetAttribute<FName>(SubMeshValue.PolygonGroupID, MeshAttribute::PolygonGroup::ImportedMaterialSlotName, 0);
+                            check(SubMeshValue.MaterialSlot == AttributeValue.ToString());
+                        }
                     }
-                    DynMaterial->TwoSided = false;
-                    StaticMesh->AddMaterial(DynMaterial);
+                    else {
+                        //キャッシュのMaterialを使用
+                        StaticMesh->AddMaterial(*SharedMatPtr);
+                    }
                 }
 
                 // 名前設定、ヒエラルキー設定など
@@ -336,8 +465,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent, const plateau::polygonMesh::Node& Node,
-                                                   const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
-                                                   AActor& Actor) {
+    const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel,
+    AActor& Actor) {
     if (Node.getMesh() == nullptr) {
         const auto& CityObject = CityModel->getCityObjectById(Node.getName());
         UStaticMeshComponent* Comp = nullptr;
@@ -350,7 +479,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
                 Comp = PLATEAUCityObjectGroup;
-            } else {
+            }
+            else {
                 StaticClass = UStaticMeshComponent::StaticClass();
                 Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
             }
@@ -363,14 +493,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
             check(Comp != nullptr);
             if (bAutomationTest) {
                 Comp->Mobility = EComponentMobility::Movable;
-            } else {
+            }
+            else {
                 Comp->Mobility = EComponentMobility::Static;
             }
 
             Actor.AddInstanceComponent(Comp);
             Comp->RegisterComponent();
             Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
         return Comp;
     }
