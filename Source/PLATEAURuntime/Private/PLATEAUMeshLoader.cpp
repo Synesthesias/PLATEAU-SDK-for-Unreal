@@ -299,7 +299,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         // テクスチャ読み込み(無ければnullptrを入れる)
         TArray<UTexture2D*> SubMeshTextures;
         for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            FString TexturePath = UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str());
+            const FString TexturePath = FString(UTF8_TO_TCHAR(SubMesh.getTexturePath().c_str()));
             const auto Texture = FPLATEAUTextureLoader::Load(TexturePath);
             SubMeshTextures.Add(Texture);
         }
@@ -346,7 +346,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
         const auto& CityObject = CityModel->getCityObjectById(Node.getName());
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
-        FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
+        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             // CityObjectがある場合はUPLATEAUCityObjectGroupとする
             if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
