@@ -89,7 +89,7 @@ void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstan
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 
-            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder.Replace(TEXT("/"), TEXT("\\"))));
+            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
             Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions);
         }
     }
@@ -193,7 +193,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        OutMesh.addSubMesh("", FirstIndex, EndIndex);
+                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
+
+                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex);
                         continue;
                     }
 
@@ -205,7 +208,9 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             }
         }
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
-        OutMesh.addSubMesh(TextureFilePathStr, FirstIndex, EndIndex);
+
+        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex);
     }
 
     OutMesh.addVerticesList(Vertices);
