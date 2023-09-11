@@ -260,6 +260,7 @@ namespace {
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent, const std::shared_ptr<plateau::polygonMesh::Model> Model,
     const FLoadInputData& LoadInputData, const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled) {
     UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
+    this->PathToTexture = FPathToTexture();
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
 
         if (bCanceled->Load(EMemoryOrder::Relaxed))
@@ -373,25 +374,48 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         Task->Wait();
 
         // テクスチャ読み込み(無ければnullptrを入れる)
-        TMap<FString, UTexture2D*> SubMeshTextureMap;
-        for (const auto& val : SubMeshMaterialSets) {
-            FString TexturePath = val.TexturePath;
-            const auto Texture = FPLATEAUTextureLoader::Load(TexturePath); //Texture読み込み(無ければnullptrを入れる)
-            SubMeshTextureMap.Add(TexturePath, Texture);
-        }
+        // TMap<FString, UTexture2D*> SubMeshTextureMap;
+        
+        // for (const auto& val : SubMeshMaterialSets) {
+            // FString TexturePath = val.TexturePath;
+            
+            // const auto Texture = FPLATEAUTextureLoader::Load(TexturePath); //Texture読み込み(無ければnullptrを入れる)
+            // SubMeshTextureMap.Add(TexturePath, Texture);
+        // }
 
         //PolygonGroup数の整合性チェック
         check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&, SubMeshMaterialSets, SubMeshTextureMap] {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef]
+            {
 
                 for (const auto& SubMeshValue : SubMeshMaterialSets) {
                     UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
                     if (SharedMatPtr == nullptr) {
                         // マテリアル作成
                         UMaterialInstanceDynamic* DynMaterial;
-                        const auto Texture = *SubMeshTextureMap.Find(SubMeshValue.TexturePath);
+                        FString TexturePath = SubMeshValue.TexturePath;
+                        UTexture2D* Texture;
+                        if(TexturePath.IsEmpty())
+                        {
+                            Texture = nullptr;
+                        }
+                        else
+                        {
+                            const bool TextureInCache = PathToTexture.Contains(TexturePath);
+                            if (TextureInCache)
+                            {
+                                Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
+                            }
+                            else
+                            {
+                                Texture = FPLATEAUTextureLoader::Load(TexturePath);
+                                // なければnullptrを返します。
+                                PathToTexture.Add(TexturePath, Texture);
+                            }
+                        }
+                        
                         if (SubMeshValue.hasMaterial) {
                             //Material情報が存在する場合
                             const auto SourceMaterialPath = SubMeshValue.Transparency > 0
