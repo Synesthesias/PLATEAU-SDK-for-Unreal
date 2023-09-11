@@ -62,7 +62,9 @@ private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
     TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
-    FPathToTexture PathToTexture;
+
+    /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
+     FPathToTexture PathToTexture;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
