@@ -211,7 +211,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
         }
         NewTexture->Rename(*TextureName, nullptr, REN_DontCreateRedirectors);
 
-        NewTexture->NeverStream = false;
+        NewTexture->NeverStream = true; // NeverStreamをtrueにしないと、レベルを保存して開き直したときにテクスチャ解像度が極端に低く見えます。
 
         if (GRHISupportsAsyncTextureCreation)
             UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);

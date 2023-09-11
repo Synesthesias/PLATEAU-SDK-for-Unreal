@@ -444,11 +444,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                     else
                     {
                         const bool TextureInCache = PathToTexture.Contains(TexturePath);
-                        if (TextureInCache)
+                        if (TextureInCache) // テクスチャをすでにロード済みの場合、使い回します。
                         {
                             Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
                         }
-                        else
+                        else // テクスチャ未ロードの場合、ロードします。
                         {
                             Texture = FPLATEAUTextureLoader::Load(TexturePath);
                             // なければnullptrを返します。
