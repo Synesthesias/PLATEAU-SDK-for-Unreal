@@ -16,6 +16,29 @@ namespace plateau::polygonMesh {
     class Mesh;
 }
 
+struct FSubMeshMaterialSet {
+public:
+    bool hasMaterial;
+    FVector3f Diffuse;
+    FVector3f Specular;
+    FVector3f Emissive;
+    float Shininess;
+    float Transparency;
+    float Ambient;
+    bool isSmooth;
+    FString TexturePath;
+    FPolygonGroupID PolygonGroupID = 0;
+    FString MaterialSlot = FString("");
+
+    FSubMeshMaterialSet();
+    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath);
+    bool operator==(const FSubMeshMaterialSet& Other) const;
+    bool Equals(const FSubMeshMaterialSet& Other) const;
+private:
+};
+
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value);
+
 struct FLoadInputData;
 class UPLATEAUCityObjectGroup;
 
@@ -35,6 +58,7 @@ public:
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
+    TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
