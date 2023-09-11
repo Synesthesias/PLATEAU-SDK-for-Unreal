@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <citygml/material.h>
+
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 
@@ -43,6 +45,7 @@ struct FLoadInputData;
 class UPLATEAUCityObjectGroup;
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
+    using FPathToTexture = TMap<FString, UTexture2D*>;
 public:
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
@@ -59,6 +62,9 @@ private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
     TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
+
+    /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
+     FPathToTexture PathToTexture;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
