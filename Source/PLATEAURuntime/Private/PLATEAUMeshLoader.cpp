@@ -471,7 +471,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
         const auto& CityObject = CityModel->getCityObjectById(Node.getName());
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
-        FString DesiredName = UTF8_TO_TCHAR(Node.getName().c_str());
+        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             // CityObjectがある場合はUPLATEAUCityObjectGroupとする
             if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
