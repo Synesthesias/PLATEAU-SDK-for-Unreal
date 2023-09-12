@@ -95,7 +95,7 @@ public:
                 ? plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath), plateau::network::Client("", ""))
                 : plateau::dataset::GmlFile(TCHAR_TO_UTF8(*GmlPath));
             const auto CopiedGml = SourceGml.fetch(TCHAR_TO_UTF8(*Destination));
-            return UTF8_TO_TCHAR(CopiedGml->getPath().c_str());
+            return FString(UTF8_TO_TCHAR(CopiedGml->getPath().c_str()));
         }
         catch (std::exception& e) {
             UE_LOG(LogTemp, Error, TEXT("Failed to copy %s"), *GmlPath);
