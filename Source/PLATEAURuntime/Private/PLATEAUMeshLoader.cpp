@@ -461,9 +461,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         //Material情報が存在する場合
                         const auto SourceMaterialPath = SubMeshValue.Transparency > 0
                                                             ? TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial")
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent")
                                                             : TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent");
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
 
                         UMaterial* Mat = Cast<UMaterial>(
                             StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
