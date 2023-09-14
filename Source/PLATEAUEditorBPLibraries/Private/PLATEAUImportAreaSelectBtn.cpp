@@ -7,6 +7,7 @@
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
+#include "Factories/MaterialImportHelpers.h"
 
 #define LOCTEXT_NAMESPACE "UPLATEAUImportAreaSelectBtn"
 
@@ -74,6 +75,21 @@ FPackageInfo UPLATEAUImportAreaSelectBtn::GetPackageInfo(const int64 Package) {
     const auto PackageInfo = plateau::dataset::CityModelPackageInfo::getPredefined(static_cast<plateau::dataset::PredefinedCityModelPackage>(Package));
     const FPackageInfo PackageInfoData(PackageInfo.hasAppearance(), PackageInfo.minLOD(), PackageInfo.maxLOD());
     return PackageInfoData;
+}
+
+/**
+ * @brief Fallback Material取得
+ * @param Package パッケージを表す数値
+ * @return Fallback Materialの情報
+ */
+UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(const int64 Package) {
+    const FString Name = UPLATEAUImportSettings::GetDefaultFallbackMaterialName(Package);
+    const FString FallbackPath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback";
+    FText Error;
+    UMaterialInterface* result = UMaterialImportHelpers::FindExistingMaterial(FallbackPath, Name, false, Error);
+    if(result == nullptr)
+        UE_LOG(LogTemp, Warning, TEXT("Fallback Material Not Found: %s"), *Error.ToString());
+    return result;
 }
 
 #undef LOCTEXT_NAMESPACE

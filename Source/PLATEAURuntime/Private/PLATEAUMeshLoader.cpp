@@ -426,7 +426,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
 
     const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef]
+        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData]
         {
             for (const auto& SubMeshValue : SubMeshMaterialSets)
             {
@@ -485,14 +485,19 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                     }
                     else
                     {
-                        //デフォルトマテリアル設定
-                        const auto SourceMaterialPath =
-                            Texture != nullptr
+                        if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
+                            DynMaterial = StaticCast<UMaterialInstanceDynamic*>(LoadInputData.FallbackMaterial);
+                        }
+                        else {
+                            //デフォルトマテリアル設定
+                            const auto SourceMaterialPath =
+                                Texture != nullptr
                                 ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
                                 : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
-                        UMaterial* Mat = Cast<UMaterial>(
-                            StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                        DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                            UMaterial* Mat = Cast<UMaterial>(
+                                StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                        }
                     }
                     //Textureが存在する場合
                     if (Texture != nullptr)

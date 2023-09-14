@@ -44,4 +44,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")
     static FPackageInfo GetPackageInfo(const int64 Package);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ImportPanel")
+    static UMaterialInterface* GetDefaultFallbackMaterial(const int64 Package);
 };

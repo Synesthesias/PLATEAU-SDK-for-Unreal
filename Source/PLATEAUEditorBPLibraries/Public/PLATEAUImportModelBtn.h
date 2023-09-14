@@ -43,6 +43,9 @@ struct FPackageInfoSettings {
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int Granularity;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    UMaterialInterface* FallbackMaterial;
 };
 
 UCLASS()
