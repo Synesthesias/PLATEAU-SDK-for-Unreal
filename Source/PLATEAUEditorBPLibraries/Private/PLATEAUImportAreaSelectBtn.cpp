@@ -88,7 +88,7 @@ UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(cons
     FText Error;
     UMaterialInterface* result = UMaterialImportHelpers::FindExistingMaterial(FallbackPath, Name, false, Error);
     if(result == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("Fallback Material Not Found: %s"), *Error.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("Fallback Material Not Found: %s %s"), *Name, *FString(Error.ToString()));
     return result;
 }
 
