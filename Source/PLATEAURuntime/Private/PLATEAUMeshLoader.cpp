@@ -406,9 +406,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             // Collision情報設定
             Mesh->CreateBodySetup();
             Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-            // レイキャスト時にブロック状態ではマルチヒットしない
-            // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
-            Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
         });
 
     const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&StaticMesh]
@@ -461,9 +458,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         //Material情報が存在する場合
                         const auto SourceMaterialPath = SubMeshValue.Transparency > 0
                                                             ? TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial")
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent")
                                                             : TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent");
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
 
                         UMaterial* Mat = Cast<UMaterial>(
                             StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
