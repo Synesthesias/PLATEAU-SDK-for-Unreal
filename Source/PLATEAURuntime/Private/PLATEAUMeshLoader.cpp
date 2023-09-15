@@ -482,6 +482,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                     }
                     else
                     {
+                        //Fallbackマテリアル設定
                         if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
                             DynMaterial = StaticCast<UMaterialInstanceDynamic*>(LoadInputData.FallbackMaterial);
                         }

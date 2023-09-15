@@ -86,6 +86,10 @@ UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(cons
     const FString Name = UPLATEAUImportSettings::GetDefaultFallbackMaterialName(Package);
     const FString FallbackPath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback";
     FText Error;
+
+    if (Name.IsEmpty())
+        return nullptr;
+
     UMaterialInterface* result = UMaterialImportHelpers::FindExistingMaterial(FallbackPath, Name, false, Error);
     if(result == nullptr)
         UE_LOG(LogTemp, Warning, TEXT("Fallback Material Not Found: %s %s"), *Name, *FString(Error.ToString()));
