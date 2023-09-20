@@ -80,7 +80,7 @@ FPackageInfo UPLATEAUImportAreaSelectBtn::GetPackageInfo(const int64 Package) {
 /**
  * @brief Fallback Material取得
  * @param Package パッケージを表す数値
- * @return Fallback Materialの情報
+ * @return Fallback Material
  */
 UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(const int64 Package) {
     const FString Name = UPLATEAUImportSettings::GetDefaultFallbackMaterialName(Package);
@@ -88,11 +88,23 @@ UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(cons
     FText Error;
 
     if (Name.IsEmpty())
-        return nullptr;
+        return GetDefaultMaterial();
 
     UMaterialInterface* result = UMaterialImportHelpers::FindExistingMaterial(FallbackPath, Name, false, Error);
-    if(result == nullptr)
+    if (result == nullptr) {
         UE_LOG(LogTemp, Warning, TEXT("Fallback Material Not Found: %s %s"), *Name, *FString(Error.ToString()));
+        result = GetDefaultMaterial();
+    }       
+    return result;
+}
+
+/**
+ * @brief Default Material取得
+ * @return Default Material
+ */
+UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultMaterial() {
+    const TCHAR* SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+    UMaterialInterface* result = Cast<UMaterialInterface>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
     return result;
 }
 
