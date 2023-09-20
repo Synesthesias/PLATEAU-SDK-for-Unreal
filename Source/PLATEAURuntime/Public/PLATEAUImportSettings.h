@@ -305,12 +305,12 @@ public:
         switch (Pkg) {
         case plateau::dataset::PredefinedCityModelPackage::Building: return "PlateauDefaultBuildingMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::Road: return "PlateauDefaultRoadMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return "PlateauDefaultVegetationMaterialInstance";
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return "PlateauDefaultUrbanPlanningDecisionMaterialInstance";
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return "PlateauDefaultLandUseMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return "PlateauDefaultCityFurnitureMaterialInstance";
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return "PlateauDefaultVegetationMaterialInstance"; 
         case plateau::dataset::PredefinedCityModelPackage::Relief: return "PlateauDefaultReliefMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return "PlateauDefaultDisasterMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::LandUse: return "PlateauDefaultLandUseMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return "PlateauDefaultUrbanPlanningDecisionMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::Railway: return "PlateauDefaultRailwayMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::Waterway: return "PlateauDefaultWaterwayMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::WaterBody: return "PlateauDefaultWaterBodyMaterialInstance";
@@ -320,9 +320,7 @@ public:
         case plateau::dataset::PredefinedCityModelPackage::Tunnel: return "PlateauDefaultTunnelMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::UndergroundFacility: return "PlateauDefaultUndergroundFacilityMaterialInstance";
         case plateau::dataset::PredefinedCityModelPackage::UndergroundBuilding: return "PlateauDefaultUndergroundBuildingMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::Area: return "PlateauDefaultAreaMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::OtherConstruction: return "PlateauDefaultOtherConstructionMaterialInstance";
-        case plateau::dataset::PredefinedCityModelPackage::Generic: return "PlateauDefaultGenericMaterialInstance";
+        case plateau::dataset::PredefinedCityModelPackage::Area: return "PlateauDefaultLandUseMaterialInstance";    // 土地利用を流用
         case plateau::dataset::PredefinedCityModelPackage::Unknown: return "PlateauDefaultUnknownMaterialInstance";
         default: return "";
         }
