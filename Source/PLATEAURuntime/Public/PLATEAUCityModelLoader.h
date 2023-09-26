@@ -27,6 +27,7 @@ struct FLoadInputData {
     plateau::polygonMesh::MeshExtractOptions ExtractOptions;
     FString GmlPath;
     bool bIncludeAttrInfo;
+    UMaterialInterface* FallbackMaterial;
 };
 
 UENUM(BlueprintType)

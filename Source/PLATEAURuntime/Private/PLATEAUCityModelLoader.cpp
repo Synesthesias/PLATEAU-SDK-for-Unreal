@@ -42,7 +42,8 @@ public:
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
                 LoadInputData.bIncludeAttrInfo = Settings.bIncludeAttrInfo;
-                auto& ExtractOptions = LoadInputData.ExtractOptions;
+                LoadInputData.FallbackMaterial = Settings.FallbackMaterial;
+                auto& ExtractOptions = LoadInputData.ExtractOptions;     
                 ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
                 ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
                 ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
