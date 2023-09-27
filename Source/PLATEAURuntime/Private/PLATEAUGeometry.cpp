@@ -96,3 +96,35 @@ FVector UPLATEAUGeoReferenceBlueprintLibrary::Project(FPLATEAUGeoReference& GeoR
     const auto NativePoint = GeoReference.GetData().project(GeoCoordinate.GetNativeData());
     return FVector(NativePoint.x, NativePoint.y, NativePoint.z);
 }
+
+FPLATEAUExtent UPLATEAUGeoReferenceBlueprintLibrary::UnprojectExtent(FPLATEAUGeoReference& GeoReference,
+    const FBox& Box)
+{
+    auto Min = Unproject(GeoReference, Box.Min);
+    auto Max = Unproject(GeoReference, Box.Max);
+    auto Tmp = Min;
+    Min.Latitude = FMath::Min(Tmp.Latitude, Max.Latitude);
+    Min.Longitude = FMath::Min(Tmp.Longitude, Max.Longitude);
+    Min.Height = FMath::Min(Tmp.Height, Max.Height);
+    Max.Latitude = FMath::Max(Tmp.Latitude, Max.Latitude);
+    Max.Longitude = FMath::Max(Tmp.Longitude, Max.Longitude);
+    Max.Height = FMath::Max(Tmp.Height, Max.Height);
+
+    return FPLATEAUExtent(plateau::geometry::Extent(Min.GetNativeData(), Max.GetNativeData()));
+}
+
+FBox UPLATEAUGeoReferenceBlueprintLibrary::ProjectExtent(FPLATEAUGeoReference& GeoReference,
+    const FPLATEAUExtent& Extent)
+{
+    auto Min = Project(GeoReference, Extent.Min);
+    auto Max = Project(GeoReference, Extent.Max);
+    auto Tmp = Min;
+    Min.X = FMath::Min(Tmp.X, Max.X);
+    Min.Y = FMath::Min(Tmp.Y, Max.Y);
+    Min.Z = FMath::Min(Tmp.Z, Max.Z);
+    Max.X = FMath::Max(Tmp.X, Max.X);
+    Max.Y = FMath::Max(Tmp.Y, Max.Y);
+    Max.Z = FMath::Max(Tmp.Z, Max.Z);
+
+    return FBox(Min, Max);
+}
