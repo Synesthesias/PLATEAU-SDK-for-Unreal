@@ -32,7 +32,10 @@ namespace plateau::polygonMesh {
 
         void setTexturePath(std::string file_path);
 
+        void setStartIndex(int start_index);
         void setEndIndex(int end_index);
+
+        bool operator==(const SubMesh& other) const;
 
         /// SubMesh の情報を stringstream に書き込みます。
         void debugString(std::stringstream& ss, int indent) const;

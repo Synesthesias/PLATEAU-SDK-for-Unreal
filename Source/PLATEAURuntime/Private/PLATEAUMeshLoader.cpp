@@ -295,6 +295,8 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
                                    const FLoadInputData& LoadInputData,
                                    const std::shared_ptr<const citygml::CityModel> CityModel, TAtomic<bool>* bCanceled)
 {
+    UE_LOG(LogTemp, Log, TEXT("LoadModel: %s %d"), *FString(Model->debugString().c_str()), Model->getAllMeshes().size());
+
     UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
     this->PathToTexture = FPathToTexture();
     for (int i = 0; i < Model->getRootNodeCount(); i++)

@@ -31,6 +31,11 @@ namespace plateau::geometry {
                 longitude(lon),
                 height(height) {
         }
+
+        GeoCoordinate operator+(GeoCoordinate op) const;
+        GeoCoordinate operator*(double op) const;
+        GeoCoordinate operator-(GeoCoordinate op) const;
+        GeoCoordinate operator/(GeoCoordinate op) const;
     };
 
 
@@ -84,6 +89,9 @@ namespace plateau::geometry {
          * min と max の中点を GeoCoordinate で返します。
          */
         GeoCoordinate centerPoint() const;
+
+        /// Extentの南西端のUVを(0,0),北東端のUVを(1,1)とするとき、指定位置のUVを求めます。
+        TVec2f uvAt(GeoCoordinate coord) const;
 
         static Extent all() {
             return {

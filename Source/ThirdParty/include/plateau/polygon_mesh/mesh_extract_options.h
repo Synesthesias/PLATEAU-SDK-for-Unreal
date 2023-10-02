@@ -22,21 +22,24 @@ namespace plateau::polygonMesh {
     struct MeshExtractOptions {
         /// 設定をデフォルト値にするコンストラクタです。
         MeshExtractOptions() :
-            reference_point(TVec3d(0, 0, 0)),
-            mesh_axes(geometry::CoordinateSystem::EUN),
-            mesh_granularity(MeshGranularity::PerPrimaryFeatureObject),
-            max_lod(PolygonMeshUtils::max_lod_in_specification_), // 仕様上ありえる最大LODをデフォルトとします。
-            min_lod(0), // 仕様上ありえる最小LODをデフォルトとします。
-            export_appearance(true),
-            grid_count_of_side(10),
-            unit_scale(1.0),
-            coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
-            exclude_city_object_outside_extent(true),
-            exclude_polygons_outside_extent(false),
-            extent(geometry::Extent::all()), // 全範囲をデフォルトとします。
-            enable_texture_packing(false),
-            texture_packing_resolution(2048)
-            {}
+                reference_point(TVec3d(0, 0, 0)),
+                mesh_axes(geometry::CoordinateSystem::EUN),
+                mesh_granularity(MeshGranularity::PerPrimaryFeatureObject),
+                max_lod(PolygonMeshUtils::max_lod_in_specification_), // 仕様上ありえる最大LODをデフォルトとします。
+                min_lod(0), // 仕様上ありえる最小LODをデフォルトとします。
+                export_appearance(true),
+                grid_count_of_side(10),
+                unit_scale(1.0),
+                coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
+                exclude_city_object_outside_extent(true),
+                exclude_polygons_outside_extent(false),
+                extent(geometry::Extent::all()), // 全範囲をデフォルトとします。
+                enable_texture_packing(false),
+                texture_packing_resolution(2048),
+                attach_map_tile(true),
+                map_tile_zoom_level(15),
+                map_tile_url("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg")
+                {}
 
     public:
         TVec3d reference_point;
@@ -85,5 +88,30 @@ namespace plateau::polygonMesh {
          */
         unsigned texture_packing_resolution;
         geometry::Extent extent;
+
+        /**
+         * 土地でのみ利用します。
+         * 地図タイルを貼り付けるかどうかです。
+         */
+        bool attach_map_tile;
+
+        /**
+         * 土地でのみ利用します。
+         * URLで地図タイルをダウンロードする場合のズームレベルです。
+         */
+        int map_tile_zoom_level;
+
+        /**
+         * 土地でのみ利用します。
+         * URLで地図タイルをダウンロードする場合のURLであり、文字列として"{x}","{y}","{z}"を含むものです。
+         * C#とC++でマーシャリングする関係上、charの固定長配列である必要があります。
+         * 配列長を変更する場合、C#の MeshExtractOptions.cs にも変更を加える必要があります。
+         *
+         * 1000文字の根拠:
+         * Wikipediaで登録されている長い言葉のページのURLが収まれば常識的に十分だろうと考えました。
+         * 下のブログによると、2008年時点で最も長いURLは705文字です。
+         * https://ctrlshift.hatenadiary.org/entry/20080119/1200719590
+         */
+        char map_tile_url[1000];
     };
 }

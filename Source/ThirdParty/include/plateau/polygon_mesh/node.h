@@ -32,7 +32,10 @@ namespace plateau::polygonMesh {
         Mesh* getMesh() const;
         void setMesh(std::unique_ptr<Mesh>&& mesh);
 
-        void addChildNode(Node&& node);
+        /// Nodeをmoveで追加し、追加後のNodeを返します。
+        Node& addChildNode(Node&& node);
+        void setChildNodes(std::vector<Node>&& child_nodes);
+
         Node& addEmptyChildNode(const std::string& name);
         size_t getChildCount() const;
 
@@ -49,9 +52,14 @@ namespace plateau::polygonMesh {
 
         /// Node 以下の階層構造を stringstream に書き込みます。
         void debugString(std::stringstream& ss, int indent) const;
+
+        void setIsPrimary(bool is_primary_); // GranularityConverterでのみ利用します。
+        bool isPrimary() const; // GranularityConverterでのみ利用します。
+        void reserveChild(size_t reserve_count);
     private:
         std::string name_;
         std::vector<Node> child_nodes_;
         std::unique_ptr<Mesh> mesh_;
+        bool is_primary_; // GranularityConverterでのみ利用します。
     };
 }

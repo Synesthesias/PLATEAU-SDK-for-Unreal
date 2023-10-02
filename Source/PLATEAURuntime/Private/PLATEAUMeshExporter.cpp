@@ -233,4 +233,35 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         return ComponentName;
 }
 
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option)     {
+
+    TargetActor = ModelActor;
+    auto OutModel = plateau::polygonMesh::Model::createModel();
+    TMap<FString, plateau::polygonMesh::Node*> ParentNodeMap;
+
+    for (const auto comp : ModelComponents) {
+    
+        FString ParentName = comp->GetAttachParent()->GetName();
+        auto ParentRef = ParentNodeMap.Find(ParentName);
+        plateau::polygonMesh::Node* Parent;
+
+        if (ParentRef == nullptr) {
+            Parent = &OutModel->addEmptyNode(TCHAR_TO_UTF8(*ParentName));
+            ParentNodeMap.Add(ParentName, Parent);
+        }
+        else {
+            Parent = *ParentRef;
+        }
+            
+        auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
+        auto Mesh = plateau::polygonMesh::Mesh();
+        CreateMesh(Mesh, comp, Option);
+        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+        Node.setMesh(std::move(MeshPtr));
+    }
+
+    return OutModel;
+}
+
+
 #endif

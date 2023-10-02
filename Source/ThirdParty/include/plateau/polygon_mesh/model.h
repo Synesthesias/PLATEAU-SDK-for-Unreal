@@ -31,8 +31,8 @@ namespace plateau::polygonMesh {
 
         static std::shared_ptr<Model> createModel();
 
-        /// 作った Node は move で渡すことを想定しています。
-        void addNode(Node&& node);
+        /// Nodeをmoveで追加します。追加した後のNodeを返します。
+        Node& addNode(Node&& node);
 
         Node& addEmptyNode(const std::string& name);
 
@@ -46,6 +46,10 @@ namespace plateau::polygonMesh {
 
         // Model以下の階層構造を読みやすい文字列にします。
         std::string debugString() const;
+
+        /// ルートノードから再帰的に探索することで、Modelに含まれるすべてのMeshを取得します。
+        std::vector<Mesh*> getAllMeshes() const;
+        void reserveRootNodes(size_t reserve_count);
     private:
         std::vector<Node> root_nodes_;
     };

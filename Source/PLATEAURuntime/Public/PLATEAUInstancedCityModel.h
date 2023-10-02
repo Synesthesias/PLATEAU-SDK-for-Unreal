@@ -97,6 +97,13 @@ public:
     bool IsFiltering();
 
     /**
+     * @brief 
+     * @param 
+     * @return thisを返します。
+     */
+    APLATEAUInstancedCityModel* ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid);
+
+    /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
      * @param MinLod 可視化される最小のLOD
@@ -121,4 +128,11 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
+    /*
+    UStaticMeshComponent* LoadNode(
+        USceneComponent* ParentComponent,
+        const plateau::polygonMesh::Node& Node,
+        const std::shared_ptr<const citygml::CityModel> CityModel,
+        AActor& Actor);
+        */
 };

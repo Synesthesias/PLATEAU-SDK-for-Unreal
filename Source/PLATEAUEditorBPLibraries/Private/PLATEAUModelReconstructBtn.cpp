@@ -30,4 +30,6 @@ void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* T
     UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %s %d %d %s"), *TargetCityModel->GetActorNameOrLabel(), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
 
 
+    TargetCityModel->ReconstructModel(TargetCityObjects, ReconstructType, bDivideGrid);
+
 }

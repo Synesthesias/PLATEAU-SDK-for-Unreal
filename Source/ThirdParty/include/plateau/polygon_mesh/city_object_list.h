@@ -64,6 +64,14 @@ namespace plateau::polygonMesh {
                 ? false
                 : atomic_index < other.atomic_index;
         }
+
+        bool operator==(const CityObjectIndex& other) const {
+            return primary_index == other.primary_index && atomic_index == other.atomic_index;
+        };
+
+        std::string toString() const {
+            return std::to_string(primary_index) + "," + std::to_string(atomic_index);
+        };
     };
 
     /**
@@ -82,9 +90,12 @@ namespace plateau::polygonMesh {
 
     public:
         CityObjectList() = default;
+        CityObjectList(const std::vector<std::tuple<CityObjectIndex, std::string>>& initial_val);
 
         const std::string& getAtomicGmlID(const CityObjectIndex& city_object_index) const;
         const std::string& getPrimaryGmlID(int index) const;
+        bool tryGetPrimaryGmlID(int index, std::string& out_gml_id) const;
+        bool tryGetAtomicGmlID(const CityObjectIndex& city_obj_index, std::string& out_gml_id) const;
 
         void getAllKeys(std::vector<CityObjectIndex>& keys) const;
 
@@ -93,6 +104,10 @@ namespace plateau::polygonMesh {
         CityObjectIndex getCityObjectIndex(const std::string& gml_id) const;
 
         void add(const CityObjectIndex& key, const std::string& value);
+
+        size_t size() const;
+
+        bool operator==(const CityObjectList& other) const;
 
     private:
         std::map<CityObjectIndex, std::string> city_object_index_to_gml_id_;
