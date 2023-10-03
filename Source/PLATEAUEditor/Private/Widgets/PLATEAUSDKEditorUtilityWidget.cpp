@@ -251,9 +251,14 @@ void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InSe
 
     ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
 
-    Async(EAsyncExecution::Thread, [bGettingNativeDatasetMetadata = bGettingNativeDatasetMetadata, ServerDatasetMetadataMapArray = ServerDatasetMetadataMapArray, ClientPtr = ClientPtr, GetDatasetMetaDataAsyncSuccessDelegate = GetDatasetMetaDataAsyncSuccessDelegate]() mutable {
+    Async(EAsyncExecution::Thread, [
+        bGettingNativeDatasetMetadata = bGettingNativeDatasetMetadata,
+        ServerDatasetMetadataMapArray = &ServerDatasetMetadataMapArray,
+        ClientPtr = ClientPtr,
+        GetDatasetMetaDataAsyncSuccessDelegate = &GetDatasetMetaDataAsyncSuccessDelegate
+        ]() mutable {
         bGettingNativeDatasetMetadata = true;
-        ServerDatasetMetadataMapArray.Reset();
+        ServerDatasetMetadataMapArray->Reset();
         std::vector<plateau::network::DatasetMetadataGroup> NativeDatasetMetadataGroups;
         ClientPtr->getMetadata(NativeDatasetMetadataGroups);
 
@@ -267,11 +272,11 @@ void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InSe
                 ServerDatasetMetadata.ID = UTF8_TO_TCHAR(Dataset.id.c_str());
                 ServerDatasetMetadataMap.ServerDatasetMetadataArray.Add(ServerDatasetMetadata);
             }
-            ServerDatasetMetadataMapArray.Add(ServerDatasetMetadataMap);
+            ServerDatasetMetadataMapArray->Emplace(ServerDatasetMetadataMap);
         }
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([GetDatasetMetaDataAsyncSuccessDelegate, ServerDatasetMetadataMapArray] {
-            GetDatasetMetaDataAsyncSuccessDelegate.Broadcast(ServerDatasetMetadataMapArray);
+            GetDatasetMetaDataAsyncSuccessDelegate->Broadcast(*ServerDatasetMetadataMapArray);
         }, TStatId(), nullptr, ENamedThreads::GameThread);
 
         bGettingNativeDatasetMetadata = false;

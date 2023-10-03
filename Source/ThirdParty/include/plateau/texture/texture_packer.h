@@ -24,6 +24,9 @@ namespace plateau::texture {
         void process(plateau::polygonMesh::Model& model);
         void processNodeRecursive(const plateau::polygonMesh::Node& node);
         void processMesh(plateau::polygonMesh::Mesh* mesh);
+        void flush();
+        AtlasInfo packImage(TextureImageBase* image, const std::string& src_tex_path, int& out_target_canvas_id);
+        void setSaveFilePath(const std::filesystem::path& dir, const std::string& file_name_without_extension);
 
     private:
         bool isTexturePacked(const std::string& src_file_path, TextureAtlasCanvas*& out_contained_canvas_ptr, AtlasInfo& out_atlas_info);

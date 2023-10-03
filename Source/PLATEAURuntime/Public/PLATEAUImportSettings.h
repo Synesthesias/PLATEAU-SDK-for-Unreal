@@ -69,6 +69,24 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Import Settings")
         UMaterialInterface* FallbackMaterial;
+
+    /* 
+    * @brief 地図タイルを付与するかどうかを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
+        bool bAttachMapTile;
+
+    /*
+    * @brief 地図タイルのURLを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
+        FString MapTileUrl;
+
+    /*
+    * @brief 地図タイルのズームレベルを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(EditAnywhere, Category = "Import Settings")
+        int ZoomLevel;
 };
 
 UCLASS()

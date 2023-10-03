@@ -29,36 +29,45 @@ public:
      * @brief ViewportのConstructから呼び出される初期化処理です。
      */
     void Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InFileCollection);
-    
-    FPLATEAUExtent GetExtent() const;
-    void InitHandlePosition() const;
+
+    /**
+     * @brief 選択状態を初期化
+     */
+    void ResetSelectedArea();
 
     // FEditorViewportClient interface
     virtual void Tick(float DeltaSeconds) override;
     virtual void Draw(const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
     virtual void DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) override;
     virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
+    virtual void CapturedMouseMove(FViewport* InViewport, int32 InMouseX, int32 InMouseY) override;
     virtual void TrackingStopped() override;
     virtual bool ShouldScaleCameraSpeedByDistance() const override;
 
+    void SwitchFeatureInfoDisplay(const int Lod, const bool bCheck) const;
+
 private:
     // このインスタンスを保持しているExtentEditorへのポインタ
-    TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
+    TWeakPtr<FPLATEAUExtentEditor> ExtentEditorPtr;
     FAdvancedPreviewScene* AdvancedPreviewScene;
 
-    TUniquePtr<class FPLATEAUExtentGizmo> ExtentGizmo;
-    TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
     TUniquePtr<class FPLATEAUBasemap> Basemap;
     TSharedPtr<class FPLATEAUFeatureInfoDisplay> FeatureInfoDisplay;
     std::shared_ptr<plateau::dataset::IDatasetAccessor> DatasetAccessor;
 
     // 内部状態
-    int SelectedHandleIndex = -1;
+    FPLATEAUExtent Extent;
+    bool IsLeftMouseButtonPressed = false;
+    bool IsLeftMouseAndShiftButtonPressed = false;
+    bool IsLeftMouseButtonMoved = false;
+    bool IsLeftMouseAndShiftButtonMoved = false;
     bool IsCameraMoving = false;
+    FVector CachedWorldMousePos; 
     FVector TrackingStartedPosition;
-    FVector TrackingStartedGizmoPosition;
     FVector TrackingStartedCameraPosition;
-
+    TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
+    
+    bool GizmoContains(const FPLATEAUMeshCodeGizmo Gizmo) const;
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
     void InitCamera();

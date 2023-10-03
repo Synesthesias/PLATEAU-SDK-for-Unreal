@@ -7,7 +7,6 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
 #include "PropertyCustomizationHelpers.h"
-#include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SMultiLineEditableTextBox.h"
 
