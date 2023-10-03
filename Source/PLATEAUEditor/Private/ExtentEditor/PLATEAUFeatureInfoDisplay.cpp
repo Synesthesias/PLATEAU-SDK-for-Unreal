@@ -97,10 +97,10 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
 
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
-void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
+bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
     // 生成済みの場合はスキップ
     if (AsyncLoadedPanels.Find(MeshCodeGizmo.GetRegionMeshID()))
-        return;
+        return false;
 
     const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
     AsyncLoadedPanels.Add(MeshCodeGizmo.GetRegionMeshID(), AsyncLoadedTile);
@@ -117,6 +117,17 @@ void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUMeshCodeGizmo& MeshCo
     const FBox Box{FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z), FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z)};
 
     AsyncLoadedTile->LoadMaxLodAsync(Input, Box);
+
+    return true;
+}
+
+int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
+    int Count = 0;
+    for (const auto& Entry : AsyncLoadedPanels) {
+        if (Entry.Value->GetLoadMaxLodTaskStatus() == EPLATEAUFeatureInfoPanelStatus::Loading)
+            ++Count;
+    }
+    return Count;
 }
 
 bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {

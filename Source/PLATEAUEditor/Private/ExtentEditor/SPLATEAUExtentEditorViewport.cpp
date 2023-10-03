@@ -137,7 +137,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
             [
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
                 OnClicked_Lambda([this] {
-                    const auto ReferencePoint = GetReferencePoint(ExtentEditorPtr.Pin()->GetExtent().GetNativeData(), ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
+                    const auto ReferencePoint = ExtentEditorPtr.Pin()->GetSelectedCenterPoint(ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
                     const auto PackageMask = GetPackageMask();
                     const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
                     if (EditorUtilityWidget != nullptr) {
@@ -330,31 +330,24 @@ TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
     return OwnerTab.Pin();
 }
 
-FVector3d SPLATEAUExtentEditorViewport::GetReferencePoint(const plateau::geometry::Extent Extent, const int ZoneID) {
-    // 平面直角座標系への変換
-    auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
-    GeoReferenceWithoutOffset.ZoneID = ZoneID;
-    GeoReferenceWithoutOffset.UpdateNativeData();
-
-    const auto MinPoint = GeoReferenceWithoutOffset.GetData().project(Extent.min);
-    const auto MaxPoint = GeoReferenceWithoutOffset.GetData().project(Extent.max);
-    const auto NewExtentCenterRaw = (MinPoint + MaxPoint) / 2.0;
-    return FVector3d(NewExtentCenterRaw.x, NewExtentCenterRaw.y, NewExtentCenterRaw.z);
-}
-
 int64 SPLATEAUExtentEditorViewport::GetPackageMask() const {
-    const auto& Extent = ExtentEditorPtr.Pin()->GetExtent();
+    const auto& SelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes();
+    std::vector<plateau::dataset::MeshCode> NativeSelectedMeshCodes;
+    for (const auto& Code : SelectedMeshCodes) {
+        NativeSelectedMeshCodes.emplace_back(TCHAR_TO_UTF8(*Code));
+    }
+
     if (ExtentEditorPtr.Pin()->IsImportFromServer()) {
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(ExtentEditorPtr.Pin()->GetServerDatasetID(), *ClientRef);
-        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetNativeData());
+        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
         const auto PackageMask = FilteredDatasetAccessor->getPackages();
         ExtentEditorPtr.Pin()->SetServerPackageMask(PackageMask);
         return static_cast<int64>(PackageMask);
     }
 
     const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()));
-    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetNativeData());
+    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
     const auto PackageMask = FilteredDatasetAccessor->getPackages();
     ExtentEditorPtr.Pin()->SetLocalPackageMask(PackageMask);
     return static_cast<int64>(PackageMask);

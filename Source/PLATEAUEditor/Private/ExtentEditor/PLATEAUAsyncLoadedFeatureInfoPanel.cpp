@@ -222,9 +222,6 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureI
 
         return MaxLods;
     }, LowLevelTasks::ETaskPriority::BackgroundHigh);
-
-    GetMaxLodTask.Wait();
-    MaxLodTaskStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 }
 
 bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeconds) {
@@ -233,6 +230,8 @@ bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeco
 
     if (!GetMaxLodTask.IsValid() || !GetMaxLodTask.IsCompleted())
         return false;
+
+    MaxLodTaskStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 
     const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
     if (PreviewScene == nullptr)

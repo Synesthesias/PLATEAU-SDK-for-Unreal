@@ -66,6 +66,10 @@ public:
         return IconComponents.Num();
     }
 
+    EPLATEAUFeatureInfoPanelStatus GetLoadMaxLodTaskStatus() const {
+        return MaxLodTaskStatus;
+    }
+
     void RecalculateIconTransform(const TArray<int>& ShowLods);
 private:
     TWeakPtr<FPLATEAUFeatureInfoDisplay> Owner;

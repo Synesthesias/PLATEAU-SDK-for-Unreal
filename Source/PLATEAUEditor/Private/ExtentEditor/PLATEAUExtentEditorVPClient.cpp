@@ -27,7 +27,12 @@ DECLARE_CYCLE_STAT(TEXT("FeatureInfoDisplay"), STAT_FeatureInfoDisplay, STATGROU
 
 namespace {
     /**
-     * @brief 最大並列数
+     * @brief 最大パネル読み込み並列数
+     */
+    constexpr int MaxLoadPanelParallelCount = 8;
+
+    /**
+     * @brief 最大パネル追加並列数
      */
     constexpr int MaxAddComponentParallelCount = 8;
 }
@@ -79,7 +84,7 @@ void FPLATEAUExtentEditorViewportClient::ResetSelectedArea() {
 
 void FPLATEAUExtentEditorViewportClient::InitCamera() {
     ToggleOrbitCamera(false);
-    SetCameraSetup(FVector::ZeroVector, FRotator::ZeroRotator, FVector(0.0, 0, 10000.0), FVector::Zero(), FVector(0, 0, 10000.0), FRotator(-90, -90, 0));
+    SetCameraSetup(FVector::ZeroVector, FRotator::ZeroRotator, FVector(0.0, 0, 8000.0), FVector::Zero(), FVector(0, 0, 8000.0), FRotator(-90, -90, 0));
     CameraController->AccessConfig().bLockedPitch = true;
     CameraController->AccessConfig().MaximumAllowedPitchRotation = -90;
     CameraController->AccessConfig().MinimumAllowedPitchRotation = -90;
@@ -167,18 +172,21 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
         FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(ExtentEditorPtr.Pin().Get()->GetGeoReference(), SharedThis(this));
     }
 
+    int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
     int AddComponentCnt = 0;
     for (const auto& Gizmo : MeshCodeGizmos) {
         // 範囲内のギズモのみ描画
         if (GizmoContains(Gizmo)) {
             if (CameraDistance < 4000.0) {
                 FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-                FeatureInfoDisplay->UpdateAsync(Gizmo, *DatasetAccessor);
+                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
+                    LoadingPanelCnt++;
                 if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
                     AddComponentCnt++;
             } else if (CameraDistance < 9000.0) {
                 FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Visible);
-                FeatureInfoDisplay->UpdateAsync(Gizmo, *DatasetAccessor);
+                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
+                    LoadingPanelCnt++;
                 if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
                     AddComponentCnt++;
             } else {

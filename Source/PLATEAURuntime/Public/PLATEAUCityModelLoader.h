@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PLATEAUGeometry.h"
@@ -25,6 +27,7 @@ class FPLATEAUMeshLoader;
 enum class MeshGranularity;
 struct FLoadInputData {
     plateau::polygonMesh::MeshExtractOptions ExtractOptions;
+    std::vector<plateau::geometry::Extent> Extents;
     FString GmlPath;
     bool bIncludeAttrInfo;
     UMaterialInterface* FallbackMaterial;
@@ -85,7 +88,7 @@ public:
         FString Source;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
-        FPLATEAUExtent Extent;
+        TArray<FString> MeshCodes;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUGeoReference GeoReference;

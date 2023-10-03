@@ -69,6 +69,16 @@ bool FPLATEAUExtentEditor::bSelectedArea() const {
     });
 }
 
+TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes() const {
+    TArray<FString> Codes;
+    for (auto [_, Value] : AreaMeshCodeMap) {
+        if (Value.bSelectedArea()) {
+            Codes.Append(Value.GetSelectedMeshIds());
+        }
+    }
+    return Codes;
+}
+
 TMap<FString, FPLATEAUMeshCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
     return AreaMeshCodeMap;
 }
@@ -87,28 +97,6 @@ FPLATEAUGeoReference FPLATEAUExtentEditor::GetGeoReference() const {
 
 void FPLATEAUExtentEditor::SetGeoReference(const FPLATEAUGeoReference& InGeoReference) {
     GeoReference = InGeoReference;
-}
-
-FPLATEAUExtent FPLATEAUExtentEditor::GetExtent() const {
-    
-    for (auto ItemIter = AreaMeshCodeMap.CreateConstIterator(); ItemIter; ++ItemIter) {
-        // const auto& MeshCodeGizmo = ItemIter->Value;
-        // if (!MeshCodeGizmo.GetbSelected())
-        //     continue;
-        //
-        // const TVec3d Min(MeshCodeGizmo.GetMin().X, MeshCodeGizmo.GetMin().Y, 0);
-        // const TVec3d Max(MeshCodeGizmo.GetMax().X, MeshCodeGizmo.GetMax().Y, 0);
-        // auto RawMin = GetGeoReference().GetData().unproject(Min);
-        // auto RawMax = GetGeoReference().GetData().unproject(Max);
-        //
-        // // 座標系変換時に緯度の大小が逆転するので再設定を行う。
-        // const auto Tmp = RawMin.latitude;
-        // RawMin.latitude = FMath::Min(RawMin.latitude, RawMax.latitude);
-        // RawMax.latitude = FMath::Max(Tmp, RawMax.latitude);
-    }
-
-    return FPLATEAUExtent(plateau::geometry::Extent(plateau::geometry::GeoCoordinate(), plateau::geometry::GeoCoordinate()));
-    // return FPLATEAUExtent(plateau::geometry::Extent(RawMin, RawMax));
 }
 
 const bool FPLATEAUExtentEditor::IsImportFromServer() const {
@@ -145,6 +133,40 @@ void FPLATEAUExtentEditor::SetLocalPackageMask(const plateau::dataset::Predefine
 
 const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetServerPackageMask() const {
     return ServerPackageMask;
+}
+
+const plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon() const {
+    const auto& SelectedCodes = GetSelectedCodes();
+
+    if (SelectedCodes.Num() == 0)
+        return plateau::geometry::GeoCoordinate(0.0, 0.0, 0.0);
+
+    // 選択された地域メッシュ全てを囲む範囲を計算
+    plateau::geometry::Extent NativeExtent(
+        plateau::geometry::GeoCoordinate(180.0, 180.0, 0.0),
+        plateau::geometry::GeoCoordinate(-180.0, -180.0, 0.0));
+
+    for (const auto& Code : SelectedCodes) {
+        const auto NativePartialExtent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
+        NativeExtent.min.latitude = std::min(NativeExtent.min.latitude, NativePartialExtent.min.latitude);
+        NativeExtent.min.longitude = std::min(NativeExtent.min.longitude, NativePartialExtent.min.longitude);
+        NativeExtent.max.latitude = std::max(NativeExtent.max.latitude, NativePartialExtent.max.latitude);
+        NativeExtent.max.longitude = std::max(NativeExtent.max.longitude, NativePartialExtent.max.longitude);
+    }
+    return NativeExtent.centerPoint();
+}
+
+const FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int ZoneID) const {
+    // 中心点の緯度経度計算
+    const auto CenterLatLon = GetSelectedCenterLatLon();
+
+    // 平面直角座標系への変換
+    auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
+    GeoReferenceWithoutOffset.ZoneID = ZoneID;
+    GeoReferenceWithoutOffset.UpdateNativeData();
+
+    const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
+    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
 void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {

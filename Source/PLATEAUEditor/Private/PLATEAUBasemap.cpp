@@ -135,7 +135,7 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
         [this, InTileCoordinate]() {
 
             const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\Basemap"));
-            const FString TexturePath = UTF8_TO_TCHAR(VectorTileDownloader::calcDestinationPath(InTileCoordinate.ToNativeData(), TCHAR_TO_UTF8(*Destination)).u8string().c_str());
+            const FString TexturePath = UTF8_TO_TCHAR(VectorTileDownloader::calcDestinationPath(InTileCoordinate.ToNativeData(), TCHAR_TO_UTF8(*Destination), ".png").u8string().c_str());
             IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 
             //テクスチャが存在する場合

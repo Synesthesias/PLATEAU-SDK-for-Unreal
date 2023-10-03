@@ -40,6 +40,7 @@ public:
     void SetAreaSourcePath(const FString& InAreaSourcePath);
 
     bool bSelectedArea() const;
+    TArray<FString> GetSelectedCodes() const;
     TMap<FString, FPLATEAUMeshCodeGizmo> GetAreaMeshCodeMap() const;
     void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
     void ResetAreaMeshCodeMap();
@@ -47,9 +48,6 @@ public:
     FPLATEAUGeoReference GetGeoReference() const;
     void SetGeoReference(const FPLATEAUGeoReference& InGeoReference);
 
-    FPLATEAUExtent GetExtent() const;
-    void ResetExtent();
-    
     const bool IsImportFromServer() const;
     void SetImportFromServer(bool InBool);
 
@@ -63,6 +61,8 @@ public:
     void SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
+    const plateau::geometry::GeoCoordinate GetSelectedCenterLatLon() const;
+    const FVector3d GetSelectedCenterPoint(const int ZoneID) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 private:
     FString SourcePath;
