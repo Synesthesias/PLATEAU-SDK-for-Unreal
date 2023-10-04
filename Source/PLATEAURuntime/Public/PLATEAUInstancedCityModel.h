@@ -6,6 +6,7 @@
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
 #include "PLATEAUCityObjectGroup.h"
+#include <plateau/polygon_mesh/model.h>
 
 #include <plateau/dataset/city_model_package.h>
 
@@ -128,11 +129,8 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-    /*
-    UStaticMeshComponent* LoadNode(
-        USceneComponent* ParentComponent,
-        const plateau::polygonMesh::Node& Node,
-        const std::shared_ptr<const citygml::CityModel> CityModel,
-        AActor& Actor);
-        */
+
+    void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
+
+
 };

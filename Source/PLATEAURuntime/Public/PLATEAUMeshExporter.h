@@ -32,7 +32,9 @@ namespace plateau {
 class PLATEAURUNTIME_API FPLATEAUMeshExporter {
 public:
     void Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
-    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option);
+
+    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromLODComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option);
+    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromFeatureComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option);
 
 private:
     void ExportAsOBJ(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);

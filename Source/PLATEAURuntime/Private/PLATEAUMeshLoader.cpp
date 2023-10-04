@@ -88,7 +88,7 @@ FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value)
 
 namespace
 {
-    void ComputeNormals(FStaticMeshAttributes& Attributes)
+    void ComputeNormals(FStaticMeshAttributes& Attributes, bool InvertNormal)
     {
         const auto Normals = Attributes.GetVertexInstanceNormals();
         const auto Indices = Attributes.GetVertexInstanceVertexIndices();
@@ -112,15 +112,20 @@ namespace
             VertexIndices[2] = Indices[FaceOffset + 2];
             VertexPositions[2] = Vertices[VertexIndices[2]];
 
-            // Calculate normal for triangle face			
-            FVector3f N = FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]),
-                                                  (VertexPositions[0] - VertexPositions[2]));
+            // Calculate normal for triangle face	
+            FVector3f N = InvertNormal ? 
+                FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]),
+                    (VertexPositions[0] - VertexPositions[2])) :                                       
+                FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[2]),
+                    (VertexPositions[0] - VertexPositions[1]));
+            
             N.Normalize();
-
+            
             // Unrolled loop
             Normals[FaceOffset + 0] += N;
             Normals[FaceOffset + 1] += N;
             Normals[FaceOffset + 2] += N;
+
         }
 
         for (int i = 0; i < Normals.GetNumElements(); ++i)
@@ -130,7 +135,7 @@ namespace
     }
 
     bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-                     TSet<FSubMeshMaterialSet>& SubMeshMaterialSets)
+                     TSet<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal)
     {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
@@ -244,8 +249,10 @@ namespace
                 FMemory::Memcpy(VertexInstanceIDsCache.GetData(), VertexInstanceIDs.GetData() + TriangleIndex * 3,
                                 sizeof(FVertexInstanceID) * 3);
 
-                // Invert winding order for triangles
-                VertexInstanceIDsCache.Swap(0, 2);
+                if (InvertNormal) {
+                    // Invert winding order for triangles
+                    VertexInstanceIDsCache.Swap(0, 2);
+                }
 
                 const FPolygonID NewPolygonID = OutMeshDescription.
                     CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
@@ -256,11 +263,13 @@ namespace
             }
         }
 
-        ComputeNormals(Attributes);
+        ComputeNormals(Attributes, InvertNormal);
 
         //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
         FElementIDRemappings ElementIDRemappings;
         OutMeshDescription.Compact(ElementIDRemappings);
+
+        //OutMeshDescription.ReverseAllPolygonFacing();
 
         return OutMeshDescription.Polygons().Num() > 0;
     }
@@ -348,7 +357,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                                                                     const plateau::polygonMesh::Mesh& InMesh,
                                                                     const FLoadInputData& LoadInputData,
                                                                     const std::shared_ptr<const citygml::CityModel>
-                                                                    CityModel, const std::string& InNodeName)
+                                                                    CityModel, const std::string& InNodeName, bool InvertNormal)
 {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
@@ -389,7 +398,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets);
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertNormal);
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&StaticMesh]()
@@ -604,4 +613,96 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
                                      Node.getName());
 }
 
+
+void FPLATEAUMeshLoader::LoadComponentFromNode(
+    USceneComponent* InParentComponent,
+    const plateau::polygonMesh::Node& InNode,
+    AActor& InActor) {
+
+    LoadComponentRecursive(InParentComponent,InNode, InActor);
+
+    // メッシュをワールド内にビルド
+    const auto CopiedStaticMeshes = StaticMeshes;
+    FFunctionGraphTask::CreateAndDispatchWhenReady(
+        [CopiedStaticMeshes]() {
+            UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [](UStaticMesh* mesh) {return false; });
+        }, TStatId(), nullptr, ENamedThreads::GameThread);
+    StaticMeshes.Reset();
+}
+
+void FPLATEAUMeshLoader::LoadComponentRecursive(
+    USceneComponent* InParentComponent,
+    const plateau::polygonMesh::Node& InNode,
+    AActor& InActor) {
+    UStaticMeshComponent* Component = LoadComponent(InParentComponent, InNode, InActor);
+    const size_t ChildNodeCount = InNode.getChildCount();
+    for (int i = 0; i < ChildNodeCount; i++) {
+        const auto& TargetNode = InNode.getChildAt(i);
+
+        LoadComponentRecursive(Component, TargetNode, InActor);
+    }
+}
+
+UStaticMeshComponent* FPLATEAUMeshLoader::LoadComponent(USceneComponent* ParentComponent,
+    const plateau::polygonMesh::Node& Node,
+    AActor& Actor) {
+    if (Node.getMesh() == nullptr) {
+        //const auto& CityObject = CityModel->getCityObjectById(Node.getName());
+        UStaticMeshComponent* Comp = nullptr;
+        UClass* StaticClass;
+        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
+        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
+            // CityObjectがある場合はUPLATEAUCityObjectGroupとする
+            /*
+            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo)
+            {
+                StaticClass = UPLATEAUCityObjectGroup::StaticClass();
+                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                Comp = PLATEAUCityObjectGroup;
+            }
+            else { */
+                StaticClass = UStaticMeshComponent::StaticClass();
+                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+            //}
+            FString NewUniqueName = FString(DesiredName);
+            if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
+                NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
+            }
+            Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+
+            check(Comp != nullptr);
+            if (bAutomationTest) {
+                Comp->Mobility = EComponentMobility::Movable;
+            }
+            else {
+                Comp->Mobility = EComponentMobility::Static;
+            }
+
+            Actor.AddInstanceComponent(Comp);
+            Comp->RegisterComponent();
+            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+
+            UE_LOG(LogTemp, Log, TEXT("AttachComp: %s => %s"), *Comp->GetName(), *ParentComponent->GetName());
+
+            }, TStatId(), nullptr, ENamedThreads::GameThread);
+        Task->Wait();
+        return Comp;
+    }
+
+    // TODO: 空のMeshが入っている問題
+    if (Node.getMesh()->getVertices().size() == 0)
+        return nullptr;
+
+    FLoadInputData LoadInputData
+    {
+        plateau::polygonMesh::MeshExtractOptions{},
+        FString(),
+        false,
+        nullptr
+    };
+
+    return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
+        Node.getName(), false);
+}
 #endif

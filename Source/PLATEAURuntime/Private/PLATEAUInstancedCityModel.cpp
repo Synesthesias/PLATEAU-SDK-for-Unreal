@@ -9,7 +9,7 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/granularity_convert/granularity_converter.h>
-#include <plateau/polygon_mesh/model.h>
+//#include <plateau/polygon_mesh/model.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
 
@@ -390,84 +390,60 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::ReconstructModel(const T
     //TODO:どこかに移動
     plateau::polygonMesh::MeshGranularity MeshGranularity;
     switch (ReconstructType)         {
-    case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea;
-    case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
-    case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
+    case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
+    case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;
+    case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
     }
 
-    GranularityConvertOption option = GranularityConvertOption(MeshGranularity, 10);
+    UE_LOG(LogTemp, Log, TEXT("ReconstructType: %d"), static_cast<int>(MeshGranularity));
 
+    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+
+    auto GeoRef = GeoReference.GetData();
     MeshExportOptions ExtOptions;
-    ExtOptions.bExportHiddenObjects = true;
+    ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = ECoordinateSystem::ENU;
+    ExtOptions.CoordinateSystem = StaticCast<ECoordinateSystem>(GeoRef.getCoordinateSystem());
+    //ExtOptions.CoordinateSystem = ECoordinateSystem::ENU;
 
     FPLATEAUMeshExporter MeshExporter;
     GranularityConverter Converter;
-    TAtomic<bool>* bCanceled = false;
 
-
-    std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, StaticCast<const TArray<USceneComponent*>>(TargetCityObjects), ExtOptions);
+    std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromFeatureComponents(this, StaticCast<const TArray<USceneComponent*>>(TargetCityObjects), ExtOptions);
 
     UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
-    //plateau::polygonMesh::Model converted = Converter.convert(*smodel, option);
-    //UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted.debugString().c_str()), converted.getAllMeshes().size());
-
-    std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, option));
+    std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
     UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
 
+    for (auto comp : TargetCityObjects) {
+        //comp->DestroyComponent();
+        comp->SetVisibility(false);
+    }
+
+    ReconstructFromConvertedModel(converted);
 
 
-
+    //FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+    //PropertyModule.NotifyCustomizationModuleChanged();
+    /*
+    auto LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+    LevelEditor.BroadcastComponentsEdited();
+    LevelEditor.BroadcastRedrawViewports(false);
+    */
     return this;
 }
 
-/*
-UStaticMeshComponent* APLATEAUInstancedCityModel::LoadNode(USceneComponent* ParentComponent,
-    const plateau::polygonMesh::Node& Node,
-    const std::shared_ptr<const citygml::CityModel> CityModel,
-    AActor& Actor) {
-    if (Node.getMesh() == nullptr) {
-        const auto& CityObject = CityModel->getCityObjectById(Node.getName());
-        UStaticMeshComponent* Comp = nullptr;
-        UClass* StaticClass;
-        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
-        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
-            // CityObjectがある場合はUPLATEAUCityObjectGroupとする
-            if (CityObject != nullptr ) {
-                StaticClass = UPLATEAUCityObjectGroup::StaticClass();
-                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
-                Comp = PLATEAUCityObjectGroup;
-            }
-            else {
-                StaticClass = UStaticMeshComponent::StaticClass();
-                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-            }
-            FString NewUniqueName = FString(DesiredName);
-            if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
-                NewUniqueName = MakeUniqueObjectName(&Actor, StaticClass, FName(DesiredName)).ToString();
-            }
-            Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
+void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model)     {
 
-            check(Comp != nullptr);
-            Comp->Mobility = EComponentMobility::Static;
-
-            Actor.AddInstanceComponent(Comp);
-            Comp->RegisterComponent();
-            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
-        Task->Wait();
-        return Comp;
+    UE_LOG(LogTemp, Log, TEXT("GML Name: %s "), *this->GetActorNameOrLabel());
+    FPipe Pipe{ TEXT("LoadComponentPipe") };
+    FPLATEAUMeshLoader MeshLoader(false);
+    for (int i = 0; i < Model->getRootNodeCount(); i++) {
+        FTask LoadComponentTask = Pipe.Launch(TEXT("LoadComponentTask"), [&MeshLoader, this, Model, i] {
+            MeshLoader.LoadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), *this);
+            });
+        LoadComponentTask.Wait();
     }
-
-    // TODO: 空のMeshが入っている問題
-    if (Node.getMesh()->getVertices().size() == 0)
-        return nullptr;
-
-    return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel,
-        Node.getName());
 }
-*/

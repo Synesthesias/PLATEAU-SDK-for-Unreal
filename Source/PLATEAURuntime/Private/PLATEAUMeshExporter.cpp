@@ -144,6 +144,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     plateau::polygonMesh::UV UV1;
     plateau::polygonMesh::UV UV2;
     plateau::polygonMesh::UV UV3;
+    plateau::polygonMesh::UV UV4;
 
     const auto& RenderMesh = StaticMeshComponent->GetStaticMesh()->GetLODForExport(0);
 
@@ -151,6 +152,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
         const FVector2f& UV = InVertices.GetVertexUV(i, 0);
         UV1.push_back(TVec2f(UV.X, 1.0f - UV.Y));
+    }
+
+    //UV4
+    for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
+        const FVector2f& UV = InVertices.GetVertexUV(i, 3);
+        UV4.push_back(TVec2f(UV.X, 1.0f - UV.Y));
     }
 
     auto GeoRef = TargetActor->GeoReference.GetData();
@@ -204,6 +211,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
                     const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
                     TextureFilePath = AssetBasePath / TextureFileRelativePath;
+
+                    //TextureFilePath = TextureFileRelativePath.Contains(":")? TextureFileRelativePath :  AssetBasePath / TextureFileRelativePath;
+                    
+                    UE_LOG(LogTemp, Log, TEXT("TexPath: %s : %s : %s : %s"), *BaseDir , *AssetBasePath, *TextureFileRelativePath, *TextureFilePath);
                 }
             }
         }
@@ -217,6 +228,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
+    OutMesh.addUV4(UV4, Vertices.size());
     ensureAlwaysMsgf(OutMesh.getIndices().size() % 3 == 0, TEXT("Indice size should be multiple of 3."));
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }
@@ -233,7 +245,7 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         return ComponentName;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option)     {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromLODComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option)     {
 
     TargetActor = ModelActor;
     auto OutModel = plateau::polygonMesh::Model::createModel();
@@ -253,6 +265,53 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             Parent = *ParentRef;
         }
             
+        auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
+        auto Mesh = plateau::polygonMesh::Mesh();
+        CreateMesh(Mesh, comp, Option);
+        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+        Node.setMesh(std::move(MeshPtr));
+    }
+
+    return OutModel;
+}
+
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromFeatureComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option) {
+
+    TargetActor = ModelActor;
+    auto OutModel = plateau::polygonMesh::Model::createModel();
+    TMap<FString, TArray<plateau::polygonMesh::Node*>> RootLodMap;
+
+    for (const auto comp : ModelComponents) {
+
+        plateau::polygonMesh::Node* Root;
+        plateau::polygonMesh::Node* Parent;
+        TArray<plateau::polygonMesh::Node*> lodArray;
+
+        FString RootName = comp->GetAttachParent()->GetAttachParent()->GetName();   //Root
+        FString ParentName = comp->GetAttachParent()->GetName();                    //LOD
+
+        auto RootRef = RootLodMap.Find(RootName);
+        if (RootRef == nullptr) {
+            Root = &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName));
+            lodArray.Add(Root);     //先頭にRootを入れる
+            RootLodMap.Add(RootName, lodArray);
+        }
+        else {
+            lodArray = *RootRef;
+            Root = lodArray[0];
+        }
+
+        auto ParentRef = lodArray.FindByPredicate([&ParentName](const auto& lodNode) {
+            return lodNode->getName() == TCHAR_TO_UTF8(*ParentName);
+            });      
+        if (ParentRef == nullptr) {
+            Parent = &Root->addEmptyChildNode(TCHAR_TO_UTF8(*ParentName));
+            lodArray.Add(Parent);
+        }
+        else {
+            Parent = *ParentRef;
+        }
+
         auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
         auto Mesh = plateau::polygonMesh::Mesh();
         CreateMesh(Mesh, comp, Option);

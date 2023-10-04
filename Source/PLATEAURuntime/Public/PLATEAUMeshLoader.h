@@ -58,6 +58,11 @@ public:
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
 
+    void LoadComponentFromNode(
+        USceneComponent* InParentComponent,
+        const plateau::polygonMesh::Node& InNode,
+        AActor& InActor);
+
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
@@ -72,7 +77,8 @@ private:
         const plateau::polygonMesh::Mesh& InMesh,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
-        const std::string& InNodeName);
+        const std::string& InNodeName,
+        bool InvertNormal = true);
     UStaticMeshComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
@@ -85,4 +91,14 @@ private:
         const FLoadInputData& InLoadInputData,
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
+
+
+    void LoadComponentRecursive(
+        USceneComponent* InParentComponent,
+        const plateau::polygonMesh::Node& InNode,
+        AActor& InActor);
+    UStaticMeshComponent* LoadComponent(
+        USceneComponent* ParentComponent,
+        const plateau::polygonMesh::Node& Node,
+        AActor& Actor);
 };
