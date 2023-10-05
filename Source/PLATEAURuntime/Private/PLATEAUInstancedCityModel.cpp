@@ -9,7 +9,6 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/granularity_convert/granularity_converter.h>
-//#include <plateau/polygon_mesh/model.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
 

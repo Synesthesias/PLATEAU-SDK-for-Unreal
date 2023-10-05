@@ -98,7 +98,7 @@ public:
     bool IsFiltering();
 
     /**
-     * @brief 
+     * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
     UE::Tasks::FTask ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid);

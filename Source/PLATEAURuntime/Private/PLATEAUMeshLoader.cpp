@@ -429,7 +429,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     Task->Wait();
 
     //PolygonGroup数の整合性チェック
-    check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
+    //check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
 
     const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData]

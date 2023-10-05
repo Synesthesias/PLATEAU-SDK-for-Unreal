@@ -29,6 +29,31 @@
 
 #if WITH_EDITOR
 
+namespace {
+    /**
+     * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
+        int num = Node->getChildCount();
+        for (int i = 0; i < num; i++) {
+            if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
+        }
+        return -1;
+    }
+    /**
+     * @brief ModelのRootChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Model* Model) {
+        int num = Model->getRootNodeCount();
+        for (int i = 0; i < num; i++) {
+            if (Model->getRootNodeAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
+        }
+        return -1;
+    }
+}
+
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
     TargetActor = ModelActor;
@@ -244,31 +269,6 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         }
     } else
         return ComponentName;
-}
-
-namespace {
-    /**
-     * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
-     */
-    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
-        int num = Node->getChildCount();
-        for (int i = 0; i < num; i++) {
-            if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
-                return i;
-        }
-        return -1;
-    }
-    /**
-     * @brief ModelのRootChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
-     */
-    int GetChildIndex(FString name, plateau::polygonMesh::Model* Model) {
-        int num = Model->getRootNodeCount();
-        for (int i = 0; i < num; i++) {
-            if (Model->getRootNodeAt(i).getName() == TCHAR_TO_UTF8(*name))
-                return i;
-        }
-        return -1;
-    }
 }
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option) {
