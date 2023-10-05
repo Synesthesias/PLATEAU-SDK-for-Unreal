@@ -25,6 +25,7 @@
 #include "filesystem"
 #include "EditorFramework/AssetImportData.h"
 #include "HAL/FileManager.h"
+#include "Algo/Reverse.h"
 
 #if WITH_EDITOR
 
@@ -245,73 +246,74 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         return ComponentName;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromLODComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option)     {
-
-    TargetActor = ModelActor;
-    auto OutModel = plateau::polygonMesh::Model::createModel();
-    TMap<FString, plateau::polygonMesh::Node*> ParentNodeMap;
-
-    for (const auto comp : ModelComponents) {
-    
-        FString ParentName = comp->GetAttachParent()->GetName();
-        auto ParentRef = ParentNodeMap.Find(ParentName);
-        plateau::polygonMesh::Node* Parent;
-
-        if (ParentRef == nullptr) {
-            Parent = &OutModel->addEmptyNode(TCHAR_TO_UTF8(*ParentName));
-            ParentNodeMap.Add(ParentName, Parent);
+namespace {
+    /**
+     * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
+        int num = Node->getChildCount();
+        for (int i = 0; i < num; i++) {
+            if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
         }
-        else {
-            Parent = *ParentRef;
-        }
-            
-        auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
-        auto Mesh = plateau::polygonMesh::Mesh();
-        CreateMesh(Mesh, comp, Option);
-        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-        Node.setMesh(std::move(MeshPtr));
+        return -1;
     }
-
-    return OutModel;
+    /**
+     * @brief ModelのRootChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Model* Model) {
+        int num = Model->getRootNodeCount();
+        for (int i = 0; i < num; i++) {
+            if (Model->getRootNodeAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
+        }
+        return -1;
+    }
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromFeatureComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option) {
 
     TargetActor = ModelActor;
     auto OutModel = plateau::polygonMesh::Model::createModel();
-    TMap<FString, TArray<plateau::polygonMesh::Node*>> RootLodMap;
 
     for (const auto comp : ModelComponents) {
 
         plateau::polygonMesh::Node* Root;
-        plateau::polygonMesh::Node* Parent;
-        TArray<plateau::polygonMesh::Node*> lodArray;
+        plateau::polygonMesh::Node* Lod; 
+        FString RootName;
+        FString LodName;
 
-        FString RootName = comp->GetAttachParent()->GetAttachParent()->GetName();   //Root
-        FString ParentName = comp->GetAttachParent()->GetName();                    //LOD
+        TArray<USceneComponent*> Parents;
+        comp->GetParentComponents(Parents);
+        int LodCompIndex = Parents.IndexOfByPredicate([](const auto& Parent) {
+            return Parent->GetName().StartsWith("LOD");
+            });
+        auto LodComp = Parents[LodCompIndex];
+        LodName = LodComp->GetName();
+        RootName = LodComp->GetAttachParent()->GetName();
+        Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true);
 
-        auto RootRef = RootLodMap.Find(RootName);
-        if (RootRef == nullptr) {
-            Root = &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName));
-            lodArray.Add(Root);     //先頭にRootを入れる
-            RootLodMap.Add(RootName, lodArray);
-        }
-        else {
-            lodArray = *RootRef;
-            Root = lodArray[0];
-        }
+        int RootIndex = GetChildIndex(RootName, OutModel.get());
+        Root = (RootIndex == -1) ? 
+            &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName)) :
+            &OutModel->getRootNodeAt(RootIndex);
 
-        auto ParentRef = lodArray.FindByPredicate([&ParentName](const auto& lodNode) {
-            return lodNode->getName() == TCHAR_TO_UTF8(*ParentName);
-            });      
-        if (ParentRef == nullptr) {
-            Parent = &Root->addEmptyChildNode(TCHAR_TO_UTF8(*ParentName));
-            lodArray.Add(Parent);
-        }
-        else {
-            Parent = *ParentRef;
-        }
+        int LodIndex = GetChildIndex(LodName, Root);
+        Lod = (LodIndex == -1) ?
+            &Root->addEmptyChildNode(TCHAR_TO_UTF8(*LodName)):
+            &Root->getChildAt(LodIndex);
 
+        plateau::polygonMesh::Node* Parent = Lod; //最小地物の場合
+        if (Parents.Num() > 0) {
+            Algo::Reverse(Parents);
+            for (auto p : Parents) {
+                int ParentIndex = GetChildIndex(p->GetName(), Parent);
+                Parent = (ParentIndex == -1) ?
+                    &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*p->GetName())):
+                    &Parent->getChildAt(ParentIndex);
+            }
+        }
+        
         auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
         auto Mesh = plateau::polygonMesh::Mesh();
         CreateMesh(Mesh, comp, Option);
@@ -321,6 +323,4 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
 
     return OutModel;
 }
-
-
 #endif

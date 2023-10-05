@@ -383,11 +383,10 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid) {
+FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid) {
 
     UE_LOG(LogTemp, Log, TEXT("PLATEAUInstancedCityModel ReconstructModel: %d %d %s"), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
 
-    //TODO:どこかに移動
     plateau::polygonMesh::MeshGranularity MeshGranularity;
     switch (ReconstructType)         {
     case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
@@ -399,51 +398,51 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::ReconstructModel(const T
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
-    auto GeoRef = GeoReference.GetData();
     MeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = StaticCast<ECoordinateSystem>(GeoRef.getCoordinateSystem());
-    //ExtOptions.CoordinateSystem = ECoordinateSystem::ENU;
+    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
 
-    FPLATEAUMeshExporter MeshExporter;
-    GranularityConverter Converter;
+    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjects, ExtOptions, ConvOption] {
 
-    std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromFeatureComponents(this, StaticCast<const TArray<USceneComponent*>>(TargetCityObjects), ExtOptions);
+        FPLATEAUMeshExporter MeshExporter;
+        GranularityConverter Converter;
 
-    UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, StaticCast<const TArray<USceneComponent*>>(TargetCityObjects), ExtOptions);
 
-    std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-    UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
+        UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
-    for (auto comp : TargetCityObjects) {
-        //comp->DestroyComponent();
-        comp->SetVisibility(false);
-    }
+        std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
+        UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
 
-    ReconstructFromConvertedModel(converted);
+        for (auto comp : TargetCityObjects) {
+            //comp->DestroyComponent();
+            comp->SetVisibility(false);
+        }
 
+        ReconstructFromConvertedModel(converted);
+
+        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
+
+        });
 
     //FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
     //PropertyModule.NotifyCustomizationModuleChanged();
-    /*
-    auto LevelEditor = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-    LevelEditor.BroadcastComponentsEdited();
-    LevelEditor.BroadcastRedrawViewports(false);
-    */
-    return this;
+
+    return ConvertTask;
 }
 
 void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model)     {
 
     UE_LOG(LogTemp, Log, TEXT("GML Name: %s "), *this->GetActorNameOrLabel());
-    FPipe Pipe{ TEXT("LoadComponentPipe") };
+    FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
     FPLATEAUMeshLoader MeshLoader(false);
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        FTask LoadComponentTask = Pipe.Launch(TEXT("LoadComponentTask"), [&MeshLoader, this, Model, i] {
-            MeshLoader.LoadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), *this);
-            });
+        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [&MeshLoader, this, Model, i] {
+            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), *this);
+            });  
+        AddNested(LoadComponentTask);
         LoadComponentTask.Wait();
     }
 }
