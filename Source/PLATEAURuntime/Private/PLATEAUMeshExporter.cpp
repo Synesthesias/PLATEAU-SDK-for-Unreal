@@ -303,8 +303,8 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             &Root->addEmptyChildNode(TCHAR_TO_UTF8(*LodName)):
             &Root->getChildAt(LodIndex);
 
-        plateau::polygonMesh::Node* Parent = Lod; //最小地物の場合
-        if (Parents.Num() > 0) {
+        plateau::polygonMesh::Node* Parent = Lod; 
+        if (Parents.Num() > 0) {    //最小地物の場合
             Algo::Reverse(Parents);
             for (auto p : Parents) {
                 int ParentIndex = GetChildIndex(p->GetName(), Parent);
