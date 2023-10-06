@@ -9,7 +9,7 @@ class UEditorUtilityWidget;
 
 class PLATEAUEDITOR_API FPLATEAUWindow {
 public:
-    FPLATEAUWindow(const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
+    FPLATEAUWindow();
     void Startup();
     void Shutdown();
     UEditorUtilityWidget* GetEditorUtilityWidget() const;
@@ -18,7 +18,6 @@ private:
     TWeakPtr<SWindow> RootWindow;
     TWeakPtr<SWindow> MyWindow;
     TWeakObjectPtr<UEditorUtilityWidgetBlueprint> EditorUtilityWidgetBlueprint;
-    TSharedPtr<class FPLATEAUEditorStyle> Style;
     TSharedPtr<class SPLATEAUMainTab> TabReference;
 
     static const FName TabID;

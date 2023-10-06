@@ -39,6 +39,10 @@ plateau::geometry::Extent FPLATEAUExtent::GetNativeData() const {
         Max.GetNativeData());
 }
 
+bool FPLATEAUExtent::IsSet() const {
+    return Min != Max;
+}
+
 bool FPLATEAUExtent::operator==(const FPLATEAUExtent& other) const {
     return Max == other.Max && Min == other.Min;
 }

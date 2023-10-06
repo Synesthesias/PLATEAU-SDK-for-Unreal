@@ -12,7 +12,6 @@
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Settings/EditorLoadingSavingSettings.h"
 
-#include "Styling/ISlateStyle.h"
 
 IPLATEAUEditorModule& IPLATEAUEditorModule::Get() {
     return FModuleManager::LoadModuleChecked<IPLATEAUEditorModule>("PLATEAUEditor");
@@ -25,9 +24,8 @@ bool IPLATEAUEditorModule::IsAvailable() {
 class FPLATEAUEditorModule : public IPLATEAUEditorModule {
 public:
     virtual void StartupModule() override {
-        Style = MakeShareable(new FPLATEAUEditorStyle());
-        Window = MakeShareable(new FPLATEAUWindow(Style.ToSharedRef()));
-        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor(Style.ToSharedRef()));
+        Window = MakeShareable(new FPLATEAUWindow());
+        ExtentEditor = MakeShareable(new FPLATEAUExtentEditor());
 
         FAutoReimportWildcard WildcardToInject1;
         WildcardToInject1.Wildcard = TEXT("PLATEAU/Datasets/*");

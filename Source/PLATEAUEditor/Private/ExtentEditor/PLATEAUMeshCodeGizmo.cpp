@@ -9,23 +9,79 @@
 #include <plateau/geometry/geo_reference.h>
 
 #include "CanvasTypes.h"
+#include "Algo/AnyOf.h"
 #include "Engine/Font.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialRenderProxy.h"
 
-FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo()
-    : MinX(-500), MinY(-500), MaxX(500), MaxY(500), IsSelected(false), LineThickness(1.0f) {}
+namespace {
+    // 範囲選択に関連する定義
+    constexpr int ThirdMeshCodeLength = 8;
+    constexpr int NumAreaColumn = 4;
+    constexpr int NumAreaRow = 4;
+    constexpr int NumGridLine = 3;
+    const TArray<FString> SuffixMeshIds = {
+        TEXT("11"), TEXT("12"), TEXT("21"), TEXT("22"),
+        TEXT("13"), TEXT("14"), TEXT("23"), TEXT("24"),
+        TEXT("31"), TEXT("32"), TEXT("41"), TEXT("42"),
+        TEXT("33"), TEXT("34"), TEXT("43"), TEXT("44")};
+
+    // 選択色
+    constexpr FColor SelectedColor = FColor(255, 204, 153);
+    constexpr FColor UnselectedColor = FColor(0, 0, 0, 0);
+
+    int GetRowIndex(const double InMinX, const double InMaxX, const int InNumGrid, const double InValue) {
+        const double GridSize = (InMaxX - InMinX) / InNumGrid;
+        for (int i = 0; i < InNumGrid; i++) {
+            if (InValue <= InMinX + GridSize * (i + 1)) {
+                return i;
+            }
+        }
+        return InNumGrid - 1;
+    }
+
+    int GetColumnIndex(const double InMinY, const double InMaxY, const int InNumGrid, const double InValue) {
+        const double GridSize = (InMaxY - InMinY) / InNumGrid;
+        for (int i = 0; i < InNumGrid; i++) {
+            if (InMaxY - GridSize * (i + 1) <= InValue) {
+                return i;
+            }
+        }
+        return InNumGrid - 1;
+    }
+}
+
+FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCodeLevel(2), MeshCode(), Width(0), Height(0), MinX(-500), MinY(-500), MaxX(500), MaxY(500),
+                                                 LineThickness(1.0f) {
+    AreaSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
+    AreaSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
+    AreaSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), SelectedColor);
+    AreaUnSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
+    AreaUnSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
+    AreaUnSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), UnselectedColor);
+
+    bSelectedArray.Reset();
+    for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
+        bSelectedArray.Emplace(false);
+    }
+}
+
+bool FPLATEAUMeshCodeGizmo::IsThirdMeshCode() const {
+    return MeshCodeString.Len() == ThirdMeshCodeLength;
+}
+
+void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
+    for (int i = 0; i < bSelectedArray.Num(); i++) {
+        bSelectedArray[i] = false;
+    }
+}
 
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
-
     const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor(10, 10, 130);
-    const auto DepthPriority = IsSelected ? SDPG_Foreground : SDPG_World;
 
-    DrawWireBox(
-        PDI,
-        Box,
-        Color,
-        DepthPriority, LineThickness, 0, true
-    );
+    // エリア枠線
+    DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
 
     if (!bShowLevel5Mesh)
         return;
@@ -33,25 +89,45 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     if (MeshCodeLevel == 2)
         return;
 
-    for (int i = 1; i < 4; ++i) {
-		const auto x1 = (Box.Min.X * i + Box.Max.X * (4 - i)) / 4;
-		const auto py1 = Box.Min.Y;
-        const auto qy1 = Box.Max.Y;
-        const auto z = 0.0;
-        const FVector P1(x1, py1, z);
-        const FVector Q1(x1, qy1, z);
-        PDI->DrawLine(P1, Q1, Color, DepthPriority, 1, 0, true);
+    // 格子状のライン
+    for (int i = 1; i <= NumGridLine; ++i) {
+        const auto X1 = (Box.Min.X * i + Box.Max.X * (NumAreaColumn - i)) / NumAreaColumn;
+        const auto Py1 = Box.Min.Y;
+        const auto Qy1 = Box.Max.Y;
+        constexpr auto Z = 0.0;
+        const FVector P1(X1, Py1, Z);
+        const FVector Q1(X1, Qy1, Z);
+        PDI->DrawLine(P1, Q1, Color, SDPG_World, 1, 0, true);
 
-        const auto y2 = (Box.Min.Y * i + Box.Max.Y * (4 - i)) / 4;
-        const auto px2 = Box.Min.X;
-        const auto qx2 = Box.Max.X;
-        const FVector P2(px2, y2, z);
-        const FVector Q2(qx2, y2, z);
-        PDI->DrawLine(P2, Q2, Color, DepthPriority, 1, 0, true);
+        const auto Y2 = (Box.Min.Y * i + Box.Max.Y * (NumAreaRow - i)) / NumAreaRow;
+        const auto Px2 = Box.Min.X;
+        const auto Qx2 = Box.Max.X;
+        const FVector P2(Px2, Y2, Z);
+        const FVector Q2(Qx2, Y2, Z);
+        PDI->DrawLine(P2, Q2, Color, SDPG_World, 1, 0, true);
+    }
+
+    // エリア塗りつぶし
+    const auto CellWidth = (Box.Max.X - Box.Min.X) / NumAreaRow;
+    const auto CellHalfWidth = (Box.Max.X - Box.Min.X) / (NumAreaRow * 2);
+    const auto CellHeight = (Box.Max.Y - Box.Min.Y) / NumAreaColumn;
+    const auto CellHalfHeight = (Box.Max.Y - Box.Min.Y) / (NumAreaColumn * 2);
+    for (int Col = 0; Col < NumAreaColumn; Col++) {
+        for (int Row = 0; Row < NumAreaRow; Row++) {
+            if (bSelectedArray[Row + Col * NumAreaColumn]) {
+                FMatrix ObjectToWorld = FMatrix::Identity;
+                ObjectToWorld.SetAxis(0, FVector(CellHalfWidth, 0, 0));
+                ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
+                ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * Row,
+                                                (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * Col, 0));
+                DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
+            }
+        }
     }
 }
 
-void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& MeshCode, double CameraDistance, int IconCount) const {
+void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& RegionMeshID,
+                                             double CameraDistance, int IconCount) const {
     constexpr auto NearOffset = 8000;
     constexpr auto FarOffset = 100000;
 
@@ -70,19 +146,16 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const 
 
     const UFont* ViewFont = GEngine->GetLargeFont();
 
-    const auto HalfWidth = ViewFont->GetStringSize(*MeshCode) / 2;
-    const auto HalfHeight = ViewFont->GetStringHeightSize(*MeshCode) / 2;
+    const auto HalfWidth = ViewFont->GetStringSize(*RegionMeshID) / 2;
+    const auto HalfHeight = ViewFont->GetStringHeightSize(*RegionMeshID) / 2;
 
-    const auto Color = MeshCodeLevel == 2
-        ? FColor(10, 10, 10)
-        : FColor::Blue;
+    const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
         if (MeshCodeLevel == 2 && CameraDistance > NearOffset && CameraDistance < FarOffset) {
-            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
-        }
-        else if (MeshCodeLevel != 2 && CameraDistance <= NearOffset) {
-            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(MeshCode), ViewFont, Color);
+            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
+        } else if (MeshCodeLevel != 2 && CameraDistance <= NearOffset) {
+            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
         }
     }
 }
@@ -95,10 +168,40 @@ FVector2D FPLATEAUMeshCodeGizmo::GetMax() const {
     return FVector2D(MaxX, MaxY);
 }
 
+FVector2D FPLATEAUMeshCodeGizmo::GetSize() const {
+    return FVector2D(Width, Height);
+}
+
+plateau::dataset::MeshCode FPLATEAUMeshCodeGizmo::GetMeshCode() const {
+    return MeshCode;
+}
+
+FString FPLATEAUMeshCodeGizmo::GetRegionMeshID() const {
+    return MeshCodeString;
+}
+
+TArray<bool> FPLATEAUMeshCodeGizmo::GetbSelectedArray() const {
+    return bSelectedArray;
+}
+
+bool FPLATEAUMeshCodeGizmo::bSelectedArea() const {
+    return Algo::AnyOf(bSelectedArray, [](const bool bSelected) {
+        return bSelected;
+    });
+}
+
+void FPLATEAUMeshCodeGizmo::SetbSelectedArray(const TArray<bool>& InbSelectedArray) {
+    bSelectedArray = InbSelectedArray;
+}
+
 void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference) {
     const auto Extent = InMeshCode.getExtent();
     const auto RawMin = InGeoReference.project(Extent.min);
     const auto RawMax = InGeoReference.project(Extent.max);
+    MeshCode = InMeshCode;
+    MeshCodeString = UTF8_TO_TCHAR(InMeshCode.get().c_str());
+    Width = MaxX - MinX;
+    Height = MaxY - MinY;
     MinX = FGenericPlatformMath::Min(RawMin.x, RawMax.x);
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
@@ -112,13 +215,61 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, c
     }
 }
 
-bool FPLATEAUMeshCodeGizmo::IntersectsWith(FVector2D InMin, FVector2D InMax) const {
-    return !(MaxX < InMin.X || MinX > InMax.X
-        || MaxY < InMin.Y || MinY > InMax.Y);
+void FPLATEAUMeshCodeGizmo::ToggleSelectArea(const double X, const double Y) {
+    if (!IsThirdMeshCode())
+        return;
+    
+    if ((MinX <= X && X <= MaxX && MinY <= Y && Y <= MaxY) == false) {
+        return;
+    }
+    const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
+    const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
+    bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
 }
 
-void FPLATEAUMeshCodeGizmo::SetSelected(const bool Value) {
-    IsSelected = Value;
+void FPLATEAUMeshCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d InMax, const bool bSelect) {
+    if (!IsThirdMeshCode())
+        return;
+    
+    const auto CellWidth = (MaxX - MinX) / NumAreaRow;
+    const auto CellHeight = (MaxY - MinY) / NumAreaColumn;
+    for (int Col = 0; Col < NumAreaColumn; Col++) {
+        for (int Row = 0; Row < NumAreaRow; Row++) {
+            const auto RectMinX = MinX + CellWidth * Row;
+            const auto RectMaxX = MinX + CellWidth * (Row + 1);
+            const auto RectMinY = MaxY - CellHeight * (Col + 1);
+            const auto RectMaxY = MaxY - CellHeight * Col;
+            if (RectMaxX < InMin.X || RectMinX > InMax.X || RectMaxY < InMin.Y || RectMinY > InMax.Y) {
+                continue;
+            }
+            bSelectedArray[Row + Col * NumAreaColumn] = bSelect;
+        }
+    }
+}
+
+void FPLATEAUMeshCodeGizmo::SetSelectArea(const double X, const double Y, const bool bSelect) {
+    if (!IsThirdMeshCode())
+        return;
+    
+    if ((MinX <= X && X <= MaxX && MinY <= Y && Y <= MaxY) == false) {
+        return;
+    }
+    const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
+    const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
+    bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = bSelect;
+}
+
+TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
+    TArray<FString> MeshIdArray;
+    for (int Col = 0; Col < NumAreaColumn; Col++) {
+        for (int Row = 0; Row < NumAreaRow; Row++) {
+            if (bSelectedArray[Row + Col * NumAreaColumn]) {
+                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), {MeshCodeString, SuffixMeshIds[Row + Col * NumAreaColumn]}));
+            }
+        }
+    }
+
+    return MeshIdArray;
 }
 
 void FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(const bool bValue) {

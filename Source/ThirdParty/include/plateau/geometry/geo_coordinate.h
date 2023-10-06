@@ -31,6 +31,11 @@ namespace plateau::geometry {
                 longitude(lon),
                 height(height) {
         }
+
+        GeoCoordinate operator+(GeoCoordinate op) const;
+        GeoCoordinate operator*(double op) const;
+        GeoCoordinate operator-(GeoCoordinate op) const;
+        GeoCoordinate operator/(GeoCoordinate op) const;
     };
 
 
@@ -65,14 +70,14 @@ namespace plateau::geometry {
             this->max = max;  // NOLINT(cppcoreguidelines-prefer-member-initializer)
         }
 
-        bool contains(GeoCoordinate point) const;
-        bool contains(TVec3d point) const;
+        bool contains(GeoCoordinate point, bool ignore_height = true) const;
+        bool contains(TVec3d point, bool ignore_height = true) const;
 
         /**
          * 引数 city_obj の位置を推定し、その位置が Extent の範囲内に含まれるかどうかを返します。
          * city_obj の位置が不明の場合は false を返します。
          */
-        bool contains(const citygml::CityObject& city_obj) const;
+        bool contains(const citygml::CityObject& city_obj, bool ignore_height = true) const;
 
         /**
          * other と交わる箇所があるかどうかを返します。
@@ -84,6 +89,9 @@ namespace plateau::geometry {
          * min と max の中点を GeoCoordinate で返します。
          */
         GeoCoordinate centerPoint() const;
+
+        /// Extentの南西端のUVを(0,0),北東端のUVを(1,1)とするとき、指定位置のUVを求めます。
+        TVec2f uvAt(GeoCoordinate coord) const;
 
         static Extent all() {
             return {

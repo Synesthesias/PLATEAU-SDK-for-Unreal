@@ -15,6 +15,7 @@ public:
     ~FPLATEAUEditorStyle();
 
 private:
+	FButtonStyle Button;
     FString InContent(
         const FString& RelativePath,
         const ANSICHAR* Extension);

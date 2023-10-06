@@ -22,11 +22,6 @@ using namespace UE::Tasks;
 
 namespace {
     /**
-     * @brief 最大並列数
-     */
-    constexpr int MaxParallelCount = 8;
-
-    /**
      * @brief 範囲選択画面に表示する画像名
      */
     constexpr TCHAR BuildingIcon[]      = TEXT("building.png");
@@ -92,54 +87,55 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
     : GeoReference(InGeoReference)
     , ViewportClient(InViewportClient)
 {
+    ShowLods.Reset();
+    for (int Lod = 0; Lod <= plateau::Feature::MaxLod; ++Lod) {
+        ShowLods.Emplace(Lod);
+    }
+    
     InitializeMaterials();
 }
 
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
-void FPLATEAUFeatureInfoDisplay::UpdateAsync(const FPLATEAUExtent& InExtent, const IDatasetAccessor& InDatasetAccessor) {
-    // 全てのパネルの状態を更新
-    for (const auto& Entry: AsyncLoadedPanels) {
-        Entry.Value->Tick();
+bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
+    // 生成済みの場合はスキップ
+    if (AsyncLoadedPanels.Find(MeshCodeGizmo.GetRegionMeshID()))
+        return false;
+
+    const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
+    AsyncLoadedPanels.Add(MeshCodeGizmo.GetRegionMeshID(), AsyncLoadedTile);
+
+    FPLATEAUFeatureInfoPanelInput Input;
+    const auto Packages = GetDisplayedPackages();
+    for (const auto& Package : GetDisplayedPackages()) {
+        Input.Add(Package, FindGmlFiles(InDatasetAccessor, MeshCodeGizmo.GetMeshCode(), Package));
     }
 
-    const auto MeshCodes = MeshCode::getThirdMeshes(InExtent.GetNativeData());
-    auto LoadingPanelCount = CountLoadingPanels();
+    const auto TileExtent = MeshCodeGizmo.GetMeshCode().getExtent();
+    const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
+    const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
+    const FBox Box{FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z), FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z)};
 
-    // 範囲内の各地域メッシュについてパネルの生成・読み込みを行う。
-    for (const auto& RawMeshCode : *MeshCodes) {
-        const FString MeshCode = UTF8_TO_TCHAR(RawMeshCode.get().c_str());
+    AsyncLoadedTile->LoadMaxLodAsync(Input, Box);
 
-        // 最大並列数以上は同時に読み込まない。
-        if (LoadingPanelCount >= MaxParallelCount)
-            break;
+    return true;
+}
 
-        // 生成済みの場合はスキップ
-        if (AsyncLoadedPanels.Find(MeshCode))
-            continue;
-
-        const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
-        AsyncLoadedTile->SetVisibility(Visibility);
-        AsyncLoadedPanels.Add(MeshCode, AsyncLoadedTile);
-
-        FPLATEAUFeatureInfoPanelInput Input;
-        const auto Packages = GetDisplayedPackages();
-
-        for (const auto& Package : GetDisplayedPackages()) {
-            Input.Add(Package, FindGmlFiles(InDatasetAccessor, RawMeshCode, Package));
-        }
-        const auto TileExtent = RawMeshCode.getExtent();
-        const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
-        const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
-        const FBox Box{
-            FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
-            FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z)
-        };
-
-        AsyncLoadedTile->LoadMaxLodAsync(Input, Box);
-
-        ++LoadingPanelCount;
+int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
+    int Count = 0;
+    for (const auto& Entry : AsyncLoadedPanels) {
+        if (Entry.Value->GetLoadMaxLodTaskStatus() == EPLATEAUFeatureInfoPanelStatus::Loading)
+            ++Count;
     }
+    return Count;
+}
+
+bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
+    if (AsyncLoadedPanels.Contains(MeshCodeGizmo.GetRegionMeshID())) {
+        return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->AddIconComponent(0.016f);
+    }
+
+    return false;
 }
 
 UMaterialInstanceDynamic* FPLATEAUFeatureInfoDisplay::GetFeatureInfoIconMaterial(
@@ -158,10 +154,11 @@ EPLATEAUFeatureInfoVisibility FPLATEAUFeatureInfoDisplay::GetVisibility() const 
     return Visibility;
 }
 
-void FPLATEAUFeatureInfoDisplay::SetVisibility(const EPLATEAUFeatureInfoVisibility Value) {
+void FPLATEAUFeatureInfoDisplay::SetVisibility(const FPLATEAUMeshCodeGizmo& Gizmo, const EPLATEAUFeatureInfoVisibility Value) {
     Visibility = Value;
-    for (const auto& Entry : AsyncLoadedPanels) {
-        Entry.Value->SetVisibility(Visibility);
+    if (AsyncLoadedPanels.Contains(Gizmo.GetRegionMeshID())) {
+        AsyncLoadedPanels[Gizmo.GetRegionMeshID()].Get()->RecalculateIconTransform(ShowLods);
+        AsyncLoadedPanels[Gizmo.GetRegionMeshID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility);
     }
 }
 
@@ -226,6 +223,21 @@ TArray<FString> FPLATEAUFeatureInfoDisplay::GetIconFileNameList() {
     return TArray<FString> {BuildingIcon, TrafficIcon, PropsIcon, BridgeIcon, PlantsIcon, UndergroundIcon, TerrainIcon, OtherIcon};
 }
 
+void FPLATEAUFeatureInfoDisplay::SwitchFeatureInfoDisplay(const TArray<FPLATEAUMeshCodeGizmo>& MeshCodeGizmos, const int Lod, const bool bCheck) {
+    if (bCheck) {
+        ShowLods.AddUnique(Lod);
+    } else {
+        ShowLods.Remove(Lod);
+    }
+
+    for (const auto& Gizmo : MeshCodeGizmos) {
+        if (AsyncLoadedPanels.Contains(Gizmo.GetRegionMeshID())) {
+            AsyncLoadedPanels[Gizmo.GetRegionMeshID()].Get()->RecalculateIconTransform(ShowLods);
+            AsyncLoadedPanels[Gizmo.GetRegionMeshID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility, true);
+        }
+    }
+}
+
 void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     const auto BaseMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
 
@@ -244,13 +256,4 @@ void FPLATEAUFeatureInfoDisplay::InitializeMaterials() {
     for (const auto& Key : Keys) {
         FeatureInfoMaterials.Add(Key, CreateMaterial(BaseMaterial, Key));
     }
-}
-
-int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
-    int Count = 0;
-    for (const auto& Entry : AsyncLoadedPanels) {
-        if (Entry.Value->GetStatus() == EPLATEAUFeatureInfoPanelStatus::Loading)
-            ++Count;
-    }
-    return Count;
 }

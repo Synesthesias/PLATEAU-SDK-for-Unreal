@@ -31,6 +31,13 @@ SDK画面から各地物の属性情報を確認いただけます。
 > [!CAUTION]
 > SDK画面を開いている状態では以下のスクリプトは動作しないため、SDK画面を閉じてから実行してください。
 
+> [!CAUTION]
+> プロジェクト設定で下記項目のチェックボックスを有効にすることでクリック時に地物の属性情報を取得できるようになります。
+> 
+> 日本語表記： プロジェクト設定 > 物理 > 最適化 > 検索結果のUVをサポート
+> 
+> 英語表記　： Project Settings > Physics > Optimization > Support UV From Hit Results 
+
 SDKにはサンプルのブループリントが含まれています。  
 確認するには、コンテンツブラウザで `設定 → プラグインコンテンツを表示`　にチェックを入れ、次の場所にあるブループリントを開いてください：  
 `Plugins/PLATEAU SDK for Unreal コンテンツ/Samples/AttributeLoadSample/ClickToGetAttribute`  
