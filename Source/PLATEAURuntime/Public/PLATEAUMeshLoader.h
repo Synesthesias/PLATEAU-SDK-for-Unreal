@@ -78,7 +78,7 @@ private:
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
         const std::string& InNodeName,
-        bool InvertNormal);
+        bool IsReconstruct = false);
     UStaticMeshComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,

@@ -386,7 +386,7 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
 
     UE_LOG(LogTemp, Log, TEXT("PLATEAUInstancedCityModel ReconstructModel: %d %d %s"), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
 
-    plateau::polygonMesh::MeshGranularity MeshGranularity;
+    plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
     switch (ReconstructType)         {
     case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
     case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;

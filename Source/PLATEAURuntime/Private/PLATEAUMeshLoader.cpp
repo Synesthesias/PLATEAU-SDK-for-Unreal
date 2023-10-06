@@ -5,7 +5,6 @@
 
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
-
 #include "Engine/StaticMesh.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
@@ -17,7 +16,6 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Misc/DefaultValueHelper.h"
-
 
 #if WITH_EDITOR
 
@@ -355,7 +353,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                                                                     const plateau::polygonMesh::Mesh& InMesh,
                                                                     const FLoadInputData& LoadInputData,
                                                                     const std::shared_ptr<const citygml::CityModel>
-                                                                    CityModel, const std::string& InNodeName, bool InvertNormal)
+                                                                    CityModel, const std::string& InNodeName, 
+                                                                    bool IsReconstruct)
 {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
@@ -396,7 +395,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertNormal);
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, !IsReconstruct);
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&StaticMesh]()
@@ -429,10 +428,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     Task->Wait();
 
     //PolygonGroup数の整合性チェック
-    //check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
+    if(SubMeshMaterialSets.Num() != MeshDescription->PolygonGroups().Num())
+        UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
     const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData]
+        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, &IsReconstruct]
         {
             for (const auto& SubMeshValue : SubMeshMaterialSets)
             {
@@ -509,6 +509,19 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                     //Textureが存在する場合
                     if (Texture != nullptr)
                         DynMaterial->SetTextureParameterValue("Texture", Texture);
+
+                    //分割・結合時のFallback Material取得
+                    if (IsReconstruct && !TexturePath.IsEmpty()) {
+                        FString Path, FileName;
+                        TexturePath.Split("/", &Path, &FileName, ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+                        FString FallbackName = UPLATEAUImportSettings::GetFallbackMaterialNameFromDiffuseTextureName(FileName);
+                        if (!FallbackName.IsEmpty()) {
+                            FString SourcePath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback/" / FallbackName;
+                            UMaterialInstance* FallbackMat = Cast<UMaterialInstance>(
+                                StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
+                            DynMaterial = StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
+                        }  
+                    }
 
                     DynMaterial->TwoSided = false;
                     StaticMesh->AddMaterial(DynMaterial);
@@ -608,7 +621,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
         return nullptr;
 
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel,
-                                     Node.getName(), true);
+                                     Node.getName());
 }
 
 
@@ -712,6 +725,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
     };
 
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
-        Node.getName(), false);
+        Node.getName(), true);
 }
 #endif
