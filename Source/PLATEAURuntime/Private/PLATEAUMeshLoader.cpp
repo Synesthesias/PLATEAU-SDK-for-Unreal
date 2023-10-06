@@ -420,7 +420,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     Task->Wait();
 
     //PolygonGroup数の整合性チェック
-    check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
+    if (SubMeshMaterialSets.Num() != MeshDescription->PolygonGroups().Num())
+        UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
     const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData]
