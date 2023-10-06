@@ -102,13 +102,13 @@ FPLATEAUAsyncLoadedFeatureInfoPanel::FPLATEAUAsyncLoadedFeatureInfoPanel(
     const TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient)
     : Owner(Owner)
     , ViewportClient(ViewportClient)
+    , AddedIconComponentCnt(0)
+    , AddedDetailedIconComponentCnt(0)
+    , DeltaTime(0)
     , MaxLodTaskStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
     , CreateComponentStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
     , AddComponentStatus(EPLATEAUFeatureInfoPanelStatus::Idle)
-    , FeatureInfoVisibility(EPLATEAUFeatureInfoVisibility::Hidden)
-    , DeltaTime(0)
-    , AddedIconComponentCnt(0)
-    , AddedDetailedIconComponentCnt(0) {}
+    , FeatureInfoVisibility(EPLATEAUFeatureInfoVisibility::Hidden) {}
 
 EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetFeatureInfoVisibility() const {
     return FeatureInfoVisibility;

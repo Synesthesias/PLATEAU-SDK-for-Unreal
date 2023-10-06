@@ -65,8 +65,7 @@ public:
                 ExtractOptions.export_appearance = Settings.bImportTexture;
                 ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
                 ExtractOptions.attach_map_tile = Settings.bAttachMapTile;
-                const char* MapTileUrl = TCHAR_TO_UTF8(*Settings.MapTileUrl);
-                std::strcpy(ExtractOptions.map_tile_url, MapTileUrl);
+                std::strcpy(ExtractOptions.map_tile_url, TCHAR_TO_UTF8(*Settings.MapTileUrl));
                 ExtractOptions.map_tile_zoom_level = Settings.ZoomLevel;
 
                 switch (Settings.TexturePackingResolution) {
