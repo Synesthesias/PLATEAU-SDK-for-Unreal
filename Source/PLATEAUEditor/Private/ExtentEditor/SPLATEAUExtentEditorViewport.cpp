@@ -29,8 +29,8 @@
 #define LOCTEXT_NAMESPACE "SPLATEAUExtentEditorViewport"
 
 
-SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport() : PreviewScene(
-    MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))) {
+SPLATEAUExtentEditorViewport::SPLATEAUExtentEditorViewport() : PreviewScene(MakeShareable(new FAdvancedPreviewScene(FPreviewScene::ConstructionValues()))),
+                                                               Style(MakeShareable(new FPLATEAUEditorStyle())) {
 }
 
 SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
@@ -109,44 +109,35 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
 
     Overlay->AddSlot().VAlign(VAlign_Top).HAlign(HAlign_Left).Padding(5.f)
     [
-        SNew(SBorder).BorderImage(FAppStyle::Get().GetBrush("FloatingBorder")).Padding(10.f)
+        SNew(SBorder).BorderImage(Style.ToSharedRef()->GetBrush("PLATEAUEditor.FloatingBorder")).Padding(5.f).
+        OnMouseButtonDown_Lambda([](const FGeometry&, const FPointerEvent& PointerEvent) {
+            // マウスイベントをここで吸収
+            return FReply::Handled();
+        })
         [
             SNew(SVerticalBox)
             + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f, 5.f, 5.f, 8.f))
             [
                 SNew(STextBlock).Text(LOCTEXT("OverlayAreaSelectionText", "範囲選択")).
-                TextStyle(ExtentEditorPtr.Pin()->GetEditorStyle(), "PLATEAUEditor.Bold.13").ColorAndOpacity(FLinearColor::White)                
+                TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.13").ColorAndOpacity(FLinearColor::White)                
             ]
             + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
             [
-                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255)).
-                OnClicked_Lambda([this]() {
-                    if (GetOwnerTab())
-                        GetOwnerTab()->RequestCloseTab();
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
+                OnClicked_Lambda([this] {
+                    ViewportClient->ResetSelectedArea();
                     return FReply::Handled();
-                }).Content()
+                }).
+                Content()
                 [
-                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("Cancel Button", "キャンセル"))
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Area Reset Button", "全選択解除"))
                 ]
             ]
             + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
             [
-                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255))
-                .OnClicked_Lambda([this] {
-                    ViewportClient->InitHandlePosition();
-                    return FReply::Handled();
-                }).Content()
-                [
-                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("Area Reset Button", "範囲選択リセット"))
-                ]
-            ]
-            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
-            [
-                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonColorAndOpacity(FColor(10, 90, 80, 255)).
-                OnClicked_Lambda([this]() {
-                    const auto Extent = ViewportClient->GetExtent();
-                    ExtentEditorPtr.Pin()->SetExtent(Extent);
-                    const auto ReferencePoint = GetReferencePoint(ViewportClient->GetExtent().GetNativeData(), ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
+                OnClicked_Lambda([this] {
+                    const auto ReferencePoint = ExtentEditorPtr.Pin()->GetSelectedCenterPoint(ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
                     const auto PackageMask = GetPackageMask();
                     const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
                     if (EditorUtilityWidget != nullptr) {
@@ -163,9 +154,26 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     if (GetOwnerTab())
                         GetOwnerTab()->RequestCloseTab();
                     return FReply::Handled();
-                }).Content()
+                }).
+                IsEnabled_Lambda([this] {
+                    return ExtentEditorPtr.Pin().Get()->bSelectedArea();
+                }).
+                Content()
                 [
-                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(0, 5.f, 0, 5.f)).Text(LOCTEXT("OK Button", "決定"))
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("OK Button", "決定"))
+                ]
+            ]
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
+                OnClicked_Lambda([this]() {
+                    if (GetOwnerTab())
+                        GetOwnerTab()->RequestCloseTab();
+                    return FReply::Handled();
+                }).
+                Content()
+                [
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Cancel Button", "キャンセル"))
                 ]
             ]
         ]
@@ -173,7 +181,112 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
 
     Overlay->AddSlot().VAlign(VAlign_Bottom).HAlign(HAlign_Left).Padding(5.f)
     [
-        SNew(SBorder).BorderImage(FAppStyle::Get().GetBrush("FloatingBorder")).Padding(10.f)
+        SNew(SBorder).BorderImage(Style.ToSharedRef()->GetBrush("PLATEAUEditor.FloatingBorder")).Padding(10.f).
+        OnMouseButtonDown_Lambda([](const FGeometry&, const FPointerEvent& PointerEvent) {
+            // マウスイベントをここで吸収
+            return FReply::Handled();
+        })
+        [
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "LOD")).
+                TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
+            ]
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Right).AutoWidth().Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(Style.ToSharedRef()->GetBrush("PLATEAUEditor.Lod01"))
+                    ]
+                ]
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Left).Padding(FMargin(5.f))
+                [
+                     SNew(SBox).WidthOverride(20.f).HeightOverride(20.f)
+                     [
+                         SNew(SCheckBox).Padding(4.f).Style(Style.ToSharedRef(), "PlateauCheckboxLookToggleButtonCheckbox").IsChecked(ECheckBoxState::Checked).
+                         OnCheckStateChanged_Lambda([this](const ECheckBoxState State) {
+                             ViewportClient->SwitchFeatureInfoDisplay(1, State == ECheckBoxState::Checked);
+                         })
+                     ]
+                 ]
+            ]
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Right).AutoWidth().Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(Style.ToSharedRef()->GetBrush("PLATEAUEditor.Lod02"))
+                    ]
+                ]
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Left).Padding(FMargin(5.f))
+                [
+                     SNew(SBox).WidthOverride(20.f).HeightOverride(20.f)
+                     [
+                         SNew(SCheckBox).Padding(4.f).Style(Style.ToSharedRef(), "PlateauCheckboxLookToggleButtonCheckbox").IsChecked(ECheckBoxState::Checked).
+                         OnCheckStateChanged_Lambda([this](const ECheckBoxState State) {
+                             ViewportClient->SwitchFeatureInfoDisplay(2, State == ECheckBoxState::Checked);
+                         })
+                     ]
+                 ]
+            ]
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Right).AutoWidth().Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(Style.ToSharedRef()->GetBrush("PLATEAUEditor.Lod03"))
+                    ]
+                ]
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Left).Padding(FMargin(5.f))
+                [
+                     SNew(SBox).WidthOverride(20.f).HeightOverride(20.f)
+                     [
+                         SNew(SCheckBox).Padding(4.f).Style(Style.ToSharedRef(), "PlateauCheckboxLookToggleButtonCheckbox").IsChecked(ECheckBoxState::Checked).
+                         OnCheckStateChanged_Lambda([this](const ECheckBoxState State) {
+                             ViewportClient->SwitchFeatureInfoDisplay(3, State == ECheckBoxState::Checked);
+                         })
+                     ]
+                 ]
+            ]
+            + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Right).AutoWidth().Padding(FMargin(5.f))
+                [
+                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
+                    [
+                        SNew(SImage).Image(Style.ToSharedRef()->GetBrush("PLATEAUEditor.Lod04"))
+                    ]
+                ]
+                + SHorizontalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Left).Padding(FMargin(5.f))
+                [
+                     SNew(SBox).WidthOverride(20.f).HeightOverride(20.f)
+                     [
+                         SNew(SCheckBox).Padding(4.f).Style(Style.ToSharedRef(), "PlateauCheckboxLookToggleButtonCheckbox").IsChecked(ECheckBoxState::Checked).
+                         OnCheckStateChanged_Lambda([this](const ECheckBoxState State) {
+                             ViewportClient->SwitchFeatureInfoDisplay(4, State == ECheckBoxState::Checked);
+                         })
+                     ]
+                 ]
+            ]
+        ]
+    ];
+
+    Overlay->AddSlot().VAlign(VAlign_Bottom).HAlign(HAlign_Right).Padding(5.f)
+    [
+        SNew(SBorder).BorderImage(Style.ToSharedRef()->GetBrush("PLATEAUEditor.FloatingBorder")).Padding(10.f).
+        OnMouseButtonDown_Lambda([](const FGeometry&, const FPointerEvent& PointerEvent) {
+            // マウスイベントをここで吸収
+            return FReply::Handled();
+        })
         [
             SNew(SVerticalBox)
             + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
@@ -181,40 +294,27 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 SNew(SVerticalBox)
                 + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).AutoHeight().Padding(FMargin(5.f))
                 [
-                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "LOD")).
-                    TextStyle(ExtentEditorPtr.Pin()->GetEditorStyle(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
+                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "操作方法")).
+                    TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
                 ]
                 + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
                 [
-                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
-                    [
-                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod01"))
-                    ]
+                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "クリック：選択切替")).
+                    TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
                 ]
                 + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
                 [
-                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
-                    [
-                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod02"))
-                    ]
+                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "ドラッグ：矩形を選択範囲に追加")).
+                    TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
                 ]
                 + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
                 [
-                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
-                    [
-                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod03"))
-                    ]
+                    SNew(STextBlock).Text(LOCTEXT("OverlayLodText", "Shift＋ドラッグ：矩形を選択範囲から除外")).
+                    TextStyle(Style.ToSharedRef(), "PLATEAUEditor.Bold.14").ColorAndOpacity(FLinearColor::White)
                 ]
-                + SVerticalBox::Slot().VAlign(VAlign_Center).HAlign(HAlign_Center).Padding(FMargin(5.f))
-                [
-                    SNew(SBox).WidthOverride(30.f).HeightOverride(30.f)
-                    [
-                        SNew(SImage).Image(ExtentEditorPtr.Pin()->GetEditorStyle()->GetBrush("PLATEAUEditor.Lod04"))
-                    ]
-                ]                
             ]
         ]
-    ];
+    ];    
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -230,31 +330,24 @@ TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
     return OwnerTab.Pin();
 }
 
-FVector3d SPLATEAUExtentEditorViewport::GetReferencePoint(const plateau::geometry::Extent Extent, const int ZoneID) {
-    // 平面直角座標系への変換
-    auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
-    GeoReferenceWithoutOffset.ZoneID = ZoneID;
-    GeoReferenceWithoutOffset.UpdateNativeData();
-
-    const auto MinPoint = GeoReferenceWithoutOffset.GetData().project(Extent.min);
-    const auto MaxPoint = GeoReferenceWithoutOffset.GetData().project(Extent.max);
-    const auto NewExtentCenterRaw = (MinPoint + MaxPoint) / 2.0;
-    return FVector3d(NewExtentCenterRaw.x, NewExtentCenterRaw.y, NewExtentCenterRaw.z);
-}
-
 int64 SPLATEAUExtentEditorViewport::GetPackageMask() const {
-    const auto& Extent = ExtentEditorPtr.Pin()->GetExtent();
+    const auto& SelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes();
+    std::vector<plateau::dataset::MeshCode> NativeSelectedMeshCodes;
+    for (const auto& Code : SelectedMeshCodes) {
+        NativeSelectedMeshCodes.emplace_back(TCHAR_TO_UTF8(*Code));
+    }
+
     if (ExtentEditorPtr.Pin()->IsImportFromServer()) {
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(ExtentEditorPtr.Pin()->GetServerDatasetID(), *ClientRef);
-        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
+        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
         const auto PackageMask = FilteredDatasetAccessor->getPackages();
         ExtentEditorPtr.Pin()->SetServerPackageMask(PackageMask);
         return static_cast<int64>(PackageMask);
     }
 
     const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()));
-    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filter(Extent.GetValue().GetNativeData());
+    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
     const auto PackageMask = FilteredDatasetAccessor->getPackages();
     ExtentEditorPtr.Pin()->SetLocalPackageMask(PackageMask);
     return static_cast<int64>(PackageMask);

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <citygml/material.h>
+
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 
@@ -16,10 +18,34 @@ namespace plateau::polygonMesh {
     class Mesh;
 }
 
+struct FSubMeshMaterialSet {
+public:
+    bool hasMaterial;
+    FVector3f Diffuse;
+    FVector3f Specular;
+    FVector3f Emissive;
+    float Shininess;
+    float Transparency;
+    float Ambient;
+    bool isSmooth;
+    FString TexturePath;
+    FPolygonGroupID PolygonGroupID = 0;
+    FString MaterialSlot = FString("");
+
+    FSubMeshMaterialSet();
+    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath);
+    bool operator==(const FSubMeshMaterialSet& Other) const;
+    bool Equals(const FSubMeshMaterialSet& Other) const;
+private:
+};
+
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value);
+
 struct FLoadInputData;
 class UPLATEAUCityObjectGroup;
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
+    using FPathToTexture = TMap<FString, UTexture2D*>;
 public:
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
@@ -35,6 +61,10 @@ public:
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
+    TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
+
+    /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
+     FPathToTexture PathToTexture;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,

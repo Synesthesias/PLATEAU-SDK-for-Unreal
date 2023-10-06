@@ -7,7 +7,9 @@
 
 #include "Widgets/Docking/SDockTab.h"
 #include "EditorViewportTabContent.h"
+#include "PLATEAUMeshCodeGizmo.h"
 #include "Engine/Selection.h"
+#include "Algo/AnyOf.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEUExtentEditor"
 
@@ -23,8 +25,8 @@ void FPLATEAUExtentEditor::UnregisterTabSpawner(const TSharedRef<class FTabManag
     InTabManager->UnregisterTabSpawner(TabId);
 }
 
-FPLATEAUExtentEditor::FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle)
-: Style(InStyle) {
+FPLATEAUExtentEditor::FPLATEAUExtentEditor() {
+    AreaMeshCodeMap.Reset();
 }
 
 FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
@@ -53,28 +55,48 @@ void FPLATEAUExtentEditor::SetSourcePath(const FString& Path) {
     SourcePath = Path;
 }
 
+const FString& FPLATEAUExtentEditor::GetAreaSourcePath() const {
+    return AreaSourcePath;
+}
+
+void FPLATEAUExtentEditor::SetAreaSourcePath(const FString& InAreaSourcePath) {
+    AreaSourcePath = InAreaSourcePath;
+}
+
+bool FPLATEAUExtentEditor::bSelectedArea() const {
+    return Algo::AnyOf(GetAreaMeshCodeMap(), [](const TTuple<FString, FPLATEAUMeshCodeGizmo>& MeshCodeGizmoTuple) {
+        return MeshCodeGizmoTuple.Value.bSelectedArea();
+    });
+}
+
+TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes() const {
+    TArray<FString> Codes;
+    for (auto [_, Value] : AreaMeshCodeMap) {
+        if (Value.bSelectedArea()) {
+            Codes.Append(Value.GetSelectedMeshIds());
+        }
+    }
+    return Codes;
+}
+
+TMap<FString, FPLATEAUMeshCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
+    return AreaMeshCodeMap;
+}
+
+void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
+    AreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+}
+
+void FPLATEAUExtentEditor::ResetAreaMeshCodeMap() {
+    AreaMeshCodeMap.Reset();
+}
+
 FPLATEAUGeoReference FPLATEAUExtentEditor::GetGeoReference() const {
     return GeoReference;
 }
 
 void FPLATEAUExtentEditor::SetGeoReference(const FPLATEAUGeoReference& InGeoReference) {
     GeoReference = InGeoReference;
-}
-
-const TOptional<FPLATEAUExtent>& FPLATEAUExtentEditor::GetExtent() const {
-    return Extent;
-}
-
-void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
-    Extent = InExtent;
-}
-
-void FPLATEAUExtentEditor::ResetExtent() {
-    Extent.Reset();
-}
-
-TSharedRef<FPLATEAUEditorStyle> FPLATEAUExtentEditor::GetEditorStyle() const {
-    return Style.ToSharedRef();
 }
 
 const bool FPLATEAUExtentEditor::IsImportFromServer() const {
@@ -111,6 +133,40 @@ void FPLATEAUExtentEditor::SetLocalPackageMask(const plateau::dataset::Predefine
 
 const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetServerPackageMask() const {
     return ServerPackageMask;
+}
+
+const plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon() const {
+    const auto& SelectedCodes = GetSelectedCodes();
+
+    if (SelectedCodes.Num() == 0)
+        return plateau::geometry::GeoCoordinate(0.0, 0.0, 0.0);
+
+    // 選択された地域メッシュ全てを囲む範囲を計算
+    plateau::geometry::Extent NativeExtent(
+        plateau::geometry::GeoCoordinate(180.0, 180.0, 0.0),
+        plateau::geometry::GeoCoordinate(-180.0, -180.0, 0.0));
+
+    for (const auto& Code : SelectedCodes) {
+        const auto NativePartialExtent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
+        NativeExtent.min.latitude = std::min(NativeExtent.min.latitude, NativePartialExtent.min.latitude);
+        NativeExtent.min.longitude = std::min(NativeExtent.min.longitude, NativePartialExtent.min.longitude);
+        NativeExtent.max.latitude = std::max(NativeExtent.max.latitude, NativePartialExtent.max.latitude);
+        NativeExtent.max.longitude = std::max(NativeExtent.max.longitude, NativePartialExtent.max.longitude);
+    }
+    return NativeExtent.centerPoint();
+}
+
+const FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int ZoneID) const {
+    // 中心点の緯度経度計算
+    const auto CenterLatLon = GetSelectedCenterLatLon();
+
+    // 平面直角座標系への変換
+    auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
+    GeoReferenceWithoutOffset.ZoneID = ZoneID;
+    GeoReferenceWithoutOffset.UpdateNativeData();
+
+    const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
+    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
 void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {

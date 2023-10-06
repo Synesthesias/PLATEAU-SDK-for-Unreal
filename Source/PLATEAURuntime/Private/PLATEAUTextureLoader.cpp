@@ -20,8 +20,7 @@ DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, 
 namespace {
     bool TryLoadAndUncompressImageFile(const FString& TexturePath,
         TArray64<uint8>& OutUncompressedData, int32& OutWidth, int32& OutHeight, EPixelFormat& OutPixelFormat) {
-        if (TexturePath.IsEmpty())
-        {
+        if (TexturePath.IsEmpty()) {
             UE_LOG(LogTemp, Error, TEXT("Failed to load texture : path is empty."));
             return false;
         }
@@ -36,20 +35,18 @@ namespace {
 
         const EImageFormat Format = ImageWrapperModule.DetectImageFormat(Buffer.GetData(), Buffer.Num());
 
-        if (Format == EImageFormat::Invalid)
-        {
+        if (Format == EImageFormat::Invalid) {
             UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Texture format is invalid : %s"), *TexturePath);
             return false;
         }
-            
+
         const auto ImageWrapper = ImageWrapperModule.CreateImageWrapper(Format);
 
-        if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num()))
-        {
+        if (!ImageWrapper->SetCompressed((void*)Buffer.GetData(), Buffer.Num())) {
             UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Could not set compressed : %s"), *TexturePath);
             return false;
         }
-            
+
 
         ERGBFormat RGBFormat;
         const int32 BitDepth = ImageWrapper->GetBitDepth();
@@ -59,16 +56,17 @@ namespace {
         if (BitDepth == 16) {
             OutPixelFormat = PF_FloatRGBA;
             RGBFormat = ERGBFormat::RGBAF;
-        } else if (BitDepth == 8) {
+        }
+        else if (BitDepth == 8) {
             OutPixelFormat = PF_B8G8R8A8;
             RGBFormat = ERGBFormat::BGRA;
-        } else {
+        }
+        else {
             UE_LOG(LogTemp, Error, TEXT("Error creating texture. Bit depth is unsupported. (%d), %s"), BitDepth, *TexturePath);
             return false;
         }
 
-        if(!ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData))
-        {
+        if (!ImageWrapper->GetRaw(RGBFormat, BitDepth, OutUncompressedData)) {
             UE_LOG(LogTemp, Error, TEXT("Failed to load texture : Failed on GetRaw : %s"), *TexturePath);
             return false;
         }
@@ -154,19 +152,14 @@ namespace {
         }
         MipData.Empty();
 
-        {
-            FFunctionGraphTask::CreateAndDispatchWhenReady(
-                [&]() {
-                    // link RHI texture to UTexture2D
-                    ENQUEUE_RENDER_COMMAND(UpdateTextureReference)(
-                        [Texture, RHITexture2D](FRHICommandListImmediate& RHICmdList) {
-                            RHIUpdateTextureReference(Texture->TextureReference.TextureReferenceRHI, RHITexture2D);
-                            Texture->RefreshSamplerStates();
-                        }
-                    );
-                }, TStatId(), nullptr, ENamedThreads::GameThread)
-                ->Wait();
-        }
+        // link RHI texture to UTexture2D
+        ENQUEUE_RENDER_COMMAND(UpdateTextureReference)(
+            [Texture, RHITexture2D](FRHICommandListImmediate& RHICmdList) {
+                RHIUpdateTextureReference(Texture->TextureReference.TextureReferenceRHI, RHITexture2D);
+                Texture->RefreshSamplerStates();
+            }
+        );
+
     }
 }
 
@@ -174,8 +167,8 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
-    if(TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
-    
+    if (TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
+
     // パスに ".." が含まれる場合は、std::filesystem の機能を使って適用します。
     fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_SlashOrBackSlash)).lexically_normal();
     const FString TexturePath_Normalized = TexturePathCpp.c_str();
@@ -190,67 +183,69 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
     // テクスチャ作成
     UTexture2D* NewTexture = nullptr;
-    {
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&]() {
 
-                FString PackageName = TEXT("/Game/PLATEAU/Textures/");
-                PackageName += FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
-                UPackage* Package = CreatePackage(*PackageName);
-                Package->FullyLoad();
-                NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());
-                if (NewTexture != nullptr) {
-                    return;
-                }
+    FString PackageName = TEXT("/Game/PLATEAU/Textures/");
+    PackageName += FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
+    UPackage* Package = CreatePackage(*PackageName);
+    Package->FullyLoad();
+    NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());
+    if (NewTexture == nullptr) {
+        NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
+        const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
+            *(FPaths::ProjectContentDir() + FString("PLATEAU/")));
+        // アセットからテクスチャファイルへの相対パス
+        auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
+        NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
 
-                NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
+        // テクスチャのアセット名設定
+        // "."はパッケージの階層とみなされるためリプレース
+        FString TextureName = FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
+        if (!NewTexture->Rename(*TextureName, nullptr, REN_Test)) {
+            TextureName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(TextureName)).ToString();
+        }
+        NewTexture->Rename(*TextureName, nullptr, REN_DontCreateRedirectors);
 
-                const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + FString("PLATEAU/")));
-                // アセットからテクスチャファイルへの相対パス
-                auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
-                NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
+        NewTexture->NeverStream = true; // NeverStreamをtrueにしないと、レベルを保存して開き直したときにテクスチャ解像度が極端に低く見えます。
 
-                // テクスチャのアセット名設定
-                // "."はパッケージの階層とみなされるためリプレース
-                FString TextureName = FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
-                if (!NewTexture->Rename(*TextureName, nullptr, REN_Test)) {
-                    TextureName = MakeUniqueObjectName(Package, USceneComponent::StaticClass(), FName(TextureName)).ToString();
-                }
-                NewTexture->Rename(*TextureName, nullptr, REN_DontCreateRedirectors);
-
-                NewTexture->NeverStream = false;
-
-                if (GRHISupportsAsyncTextureCreation)
-                    UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
-
-                // アセットとして保存するデータで上書き
-                SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
-
-                // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
-                if (!GRHISupportsAsyncTextureCreation)
-                    NewTexture->UpdateResource();
-
-                NewTexture->AddToRoot();
-                NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
-                // TODO: 関数化(SaveTexturePackage)
-                Package->MarkPackageDirty();
-
-                // 3Dファイルエクスポート用にテクスチャファイルのパスを保持
-                const auto ContentPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir()));
-                auto TextureFilePath = TexturePath.Replace(*ContentPath, TEXT("")).Replace(*FString("\\"), *FString("/"));
-                Package->SetLoadedPath(FPackagePath::FromLocalPath(TexturePath));
-
-                FAssetRegistryModule::AssetCreated(NewTexture);
-                const FString PackageFileName = FPackageName::LongPackageNameToFilename(PackageName, FPackageName::GetAssetPackageExtension());
-                FSavePackageArgs Args;
-                Args.SaveFlags = SAVE_NoError;
-                Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
-                Args.Error = GError;
-                UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
-
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
+        NewTexture->AddToRoot();
     }
+
+    // テクスチャ上書き開始
+    NewTexture->PreEditChange(nullptr);
+
+    if (GRHISupportsAsyncTextureCreation)
+        UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
+
+    // アセットとして保存するデータで上書き
+    SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
+
+    // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
+    if (!GRHISupportsAsyncTextureCreation)
+        NewTexture->UpdateResource();
+
+    NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
+
+    // テクスチャ上書き終了
+    NewTexture->PostEditChange();
+
+    // TODO: 関数化(SaveTexturePackage)
+    Package->MarkPackageDirty();
+
+    // 3Dファイルエクスポート用にテクスチャファイルのパスを保持
+    const auto ContentPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
+        *(FPaths::ProjectContentDir()));
+    auto TextureFilePath = TexturePath.Replace(*ContentPath, TEXT("")).Replace(*FString("\\"), *FString("/"));
+    Package->SetLoadedPath(FPackagePath::FromLocalPath(TexturePath));
+
+    FAssetRegistryModule::AssetCreated(NewTexture);
+    const FString PackageFileName = FPackageName::LongPackageNameToFilename(
+        PackageName, FPackageName::GetAssetPackageExtension());
+    FSavePackageArgs Args;
+    Args.SaveFlags = SAVE_NoError;
+    Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
+    Args.Error = GError;
+    UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
+
     check(IsValid(NewTexture));
 
     if (GRHISupportsAsyncTextureCreation)
@@ -280,7 +275,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
                     GetTransientPackage(),
                     MakeUniqueObjectName(GetTransientPackage(), UTexture2D::StaticClass(), *FPaths::GetBaseFilename(TexturePath)),
                     RF_Transient
-                    );
+                );
 
                 NewTexture->NeverStream = false;
 

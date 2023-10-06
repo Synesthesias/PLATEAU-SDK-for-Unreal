@@ -45,3 +45,7 @@
     バージョンが違うとビルドに失敗する場合があります。
   - Visual Studio のインストール時は、[こちらの手順に従って](https://docs.unrealengine.com/5.0/ja/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/) 追加のコンポーネントをインストールしてください。
 - MacOSの場合、Xcode がインストールされていることが前提となります。
+
+# トラブルシューティング
+うまく導入できない場合、次のことをご確認ください。
+- お使いのウイルス対策ソフトによっては、SDKに含まれるバイナリファイルが削除されることがあります。ウィルス対策ソフトによってSDKのファイルが削除されないよう設定をお願いします。

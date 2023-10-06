@@ -15,8 +15,9 @@ namespace plateau::polygonMesh {
     class LIBPLATEAU_EXPORT MeshFactory {
     public:
         MeshFactory(
-            std::unique_ptr<Mesh>&& target = nullptr,
-            const MeshExtractOptions& mesh_extract_options = MeshExtractOptions(),
+            std::unique_ptr<Mesh>&& target,
+            const MeshExtractOptions& mesh_extract_options,
+            const std::vector<plateau::geometry::Extent>& extents,
             const geometry::GeoReference& geo_reference = geometry::GeoReference(9));
 
         std::unique_ptr<Mesh> releaseMesh() {
@@ -31,7 +32,7 @@ namespace plateau::polygonMesh {
          * options.export_appearance の値によって、 mergeWithTexture または mergeWithoutTexture を呼び出します。
          */
         void addPolygon(const citygml::Polygon& polygon, const std::string& gml_path) const;
-        
+
         /**
          * 主要地物の主要地物IDを設定しMeshをマージします。
          */
@@ -42,7 +43,7 @@ namespace plateau::polygonMesh {
         /**
          * 最小地物のMeshのuv4フィールドに最小地物IDを設定するために、最小地物を構成するPolygonに含まれるVertex数を取得します。
          */
-        static long long countVertices(const citygml::CityObject& city_object, unsigned int lod);
+        long long countVertices(const citygml::CityObject& city_object, unsigned int lod);
 
         /**
          * 最小地物に含まれるすべてのポリゴンをメッシュに追加します。
@@ -67,7 +68,7 @@ namespace plateau::polygonMesh {
          * 子の CityObject は検索しません。
          * 子の Geometry は再帰的に検索します。
          */
-        static void findAllPolygons(const citygml::CityObject& city_obj, unsigned lod, std::list<const citygml::Polygon*>& out_polygons, long long& out_vertices_count, const plateau::geometry::Extent& extent = plateau::geometry::Extent::all());
+        void findAllPolygons(const citygml::CityObject& city_obj, unsigned lod, std::list<const citygml::Polygon*>& out_polygons, long long& out_vertices_count);
 
         /**
          * PLATEAUからメッシュを読み込んで座標軸を変換をするとき、このままだとメッシュが裏返ることがあります（座標軸が反転したりするので）。
@@ -77,6 +78,7 @@ namespace plateau::polygonMesh {
     private:
         MeshExtractOptions options_;
         geometry::GeoReference geo_reference_;
+        std::vector<plateau::geometry::Extent> extents_;
 
         std::unique_ptr<Mesh> mesh_;
         // 新規に主要地物を追加する際に利用可能なインデックス

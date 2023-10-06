@@ -46,6 +46,9 @@ namespace plateau::polygonMesh {
 
         // Model以下の階層構造を読みやすい文字列にします。
         std::string debugString() const;
+
+        /// ルートノードから再帰的に探索することで、Modelに含まれるすべてのMeshを取得します。
+        std::vector<Mesh*> getAllMeshes() const;
     private:
         std::vector<Node> root_nodes_;
     };

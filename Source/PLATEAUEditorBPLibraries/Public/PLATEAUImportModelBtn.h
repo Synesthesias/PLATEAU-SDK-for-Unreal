@@ -13,7 +13,13 @@ USTRUCT(BlueprintType)
 struct FPackageInfoSettings {
     GENERATED_BODY()
 
-    FPackageInfoSettings(): bImport(false), bTextureImport(false), bIncludeAttrInfo(true), MinLod(0), MaxLod(0), Granularity(0) {
+    FPackageInfoSettings()
+        : bImport(false)
+        , bTextureImport(false)
+        , bIncludeAttrInfo(true)
+        , MinLod(0)
+        , MaxLod(0)
+        , Granularity(0) {
     }
 
     FPackageInfoSettings(const bool InbImport, const bool InbTextureImport, const bool InbIncludeAttrInfo, const int InMinLod, const int InMaxLod, const int InGranularity):
@@ -43,6 +49,27 @@ struct FPackageInfoSettings {
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
     int Granularity;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    UMaterialInterface* FallbackMaterial;
+
+    /*
+    * @brief 地図タイルを付与するかどうかを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    bool bAttachMapTile;
+
+    /*
+    * @brief 地図タイルのURLを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    FString MapTileUrl;
+
+    /*
+    * @brief 地図タイルのズームレベルを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")
+    int ZoomLevel;
 };
 
 UCLASS()

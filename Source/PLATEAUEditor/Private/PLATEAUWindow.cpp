@@ -15,8 +15,7 @@ constexpr TCHAR WidgetPath[] = TEXT("/PLATEAU-SDK-for-Unreal/EUW/MainWindow");
 
 const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
 
-FPLATEAUWindow::FPLATEAUWindow(const TSharedRef<FPLATEAUEditorStyle>& InStyle)
-    : Style(InStyle) {
+FPLATEAUWindow::FPLATEAUWindow() {
 }
 
 void FPLATEAUWindow::Startup() {
