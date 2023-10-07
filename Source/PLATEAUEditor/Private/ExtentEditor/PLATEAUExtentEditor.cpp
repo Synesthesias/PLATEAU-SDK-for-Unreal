@@ -63,7 +63,7 @@ void FPLATEAUExtentEditor::SetAreaSourcePath(const FString& InAreaSourcePath) {
     AreaSourcePath = InAreaSourcePath;
 }
 
-bool FPLATEAUExtentEditor::bSelectedArea() const {
+bool FPLATEAUExtentEditor::IsSelectedArea() const {
     return Algo::AnyOf(GetAreaMeshCodeMap(), [](const TTuple<FString, FPLATEAUMeshCodeGizmo>& MeshCodeGizmoTuple) {
         return MeshCodeGizmoTuple.Value.bSelectedArea();
     });
@@ -99,7 +99,7 @@ void FPLATEAUExtentEditor::SetGeoReference(const FPLATEAUGeoReference& InGeoRefe
     GeoReference = InGeoReference;
 }
 
-const bool FPLATEAUExtentEditor::IsImportFromServer() const {
+bool FPLATEAUExtentEditor::IsImportFromServer() const {
     return bImportFromServer;
 }
 
@@ -135,7 +135,7 @@ const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetSer
     return ServerPackageMask;
 }
 
-const plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon() const {
+plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon() const {
     const auto& SelectedCodes = GetSelectedCodes();
 
     if (SelectedCodes.Num() == 0)
@@ -156,7 +156,7 @@ const plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLa
     return NativeExtent.centerPoint();
 }
 
-const FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int ZoneID) const {
+FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int ZoneID) const {
     // 中心点の緯度経度計算
     const auto CenterLatLon = GetSelectedCenterLatLon();
 

@@ -156,7 +156,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     return FReply::Handled();
                 }).
                 IsEnabled_Lambda([this] {
-                    return ExtentEditorPtr.Pin().Get()->bSelectedArea();
+                    return ExtentEditorPtr.Pin().Get()->IsSelectedArea();
                 }).
                 Content()
                 [
