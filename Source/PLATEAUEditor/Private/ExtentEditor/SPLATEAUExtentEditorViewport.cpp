@@ -137,8 +137,8 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
             [
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
                 OnClicked_Lambda([this] {
-                    const auto ReferencePoint = ExtentEditorPtr.Pin()->GetSelectedCenterPoint(ExtentEditorPtr.Pin()->GetGeoReference().ZoneID);
-                    const auto PackageMask = GetPackageMask();
+                    const auto ReferencePoint = ExtentEditorPtr.Pin()->GetSelectedCenterPoint(ExtentEditorPtr.Pin()->GetGeoReference().ZoneID, ExtentEditorPtr.Pin()->IsImportFromServer());
+                    const auto PackageMask = GetPackageMask(ExtentEditorPtr.Pin()->IsImportFromServer());
                     const auto& EditorUtilityWidget = IPLATEAUEditorModule::Get().GetWindow()->GetEditorUtilityWidget();
                     if (EditorUtilityWidget != nullptr) {
                         const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
@@ -330,8 +330,8 @@ TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
     return OwnerTab.Pin();
 }
 
-int64 SPLATEAUExtentEditorViewport::GetPackageMask() const {
-    const auto& SelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes();
+int64 SPLATEAUExtentEditorViewport::GetPackageMask(const bool bImportFromServer) const {
+    const auto& SelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes(bImportFromServer);
     std::vector<plateau::dataset::MeshCode> NativeSelectedMeshCodes;
     for (const auto& Code : SelectedMeshCodes) {
         NativeSelectedMeshCodes.emplace_back(TCHAR_TO_UTF8(*Code));

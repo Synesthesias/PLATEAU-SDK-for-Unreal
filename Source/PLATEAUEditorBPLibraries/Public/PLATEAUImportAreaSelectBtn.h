@@ -55,7 +55,7 @@ public:
     static FString GetDefaultMapTileUrl();
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ImportPanel")
-    static void GetAvailableZoomLevels(const FString& Url, TArray<int>& OutLevels);
+    static void GetAvailableZoomLevels(const FString& Url, const bool bImportFromServer, TArray<int>& OutLevels);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ImportPanel")
     static UMaterialInterface* GetDefaultMaterial();

@@ -26,7 +26,8 @@ void FPLATEAUExtentEditor::UnregisterTabSpawner(const TSharedRef<class FTabManag
 }
 
 FPLATEAUExtentEditor::FPLATEAUExtentEditor() {
-    AreaMeshCodeMap.Reset();
+    LocalAreaMeshCodeMap.Reset();
+    ServerAreaMeshCodeMap.Reset();
 }
 
 FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
@@ -69,26 +70,44 @@ bool FPLATEAUExtentEditor::IsSelectedArea() const {
     });
 }
 
-TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes() const {
+TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes(const bool InbImportFromServer) const {
     TArray<FString> Codes;
-    for (auto [_, Value] : AreaMeshCodeMap) {
-        if (Value.bSelectedArea()) {
-            Codes.Append(Value.GetSelectedMeshIds());
+
+    if (InbImportFromServer) {
+        for (auto [_, Value] : ServerAreaMeshCodeMap) {
+            if (Value.bSelectedArea()) {
+                Codes.Append(Value.GetSelectedMeshIds());
+            }
+        }
+    } else {
+        for (auto [_, Value] : LocalAreaMeshCodeMap) {
+            if (Value.bSelectedArea()) {
+                Codes.Append(Value.GetSelectedMeshIds());
+            }
         }
     }
+
     return Codes;
 }
 
 TMap<FString, FPLATEAUMeshCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
-    return AreaMeshCodeMap;
+    return IsImportFromServer() ? ServerAreaMeshCodeMap : LocalAreaMeshCodeMap;
 }
 
 void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
-    AreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+    if (IsImportFromServer()) {
+        ServerAreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+    } else {
+        LocalAreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+    }
 }
 
 void FPLATEAUExtentEditor::ResetAreaMeshCodeMap() {
-    AreaMeshCodeMap.Reset();
+    if (IsImportFromServer()) {
+        ServerAreaMeshCodeMap.Reset();
+    } else {
+        LocalAreaMeshCodeMap.Reset();
+    }
 }
 
 FPLATEAUGeoReference FPLATEAUExtentEditor::GetGeoReference() const {
@@ -103,8 +122,8 @@ bool FPLATEAUExtentEditor::IsImportFromServer() const {
     return bImportFromServer;
 }
 
-void FPLATEAUExtentEditor::SetImportFromServer(bool InBool) {
-    bImportFromServer = InBool;
+void FPLATEAUExtentEditor::SetImportFromServer(const bool InbImportFromServer) {
+    bImportFromServer = InbImportFromServer;
 }
 
 std::shared_ptr<plateau::network::Client> FPLATEAUExtentEditor::GetClientPtr() const {
@@ -135,8 +154,8 @@ const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetSer
     return ServerPackageMask;
 }
 
-plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon() const {
-    const auto& SelectedCodes = GetSelectedCodes();
+plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon(const bool InbImportFromServer) const {
+    const auto& SelectedCodes = GetSelectedCodes(InbImportFromServer);
 
     if (SelectedCodes.Num() == 0)
         return plateau::geometry::GeoCoordinate(0.0, 0.0, 0.0);
@@ -156,13 +175,13 @@ plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon()
     return NativeExtent.centerPoint();
 }
 
-FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int ZoneID) const {
+FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
     // 中心点の緯度経度計算
-    const auto CenterLatLon = GetSelectedCenterLatLon();
+    const auto CenterLatLon = GetSelectedCenterLatLon(InbImportFromServer);
 
     // 平面直角座標系への変換
     auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
-    GeoReferenceWithoutOffset.ZoneID = ZoneID;
+    GeoReferenceWithoutOffset.ZoneID = InZoneID;
     GeoReferenceWithoutOffset.UpdateNativeData();
 
     const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
