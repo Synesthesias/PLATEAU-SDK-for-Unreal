@@ -479,21 +479,17 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
                             DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
-                    }
-                    else
-                    {
+                    } else {
                         //Fallbackマテリアル設定
                         if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
-                            DynMaterial = StaticCast<UMaterialInstanceDynamic*>(LoadInputData.FallbackMaterial);
-                        }
-                        else {
+                            DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
+                        } else {
                             //デフォルトマテリアル設定
                             const auto SourceMaterialPath =
                                 Texture != nullptr
                                 ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
                                 : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
-                            UMaterial* Mat = Cast<UMaterial>(
-                                StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
                             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
                         }
                     }
