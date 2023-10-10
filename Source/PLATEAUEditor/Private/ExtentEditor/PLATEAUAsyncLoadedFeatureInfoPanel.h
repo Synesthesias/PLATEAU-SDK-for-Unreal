@@ -77,9 +77,9 @@ private:
 
     UE::Tasks::TTask<TMap<plateau::dataset::PredefinedCityModelPackage, int>> GetMaxLodTask;
 
-    float DeltaTime;
     int AddedIconComponentCnt;
     int AddedDetailedIconComponentCnt;
+    float DeltaTime;
     TAtomic<EPLATEAUFeatureInfoPanelStatus> MaxLodTaskStatus;
     TAtomic<EPLATEAUFeatureInfoPanelStatus> CreateComponentStatus;
     TAtomic<EPLATEAUFeatureInfoPanelStatus> AddComponentStatus;

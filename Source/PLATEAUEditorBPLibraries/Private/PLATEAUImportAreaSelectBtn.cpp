@@ -104,8 +104,7 @@ bool UPLATEAUImportAreaSelectBtn::IsReliefPackage(const int64 Package) {
 }
 
 FString UPLATEAUImportAreaSelectBtn::GetDefaultMapTileUrl() {
-    const auto NativeDefaultUrl = plateau::polygonMesh::MeshExtractOptions().map_tile_url;
-    return FString(UTF8_TO_TCHAR(NativeDefaultUrl));
+    return FString(UTF8_TO_TCHAR(plateau::polygonMesh::MeshExtractOptions().map_tile_url));
 }
 
 void UPLATEAUImportAreaSelectBtn::GetAvailableZoomLevels(const FString& Url, TArray<int>& OutLevels) {
