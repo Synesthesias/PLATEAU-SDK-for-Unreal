@@ -39,8 +39,8 @@ public:
     const FString& GetAreaSourcePath() const;
     void SetAreaSourcePath(const FString& InAreaSourcePath);
 
-    bool bSelectedArea() const;
-    TArray<FString> GetSelectedCodes() const;
+    bool IsSelectedArea() const;
+    TArray<FString> GetSelectedCodes(const bool InbImportFromServer) const;
     TMap<FString, FPLATEAUMeshCodeGizmo> GetAreaMeshCodeMap() const;
     void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
     void ResetAreaMeshCodeMap();
@@ -48,8 +48,8 @@ public:
     FPLATEAUGeoReference GetGeoReference() const;
     void SetGeoReference(const FPLATEAUGeoReference& InGeoReference);
 
-    const bool IsImportFromServer() const;
-    void SetImportFromServer(bool InBool);
+    bool IsImportFromServer() const;
+    void SetImportFromServer(const bool InbImportFromServer);
 
     std::shared_ptr<plateau::network::Client> GetClientPtr() const;
     void SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr);
@@ -61,13 +61,14 @@ public:
     void SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
-    const plateau::geometry::GeoCoordinate GetSelectedCenterLatLon() const;
-    const FVector3d GetSelectedCenterPoint(const int ZoneID) const;
+    plateau::geometry::GeoCoordinate GetSelectedCenterLatLon(const bool InbImportFromServer) const;
+    FVector3d GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 private:
     FString SourcePath;
     FString AreaSourcePath;
-    TMap<FString, FPLATEAUMeshCodeGizmo> AreaMeshCodeMap;
+    TMap<FString, FPLATEAUMeshCodeGizmo> LocalAreaMeshCodeMap;
+    TMap<FString, FPLATEAUMeshCodeGizmo> ServerAreaMeshCodeMap;
     FPLATEAUGeoReference GeoReference;
 
     bool bImportFromServer = false;
