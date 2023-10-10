@@ -425,10 +425,6 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
 
         });
-
-    //FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-    //PropertyModule.NotifyCustomizationModuleChanged();
-
     return ConvertTask;
 }
 

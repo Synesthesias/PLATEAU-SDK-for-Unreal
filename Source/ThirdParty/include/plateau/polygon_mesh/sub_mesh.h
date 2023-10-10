@@ -32,8 +32,8 @@ namespace plateau::polygonMesh {
 
         void setTexturePath(std::string file_path);
 
-        void setStartIndex(int start_index);
-        void setEndIndex(int end_index);
+        void setStartIndex(size_t start_index);
+        void setEndIndex(size_t end_index);
 
         bool operator==(const SubMesh& other) const;
 

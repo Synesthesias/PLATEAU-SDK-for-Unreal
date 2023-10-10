@@ -237,10 +237,6 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
                     const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
                     TextureFilePath = AssetBasePath / TextureFileRelativePath;
-
-                    //TextureFilePath = TextureFileRelativePath.Contains(":")? TextureFileRelativePath :  AssetBasePath / TextureFileRelativePath;
-                    
-                    UE_LOG(LogTemp, Log, TEXT("TexPath: %s : %s : %s : %s"), *BaseDir , *AssetBasePath, *TextureFileRelativePath, *TextureFilePath);
                 }
             }
         }

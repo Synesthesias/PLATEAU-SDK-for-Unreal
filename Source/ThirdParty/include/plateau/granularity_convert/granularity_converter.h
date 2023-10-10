@@ -13,8 +13,10 @@ namespace plateau::granularityConvert {
         int grid_count_; // 粒度が地域単位のときのみに利用します。
     };
 
+
     class LIBPLATEAU_EXPORT GranularityConverter {
     public:
-         plateau::polygonMesh::Model convert(plateau::polygonMesh::Model& src, GranularityConvertOption option);
+         /// Modelの粒度を変換したものを作って返します。
+         plateau::polygonMesh::Model convert(const plateau::polygonMesh::Model& src, GranularityConvertOption option) const;
     };
 }

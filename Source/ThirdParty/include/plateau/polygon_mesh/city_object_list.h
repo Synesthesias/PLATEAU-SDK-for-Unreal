@@ -87,6 +87,7 @@ namespace plateau::polygonMesh {
      * mesh_extractor の処理において、上記の city_object_indexが構築されるようにし、ゲームエンジンから読めるようにします。
      */
     class LIBPLATEAU_EXPORT CityObjectList {
+        using TIdMap = std::map<CityObjectIndex, std::string>;
 
     public:
         CityObjectList() = default;
@@ -110,9 +111,13 @@ namespace plateau::polygonMesh {
         size_t size() const;
 
         bool operator==(const CityObjectList& other) const;
+        decltype(TIdMap().begin()) begin() {return city_object_index_to_gml_id_.begin();};
+        decltype(TIdMap().end()) end(){return city_object_index_to_gml_id_.end();};
+        TIdMap& getIdMap() { return city_object_index_to_gml_id_; };
+
 
     private:
-        std::map<CityObjectIndex, std::string> city_object_index_to_gml_id_;
+        TIdMap city_object_index_to_gml_id_;
     };
 
 }

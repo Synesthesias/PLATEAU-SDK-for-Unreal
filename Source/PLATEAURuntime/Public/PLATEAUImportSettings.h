@@ -337,7 +337,7 @@ public:
         if (DiffuseTextureName == "Tex_Area_Disaster_Diffuse.png") return "PlateauDefaultDisasterMaterialInstance";
         if (DiffuseTextureName == "Tex_Rail_Diffuse.jpg") return "PlateauDefaultRailwayMaterialInstance";
         if (DiffuseTextureName == "Tex_Area_Planned.png") return "PlateauDefaultWaterwayMaterialInstance";
-        if (DiffuseTextureName == "Tex_Water_Diffuse.psd") return "PlateauDefaultWaterBodyMaterialInstance";
+        if (DiffuseTextureName == "Tex_Water_Diffuse.jpg") return "PlateauDefaultWaterBodyMaterialInstance";
         if (DiffuseTextureName == "Tex_Bridge_Diffuse.png") return "PlateauDefaultBridgeMaterialInstance";
         if (DiffuseTextureName == "Tex_Track_Diffuse.jpg") return "PlateauDefaultTrackMaterialInstance";
         if (DiffuseTextureName == "Tex_Park_Diffuse.jpg") return "PlateauDefaultSquareMaterialInstance";
