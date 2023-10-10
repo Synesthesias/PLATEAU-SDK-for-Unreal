@@ -8,10 +8,7 @@
 #include "PLATEAUEditor/Private/ExtentEditor/PLATEAUMeshCodeGizmo.h"
 #include <plateau/network/client.h>
 
-class FEditorViewportClient;
 class SDockTab;
-class FViewportTabContent;
-class UPLATEAUSDKEditorUtilityWidget;
 
 namespace plateau::dataset {
     enum class PredefinedCityModelPackage : uint32;

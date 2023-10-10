@@ -246,6 +246,10 @@ void UPLATEAUSDKEditorUtilityWidget::AreaSelectSuccessInvoke(const FVector3d& Re
     AreaSelectSuccessDelegate.Broadcast(ReferencePoint, PackageMask);
 }
 
+void UPLATEAUSDKEditorUtilityWidget::CloseAreaSelectionWindowInvoke() const {
+    CloseAreaSelectionWindowDelegate.Broadcast();
+}
+
 void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken) {
     if (bGettingNativeDatasetMetadata) return;
 

@@ -1,15 +1,19 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
+
+#include "EditorViewportTabContent.h"
+#include "Engine/Selection.h"
+#include "Misc/ScopedSlowTask.h"
+#include "Algo/AnyOf.h"
+
+#include "PLATEAUEditor.h"
+#include "PLATEAUMeshCodeGizmo.h"
+#include "PLATEAUWindow.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 #include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
 
-#include "Misc/ScopedSlowTask.h"
-
-#include "Widgets/Docking/SDockTab.h"
-#include "EditorViewportTabContent.h"
-#include "PLATEAUMeshCodeGizmo.h"
-#include "Engine/Selection.h"
-#include "Algo/AnyOf.h"
 
 #define LOCTEXT_NAMESPACE "FPLATEUExtentEditor"
 
@@ -35,15 +39,19 @@ FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
 TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     TWeakPtr<FPLATEAUExtentEditor> WeakSharedThis(SharedThis(this));
 
-    const auto Viewport = SNew(SPLATEAUExtentEditorViewport)
-        .ExtentEditor(WeakSharedThis);
-
-    TSharedRef< SDockTab > DockableTab =
-        SNew(SDockTab)
-        .TabRole(ETabRole::NomadTab)
-        [Viewport];
-
+    const auto Viewport = SNew(SPLATEAUExtentEditorViewport).ExtentEditor(WeakSharedThis);
+    TSharedRef<SDockTab> DockableTab = SNew(SDockTab).TabRole(NomadTab)[Viewport];
     Viewport->SetOwnerTab(DockableTab);
+    DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([](TSharedRef<SDockTab> DockTab) {
+        const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
+        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
+        if (EditorUtilityWidget != nullptr) {
+            const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
+            if (PLATEAUSDKEditorUtilityWidget != nullptr) {
+                PLATEAUSDKEditorUtilityWidget->CloseAreaSelectionWindowInvoke();
+            }
+        }
+    }));
 
     return DockableTab;
 }

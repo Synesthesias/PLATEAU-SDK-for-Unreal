@@ -44,6 +44,7 @@ struct FServerDatasetMetadataMap {
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAreaSelectSuccessDelegate, FVector3d, ReferencePoint, int64, PackageMask);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCloseAreaSelectionWindowDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetDatasetMetaDataAsyncSuccessDelegate, const TArray<FServerDatasetMetadataMap>&, PLATEAUServerDatasetMetadataMap);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSelectionChangedDelegate, AActor*, SelectionActor, USceneComponent*, SelectionComponent, bool, IsActorChanged);
 
@@ -59,6 +60,11 @@ public:
     void AreaSelectSuccessInvoke(const FVector3d& ReferencePoint, const int64& PackageMask) const;
 
     /**
+     * @brief 範囲選択ウィンドウクローズ通知
+     */
+    void CloseAreaSelectionWindowInvoke() const;
+    
+    /**
      * @brief クライアントポインタ取得
      * @return クライアントポインタ
      */
@@ -72,6 +78,12 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
     FAreaSelectSuccessDelegate AreaSelectSuccessDelegate;
 
+    /**
+     * @brief 範囲選択ウィンドウクローズデリゲート
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries|ImportPanel")
+    FCloseAreaSelectionWindowDelegate CloseAreaSelectionWindowDelegate;
+    
     /**
      * @brief サーバのメタデータ受信成功デリゲート
      */
