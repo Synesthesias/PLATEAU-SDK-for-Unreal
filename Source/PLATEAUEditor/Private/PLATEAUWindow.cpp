@@ -90,7 +90,7 @@ bool FPLATEAUWindow::CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const {
     if (!EditorUtilityWidgetBlueprint.IsValid()) {
         return true;
     }
-    return EditorUtilityWidgetBlueprint.IsValid() && EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
+    return EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
 }
 
 void FPLATEAUWindow::ConstructTab() {    
