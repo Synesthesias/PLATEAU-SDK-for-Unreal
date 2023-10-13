@@ -139,21 +139,65 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
                     OnClicked_Lambda([this] {
 
+                    //入力Window表示
+                    TWeakPtr<SEditableTextBox> MeshCodeTextBox;
+                    TSharedRef<SWindow> MeshCodeInputWindow = SNew(SWindow)
+                        .Title(FText::FromString(TEXT("メッシュコード入力")))
+                        .ClientSize(FVector2D(400, 200))
+                        .SupportsMaximize(false)
+                        .SupportsMinimize(false)
+                        .AutoCenter(EAutoCenter::PrimaryWorkArea)
+                        .FocusWhenFirstShown(true)
+                        .IsTopmostWindow(true);
 
-                //ViewportClient->ResetSelectedArea();
+                    MeshCodeInputWindow->SetContent(
+                        SNew(SVerticalBox)
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SNew(STextBlock)
+                            .Text(FText::FromString(TEXT("メッシュコード入力")))
+                        ]
+                        + SVerticalBox::Slot()
+                        .AutoHeight()
+                        [
+                            SAssignNew(MeshCodeTextBox, SEditableTextBox)
+                            .Text(FText::FromString(TEXT("53393574")))
 
-                UEditorUtilityWidgetBlueprint* UMGBP = LoadObject<UEditorUtilityWidgetBlueprint>(nullptr, L"/PLATEAU-SDK-for-Unreal/EUW/MeshCodeInputWindow");
-                auto widget = UMGBP->GetCreatedWidget();
-                //TSharedRef<SDockTab> SpawnedTab = UMGBP->SpawnEditorUITab(SpawnTabArgs);
+                        ]
+                        + SVerticalBox::Slot()
+                            .AutoHeight()
+                            [
+                                SNew(SHorizontalBox)
+                                + SHorizontalBox::Slot()
+                                .AutoWidth()
+                                [
+                                    SNew(SButton)
+                                    .Text(FText::FromString(TEXT("キャンセル"))).
+                                    OnClicked_Lambda([this, MeshCodeInputWindow] {
+                                        //Windowを閉じる
+                                        MeshCodeInputWindow->DestroyWindowImmediately();
+                                        return FReply::Handled();
+                                    })
+                                ]
+                                + SHorizontalBox::Slot()
+                                    .AutoWidth()
+                                    [
+                                        SNew(SButton)
+                                        .Text(FText::FromString(TEXT("OK"))).
+                                        OnClicked_Lambda([this, MeshCodeTextBox] {
+                                            //メッシュコードの位置を表示
+                                            FText Value = MeshCodeTextBox.Pin()->GetText();
+                                            FString meshcode = Value.ToString();
+                                            ViewportClient->SetViewLocationByMeshCode(meshcode);
+                                            return FReply::Handled();
+                                        })
+                                    ]
+                            ]
+                    );
+                    FSlateApplication::Get().AddWindow(MeshCodeInputWindow, true);
 
-                FString meshcode = "";
-                //meshcode = "53395680";
-                //meshcode = "53393578";
-                meshcode = "53393574";
-
-                ViewportClient->SetViewLocationByMeshCode(meshcode);
-
-                return FReply::Handled();
+                    return FReply::Handled();
                         }).
                 Content()
                             [
