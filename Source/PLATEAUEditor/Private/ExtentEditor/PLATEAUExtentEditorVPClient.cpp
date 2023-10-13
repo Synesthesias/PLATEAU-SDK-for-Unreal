@@ -67,6 +67,10 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
     auto GeoReference = ExtentEditor->GetGeoReference();
     MeshCodeGizmos.Reset();
     for (const auto& MeshCode : MeshCodes) {
+        // 2次メッシュ以下の次数は省く
+        if (MeshCode.getLevel() <= 2)
+            continue;
+
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
         if (ExtentEditor->GetAreaMeshCodeMap().Contains(UTF8_TO_TCHAR(MeshCode.get().c_str()))) {
