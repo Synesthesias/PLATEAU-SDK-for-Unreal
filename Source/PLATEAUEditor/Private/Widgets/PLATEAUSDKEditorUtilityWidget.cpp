@@ -250,6 +250,10 @@ void UPLATEAUSDKEditorUtilityWidget::CloseAreaSelectionWindowInvoke() const {
     CloseAreaSelectionWindowDelegate.Broadcast();
 }
 
+void UPLATEAUSDKEditorUtilityWidget::ClosePLATEAUSDKEuwInvoke() const {
+    ClosePLATEAUSDKEuwDelegate.Broadcast();
+}
+
 void UPLATEAUSDKEditorUtilityWidget::GetDatasetMetadataAsync(const FString& InServerURL, const FString& InToken) {
     if (bGettingNativeDatasetMetadata) return;
 
