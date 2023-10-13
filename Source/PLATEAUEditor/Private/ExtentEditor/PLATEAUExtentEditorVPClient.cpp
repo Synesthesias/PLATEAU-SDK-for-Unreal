@@ -321,4 +321,10 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
     return FMath::SegmentPlaneIntersection(StartPoint, EndPoint, Plane, Position);
 }
 
+void FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
+    const auto ExtentEditor = ExtentEditorPtr.Pin();
+    FocusViewportOnBox(ExtentEditor->GetBoxByMeshCode(meshCode), true);
+}
+
+
 #undef LOCTEXT_NAMESPACE

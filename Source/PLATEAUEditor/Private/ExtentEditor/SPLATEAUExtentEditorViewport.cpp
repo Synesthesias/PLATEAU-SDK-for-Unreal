@@ -133,6 +133,35 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Area Reset Button", "全選択解除"))
                 ]
             ]
+
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+                [
+                    SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
+                    OnClicked_Lambda([this] {
+
+
+                //ViewportClient->ResetSelectedArea();
+
+                UEditorUtilityWidgetBlueprint* UMGBP = LoadObject<UEditorUtilityWidgetBlueprint>(nullptr, L"/PLATEAU-SDK-for-Unreal/EUW/MeshCodeInputWindow");
+                auto widget = UMGBP->GetCreatedWidget();
+                //TSharedRef<SDockTab> SpawnedTab = UMGBP->SpawnEditorUITab(SpawnTabArgs);
+
+                FString meshcode = "";
+                //meshcode = "53395680";
+                //meshcode = "53393578";
+                meshcode = "53393574";
+
+                ViewportClient->SetViewLocationByMeshCode(meshcode);
+
+                return FReply::Handled();
+                        }).
+                Content()
+                            [
+                                SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Search By Mesh Code Button", "メッシュコードで選択"))
+                            ]
+                ]
+
+
             + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
             [
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
