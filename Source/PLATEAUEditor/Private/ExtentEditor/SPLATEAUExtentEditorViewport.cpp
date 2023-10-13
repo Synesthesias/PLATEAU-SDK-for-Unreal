@@ -189,7 +189,17 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                             //メッシュコードの位置を表示
                                             FText Value = MeshCodeTextBox.Pin()->GetText();
                                             FString meshcode = Value.ToString();
-                                            ViewportClient->SetViewLocationByMeshCode(meshcode);
+
+                                            if (!meshcode.IsNumeric()) {
+                                                UE_LOG(LogTemp, Error, TEXT("Mesh Code Not Numeric !!!: %s"), *meshcode);
+                                                return FReply::Handled();
+                                            }
+
+                                            if (!ViewportClient->SetViewLocationByMeshCode(meshcode))                                                 {
+
+                                                UE_LOG(LogTemp, Error, TEXT("Wrong Mesh Code!!!: %s"), *meshcode);
+
+                                            }
                                             return FReply::Handled();
                                         })
                                     ]

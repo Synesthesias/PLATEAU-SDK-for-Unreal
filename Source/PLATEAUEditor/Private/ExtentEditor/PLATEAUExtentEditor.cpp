@@ -174,7 +174,10 @@ void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::Predefin
 }
 
 const FVector3d FPLATEAUExtentEditor::GetCenterByMeshCode(const FString& Code) const {
-    const auto Extent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
+    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code));
+    if (!MeshCode.isValid())
+        return FVector3d();
+    const auto Extent = MeshCode.getExtent();
     const auto CenterLatLon = Extent.centerPoint();
     auto GeoRef= GetGeoReference();
     const auto CenterPoint = GeoRef.GetData().project(CenterLatLon);
@@ -182,11 +185,22 @@ const FVector3d FPLATEAUExtentEditor::GetCenterByMeshCode(const FString& Code) c
 }
 
 const FBox FPLATEAUExtentEditor::GetBoxByMeshCode(const FString& Code) const {
-    const auto Extent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
-    auto GeoRef = GetGeoReference();
-    const auto Min = GeoRef.GetData().project(Extent.min);
-    const auto Max = GeoRef.GetData().project(Extent.max);    
-    return FBox(FVector3d(Min.x, Min.y, Min.z), FVector3d(Max.x, Max.y, Max.z));
+    try {
+        const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code));
+        if (!MeshCode.isValid())
+            return FBox();
+        const auto Extent = MeshCode.getExtent();
+        auto GeoRef = GetGeoReference();
+        const auto Min = GeoRef.GetData().project(Extent.min);
+        const auto Max = GeoRef.GetData().project(Extent.max);
+        return FBox(FVector3d(Min.x, Min.y, Min.z), FVector3d(Max.x, Max.y, Max.z));
+    }
+    catch (const std::exception& e) {
+
+        UE_LOG(LogTemp, Error, TEXT("MeshCode Exception !!!: %s"), e.what());
+
+    }
+    return FBox();
 }
 
 #undef LOCTEXT_NAMESPACE

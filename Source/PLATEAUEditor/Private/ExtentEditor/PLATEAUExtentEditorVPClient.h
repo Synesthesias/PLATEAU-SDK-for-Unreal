@@ -45,7 +45,7 @@ public:
     virtual bool ShouldScaleCameraSpeedByDistance() const override;
 
     void SwitchFeatureInfoDisplay(const int Lod, const bool bCheck) const;
-    void SetViewLocationByMeshCode(FString meshCode);
+    bool SetViewLocationByMeshCode(FString meshCode);
 
 private:
     // このインスタンスを保持しているExtentEditorへのポインタ
