@@ -45,6 +45,7 @@ public:
     FPLATEAUExtent(const plateau::geometry::Extent& InExtent);
 
     plateau::geometry::Extent GetNativeData() const;
+    bool IsSet() const;
     bool operator==(const FPLATEAUExtent& other) const;
     bool operator!=(const FPLATEAUExtent& other) const;
 };

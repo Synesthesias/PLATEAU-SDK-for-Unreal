@@ -4,10 +4,12 @@
 
 #include "EditorUtilityWidgetBlueprint.h"
 #include "LevelEditor.h"
+#include "PLATEAUEditor.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "Dialogs/DlgPickPath.h"
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 #include "Framework/Docking/LayoutExtender.h"
+#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
 
 #define LEVEL_EDITOR_NAME "LevelEditor"
 #define LOCTEXT_NAMESPACE "FPLATEUEditorModule"
@@ -15,8 +17,7 @@ constexpr TCHAR WidgetPath[] = TEXT("/PLATEAU-SDK-for-Unreal/EUW/MainWindow");
 
 const FName FPLATEAUWindow::TabID(TEXT("PLATEAUWindow"));
 
-FPLATEAUWindow::FPLATEAUWindow(const TSharedRef<FPLATEAUEditorStyle>& InStyle)
-    : Style(InStyle) {
+FPLATEAUWindow::FPLATEAUWindow() {
 }
 
 void FPLATEAUWindow::Startup() {
@@ -60,7 +61,19 @@ void FPLATEAUWindow::Shutdown() {
 TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs) {
     EditorUtilityWidgetBlueprint = LoadObject<UEditorUtilityWidgetBlueprint>(nullptr, WidgetPath);
     if (EditorUtilityWidgetBlueprint != nullptr) {
-        return EditorUtilityWidgetBlueprint->SpawnEditorUITab(TabSpawnArgs);
+        TSharedRef<SDockTab> DockableTab = EditorUtilityWidgetBlueprint->SpawnEditorUITab(TabSpawnArgs);
+        DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([&](TSharedRef<SDockTab> DockTab) {
+            const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
+            const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
+            if (EditorUtilityWidget != nullptr) {
+                const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
+                if (PLATEAUSDKEditorUtilityWidget != nullptr) {
+                    PLATEAUSDKEditorUtilityWidget->ClosePLATEAUSDKEuwInvoke();
+                }
+            }
+            EditorUtilityWidgetBlueprint = nullptr;
+        }));
+        return DockableTab;
     }
 
     const FText Title = LOCTEXT("WidgetWarning", "ウィジェット破損");
@@ -77,7 +90,7 @@ bool FPLATEAUWindow::CanSpawnTab(const FSpawnTabArgs& TabSpawnArgs) const {
     if (!EditorUtilityWidgetBlueprint.IsValid()) {
         return true;
     }
-    return EditorUtilityWidgetBlueprint.IsValid() && EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
+    return EditorUtilityWidgetBlueprint->GetCreatedWidget() == nullptr;
 }
 
 void FPLATEAUWindow::ConstructTab() {    

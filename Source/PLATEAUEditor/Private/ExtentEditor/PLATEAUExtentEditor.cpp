@@ -1,13 +1,19 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
-#include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
 
-#include "Misc/ScopedSlowTask.h"
-
-#include "Widgets/Docking/SDockTab.h"
 #include "EditorViewportTabContent.h"
 #include "Engine/Selection.h"
+#include "Misc/ScopedSlowTask.h"
+#include "Algo/AnyOf.h"
+
+#include "PLATEAUEditor.h"
+#include "PLATEAUMeshCodeGizmo.h"
+#include "PLATEAUWindow.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/PLATEAUSDKEditorUtilityWidget.h"
+#include "ExtentEditor/SPLATEAUExtentEditorViewport.h"
+
 
 #define LOCTEXT_NAMESPACE "FPLATEUExtentEditor"
 
@@ -23,8 +29,9 @@ void FPLATEAUExtentEditor::UnregisterTabSpawner(const TSharedRef<class FTabManag
     InTabManager->UnregisterTabSpawner(TabId);
 }
 
-FPLATEAUExtentEditor::FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle)
-: Style(InStyle) {
+FPLATEAUExtentEditor::FPLATEAUExtentEditor() {
+    LocalAreaMeshCodeMap.Reset();
+    ServerAreaMeshCodeMap.Reset();
 }
 
 FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
@@ -32,15 +39,19 @@ FPLATEAUExtentEditor::~FPLATEAUExtentEditor() {}
 TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     TWeakPtr<FPLATEAUExtentEditor> WeakSharedThis(SharedThis(this));
 
-    const auto Viewport = SNew(SPLATEAUExtentEditorViewport)
-        .ExtentEditor(WeakSharedThis);
-
-    TSharedRef< SDockTab > DockableTab =
-        SNew(SDockTab)
-        .TabRole(ETabRole::NomadTab)
-        [Viewport];
-
+    const auto Viewport = SNew(SPLATEAUExtentEditorViewport).ExtentEditor(WeakSharedThis);
+    TSharedRef<SDockTab> DockableTab = SNew(SDockTab).TabRole(NomadTab)[Viewport];
     Viewport->SetOwnerTab(DockableTab);
+    DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([](TSharedRef<SDockTab> DockTab) {
+        const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
+        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
+        if (EditorUtilityWidget != nullptr) {
+            const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
+            if (PLATEAUSDKEditorUtilityWidget != nullptr) {
+                PLATEAUSDKEditorUtilityWidget->CloseAreaSelectionWindowInvoke();
+            }
+        }
+    }));
 
     return DockableTab;
 }
@@ -53,6 +64,60 @@ void FPLATEAUExtentEditor::SetSourcePath(const FString& Path) {
     SourcePath = Path;
 }
 
+const FString& FPLATEAUExtentEditor::GetAreaSourcePath() const {
+    return AreaSourcePath;
+}
+
+void FPLATEAUExtentEditor::SetAreaSourcePath(const FString& InAreaSourcePath) {
+    AreaSourcePath = InAreaSourcePath;
+}
+
+bool FPLATEAUExtentEditor::IsSelectedArea() const {
+    return Algo::AnyOf(GetAreaMeshCodeMap(), [](const TTuple<FString, FPLATEAUMeshCodeGizmo>& MeshCodeGizmoTuple) {
+        return MeshCodeGizmoTuple.Value.bSelectedArea();
+    });
+}
+
+TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes(const bool InbImportFromServer) const {
+    TArray<FString> Codes;
+
+    if (InbImportFromServer) {
+        for (auto [_, Value] : ServerAreaMeshCodeMap) {
+            if (Value.bSelectedArea()) {
+                Codes.Append(Value.GetSelectedMeshIds());
+            }
+        }
+    } else {
+        for (auto [_, Value] : LocalAreaMeshCodeMap) {
+            if (Value.bSelectedArea()) {
+                Codes.Append(Value.GetSelectedMeshIds());
+            }
+        }
+    }
+
+    return Codes;
+}
+
+TMap<FString, FPLATEAUMeshCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
+    return IsImportFromServer() ? ServerAreaMeshCodeMap : LocalAreaMeshCodeMap;
+}
+
+void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
+    if (IsImportFromServer()) {
+        ServerAreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+    } else {
+        LocalAreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
+    }
+}
+
+void FPLATEAUExtentEditor::ResetAreaMeshCodeMap() {
+    if (IsImportFromServer()) {
+        ServerAreaMeshCodeMap.Reset();
+    } else {
+        LocalAreaMeshCodeMap.Reset();
+    }
+}
+
 FPLATEAUGeoReference FPLATEAUExtentEditor::GetGeoReference() const {
     return GeoReference;
 }
@@ -61,28 +126,12 @@ void FPLATEAUExtentEditor::SetGeoReference(const FPLATEAUGeoReference& InGeoRefe
     GeoReference = InGeoReference;
 }
 
-const TOptional<FPLATEAUExtent>& FPLATEAUExtentEditor::GetExtent() const {
-    return Extent;
-}
-
-void FPLATEAUExtentEditor::SetExtent(const FPLATEAUExtent& InExtent) {
-    Extent = InExtent;
-}
-
-void FPLATEAUExtentEditor::ResetExtent() {
-    Extent.Reset();
-}
-
-TSharedRef<FPLATEAUEditorStyle> FPLATEAUExtentEditor::GetEditorStyle() const {
-    return Style.ToSharedRef();
-}
-
-const bool FPLATEAUExtentEditor::IsImportFromServer() const {
+bool FPLATEAUExtentEditor::IsImportFromServer() const {
     return bImportFromServer;
 }
 
-void FPLATEAUExtentEditor::SetImportFromServer(bool InBool) {
-    bImportFromServer = InBool;
+void FPLATEAUExtentEditor::SetImportFromServer(const bool InbImportFromServer) {
+    bImportFromServer = InbImportFromServer;
 }
 
 std::shared_ptr<plateau::network::Client> FPLATEAUExtentEditor::GetClientPtr() const {
@@ -111,6 +160,40 @@ void FPLATEAUExtentEditor::SetLocalPackageMask(const plateau::dataset::Predefine
 
 const plateau::dataset::PredefinedCityModelPackage& FPLATEAUExtentEditor::GetServerPackageMask() const {
     return ServerPackageMask;
+}
+
+plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon(const bool InbImportFromServer) const {
+    const auto& SelectedCodes = GetSelectedCodes(InbImportFromServer);
+
+    if (SelectedCodes.Num() == 0)
+        return plateau::geometry::GeoCoordinate(0.0, 0.0, 0.0);
+
+    // 選択された地域メッシュ全てを囲む範囲を計算
+    plateau::geometry::Extent NativeExtent(
+        plateau::geometry::GeoCoordinate(180.0, 180.0, 0.0),
+        plateau::geometry::GeoCoordinate(-180.0, -180.0, 0.0));
+
+    for (const auto& Code : SelectedCodes) {
+        const auto NativePartialExtent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
+        NativeExtent.min.latitude = std::min(NativeExtent.min.latitude, NativePartialExtent.min.latitude);
+        NativeExtent.min.longitude = std::min(NativeExtent.min.longitude, NativePartialExtent.min.longitude);
+        NativeExtent.max.latitude = std::max(NativeExtent.max.latitude, NativePartialExtent.max.latitude);
+        NativeExtent.max.longitude = std::max(NativeExtent.max.longitude, NativePartialExtent.max.longitude);
+    }
+    return NativeExtent.centerPoint();
+}
+
+FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
+    // 中心点の緯度経度計算
+    const auto CenterLatLon = GetSelectedCenterLatLon(InbImportFromServer);
+
+    // 平面直角座標系への変換
+    auto GeoReferenceWithoutOffset = FPLATEAUGeoReference();
+    GeoReferenceWithoutOffset.ZoneID = InZoneID;
+    GeoReferenceWithoutOffset.UpdateNativeData();
+
+    const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
+    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
 void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {

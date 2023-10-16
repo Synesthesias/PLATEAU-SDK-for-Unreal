@@ -406,9 +406,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             // Collision情報設定
             Mesh->CreateBodySetup();
             Mesh->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-            // レイキャスト時にブロック状態ではマルチヒットしない
-            // ヒエラルキー上にLODが複数存在する場合は全てにレイキャスト結果がヒットするようオーバーラップする
-            Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Overlap);
         });
 
     const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&StaticMesh]
@@ -426,7 +423,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     check(SubMeshMaterialSets.Num() == MeshDescription->PolygonGroups().Num());
 
     const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef]
+        [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData]
         {
             for (const auto& SubMeshValue : SubMeshMaterialSets)
             {
@@ -461,9 +458,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         //Material情報が存在する場合
                         const auto SourceMaterialPath = SubMeshValue.Transparency > 0
                                                             ? TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial")
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent")
                                                             : TEXT(
-                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent");
+                                                                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
 
                         UMaterial* Mat = Cast<UMaterial>(
                             StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
@@ -482,17 +479,19 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
                             DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
-                    }
-                    else
-                    {
-                        //デフォルトマテリアル設定
-                        const auto SourceMaterialPath =
-                            Texture != nullptr
+                    } else {
+                        //Fallbackマテリアル設定
+                        if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
+                            DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
+                        } else {
+                            //デフォルトマテリアル設定
+                            const auto SourceMaterialPath =
+                                Texture != nullptr
                                 ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
                                 : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
-                        UMaterial* Mat = Cast<UMaterial>(
-                            StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                        DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+                        }
                     }
                     //Textureが存在する場合
                     if (Texture != nullptr)

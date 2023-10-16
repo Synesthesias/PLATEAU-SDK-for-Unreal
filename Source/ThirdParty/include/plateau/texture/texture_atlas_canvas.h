@@ -3,6 +3,7 @@
 #include "texture_image_base.h"
 #include "atlas_info.h"
 #include "atlas_container.h"
+#include <filesystem>
 
 namespace plateau::texture{
     class TextureAtlasCanvas {
@@ -11,11 +12,12 @@ namespace plateau::texture{
         explicit TextureAtlasCanvas(size_t width, size_t height) :
                 vertical_range_(0), capacity_(0), coverage_(0),
                 canvas_(TextureImageBase::createNewTexture(width, height)),
-                canvas_width_(width), canvas_height_(height) {
+                canvas_width_(width), canvas_height_(height), is_touched_(false) {
         }
 
 
-        void setSaveFilePathIfEmpty(const std::string& original_file_path);
+        void setDefaultSaveFilePathIfEmpty(const std::string& original_file_path);
+        void setSaveFilePath(const std::filesystem::path& path);
         const std::string& getSaveFilePath() const;
 
         TextureImageBase& getCanvas() {
@@ -35,6 +37,9 @@ namespace plateau::texture{
         AtlasInfo insert(const size_t width, const size_t height, const std::string& src_texture_path); // 指定された画像領域（width x height）の領域が確保できるか検証、戻り値AtrasInfoの「valid」ブール値（true:成功、false:失敗）で判定可能
         bool isTexturePacked(const std::string& src_file_path, AtlasInfo& out_atlas_info);
 
+        /// 画像が生成直後の背景色のみの状態ならfalse, 一度でも書き込まれたならtrueを返します。
+        bool isTouched() const {return is_touched_;};
+
     private:
         std::vector<AtlasContainer> container_list_;
         size_t canvas_width_;
@@ -43,7 +48,8 @@ namespace plateau::texture{
         size_t capacity_;
         double coverage_;
         std::unique_ptr<TextureImageBase> canvas_;
-        std::string save_file_path_;
         std::vector<AtlasInfo> packed_textures_info;
+        std::string save_file_path_;
+        bool is_touched_;
     };
 }

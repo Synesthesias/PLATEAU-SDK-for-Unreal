@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUBasemap.h"
-#include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
 
+class FPLATEAUEditorStyle;
 
 class SPLATEAUExtentEditorViewport : public SEditorViewport {
 public:
@@ -30,8 +30,7 @@ protected:
     virtual void BindCommands() override;
 
 private:
-    FVector3d GetReferencePoint(const plateau::geometry::Extent Extent, const int ZoneID);
-    int64 GetPackageMask() const;
+    int64 GetPackageMask(const bool bImportFromServer) const;
     
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;
@@ -40,4 +39,6 @@ private:
     TSharedPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
     // このビューポートを含むDockTab
     TWeakPtr<class SDockTab> OwnerTab;
+    // エディタースタイル
+    TSharedPtr<FPLATEAUEditorStyle> Style;
 };

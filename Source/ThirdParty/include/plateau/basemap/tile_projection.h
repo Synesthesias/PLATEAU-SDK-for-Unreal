@@ -11,7 +11,7 @@ public:
     * \brief 経度・緯度・高さの最小・最大で表現される範囲とズームレベルからそれに該当する地理院地図のタイル座標の集合を返します。
     * \param extent 経度・緯度・高さの最小・最大で表現される範囲
     *        zoom_level 地理院地図のズームレベル
-    * \return extentの範囲に該当する地理院地図のタイル座標の集合
+    * \return extentの範囲に該当する地理院地図のタイル座標が入ったVector。順番は左上から右へ進む順です。
     */
     static std::shared_ptr<std::vector<TileCoordinate>> getTileCoordinates(const plateau::geometry::Extent& extent, int zoomLevel);
 

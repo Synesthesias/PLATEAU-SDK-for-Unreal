@@ -30,13 +30,10 @@ APLATEAUCityModelLoader* UPLATEAUImportModelBtn::GetCityModelLoader(const int Zo
         Loader->Source = ExtentEditor->GetSourcePath();
     }
 
-    const auto& Extent = IPLATEAUEditorModule::Get().GetExtentEditor()->GetExtent();
-    Loader->Extent = Extent.GetValue();
-    Loader->Extent.Min.Height = -100000;
-    Loader->Extent.Max.Height = 100000;
+    Loader->MeshCodes = IPLATEAUEditorModule::Get().GetExtentEditor()->GetSelectedCodes(bImportFromServer);
 
-    Loader->GeoReference.ReferencePoint = ReferencePoint;
     Loader->GeoReference.ZoneID = ZoneID;
+    Loader->GeoReference.ReferencePoint = ReferencePoint;
     Loader->GeoReference.UpdateNativeData();
 
     const auto& PackageMask = bImportFromServer ? ExtentEditor->GetServerPackageMask() : ExtentEditor->GetLocalPackageMask();
@@ -54,6 +51,12 @@ APLATEAUCityModelLoader* UPLATEAUImportModelBtn::GetCityModelLoader(const int Zo
         Feature.MeshGranularity = static_cast<EPLATEAUMeshGranularity>(PackageInfoSettings.Granularity);
         Feature.MinLod = PackageInfoSettings.MinLod;
         Feature.MaxLod = PackageInfoSettings.MaxLod;
+        Feature.FallbackMaterial = PackageInfoSettings.FallbackMaterial;
+        if (Package == plateau::dataset::PredefinedCityModelPackage::Relief) {
+            Feature.bAttachMapTile = PackageInfoSettings.bAttachMapTile;
+            Feature.MapTileUrl = PackageInfoSettings.MapTileUrl;
+            Feature.ZoomLevel = PackageInfoSettings.ZoomLevel;
+        }
     }
 
     Loader->ImportSettings = ImportSettings;
