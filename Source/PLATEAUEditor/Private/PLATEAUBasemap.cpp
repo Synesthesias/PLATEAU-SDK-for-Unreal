@@ -22,10 +22,10 @@ namespace {
 FPLATEAUBasemap::FPLATEAUBasemap(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
-    : GeoReference(InGeoReference)
+    : DeltaTime(0)
+    , GeoReference(InGeoReference)
     , ViewportClient(InViewportClient)
-    , VectorTilePipe{ TEXT("VectorTilePipe") }
-    , DeltaTime(0) {}
+    , VectorTilePipe{ TEXT("VectorTilePipe") } {}
 
 FPLATEAUBasemap::~FPLATEAUBasemap() {
     if (VectorTilePipe.HasWork())

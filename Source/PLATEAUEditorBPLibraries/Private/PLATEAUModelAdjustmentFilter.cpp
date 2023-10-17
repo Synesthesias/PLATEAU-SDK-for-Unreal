@@ -58,5 +58,5 @@ void UPLATEAUModelAdjustmentFilter::ApplyFilter(APLATEAUInstancedCityModel* Targ
     for (const auto& Entity : PackageToLodRangeMap) {
         CastPackageToLodRangeMap.Add(static_cast<plateau::dataset::PredefinedCityModelPackage>(Entity.Key), { Entity.Value.MinLod, Entity.Value.MaxLod });
     }
-    TargetCityModel->FilterByLods(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bOnlyMaxLod)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));;
+    TargetCityModel->FilterByLods(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bOnlyMaxLod)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));
 }
