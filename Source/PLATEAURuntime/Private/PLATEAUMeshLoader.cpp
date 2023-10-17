@@ -715,6 +715,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
     FLoadInputData LoadInputData
     {
         plateau::polygonMesh::MeshExtractOptions{},
+        std::vector<plateau::geometry::Extent>{},
         FString(),
         false,
         nullptr
