@@ -427,8 +427,10 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
 
         for (auto comp : TargetCityObjects) {
-            //comp->DestroyComponent();
-            comp->SetVisibility(false);
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+                comp->DestroyComponent();
+                }, TStatId(), NULL, ENamedThreads::GameThread);
+            //comp->SetVisibility(false);
         }
 
         ReconstructFromConvertedModel(converted);
