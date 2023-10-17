@@ -1,4 +1,4 @@
-﻿// Copyright © 2023 Ministry of Land, Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #pragma once
 
@@ -9,7 +9,6 @@
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUImportModelBtn.h"
 #include "PLATEAUInstancedCityModel.h"
-#include "ExtentEditor/PLATEAUExtentGizmo.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include <plateau/dataset/dataset_source.h>
@@ -62,12 +61,12 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
         GeoReference.ReferencePoint.Z = RawCenterPoint.z;
         ExtentEditor->SetGeoReference(RawGeoReference);
 
-        const auto ExtentGizmo = MakeUnique<FPLATEAUExtentGizmo>();
-        ExtentGizmo->SetMaxX(GizmoData.MaxX);
-        ExtentGizmo->SetMaxY(GizmoData.MaxY);
-        ExtentGizmo->SetMinX(GizmoData.MinX);
-        ExtentGizmo->SetMinY(GizmoData.MinY);
-        ExtentEditor->SetExtent(ExtentGizmo->GetExtent(GeoReference));
+        // const auto ExtentGizmo = MakeUnique<FPLATEAUExtentGizmo>();
+        // ExtentGizmo->SetMaxX(GizmoData.MaxX);
+        // ExtentGizmo->SetMaxY(GizmoData.MaxY);
+        // ExtentGizmo->SetMinX(GizmoData.MinX);
+        // ExtentGizmo->SetMinY(GizmoData.MinY);
+        // ExtentEditor->SetExtent(ExtentGizmo->GetExtent(GeoReference));
 
         return UPLATEAUImportModelBtn::GetCityModelLoader(ZoneId, ReferencePoint, PackageInfoSettingsData, false);
     }

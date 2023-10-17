@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "AdvancedPreviewSceneModule.h"
 #include "PLATEAUGeometry.h"
-#include "PLATEAUEditor/Private/PLATEAUFeatureImportSettingsDetails.h"
+#include "PLATEAUEditor/Private/ExtentEditor/PLATEAUMeshCodeGizmo.h"
 #include <plateau/network/client.h>
 
-class FEditorViewportClient;
 class SDockTab;
-class FViewportTabContent;
-class UPLATEAUSDKEditorUtilityWidget;
+
+namespace plateau::dataset {
+    enum class PredefinedCityModelPackage : uint32;
+}
 
 /**
  * @brief 範囲選択画面の表示、操作、情報取得、設定を行うためのインスタンスメソッドを提供します。
@@ -19,7 +20,7 @@ class UPLATEAUSDKEditorUtilityWidget;
  */
 class PLATEAUEDITOR_API FPLATEAUExtentEditor : public TSharedFromThis<FPLATEAUExtentEditor> {
 public:
-    FPLATEAUExtentEditor(const TSharedRef<class FPLATEAUEditorStyle>& InStyle);
+    FPLATEAUExtentEditor();
     ~FPLATEAUExtentEditor();
 
     static const FName TabId;
@@ -32,17 +33,20 @@ public:
     const FString& GetSourcePath() const;
     void SetSourcePath(const FString& Path);
 
+    const FString& GetAreaSourcePath() const;
+    void SetAreaSourcePath(const FString& InAreaSourcePath);
+
+    bool IsSelectedArea() const;
+    TArray<FString> GetSelectedCodes(const bool InbImportFromServer) const;
+    TMap<FString, FPLATEAUMeshCodeGizmo> GetAreaMeshCodeMap() const;
+    void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
+    void ResetAreaMeshCodeMap();
+
     FPLATEAUGeoReference GetGeoReference() const;
     void SetGeoReference(const FPLATEAUGeoReference& InGeoReference);
 
-    const TOptional<FPLATEAUExtent>& GetExtent() const;
-    void SetExtent(const FPLATEAUExtent& InExtent);
-    void ResetExtent();
-
-    TSharedRef<FPLATEAUEditorStyle> GetEditorStyle() const;
-
-    const bool IsImportFromServer() const;
-    void SetImportFromServer(bool InBool);
+    bool IsImportFromServer() const;
+    void SetImportFromServer(const bool InbImportFromServer);
 
     std::shared_ptr<plateau::network::Client> GetClientPtr() const;
     void SetClientPtr(const std::shared_ptr<plateau::network::Client>& InClientPtr);
@@ -54,12 +58,15 @@ public:
     void SetLocalPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
+    plateau::geometry::GeoCoordinate GetSelectedCenterLatLon(const bool InbImportFromServer) const;
+    FVector3d GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 private:
     FString SourcePath;
+    FString AreaSourcePath;
+    TMap<FString, FPLATEAUMeshCodeGizmo> LocalAreaMeshCodeMap;
+    TMap<FString, FPLATEAUMeshCodeGizmo> ServerAreaMeshCodeMap;
     FPLATEAUGeoReference GeoReference;
-    TOptional<FPLATEAUExtent> Extent;
-    TSharedPtr<FPLATEAUEditorStyle> Style;
 
     bool bImportFromServer = false;
     std::shared_ptr<plateau::network::Client> ClientPtr;

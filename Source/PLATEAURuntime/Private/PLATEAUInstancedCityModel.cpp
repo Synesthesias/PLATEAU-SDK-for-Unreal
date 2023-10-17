@@ -226,6 +226,17 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
     bIsFiltering = true;
 
     for (const auto& GmlComponent : GetGmlComponents()) {
+        const TArray<USceneComponent*>& AttachedLodChildren = GmlComponent->GetAttachChildren();
+
+        // 一度全ての地物メッシュを不可視にする
+        for (const auto& LodComponent : AttachedLodChildren) {
+            const TArray<USceneComponent*>& AttachedFeatureChildren = LodComponent->GetAttachChildren();
+            for (const auto& FeatureComponent : AttachedFeatureChildren) {
+                ApplyCollisionResponseBlockToChannel(FeatureComponent, false, true);
+                FeatureComponent->SetVisibility(false, true);
+            }
+        }
+
         // 選択されていないパッケージを除外
         const auto Package = GetCityModelPackage(GmlComponent);
         if ((Package & InPackage) == plateau::dataset::PredefinedCityModelPackage::None)
@@ -236,7 +247,7 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
 
         // 各地物について全てのLODを表示する場合の処理
         if (!bOnlyMaxLod) {
-            for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            for (const auto& LodComponent : AttachedLodChildren) {
                 const auto Lod = ParseLodComponent(LodComponent);
                 if (MinLod <= Lod && Lod <= MaxLod) {
                     for (const auto& FeatureComponent : LodComponent->GetAttachChildren()) {

@@ -8,8 +8,8 @@
 #include "plateau/mesh_writer/fbx_writer.h"
 
 enum class EMeshTransformType : uint8_t;
-enum class EMeshFileFormat : uint8_t;
 enum class ECoordinateSystem : uint8;
+enum class EMeshFileFormat : uint8_t;
 
 class APLATEAUInstancedCityModel;
 

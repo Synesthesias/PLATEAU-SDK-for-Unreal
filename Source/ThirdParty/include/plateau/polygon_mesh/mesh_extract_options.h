@@ -33,7 +33,6 @@ namespace plateau::polygonMesh {
                 coordinate_zone_id(9), // 東京で歪みの少ない直交座標系をデフォルトとします。
                 exclude_city_object_outside_extent(true),
                 exclude_polygons_outside_extent(false),
-                extent(geometry::Extent::all()), // 全範囲をデフォルトとします。
                 enable_texture_packing(false),
                 texture_packing_resolution(2048),
                 attach_map_tile(true),
@@ -87,7 +86,6 @@ namespace plateau::polygonMesh {
          * テクスチャ結合時の結合先のテクスチャ画像の解像度（縦：texture_packing_resolution x 横:texture_packing_resolution）
          */
         unsigned texture_packing_resolution;
-        geometry::Extent extent;
 
         /**
          * 土地でのみ利用します。

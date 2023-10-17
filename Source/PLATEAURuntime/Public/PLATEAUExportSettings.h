@@ -25,29 +25,10 @@ enum class ECoordinateSystem : uint8 {
     EUN = 3
 };
 
-USTRUCT()
-struct PLATEAURUNTIME_API FPLATEAUFeatureExportSettings {
-    GENERATED_USTRUCT_BODY()
-
-public:
-    UPROPERTY(EditAnywhere, Category = "Export Settings")
-        bool bExportTexture = true;
-
-    UPROPERTY(EditAnywhere, Category = "Export Settings")
-        EMeshTransformType ExportCoordinate = EMeshTransformType::Local;
-
-    UPROPERTY(EditAnywhere, Category = "Export Settings")
-        bool bExportHiddenModel = true;
-
-    UPROPERTY(EditAnywhere, Category = "Export Settings")
-        ECoordinateSystem CoorinateSystem = ECoordinateSystem::ENU;
-};
-
-UCLASS()
-class PLATEAURUNTIME_API UPLATEAUExportSettings : public UObject {
-    GENERATED_BODY()
-
-public:
-    UPROPERTY(EditAnywhere, Category = "Export Settings")
-        FPLATEAUFeatureExportSettings ExportSetting;
+UENUM(BlueprintType)
+enum class EMeshFileFormat : uint8 {
+    OBJ = 0,
+    FBX,
+    GLTF,
+    EMeshFileFormat_MAX,
 };

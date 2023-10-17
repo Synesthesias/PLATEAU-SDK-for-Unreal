@@ -4,6 +4,7 @@
 #include <memory>
 #include <plateau/polygon_mesh/mesh.h>
 #include <plateau/polygon_mesh/mesh_extract_options.h>
+#include <plateau/geometry/geo_coordinate.h>
 #include "citygml/citymodel.h"
 #include "model.h"
 
@@ -32,6 +33,16 @@ namespace plateau::polygonMesh {
          * 生ポインタのdeleteはDLLの利用者の責任です。
          */
         static void extract(Model& out_model, const citygml::CityModel& city_model, const MeshExtractOptions& options);
+
+        /**
+         * CityModelから範囲内のModelを取り出します。
+         */
+        static std::shared_ptr<Model> extractInExtents(const citygml::CityModel& city_model, const MeshExtractOptions& options, const std::vector<plateau::geometry::Extent>& extents);
+
+        /**
+         * CityModelから範囲内のModelを取り出します。
+         */
+        static void extractInExtents(Model& out_model, const citygml::CityModel& city_model, const MeshExtractOptions& options, const std::vector<plateau::geometry::Extent>& extents);
 
         /**
          * 引数で与えられた LOD の主要地物について、次を判定して bool で返します。

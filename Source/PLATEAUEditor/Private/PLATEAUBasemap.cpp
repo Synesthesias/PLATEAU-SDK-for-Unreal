@@ -5,6 +5,7 @@
 #include "PLATEAUGeometry.h"
 #include "PLATEAUTextureLoader.h"
 #include "ExtentEditor/PLATEAUExtentEditorVPClient.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 #include <plateau/basemap/tile_projection.h>
 #include <plateau/basemap/vector_tile_downloader.h>
@@ -12,98 +13,74 @@
 #include <Async/Async.h>
 
 namespace {
-    UStaticMeshComponent* CreateTileComponentInGameThread(UTexture* Texture) {
-        UStaticMeshComponent* TileComponent;
-        FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&] {
-                //mesh component作成，テクスチャを適用
-                const FName MeshName = MakeUniqueObjectName(
-                    GetTransientPackage(),
-                    UStaticMeshComponent::StaticClass(),
-                    TEXT("Tile"));
-
-                TileComponent =
-                    NewObject<UStaticMeshComponent>(
-                        GetTransientPackage(),
-                        MeshName, RF_Transient);
-
-                const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
-                const auto DynMat = UMaterialInstanceDynamic::Create(Mat, GetTransientPackage());
-                DynMat->SetTextureParameterValue(TEXT("Texture"), Texture);
-                TileComponent->SetMaterial(0, DynMat);
-                const auto StaticMeshName = TEXT("/Engine/BasicShapes/Plane");
-                const auto Mesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, StaticMeshName));
-                Mesh->AddMaterial(DynMat);
-                TileComponent->SetStaticMesh(Mesh);
-            }, TStatId(), nullptr, ENamedThreads::GameThread)
-            ->Wait();
-
-            return TileComponent;
-    }
-
+    /**
+     * @brief コンポーネント追加間隔
+     */
+    constexpr float AddBaseMapComponentSleepTime = 0.03f;
 }
 
 FPLATEAUBasemap::FPLATEAUBasemap(
     const FPLATEAUGeoReference& InGeoReference,
     const TSharedPtr<FPLATEAUExtentEditorViewportClient> InViewportClient)
-    : GeoReference(InGeoReference)
+    : DeltaTime(0)
+    , GeoReference(InGeoReference)
     , ViewportClient(InViewportClient)
-    , VectorTilePipe{ TEXT("VectorTilePipe") } {
-}
+    , VectorTilePipe{ TEXT("VectorTilePipe") } {}
 
 FPLATEAUBasemap::~FPLATEAUBasemap() {
     if (VectorTilePipe.HasWork())
         VectorTilePipe.WaitUntilEmpty();
 }
 
-void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
+void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent, float DeltaSeconds) {
     int ZoomLevel = 18;
     std::shared_ptr<std::vector<TileCoordinate>> TileCoordinates;
+
+    // 画面内のタイル数が一定数よりも低くなるようにズームレベルを設定
     while (true) {
         TileCoordinates = TileProjection::getTileCoordinates(InExtent.GetNativeData(), ZoomLevel);
-        // 画面内のタイル数が一定数よりも低くなるようにズームレベルを設定
         if (TileCoordinates->size() <= 16 || ZoomLevel == 1)
             break;
         --ZoomLevel;
     }
 
-    const auto Destination = FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir() + TEXT("\\PLATEAU\\Basemap"));
-
     for (auto& Entry : AsyncLoadedTiles) {
-        if (Entry.Value->GetLoadPhase() != EVectorTileLoadingPhase::FullyLoaded)
-            continue;
-
         const auto TileComponent = Entry.Value->GetComponent();
         if (TileComponent == nullptr)
             continue;
+        if (Entry.Value->GetLoadPhase() != EVectorTileLoadingPhase::FullyLoaded)
+            continue;
 
-        // 全てのタイルを非表示化する。使用するタイルだけ後で再表示
-        TileComponent->SetVisibility(false);
+        // ここで一旦読み込み済みのタイルを非表示にする
+        // 後述のSetVisibilityにより表示するべきタイル（TileCoordinates）を表示する
+        Entry.Value->SetVisibility(false);
 
         if (TilesInScene.Contains(TileComponent))
             continue;
+        
+        DeltaTime = DeltaSeconds + DeltaTime;
+        if (DeltaTime < AddBaseMapComponentSleepTime)
+            break;
         if (!ViewportClient.IsValid())
-            continue;
+            break;
+        const auto PreviewScene = ViewportClient.Pin()->GetPreviewScene();
+        if (PreviewScene == nullptr)
+            break;
+
+        DeltaTime = 0;
 
         //タイルの座標を取得
         auto TileExtent = TileProjection::unproject(Entry.Key.ToNativeData());
         const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
         const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
-        FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z),
-            FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
-
+        FBox Box(FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z), FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z));
         auto Extent = Box.GetExtent();
         Extent.X = FMath::Abs(Extent.X);
         Extent.Y = FMath::Abs(Extent.Y);
         Extent.Z = 0.01;
 
         TileComponent->SetTranslucentSortPriority(plateau::dataset::SortPriority_BaseMap);
-        ViewportClient.Pin()->GetPreviewScene()->AddComponent(
-            TileComponent,
-            FTransform(FRotator(0, 0, 0),
-                Box.GetCenter() - FVector::UpVector,
-                Extent / 50.0
-            ));
+        PreviewScene->AddComponent(TileComponent, FTransform(FRotator(0, 0, 0), Box.GetCenter() - FVector::UpVector, Extent / 50.0));
         TilesInScene.Add(TileComponent);
     }
 
@@ -117,8 +94,7 @@ void FPLATEAUBasemap::UpdateAsync(const FPLATEAUExtent& InExtent) {
 
         const auto& AsyncLoadedTile = AsyncLoadedTiles[TileCoordinate];
         if (AsyncLoadedTile->GetLoadPhase() == EVectorTileLoadingPhase::FullyLoaded) {
-            const auto TileComponent = AsyncLoadedTile->GetComponent();
-            TileComponent->SetVisibility(true);
+            AsyncLoadedTile->SetVisibility(true);
         }
     }
 }
@@ -195,7 +171,7 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
                 return;
             }
 
-            const auto TempComponent = CreateTileComponentInGameThread(Texture);
+            const auto& TempComponent = CreateTileComponentInGameThread(Texture);
             {
                 FScopeLock Lock(&CriticalSection);
                 TileComponent = TempComponent;
@@ -204,4 +180,42 @@ void FPLATEAUAsyncLoadedVectorTile::StartLoading(const FPLATEAUTileCoordinate& I
 
             check(LoadPhase != EVectorTileLoadingPhase::Loading);
         });
+}
+
+UStaticMeshComponent* FPLATEAUAsyncLoadedVectorTile::CreateTileComponentInGameThread(UTexture* Texture) {
+    UStaticMeshComponent* NewTileComponent;
+    FFunctionGraphTask::CreateAndDispatchWhenReady([&] {
+        //mesh component作成，テクスチャを適用
+        const FName MeshName = MakeUniqueObjectName(GetTransientPackage(), UStaticMeshComponent::StaticClass(), TEXT("Tile"));
+        NewTileComponent = NewObject<UStaticMeshComponent>(GetTransientPackage(), MeshName, RF_Transient);
+        const auto Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/PLATEAU-SDK-for-Unreal/FeatureInfoPanel_PanelIcon")));
+        const auto DynMat = UMaterialInstanceDynamic::Create(Mat, GetTransientPackage());
+        DynMat->SetTextureParameterValue(TEXT("Texture"), Texture);
+        TileMaterialInstanceDynamicsMap.Emplace(NewTileComponent, DynMat);
+        NewTileComponent->SetMaterial(0, DynMat);
+        const auto StaticMeshName = TEXT("/Engine/BasicShapes/Plane");
+        const auto Mesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, StaticMeshName));
+        Mesh->AddMaterial(DynMat);
+        NewTileComponent->SetStaticMesh(Mesh);
+    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+
+    return NewTileComponent;
+}
+
+void FPLATEAUAsyncLoadedVectorTile::SetVisibility(const bool InbVisibility) {
+    if (bVisibility == InbVisibility)
+        return;
+
+    bVisibility = InbVisibility;
+    ApplyVisibility();
+}
+
+void FPLATEAUAsyncLoadedVectorTile::ApplyVisibility() const {
+    if (!TileMaterialInstanceDynamicsMap.Contains(TileComponent))
+        return;
+    
+    const auto& MaterialInstanceDynamic = TileMaterialInstanceDynamicsMap[TileComponent];
+    if (MaterialInstanceDynamic == nullptr)
+        return;
+    MaterialInstanceDynamic->SetScalarParameterValue(FName("Opacity"), bVisibility ? 1.0 : 0);
 }
