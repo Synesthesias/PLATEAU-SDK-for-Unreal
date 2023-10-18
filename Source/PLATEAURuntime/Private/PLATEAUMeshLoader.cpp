@@ -366,12 +366,23 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [this, &LoadInputData, &InNodeName, &InMesh, &CityModel, &Component, &Actor, &StaticMesh, &MeshDescription,
-                &NodeName]()
+                &NodeName, IsReconstruct]()
             {
                 if (LoadInputData.bIncludeAttrInfo)
                 {
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                     PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
+                    Component = PLATEAUCityObjectGroup;
+                }
+                else if (IsReconstruct) 
+                {
+                    //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
+                    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+                    auto cityObjRef = CityObjMap.Find(InNodeName.c_str());
+                    if (cityObjRef != nullptr) {
+                        const FPLATEAUCityObject cityObj = *cityObjRef;   
+                        PLATEAUCityObjectGroup->SerializeCityObject(cityObj, LoadInputData.ExtractOptions.mesh_granularity);
+                    }
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -629,13 +640,16 @@ UStaticMeshComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentCompon
                                      Node.getName());
 }
 
-
 void FPLATEAUMeshLoader::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
+    plateau::polygonMesh::MeshGranularity Granularity,
+    TMap<FString, FPLATEAUCityObject> cityObjMap,
     AActor& InActor) {
 
-    ReloadNodeRecursive(InParentComponent,InNode, InActor);
+    CityObjMap = cityObjMap;
+
+    ReloadNodeRecursive(InParentComponent,InNode, Granularity, InActor);
 
     // メッシュをワールド内にビルド
     const auto CopiedStaticMeshes = StaticMeshes;
@@ -649,48 +663,35 @@ void FPLATEAUMeshLoader::ReloadComponentFromNode(
 void FPLATEAUMeshLoader::ReloadNodeRecursive(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
+    plateau::polygonMesh::MeshGranularity Granularity,
     AActor& InActor) {
-    UStaticMeshComponent* Component = ReloadNode(InParentComponent, InNode, InActor);
+    UStaticMeshComponent* Component = ReloadNode(InParentComponent, InNode, Granularity, InActor);
     const size_t ChildNodeCount = InNode.getChildCount();
     for (int i = 0; i < ChildNodeCount; i++) {
         const auto& TargetNode = InNode.getChildAt(i);
-        ReloadNodeRecursive(Component, TargetNode, InActor);
+        ReloadNodeRecursive(Component, TargetNode, Granularity, InActor);
     }
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
+    plateau::polygonMesh::MeshGranularity Granularity,
     AActor& Actor) {
     if (Node.getMesh() == nullptr) {
-        //const auto& CityObject = CityModel->getCityObjectById(Node.getName());
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
         const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             
-            /* */
             StaticClass = UPLATEAUCityObjectGroup::StaticClass();
             const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
             Comp = PLATEAUCityObjectGroup;
-            
-            /*
-            StaticClass = UStaticMeshComponent::StaticClass();
-            Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-            */
-            /*
-            // CityObjectがある場合はUPLATEAUCityObjectGroupとする
-            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo)
-            {
-                StaticClass = UPLATEAUCityObjectGroup::StaticClass();
-                const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
-                Comp = PLATEAUCityObjectGroup;
+
+            auto cityObjRef = CityObjMap.Find(DesiredName);
+            if (cityObjRef != nullptr)                 {
+                const FPLATEAUCityObject cityObj = *cityObjRef;
+                PLATEAUCityObjectGroup->SerializeCityObject(cityObj, Granularity);
             }
-            else { 
-                StaticClass = UStaticMeshComponent::StaticClass();
-                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-            }
-            */
 
             FString NewUniqueName = FString(DesiredName);
             if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
@@ -721,9 +722,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
     if (Node.getMesh()->getVertices().size() == 0)
         return nullptr;
 
+    plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
+    MeshExtractOptions.mesh_granularity = Granularity;
     FLoadInputData LoadInputData
     {
-        plateau::polygonMesh::MeshExtractOptions{},
+        MeshExtractOptions,
         std::vector<plateau::geometry::Extent>{},
         FString(),
         false,

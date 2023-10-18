@@ -6,6 +6,7 @@
 
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/fbx_writer.h"
+#include "CityGML/PLATEAUCityObject.h"
 
 enum class EMeshTransformType : uint8_t;
 enum class ECoordinateSystem : uint8;
@@ -32,7 +33,7 @@ namespace plateau {
 class PLATEAURUNTIME_API FPLATEAUMeshExporter {
 public:
     void Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
-    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<USceneComponent*> ModelComponents, const MeshExportOptions Option);
+    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option, TMap<FString, FPLATEAUCityObject>& cityObjMap);
 
 private:
     void ExportAsOBJ(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);

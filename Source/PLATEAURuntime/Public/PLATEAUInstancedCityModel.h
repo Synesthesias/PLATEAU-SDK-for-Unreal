@@ -128,5 +128,5 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-    void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
+    void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

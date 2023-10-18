@@ -61,6 +61,8 @@ public:
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
+        plateau::polygonMesh::MeshGranularity Granularity,
+        TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
 
 private:
@@ -70,6 +72,9 @@ private:
 
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
+
+    //分割・結合時に保持
+    TMap<FString, FPLATEAUCityObject> CityObjMap;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
@@ -95,9 +100,11 @@ private:
     void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
+        plateau::polygonMesh::MeshGranularity Granularity,
         AActor& InActor);
     UStaticMeshComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
+        plateau::polygonMesh::MeshGranularity Granularity,
         AActor& Actor);
 };

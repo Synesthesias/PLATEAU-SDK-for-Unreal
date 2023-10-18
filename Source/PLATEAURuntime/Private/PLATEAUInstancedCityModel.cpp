@@ -419,7 +419,10 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         FPLATEAUMeshExporter MeshExporter;
         GranularityConverter Converter;
 
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, StaticCast<const TArray<USceneComponent*>>(TargetCityObjects), ExtOptions);
+        //属性情報を覚えておきます。
+        TMap<FString, FPLATEAUCityObject> cityObjMap;
+
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions, cityObjMap);
 
         UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
@@ -433,22 +436,21 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
             //comp->SetVisibility(false);
         }
 
-        ReconstructFromConvertedModel(converted);
+        ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
 
         UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
-
-        });
+    });
     return ConvertTask;
 }
 
-void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model)     {
+void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
 
     UE_LOG(LogTemp, Log, TEXT("GML Name: %s "), *this->GetActorNameOrLabel());
     FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
     FPLATEAUMeshLoader MeshLoader(false);
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [&MeshLoader, this, Model, i] {
-            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), *this);
+        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [this, &MeshLoader, Model, Granularity, cityObjMap, i] {
+            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), Granularity, cityObjMap, *this );
             });  
         AddNested(LoadComponentTask);
         LoadComponentTask.Wait();

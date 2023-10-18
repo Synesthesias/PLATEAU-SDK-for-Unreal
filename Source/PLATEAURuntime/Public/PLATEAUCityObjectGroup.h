@@ -61,6 +61,12 @@ public:
      */
     void SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, std::shared_ptr<const citygml::CityModel> InCityModel);
 
+    /**
+     * @brief 結合・分割時のノードをシリアライズ
+     * @param InCityObject 結合・分割以前のFPLATEAUCityObject
+     */
+    void SerializeCityObject(const FPLATEAUCityObject& InCityObject, plateau::polygonMesh::MeshGranularity Granularity);
+
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);
 
