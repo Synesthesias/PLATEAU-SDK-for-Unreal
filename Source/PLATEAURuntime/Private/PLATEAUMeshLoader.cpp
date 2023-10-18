@@ -488,6 +488,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
                             DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
+                        /*
+                        base color とスペキュラの R:G:B の比率がほぼ同じ場合は
+                        (Unrealのmetallic) = (PLATEAUのスペキュラのR) / (PLATEAUのベースカラーのR)
+                        PLATEAUのスペキュラのR,G,Bの値がほぼ同じ場合は
+                        metallicは0でその値を Specularにする。
+                        */
+                        //auto metallic = SubMeshValue.Specular.X / SubMeshValue.Diffuse.X;
+                        //auto specular = SubMeshValue.Specular;
+
                     } else {
                         //Fallbackマテリアル設定
                         if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
