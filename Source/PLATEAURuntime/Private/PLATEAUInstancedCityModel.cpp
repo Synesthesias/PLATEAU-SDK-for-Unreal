@@ -114,6 +114,11 @@ namespace {
         }
     }
 
+    /**
+     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
+     */
     TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
         TMap<FString, FPLATEAUCityObject> cityObjMap;
         for (auto comp : TargetCityObjects) {
@@ -455,7 +460,6 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
 
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-
         UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
@@ -478,6 +482,7 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
 void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
 
     UE_LOG(LogTemp, Log, TEXT("GML Name: %s "), *this->GetActorNameOrLabel());
+
     FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
     FPLATEAUMeshLoader MeshLoader(false);
     for (int i = 0; i < Model->getRootNodeCount(); i++) {

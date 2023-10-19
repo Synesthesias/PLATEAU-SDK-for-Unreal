@@ -276,6 +276,9 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         return ComponentName;
 }
 
+/**
+ * @brief UPLATEAUCityObjectGroupのリストからplateauのModelを生成
+ */
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option) {
 
     TargetActor = ModelActor;
@@ -323,44 +326,17 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
         auto Mesh = plateau::polygonMesh::Mesh();
         CreateMesh(Mesh, comp, Option);
         auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-
-        //TODO: 属性情報を覚えておきます。
-        //Dictionary<string, CityInfo.CityObjectList.CityObject>
-        //TMap<FString, FPLATEAUCityObject> cityObjMap;
-
-        //TODO: CityObjectListを作って渡します。
-        /*
-        var cityObjGroup = trans.GetComponent<PLATEAUCityObjectGroup>();
-        if (cityObjGroup != null) {
-            using var cityObjList = CityObjectList.Create();
-            foreach(var cityObj in cityObjGroup.GetAllCityObjects()) {
-                int primaryID = cityObj.CityObjectIndex[0];
-                int atomicID = cityObj.CityObjectIndex[1];
-                cityObjList.Add(new CityObjectIndex(primaryID, atomicID), cityObj.GmlID);
-            }
-            dllMesh.CityObjectList = cityObjList;
-        }
-        node.SetMeshByCppMove(dllMesh);
-        */
-        
+       
         CityObjectList cityObjList;
         for (auto cityObj : comp->GetAllRootCityObjects()) {
-            /*
-            CityObjectIndex cityObjIdx;
-            cityObjIdx.primary_index = cityObj.CityObjectIndex.PrimaryIndex;
-            cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
-            cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
-            */
             SetCityObjectIndex(cityObj, cityObjList);
             for (auto child : cityObj.Children) {
                 SetCityObjectIndex(child, cityObjList);
             }
         }
         MeshPtr->setCityObjectList(cityObjList);
-
         Node.setMesh(std::move(MeshPtr));
     }
-
     return OutModel;
 }
 #endif
