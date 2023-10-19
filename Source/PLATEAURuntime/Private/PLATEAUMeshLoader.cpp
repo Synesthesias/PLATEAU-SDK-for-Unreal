@@ -378,11 +378,16 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 {
                     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    auto cityObjRef = CityObjMap.Find(InNodeName.c_str());
+                    auto cityObjRef = CityObjMap.Find(NodeName);
                     if (cityObjRef != nullptr) {
                         const FPLATEAUCityObject cityObj = *cityObjRef;   
                         PLATEAUCityObjectGroup->SerializeCityObject(cityObj, LoadInputData.ExtractOptions.mesh_granularity);
+
+                        UE_LOG(LogTemp, Warning, TEXT("CityObject Found: %s"), *NodeName);
                     }
+                    else
+                        UE_LOG(LogTemp, Error, TEXT("CityObject Not Found: %s"), *NodeName);
+
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -488,7 +493,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
                         DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
                         DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
-                        DynMaterial->SetVectorParameterValue("SpecularColor", SubMeshValue.Specular);
                         DynMaterial->SetScalarParameterValue("Ambient", SubMeshValue.Ambient);
                         DynMaterial->SetScalarParameterValue("Shininess", SubMeshValue.Shininess);
                         DynMaterial->SetScalarParameterValue("Transparency", SubMeshValue.Transparency);
@@ -498,15 +502,17 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             && FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Z)
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
                             && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z))
-                            DynMaterial->SetScalarParameterValue("Specular/Metallic", 1.0f);
-                        /*
-                        base color とスペキュラの R:G:B の比率がほぼ同じ場合は
-                        (Unrealのmetallic) = (PLATEAUのスペキュラのR) / (PLATEAUのベースカラーのR)
-                        PLATEAUのスペキュラのR,G,Bの値がほぼ同じ場合は
-                        metallicは0でその値を Specularにする。
-                        */
-                        //auto metallic = SubMeshValue.Specular.X / SubMeshValue.Diffuse.X;
-                        //auto specular = SubMeshValue.Specular;
+                        {
+                            //metallic = (PLATEAUのスペキュラのR) / (PLATEAUのベースカラーのR)
+                            DynMaterial->SetScalarParameterValue("Metallic", SubMeshValue.Specular.X / SubMeshValue.Diffuse.X);
+                            DynMaterial->SetScalarParameterValue("Specular", 0.f);
+                        }
+                        else 
+                        {
+                            //metallicは0でその値を Specularにする。
+                            DynMaterial->SetScalarParameterValue("Metallic", 0.f);
+                            DynMaterial->SetScalarParameterValue("Specular", (SubMeshValue.Specular.X + SubMeshValue.Specular.Y + SubMeshValue.Specular.Z) / 3.0f );
+                        }
 
                     } else {
                         //Fallbackマテリアル設定
@@ -691,7 +697,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
             if (cityObjRef != nullptr)                 {
                 const FPLATEAUCityObject cityObj = *cityObjRef;
                 PLATEAUCityObjectGroup->SerializeCityObject(cityObj, Granularity);
+
+                UE_LOG(LogTemp, Warning, TEXT("CityObject Found: %s"), *DesiredName);
             }
+            else
+                UE_LOG(LogTemp, Error, TEXT("CityObject Not Found: %s"), *DesiredName);
 
             FString NewUniqueName = FString(DesiredName);
             if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {
@@ -710,8 +720,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
             Actor.AddInstanceComponent(Comp);
             Comp->RegisterComponent();
             Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-
-            UE_LOG(LogTemp, Log, TEXT("AttachComp: %s => %s"), *Comp->GetName(), *ParentComponent->GetName());
 
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();

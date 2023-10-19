@@ -55,12 +55,11 @@ namespace {
     /**
      * @brief FPLATEAUCityObjectからCityObjectIndexを取得してCityObjectListに追加します。
      */
-    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, CityObjectList& cityObjList, TMap<FString, FPLATEAUCityObject>& cityObjMap) {
+    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, CityObjectList& cityObjList) {
         CityObjectIndex cityObjIdx;
         cityObjIdx.primary_index = cityObj.CityObjectIndex.PrimaryIndex;
         cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
         cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
-        cityObjMap.Add(cityObj.GmlID, cityObj);
     }
 }
 
@@ -277,7 +276,7 @@ FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
         return ComponentName;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option, TMap<FString, FPLATEAUCityObject>& cityObjMap) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option) {
 
     TargetActor = ModelActor;
     auto OutModel = plateau::polygonMesh::Model::createModel();
@@ -352,9 +351,9 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
             cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
             */
-            SetCityObjectIndex(cityObj, cityObjList, cityObjMap);
+            SetCityObjectIndex(cityObj, cityObjList);
             for (auto child : cityObj.Children) {
-                SetCityObjectIndex(child, cityObjList, cityObjMap);
+                SetCityObjectIndex(child, cityObjList);
             }
         }
         MeshPtr->setCityObjectList(cityObjList);

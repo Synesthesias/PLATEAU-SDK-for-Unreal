@@ -363,8 +363,8 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
 
 void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCityObject, plateau::polygonMesh::MeshGranularity Granularity) {
 
-    //主要地物
-    if (Granularity == plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject) {
+    //主要地物 / 最小地物
+    if (Granularity == plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject || Granularity == plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject) {
         const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
 
         // 親はなし
@@ -379,17 +379,30 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCi
         const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
         FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
     }
-    else if (Granularity == plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject) {
-
-
-    }
     else if (Granularity == plateau::polygonMesh::MeshGranularity::PerCityModelArea) {
 
+        //TODO: 処理
+
+        //とりあえず↑と一緒
+
+        const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+
+        // 親はなし
+        JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
+
+        // CityObjects取得
+        TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
+        CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(InCityObject)));
+        JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectsJsonArray);
+
+        // Json書き出し
+        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
+        FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
+
 
 
     }
 
-    //TODO: 主要地物 以外
 }
 
 FPLATEAUCityObject UPLATEAUCityObjectGroup::GetPrimaryCityObjectByRaycast(const FHitResult& HitResult) {

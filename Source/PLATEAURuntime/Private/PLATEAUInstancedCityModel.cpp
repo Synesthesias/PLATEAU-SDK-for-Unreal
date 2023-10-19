@@ -113,6 +113,38 @@ namespace {
             }
         }
     }
+
+    TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+        TMap<FString, FPLATEAUCityObject> cityObjMap;
+        for (auto comp : TargetCityObjects) {
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+
+                UE_LOG(LogTemp, Warning, TEXT("Added to Map : %s"), *cityObj.GmlID);
+
+                if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
+                    // 親を探す
+                    USceneComponent* ParentIterator = comp->GetAttachParent();
+                    while (ParentIterator != nullptr) {
+                        if (const auto& Parent = Cast<UPLATEAUCityObjectGroup>(ParentIterator); Parent->GetName().Contains(comp->OutsideParent)) {
+                            for (auto pObj : Parent->GetAllRootCityObjects()) {
+                                cityObjMap.Add(pObj.GmlID, pObj);
+                            } 
+                            break;
+                        }
+                        ParentIterator = ParentIterator->GetAttachParent();
+                    }
+                }
+
+                cityObjMap.Add(cityObj.GmlID, cityObj);
+                for (auto child : cityObj.Children) {
+                    cityObjMap.Add(child.GmlID, child);
+
+                    UE_LOG(LogTemp, Warning, TEXT("Added to Map : %s"), *child.GmlID);
+                }
+            }
+        }
+        return cityObjMap;
+    }
 }
 
 // Sets default values
@@ -420,9 +452,9 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         GranularityConverter Converter;
 
         //属性情報を覚えておきます。
-        TMap<FString, FPLATEAUCityObject> cityObjMap;
+        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
 
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions, cityObjMap);
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
 
         UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
