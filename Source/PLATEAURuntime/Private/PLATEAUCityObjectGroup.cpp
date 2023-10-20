@@ -211,6 +211,25 @@ namespace {
 
         return CityJsonObject;
     }
+
+    TSharedRef<FJsonObject> GetCityJsonObject(const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::CityObjectIndex& CityObjectIndex) {
+        TSharedRef<FJsonObject> CityJsonObject = MakeShared<FJsonObject>();
+
+        CityJsonObject->SetStringField(plateau::CityObject::GmlIdFieldName, InCityObject.GmlID);
+
+        TArray<TSharedPtr<FJsonValue>> CityObjectIndexArray;
+        CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(CityObjectIndex.primary_index));
+        CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(CityObjectIndex.atomic_index));
+        CityJsonObject->SetArrayField(plateau::CityObject::CityObjectIndexFieldName, CityObjectIndexArray);
+
+        CityJsonObject->SetNumberField(plateau::CityObject::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
+
+        TArray<TSharedPtr<FJsonValue>> AttributesJsonObjectArray;
+        GetAttributesJsonObjectRecursive(InCityObject.Attributes, AttributesJsonObjectArray);
+        CityJsonObject->SetArrayField(plateau::CityObject::AttributesFieldName, AttributesJsonObjectArray);
+
+        return CityJsonObject;
+    }
 }
 
 void UPLATEAUCityObjectGroup::FindCollisionUV(const FHitResult& HitResult, FVector2D& UV, const int32 UVChannel) {
@@ -361,48 +380,89 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCityObject, plateau::polygonMesh::MeshGranularity Granularity) {
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, TMap<FString, FPLATEAUCityObject> CityObjMap) {
+    const auto& CityObjectList = InMesh.getCityObjectList();
+    const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
+    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+    JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
+    JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, {});
 
-    //主要地物 / 最小地物
-    if (Granularity == plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject || Granularity == plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject) {
-        const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
-
-        // 親はなし
-        JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
-
-        // CityObjects取得
-        TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
-        CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(InCityObject)));
-        JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectsJsonArray);
-
-        // Json書き出し
-        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
-        FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
-    }
-    else if (Granularity == plateau::polygonMesh::MeshGranularity::PerCityModelArea) {
-
-        //TODO: 処理
-
-        //とりあえず↑と一緒
-
-        const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
-
-        // 親はなし
-        JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
-
-        // CityObjects取得
-        TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
-        CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(InCityObject)));
-        JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectsJsonArray);
-
-        // Json書き出し
-        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
-        FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
-
-
-
+    // 最小地物単位の親を求める（主要地物のIDを設定）
+    if (plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject == InLoadInputData.ExtractOptions.mesh_granularity) {
+        for (const auto& CityObjectIndex : CityObjectIndices) {
+            const FString& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());
+            if (AtomicGmlId != InNodeName) {
+                JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, AtomicGmlId);
+            }
+        }
     }
 
+    if (plateau::polygonMesh::MeshGranularity::PerCityModelArea == InLoadInputData.ExtractOptions.mesh_granularity) {
+        // 地域単位
+        TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
+        TSharedPtr<FJsonObject> CityJsonObjectParent = MakeShareable(new FJsonObject);
+        TArray<TSharedPtr<FJsonValue>> CityJsonObjectChildren;
+        int CurrentPrimaryIndex = -1;
+        for (int i = 0; i < CityObjectIndices.size(); i++) {
+            const auto& CityObjectIndex = CityObjectIndices[i];
+            const auto& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());
+
+            const auto& CityObjRef = CityObjMap.Find(AtomicGmlId);
+            if (CityObjRef == nullptr)
+                continue;
+
+            if (CityObjectIndex.primary_index != CurrentPrimaryIndex) {
+                // 主要地物
+                CurrentPrimaryIndex = CityObjectIndex.primary_index;
+                CityJsonObjectParent = GetCityJsonObject(*CityObjRef, CityObjectIndex);
+                CityObjectJsonArray.Emplace(MakeShared<FJsonValueObject>(CityJsonObjectParent));
+                CityJsonObjectChildren.Empty();
+            }
+            else {
+                // 最小地物
+                CityJsonObjectChildren.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(*CityObjRef, CityObjectIndex)));
+            }
+
+            // データの区切りか？
+            if (i + 1 == CityObjectIndices.size() || CityObjectIndices[i + 1].primary_index != CurrentPrimaryIndex) {
+                CityJsonObjectParent->SetArrayField(plateau::CityObject::ChildrenFieldName, CityJsonObjectChildren);
+            }
+        }
+        JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectJsonArray);
+    } else {
+        // 最小地物単位・主要地物単位共通
+        const auto& CityObjParentRef = CityObjMap.Find(InNodeName);
+        if (CityObjParentRef != nullptr) {
+            const auto& CityObjectParent = *CityObjParentRef;
+            const auto& CityObjectParentIndex = CityObjectList.getCityObjectIndex(TCHAR_TO_UTF8(*InNodeName));
+
+            const auto& CityJsonObjectParent = GetCityJsonObject(CityObjectParent, CityObjectParentIndex);
+            TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
+            CityObjectJsonArray.Emplace(MakeShared<FJsonValueObject>(CityJsonObjectParent));
+
+            if (plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject == InLoadInputData.ExtractOptions.mesh_granularity) {
+                TArray<TSharedPtr<FJsonValue>> CityObjectsChildrenJsonArray;
+                for (const auto& CityObjectIndex : CityObjectIndices) {
+                    const auto& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());
+                    if (AtomicGmlId == InNodeName)
+                        // 親は前の処理で既に情報抽出済み
+                        continue;
+
+                    const auto& CityObjRef = CityObjMap.Find(InNodeName);
+                    if (CityObjRef == nullptr) 
+                        continue;
+
+                    const auto& CityObject = *CityObjRef;
+                    CityObjectsChildrenJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(CityObject, CityObjectIndex)));
+                }
+                CityJsonObjectParent->SetArrayField(plateau::CityObject::ChildrenFieldName, CityObjectsChildrenJsonArray);
+            }
+            JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectJsonArray);
+        }
+    }
+
+    const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
+    FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
 FPLATEAUCityObject UPLATEAUCityObjectGroup::GetPrimaryCityObjectByRaycast(const FHitResult& HitResult) {

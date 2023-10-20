@@ -33,6 +33,7 @@ public:
         FString ID;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -49,6 +50,13 @@ class PLATEAURUNTIME_API APLATEAUInstancedCityModel : public AActor {
     GENERATED_BODY()
 
 public:
+
+    /**
+     * @brief 分割・結合処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnReconstructFinishedDelegate OnReconstructFinished;
+
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 
@@ -128,5 +136,5 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-    void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
+	void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

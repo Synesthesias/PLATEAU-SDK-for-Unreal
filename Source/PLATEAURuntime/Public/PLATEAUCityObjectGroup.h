@@ -63,9 +63,12 @@ public:
 
     /**
      * @brief 結合・分割時のノードをシリアライズ
-     * @param InCityObject 結合・分割以前のFPLATEAUCityObject
+     * @param InNodeName ノード名
+     * @param InMesh メッシュ情報
+     * @param InLoadInputData メッシュの結合単位を確認するために用いる
+     * @param CityObjMap 結合・分割前に保存したFPLATEAUCityObjectのMap
      */
-    void SerializeCityObject(const FPLATEAUCityObject& InCityObject, plateau::polygonMesh::MeshGranularity Granularity);
+    void SerializeCityObject(const FString& NodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, TMap<FString, FPLATEAUCityObject> CityObjMap);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);

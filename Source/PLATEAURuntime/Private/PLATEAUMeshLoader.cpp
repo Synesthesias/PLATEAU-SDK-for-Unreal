@@ -378,16 +378,25 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 {
                     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    auto cityObjRef = CityObjMap.Find(NodeName);
+
+                    PLATEAUCityObjectGroup->SerializeCityObject(RemoveSuffix(NodeName), InMesh, LoadInputData, CityObjMap);
+
+                    /*
+                    auto cityObjRef = CityObjMap.Find(RemoveSuffix(NodeName));
                     if (cityObjRef != nullptr) {
                         const FPLATEAUCityObject cityObj = *cityObjRef;   
+
+
+                        auto& list = InMesh.getCityObjectList();
+                        auto& gmlId = list.getPrimaryGmlID(0);
+
                         PLATEAUCityObjectGroup->SerializeCityObject(cityObj, LoadInputData.ExtractOptions.mesh_granularity);
 
                         UE_LOG(LogTemp, Warning, TEXT("CityObject Found: %s"), *NodeName);
                     }
                     else
                         UE_LOG(LogTemp, Error, TEXT("CityObject Not Found: %s"), *NodeName);
-
+                    */
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -686,7 +695,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
     if (Node.getMesh() == nullptr) {
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
-        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
+        const FString DesiredName = RemoveSuffix(FString(UTF8_TO_TCHAR(Node.getName().c_str())));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             
             StaticClass = UPLATEAUCityObjectGroup::StaticClass();
@@ -743,5 +752,19 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
 
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
+}
+
+FString FPLATEAUMeshLoader::RemoveSuffix(const FString ComponentName) {
+    int Index = 0;
+    if (ComponentName.FindLastChar('_', Index)) {
+        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+            return ComponentName.LeftChop(ComponentName.Len() - Index);
+        }
+        else {
+            return ComponentName;
+        }
+    }
+    else
+        return ComponentName;
 }
 #endif

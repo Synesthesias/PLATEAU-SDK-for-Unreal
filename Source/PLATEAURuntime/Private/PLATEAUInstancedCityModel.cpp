@@ -4,7 +4,6 @@
 #include "PLATEAUInstancedCityModel.h"
 
 #include "Tasks/Task.h"
-
 #include "Misc/DefaultValueHelper.h"
 
 #include <plateau/dataset/i_dataset_accessor.h>
@@ -122,21 +121,25 @@ namespace {
     TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
         TMap<FString, FPLATEAUCityObject> cityObjMap;
         for (auto comp : TargetCityObjects) {
+
+            if (comp->SerializedCityObjects.IsEmpty())
+                continue;
+
             for (auto cityObj : comp->GetAllRootCityObjects()) {
 
                 UE_LOG(LogTemp, Warning, TEXT("Added to Map : %s"), *cityObj.GmlID);
 
                 if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
                     // 親を探す
-                    USceneComponent* ParentIterator = comp->GetAttachParent();
-                    while (ParentIterator != nullptr) {
-                        if (const auto& Parent = Cast<UPLATEAUCityObjectGroup>(ParentIterator); Parent->GetName().Contains(comp->OutsideParent)) {
-                            for (auto pObj : Parent->GetAllRootCityObjects()) {
+                    TArray<USceneComponent*> Parents;
+                    comp->GetParentComponents(Parents);
+                    for (const auto& Parent : Parents)                         {
+                        if (Parent->GetName().Contains(comp->OutsideParent)) {
+                            for (auto pObj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
                                 cityObjMap.Add(pObj.GmlID, pObj);
-                            } 
+                            }
                             break;
                         }
-                        ParentIterator = ParentIterator->GetAttachParent();
                     }
                 }
 
@@ -475,6 +478,11 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
 
         UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
+
+        //終了イベント通知
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            OnReconstructFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);      
     });
     return ConvertTask;
 }
