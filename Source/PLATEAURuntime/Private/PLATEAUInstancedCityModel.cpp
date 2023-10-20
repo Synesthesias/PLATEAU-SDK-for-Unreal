@@ -468,21 +468,22 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
         UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
 
-        for (auto comp : TargetCityObjects) {
-            FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
-                comp->DestroyComponent();
-                }, TStatId(), NULL, ENamedThreads::GameThread);
-            //comp->SetVisibility(false);
-        }
-
         ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
+     
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
 
-        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
+            //コンポーネント削除
+            for (auto comp : TargetCityObjects) {
+                UE_LOG(LogTemp, Warning, TEXT("DestroyComponent %s"), *comp->GetName());
+                comp->DestroyComponent();
+                //comp->SetVisibility(false);
+            }
 
-        //終了イベント通知
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //終了イベント通知
             OnReconstructFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);      
+
+        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
     });
     return ConvertTask;
 }
