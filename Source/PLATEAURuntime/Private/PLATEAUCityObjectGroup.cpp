@@ -380,6 +380,23 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCityObject) {
+
+    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+
+    // 親はなし
+    JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
+
+    // CityObjects取得
+    TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
+    CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(InCityObject)));
+    JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectsJsonArray);
+
+    // Json書き出し
+    const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
+    FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
+}
+
 void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, TMap<FString, FPLATEAUCityObject> CityObjMap) {
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();

@@ -69,6 +69,7 @@ public:
      * @param CityObjMap 結合・分割前に保存したFPLATEAUCityObjectのMap
      */
     void SerializeCityObject(const FString& NodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, TMap<FString, FPLATEAUCityObject> CityObjMap);
+    void SerializeCityObject(const FPLATEAUCityObject& InCityObject);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);

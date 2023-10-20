@@ -378,25 +378,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 {
                     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-
                     PLATEAUCityObjectGroup->SerializeCityObject(RemoveSuffix(NodeName), InMesh, LoadInputData, CityObjMap);
-
-                    /*
-                    auto cityObjRef = CityObjMap.Find(RemoveSuffix(NodeName));
-                    if (cityObjRef != nullptr) {
-                        const FPLATEAUCityObject cityObj = *cityObjRef;   
-
-
-                        auto& list = InMesh.getCityObjectList();
-                        auto& gmlId = list.getPrimaryGmlID(0);
-
-                        PLATEAUCityObjectGroup->SerializeCityObject(cityObj, LoadInputData.ExtractOptions.mesh_granularity);
-
-                        UE_LOG(LogTemp, Warning, TEXT("CityObject Found: %s"), *NodeName);
-                    }
-                    else
-                        UE_LOG(LogTemp, Error, TEXT("CityObject Not Found: %s"), *NodeName);
-                    */
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -705,12 +687,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
             auto cityObjRef = CityObjMap.Find(DesiredName);
             if (cityObjRef != nullptr)                 {
                 const FPLATEAUCityObject cityObj = *cityObjRef;
-                PLATEAUCityObjectGroup->SerializeCityObject(cityObj, Granularity);
-
-                UE_LOG(LogTemp, Warning, TEXT("CityObject Found: %s"), *DesiredName);
+                PLATEAUCityObjectGroup->SerializeCityObject(cityObj);
             }
-            else
-                UE_LOG(LogTemp, Error, TEXT("CityObject Not Found: %s"), *DesiredName);
 
             FString NewUniqueName = FString(DesiredName);
             if (!Comp->Rename(*NewUniqueName, nullptr, REN_Test)) {

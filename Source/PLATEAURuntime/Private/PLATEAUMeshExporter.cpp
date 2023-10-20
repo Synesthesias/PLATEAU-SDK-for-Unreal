@@ -296,6 +296,12 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
         int LodCompIndex = Parents.IndexOfByPredicate([](const auto& Parent) {
             return Parent->GetName().StartsWith("LOD");
             });
+        if (LodCompIndex == -1) {
+
+            UE_LOG(LogTemp, Error, TEXT("CreateModelFromComponents LOD Not Found Error : %s "), *comp->GetName());
+            continue;
+        }
+
         auto LodComp = Parents[LodCompIndex];
         LodName = LodComp->GetName();
         RootName = LodComp->GetAttachParent()->GetName();
