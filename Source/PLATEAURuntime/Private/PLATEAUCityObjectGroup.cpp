@@ -380,12 +380,18 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCityObject) {
-
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
 
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
+
+    // 子コンポーネント名取得
+    TArray<TSharedPtr<FJsonValue>> OutsideChildrenJsonArray;
+    for (int i = 0; i < InNode.getChildCount(); i++) {
+        OutsideChildrenJsonArray.Emplace(MakeShared<FJsonValueString>(UTF8_TO_TCHAR(InNode.getChildAt(i).getName().c_str())));
+    }
+    JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, OutsideChildrenJsonArray);
 
     // CityObjects取得
     TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
@@ -397,7 +403,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCi
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, TMap<FString, FPLATEAUCityObject> CityObjMap) {
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
@@ -405,7 +411,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
     JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, {});
 
     // 最小地物単位の親を求める（主要地物のIDを設定）
-    if (plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject == InLoadInputData.ExtractOptions.mesh_granularity) {
+    if (plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject == Granularity) {
         for (const auto& CityObjectIndex : CityObjectIndices) {
             const FString& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());
             if (AtomicGmlId != InNodeName) {
@@ -414,7 +420,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
         }
     }
 
-    if (plateau::polygonMesh::MeshGranularity::PerCityModelArea == InLoadInputData.ExtractOptions.mesh_granularity) {
+    if (plateau::polygonMesh::MeshGranularity::PerCityModelArea == Granularity) {
         // 地域単位
         TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
         TSharedPtr<FJsonObject> CityJsonObjectParent = MakeShareable(new FJsonObject);
@@ -457,7 +463,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
             TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
             CityObjectJsonArray.Emplace(MakeShared<FJsonValueObject>(CityJsonObjectParent));
 
-            if (plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject == InLoadInputData.ExtractOptions.mesh_granularity) {
+            if (plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject == Granularity) {
                 TArray<TSharedPtr<FJsonValue>> CityObjectsChildrenJsonArray;
                 for (const auto& CityObjectIndex : CityObjectIndices) {
                     const auto& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());

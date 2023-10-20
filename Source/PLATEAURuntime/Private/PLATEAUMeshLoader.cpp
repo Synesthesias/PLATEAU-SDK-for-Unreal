@@ -378,7 +378,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 {
                     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    PLATEAUCityObjectGroup->SerializeCityObject(RemoveSuffix(NodeName), InMesh, LoadInputData, CityObjMap);
+                    PLATEAUCityObjectGroup->SerializeCityObject(RemoveSuffix(NodeName), InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -687,7 +687,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
             auto cityObjRef = CityObjMap.Find(DesiredName);
             if (cityObjRef != nullptr)                 {
                 const FPLATEAUCityObject cityObj = *cityObjRef;
-                PLATEAUCityObjectGroup->SerializeCityObject(cityObj);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj);
             }
 
             FString NewUniqueName = FString(DesiredName);
