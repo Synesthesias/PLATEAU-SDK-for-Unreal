@@ -29,6 +29,7 @@ namespace plateau::polygonMesh {
         Node& operator=(Node&& node) = default;
 
         const std::string& getName() const;
+        void setName(const std::string& name);
         Mesh* getMesh() const;
         void setMesh(std::unique_ptr<Mesh>&& mesh);
 

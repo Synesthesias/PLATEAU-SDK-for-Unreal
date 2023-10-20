@@ -298,50 +298,63 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             });
         if (LodCompIndex == -1) {
 
-            UE_LOG(LogTemp, Error, TEXT("CreateModelFromComponents LOD Not Found Error : %s "), *comp->GetName());
-            continue;
-        }
-
-        auto LodComp = Parents[LodCompIndex];
-        LodName = LodComp->GetName();
-        RootName = LodComp->GetAttachParent()->GetName();
-        Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true);
-
-        int RootIndex = GetChildIndex(RootName, OutModel.get());
-        Root = (RootIndex == -1) ? 
-            &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName)) :
-            &OutModel->getRootNodeAt(RootIndex);
-
-        int LodIndex = GetChildIndex(LodName, Root);
-        Lod = (LodIndex == -1) ?
-            &Root->addEmptyChildNode(TCHAR_TO_UTF8(*LodName)):
-            &Root->getChildAt(LodIndex);
-
-        plateau::polygonMesh::Node* Parent = Lod; 
-        if (Parents.Num() > 0) {    //最小地物の場合
-            Algo::Reverse(Parents);
-            for (auto p : Parents) {
-                int ParentIndex = GetChildIndex(p->GetName(), Parent);
-                Parent = (ParentIndex == -1) ?
-                    &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*p->GetName())):
-                    &Parent->getChildAt(ParentIndex);
+            //LOD Nodeが存在しない場合 Nodeを１つ作ってModelに入れる
+            auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*comp->GetName()));
+            auto Mesh = plateau::polygonMesh::Mesh();
+            CreateMesh(Mesh, comp, Option);
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            CityObjectList cityObjList;
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+                SetCityObjectIndex(cityObj, cityObjList);
+                for (auto child : cityObj.Children) {
+                    SetCityObjectIndex(child, cityObjList);
+                }
             }
+            MeshPtr->setCityObjectList(cityObjList);
+            Node.setMesh(std::move(MeshPtr));
+
         }
-        
-        auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
-        auto Mesh = plateau::polygonMesh::Mesh();
-        CreateMesh(Mesh, comp, Option);
-        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-       
-        CityObjectList cityObjList;
-        for (auto cityObj : comp->GetAllRootCityObjects()) {
-            SetCityObjectIndex(cityObj, cityObjList);
-            for (auto child : cityObj.Children) {
-                SetCityObjectIndex(child, cityObjList);
+        else  {
+            auto LodComp = Parents[LodCompIndex];
+            LodName = LodComp->GetName();
+            RootName = LodComp->GetAttachParent()->GetName();
+            Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
+
+            int RootIndex = GetChildIndex(RootName, OutModel.get());
+            Root = (RootIndex == -1) ?
+                &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName)) :
+                &OutModel->getRootNodeAt(RootIndex);
+
+            int LodIndex = GetChildIndex(LodName, Root);
+            Lod = (LodIndex == -1) ?
+                &Root->addEmptyChildNode(TCHAR_TO_UTF8(*LodName)) :
+                &Root->getChildAt(LodIndex);
+
+            plateau::polygonMesh::Node* Parent = Lod;
+            if (Parents.Num() > 0) {    //最小地物の場合
+                Algo::Reverse(Parents);
+                for (auto p : Parents) {
+                    int ParentIndex = GetChildIndex(p->GetName(), Parent);
+                    Parent = (ParentIndex == -1) ?
+                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*p->GetName())) :
+                        &Parent->getChildAt(ParentIndex);
+                }
             }
+            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
+            auto Mesh = plateau::polygonMesh::Mesh();
+            CreateMesh(Mesh, comp, Option);
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+
+            CityObjectList cityObjList;
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+                SetCityObjectIndex(cityObj, cityObjList);
+                for (auto child : cityObj.Children) {
+                    SetCityObjectIndex(child, cityObjList);
+                }
+            }
+            MeshPtr->setCityObjectList(cityObjList);
+            Node.setMesh(std::move(MeshPtr));
         }
-        MeshPtr->setCityObjectList(cityObjList);
-        Node.setMesh(std::move(MeshPtr));
     }
     return OutModel;
 }

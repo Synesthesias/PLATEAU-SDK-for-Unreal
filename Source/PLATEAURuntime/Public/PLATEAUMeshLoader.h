@@ -64,9 +64,6 @@ public:
         plateau::polygonMesh::MeshGranularity Granularity,
         TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
-
-    static FString RemoveSuffix(const FString ComponentName);
-
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;

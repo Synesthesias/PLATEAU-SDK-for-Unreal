@@ -126,9 +126,6 @@ namespace {
                 continue;
 
             for (auto cityObj : comp->GetAllRootCityObjects()) {
-
-                UE_LOG(LogTemp, Warning, TEXT("Added to Map : %s"), *cityObj.GmlID);
-
                 if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
                     // 親を探す
                     TArray<USceneComponent*> Parents;
@@ -146,8 +143,6 @@ namespace {
                 cityObjMap.Add(cityObj.GmlID, cityObj);
                 for (auto child : cityObj.Children) {
                     cityObjMap.Add(child.GmlID, child);
-
-                    UE_LOG(LogTemp, Warning, TEXT("Added to Map : %s"), *child.GmlID);
                 }
             }
         }

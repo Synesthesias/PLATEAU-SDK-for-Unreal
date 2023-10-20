@@ -378,7 +378,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 {
                     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
                     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    PLATEAUCityObjectGroup->SerializeCityObject(RemoveSuffix(NodeName), InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
+                    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
                     Component = PLATEAUCityObjectGroup;
                 }
                 else
@@ -677,7 +677,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
     if (Node.getMesh() == nullptr) {
         UStaticMeshComponent* Comp = nullptr;
         UClass* StaticClass;
-        const FString DesiredName = RemoveSuffix(FString(UTF8_TO_TCHAR(Node.getName().c_str())));
+        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             
             StaticClass = UPLATEAUCityObjectGroup::StaticClass();
@@ -730,19 +730,5 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
 
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
-}
-
-FString FPLATEAUMeshLoader::RemoveSuffix(const FString ComponentName) {
-    int Index = 0;
-    if (ComponentName.FindLastChar('_', Index)) {
-        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-            return ComponentName.LeftChop(ComponentName.Len() - Index);
-        }
-        else {
-            return ComponentName;
-        }
-    }
-    else
-        return ComponentName;
 }
 #endif

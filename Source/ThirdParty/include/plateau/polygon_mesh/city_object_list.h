@@ -115,6 +115,7 @@ namespace plateau::polygonMesh {
         decltype(TIdMap().begin()) begin() {return city_object_index_to_gml_id_.begin();};
         decltype(TIdMap().end()) end(){return city_object_index_to_gml_id_.end();};
         TIdMap& getIdMap() { return city_object_index_to_gml_id_; };
+        bool containsPrimaryGmlId(const std::string& primary_gml_id) const;
 
 
     private:
