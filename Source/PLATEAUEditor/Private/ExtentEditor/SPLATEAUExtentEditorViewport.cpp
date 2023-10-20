@@ -210,7 +210,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                         MeshCodeInputErrorText = TEXT("6桁または８桁の数字を入力してください");
                                     }
                                     else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
-                                        MeshCodeInputErrorText = TEXT("メッシュコードが間違っています");
+                                        MeshCodeInputErrorText = TEXT("範囲外か、メッシュコードが間違っています");
                                     }
                                     else 
                                         InputWindow->DestroyWindowImmediately();

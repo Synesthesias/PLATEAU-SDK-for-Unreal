@@ -65,8 +65,8 @@ public:
     const FVector3d GetSelectedCenterPoint(const int ZoneID) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 
-    const FVector3d GetCenterByMeshCode(const FString& Code) const;
-    const FBox GetBoxByMeshCode(const FString& Code) const;
+    const FVector3d GetCenterByExtent(const plateau::geometry::Extent Extent) const;
+    const FBox GetBoxByExtent(const plateau::geometry::Extent Extent) const;
 
 private:
     FString SourcePath;

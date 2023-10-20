@@ -322,8 +322,11 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
 }
 
 bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
+    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
+    if (!Extent.GetNativeData().intersects2D(MeshCode.getExtent()))
+        return false;       
     const auto ExtentEditor = ExtentEditorPtr.Pin();
-    const auto Box = ExtentEditor->GetBoxByMeshCode(meshCode);
+    const auto Box = ExtentEditor->GetBoxByExtent(MeshCode.getExtent());
     if (!Box.IsValid) return false;
     FocusViewportOnBox(Box, true);
     return true;

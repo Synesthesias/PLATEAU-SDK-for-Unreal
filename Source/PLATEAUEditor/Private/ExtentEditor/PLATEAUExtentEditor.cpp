@@ -173,22 +173,14 @@ void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::Predefin
     ServerPackageMask = InPackageMask;
 }
 
-const FVector3d FPLATEAUExtentEditor::GetCenterByMeshCode(const FString& Code) const {
-    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code));
-    if (!MeshCode.isValid())
-        return FVector3d();
-    const auto Extent = MeshCode.getExtent();
+const FVector3d FPLATEAUExtentEditor::GetCenterByExtent(const plateau::geometry::Extent Extent) const {
     const auto CenterLatLon = Extent.centerPoint();
-    auto GeoRef= GetGeoReference();
+    auto GeoRef = GetGeoReference();
     const auto CenterPoint = GeoRef.GetData().project(CenterLatLon);
     return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
-const FBox FPLATEAUExtentEditor::GetBoxByMeshCode(const FString& Code) const {
-    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code));
-    if (!MeshCode.isValid())
-        return FBox(EForceInit::ForceInitToZero);
-    const auto Extent = MeshCode.getExtent();
+const FBox FPLATEAUExtentEditor::GetBoxByExtent(const plateau::geometry::Extent Extent) const {
     auto GeoRef = GetGeoReference();
     const auto Min = GeoRef.GetData().project(Extent.min);
     const auto Max = GeoRef.GetData().project(Extent.max);
