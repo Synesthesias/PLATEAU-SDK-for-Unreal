@@ -18,20 +18,6 @@
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
     FString MyTestName;
-    
-    struct FGizmoData {
-        FGizmoData(): MinX(0), MinY(0), MaxX(0), MaxY(0) {
-        }
-
-        FGizmoData(const double InMinX, const double InMinY, const double InMaxX, const double InMaxY): MinX(InMinX), MinY(InMinY), MaxX(InMaxX),
-            MaxY(InMaxY) {
-        }
-
-        double MinX;
-        double MinY;
-        double MaxX;
-        double MaxY;
-    };
 
     bool WriteToFile(const FString& Path, const FString& Text) const {
         const FString& DirectoryPath = FPaths::GetPath(Path);
@@ -129,8 +115,8 @@ protected:
         return nullptr;
     }
 
-    void FinishTest() {
+    void FinishTest(const bool bSuccess, const FString Message) {
         const FString TestLogPath = FPaths::ProjectDir().Append("TestLogs/" + MyTestName + ".log");
-        if (!WriteToFile(TestLogPath, "Succeeded")) AddError("Failed to WriteToFile");
+        if (!WriteToFile(TestLogPath, bSuccess ? "Succeeded" : FString::Format(TEXT("Failed: {0}"), {Message}))) AddError("Failed to WriteToFile");
     }
 };
