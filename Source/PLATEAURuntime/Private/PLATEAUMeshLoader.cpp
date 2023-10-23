@@ -15,6 +15,7 @@
 #include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
+#include "EditorFramework/AssetImportData.h"
 #include "Misc/DefaultValueHelper.h"
 
 #if WITH_EDITOR
@@ -509,6 +510,25 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         //Fallbackマテリアル設定
                         if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
                             DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
+
+                            // 分割・結合で使用するためにテクスチャ情報を保持
+                            TArray<UTexture*> UsedTextures;
+                            LoadInputData.FallbackMaterial->GetUsedTextures(UsedTextures, EMaterialQualityLevel::Epic, true, ERHIFeatureLevel::ES2_REMOVED, true);
+                            UTexture* ReferencedTexture = nullptr;
+                            for (const auto& UsedTexture : UsedTextures)
+                            {
+                                const auto TextureSourceFiles = UsedTexture->AssetImportData->SourceData.SourceFiles;
+                                // diffuseかつside(topでない)テクスチャを探す
+                                if (!TextureSourceFiles.IsEmpty() && TextureSourceFiles[0].RelativeFilename.Contains("diffuse")
+                                    && !TextureSourceFiles[0].RelativeFilename.Contains("top"))
+                                {
+                                    ReferencedTexture = UsedTexture;
+                                    break;
+                                }
+                            }
+                            if (ReferencedTexture != nullptr)
+                                DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
+
                         } else {
                             //デフォルトマテリアル設定
                             const auto SourceMaterialPath =

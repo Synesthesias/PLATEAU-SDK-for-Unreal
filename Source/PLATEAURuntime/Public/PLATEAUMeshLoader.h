@@ -7,11 +7,14 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 
+struct FPLATEAUCityObject;
+
 namespace citygml {
     class CityModel;
 }
 
 namespace plateau::polygonMesh {
+    enum class MeshGranularity;
     class Model;
     class Node;
     class SubMesh;
