@@ -45,5 +45,5 @@ private:
     //メッシュコード入力パネル
     TWeakPtr<SWindow> MeshCodeInputWindow;
     TWeakPtr<SEditableTextBox> MeshCodeTextBox;
-    FString MeshCodeInputErrorText;
+    TWeakPtr<STextBlock> MeshCodeErrorText;
 };

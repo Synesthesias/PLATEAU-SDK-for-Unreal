@@ -40,6 +40,7 @@ SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
 
     if (MeshCodeInputWindow.IsValid()) {
         MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+        MeshCodeInputWindow.Reset();
     }
 }
 
@@ -143,6 +144,9 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
                 OnClicked_Lambda([this] {
 
+                if (MeshCodeInputWindow.IsValid()) 
+                    return FReply::Handled();
+
                 //入力Window表示
                 TSharedRef<SWindow> InputWindow = SNew(SWindow)
                     .Title(FText::FromString(TEXT("メッシュコード入力")))
@@ -151,9 +155,9 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     .SupportsMinimize(false)
                     .AutoCenter(EAutoCenter::PrimaryWorkArea)
                     .FocusWhenFirstShown(true)
-                    .IsTopmostWindow(true);
+                    .IsTopmostWindow(true)
+                    .HasCloseButton(false);
                 MeshCodeInputWindow = InputWindow;
-                MeshCodeInputErrorText = TEXT("");
 
                 InputWindow->SetContent(
                     SNew(SVerticalBox)
@@ -167,17 +171,14 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
                     [
                         SAssignNew(MeshCodeTextBox, SEditableTextBox)
-                        //.Text(FText::FromString(TEXT("53393574")))
                         .HintText(FText::FromString(TEXT("メッシュコード")))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight().Padding(FMargin(5.f, 2.f, 5.f, 2.f))
                     [
-                        SNew(STextBlock)
+                        SAssignNew(MeshCodeErrorText, STextBlock)
                         .ColorAndOpacity(FLinearColor::Red)
-                        .Text_Lambda([this]() {
-                            return FText::FromString(MeshCodeInputErrorText);
-                        })
+                        .Text(FText())
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
@@ -191,6 +192,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                             OnClicked_Lambda([this, InputWindow] {
                                 //Windowを閉じる
                                 InputWindow->DestroyWindowImmediately();
+                                MeshCodeInputWindow.Reset();
                                 return FReply::Handled();
                             })
                         ]
@@ -204,16 +206,18 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                     FText Value = MeshCodeTextBox.Pin()->GetText();
                                     FString meshcode = Value.ToString();
                                     if (!meshcode.IsNumeric()) {
-                                        MeshCodeInputErrorText = TEXT("数字を入力してください");
+                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
                                     }
                                     else if (meshcode.Len() != 6 && meshcode.Len() != 8) {
-                                        MeshCodeInputErrorText = TEXT("6桁または８桁の数字を入力してください");
+                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
                                     }
                                     else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
-                                        MeshCodeInputErrorText = TEXT("範囲外か、メッシュコードが間違っています");
+                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
                                     }
-                                    else 
+                                    else {
                                         InputWindow->DestroyWindowImmediately();
+                                        MeshCodeInputWindow.Reset();
+                                    }     
                                     return FReply::Handled();
                                 })
                             ]
