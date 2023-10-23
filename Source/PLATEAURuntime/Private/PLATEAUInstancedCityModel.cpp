@@ -478,8 +478,8 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
             OnReconstructFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);      
 
-        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
-    });
+            UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
+        });
     return ConvertTask;
 }
 

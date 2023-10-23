@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <cmath>
+#include <set>
 
 namespace plateau::polygonMesh {
 
@@ -73,6 +74,46 @@ namespace plateau::polygonMesh {
             return std::to_string(primary_index) + "," + std::to_string(atomic_index);
         };
     };
+
+
+    /// CityObjectIndex の複数形です。
+    class CityObjectIndexSet {
+    public:
+        CityObjectIndexSet() : indices_(){};
+
+        void insert(const CityObjectIndex& city_obj_index) {
+            indices_.insert(city_obj_index);
+        }
+
+        size_t sizeOfPrimary() const {
+            size_t ret = 0;
+            for (const auto& index: indices_) {
+                if (index.atomic_index == CityObjectIndex::invalidIndex()) ret++;
+            }
+            return ret;
+        }
+
+        size_t sizeOfAtomic() const {
+            return indices_.size() - sizeOfPrimary();
+        }
+
+        /// セットに含まれるPrimaryIndexを列挙します。
+        std::set<int> listPrimaryIndices() const {
+            std::set<int> primaries;
+            for(auto& index : indices_) {
+                primaries.insert(index.primary_index);
+            }
+            return primaries;
+        }
+
+        const std::set<CityObjectIndex>& get() const {
+            return indices_;
+        }
+
+    private:
+        std::set<CityObjectIndex> indices_;
+    };
+
 
     /**
      * @brief CityObjectListは、地物インデックスと地物IDの対応関係を保持するために、Modelに含まれる地物のリストを保持する目的で設計されています。

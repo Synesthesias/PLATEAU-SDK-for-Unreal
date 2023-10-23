@@ -58,6 +58,7 @@ public:
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
 
+    //分割・結合時
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
@@ -72,7 +73,7 @@ private:
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
 
-    //分割・結合時に保持
+    //分割・結合時に属性情報を保持
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
@@ -96,6 +97,7 @@ private:
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
 
+    //分割・結合時
     void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,

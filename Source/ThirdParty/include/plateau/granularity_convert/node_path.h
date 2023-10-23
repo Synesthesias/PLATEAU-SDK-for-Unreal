@@ -24,16 +24,21 @@ namespace plateau::granularityConvert {
         /// ノードパスの末尾に数値を追加したものを作って返します。
         NodePath plus(int next_index) const;
 
+        /// ノードパスの最後の数値を1減らしたノードパスを作って返します。
+        NodePath decrement() const;
+
         /// パスが空ならtrueを返します。
         bool empty() const;
 
-        /// ノードパスが指すノードに子ノードを追加して、その子ノードを返します。
-        plateau::polygonMesh::Node&
-        addChildNode(plateau::polygonMesh::Node&& node, plateau::polygonMesh::Model* model);
+        /// ノードパスが指すノードに子ノードを追加ます。そのノードパスを返します。
+        NodePath addChildNode(plateau::polygonMesh::Node&& node, plateau::polygonMesh::Model* model);
+
+        /// dstに子ノードを追加します。その名前とisPrimaryは、srcのノードパスからコピーしたものになります。
+        void addNodeFromSrc(const plateau::polygonMesh::Model& src, plateau::polygonMesh::Model& dst);
 
         /// パス中にプライマリノードがあればそのパスを返し、なければ空のNodePathを返します。
         /// パス中に複数ある場合は、最後のものを返します。
-        NodePath searchLastPrimaryNodeInPath(plateau::polygonMesh::Model* model);
+        NodePath searchLastPrimaryNodeInPath(const plateau::polygonMesh::Model* model) const;
 
         bool operator==(const NodePath& other) const;
 

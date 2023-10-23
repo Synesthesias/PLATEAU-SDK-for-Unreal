@@ -33,6 +33,9 @@ namespace plateau::polygonMesh {
         Mesh* getMesh() const;
         void setMesh(std::unique_ptr<Mesh>&& mesh);
 
+        /// Meshが存在し、かつそのMeshに頂点が1つ以上あるときにtrueを返します。
+        bool hasVertices() const;
+
         /// Nodeをmoveで追加し、追加後のNodeを返します。
         Node& addChildNode(Node&& node);
         void setChildNodes(std::vector<Node>&& child_nodes);

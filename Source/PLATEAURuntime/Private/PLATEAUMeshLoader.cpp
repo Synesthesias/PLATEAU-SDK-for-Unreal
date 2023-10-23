@@ -727,7 +727,6 @@ UStaticMeshComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComp
         false,
         nullptr
     };
-
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
 }

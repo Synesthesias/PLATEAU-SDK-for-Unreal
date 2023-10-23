@@ -312,7 +312,6 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             }
             MeshPtr->setCityObjectList(cityObjList);
             Node.setMesh(std::move(MeshPtr));
-
         }
         else  {
             auto LodComp = Parents[LodCompIndex];
