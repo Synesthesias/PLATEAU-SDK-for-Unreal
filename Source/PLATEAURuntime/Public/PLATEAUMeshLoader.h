@@ -87,7 +87,7 @@ private:
         const std::shared_ptr<const citygml::CityModel> CityModel,
         const std::string& InNodeName,
         bool IsReconstruct = false);
-    UStaticMeshComponent* LoadNode(
+    USceneComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
         const FLoadInputData& LoadInputData,
@@ -106,7 +106,7 @@ private:
         const plateau::polygonMesh::Node& InNode,
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& InActor);
-    UStaticMeshComponent* ReloadNode(
+    USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
         plateau::polygonMesh::MeshGranularity Granularity,

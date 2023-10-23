@@ -57,6 +57,18 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnReconstructFinishedDelegate OnReconstructFinished;
 
+    /**
+     * @brief Componentのユニーク化されていない元の名前を取得します。
+     * コンポーネント名の末尾に"__{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"__"以降を削除します。
+     * 元の名前に"__{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
+     */
+    static FString GetOriginalComponentName(const USceneComponent* InComponent);
+
+    /**
+     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
+     */
+    static int ParseLodComponent(const USceneComponent* InLodComponent);
+
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 

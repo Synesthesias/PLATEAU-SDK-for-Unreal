@@ -129,7 +129,6 @@ namespace plateau::polygonMesh {
      */
     class LIBPLATEAU_EXPORT CityObjectList {
         using TIdMap = std::map<CityObjectIndex, std::string>;
-
     public:
         CityObjectList() = default;
         CityObjectList(const std::vector<std::tuple<CityObjectIndex, std::string>>& initial_val);

@@ -21,36 +21,6 @@ using namespace plateau::granularityConvert;
 
 namespace {
     /**
-     * @brief Componentのユニーク化されていない元の名前を取得します。
-     * コンポーネント名の末尾に"_{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"_"以降を削除します。
-     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
-     */
-    FString GetOriginalComponentName(const USceneComponent* const InComponent) {
-        auto ComponentName = InComponent->GetName();
-        int Index = 0;
-        if (ComponentName.FindLastChar('_', Index)) {
-            if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
-            }
-        }
-        return ComponentName;
-    }
-
-    /**
-     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
-     */
-    int ParseLodComponent(const USceneComponent* const InLodComponent) {
-        auto LodString = GetOriginalComponentName(InLodComponent);
-        // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
-        LodString = LodString.RightChop(3);
-
-        int Lod;
-        FDefaultValueHelper::ParseInt(LodString, Lod);
-
-        return Lod;
-    }
-
-    /**
      * @brief 3D都市モデル内のCityGMLファイルに相当するコンポーネントを入力として、CityGMLファイル名を返します。
      * @return CityGMLファイル名
      */
@@ -148,6 +118,28 @@ namespace {
         }
         return cityObjMap;
     }
+}
+
+FString APLATEAUInstancedCityModel::GetOriginalComponentName(const USceneComponent* const InComponent) {
+    auto ComponentName = InComponent->GetName();
+    int Index = 0;
+    if (ComponentName.FindLastChar('_', Index)) {
+        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index + 1);
+        }
+    }
+    return ComponentName;
+}
+
+int APLATEAUInstancedCityModel::ParseLodComponent(const USceneComponent* const InLodComponent) {
+    auto LodString = GetOriginalComponentName(InLodComponent);
+    // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
+    LodString = LodString.RightChop(3);
+
+    int Lod;
+    FDefaultValueHelper::ParseInt(LodString, Lod);
+
+    return Lod;
 }
 
 // Sets default values
@@ -458,27 +450,25 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
 
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-        UE_LOG(LogTemp, Log, TEXT("model: %s %d"), *FString(smodel->debugString().c_str()), smodel->getAllMeshes().size());
 
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-        UE_LOG(LogTemp, Log, TEXT("converted: %s %d"), *FString(converted->debugString().c_str()), converted->getAllMeshes().size());
 
-        ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
-     
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
-
             //コンポーネント削除
             for (auto comp : TargetCityObjects) {
-                UE_LOG(LogTemp, Warning, TEXT("DestroyComponent %s"), *comp->GetName());
                 comp->DestroyComponent();
-                //comp->SetVisibility(false);
             }
+        }, TStatId(), NULL, ENamedThreads::GameThread)
+        ->Wait();
 
+        ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
             //終了イベント通知
             OnReconstructFinished.Broadcast();
-            }, TStatId(), NULL, ENamedThreads::GameThread);      
+        }, TStatId(), NULL, ENamedThreads::GameThread);
 
-            UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
+        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
         });
     return ConvertTask;
 }

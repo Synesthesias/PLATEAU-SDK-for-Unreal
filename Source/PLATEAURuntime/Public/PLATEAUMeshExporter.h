@@ -43,7 +43,6 @@ private:
     std::shared_ptr<plateau::polygonMesh::Model> CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option);
     void CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option);
     void CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option);
-    FString RemoveSuffix(const FString ComponentName);
 
     TArray<FString> ModelNames;
     FVector ReferencePoint;

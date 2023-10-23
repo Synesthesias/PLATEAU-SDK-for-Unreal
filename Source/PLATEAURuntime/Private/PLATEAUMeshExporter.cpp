@@ -139,7 +139,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
         if (Components[i]->GetName().Contains("BillboardComponent")) continue;
 
         ModelArray.Add(CreateModel(Components[i], Option));
-        ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
+        ModelNames.Add(APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i]));
     }
     return ModelArray;
 }
@@ -148,7 +148,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
     auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
-        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*RemoveSuffix(Components[i]->GetName())));
+        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i])));
         CreateNode(Node, Components[i], Option);
     }
     return OutModel;
@@ -192,7 +192,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     //UV4
     for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
         const FVector2f& UV = InVertices.GetVertexUV(i, 3);
-        UV4.push_back(TVec2f(UV.X, 1.0f - UV.Y));
+        UV4.push_back(TVec2f(UV.X, UV.Y));
     }
 
     auto GeoRef = TargetActor->GeoReference.GetData();
@@ -264,18 +264,6 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }
 
-FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
-    int Index = 0;
-    if (ComponentName.FindLastChar('_', Index)) {
-        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-            return ComponentName.LeftChop(ComponentName.Len() - Index);
-        } else {
-            return ComponentName;
-        }
-    } else
-        return ComponentName;
-}
-
 /**
  * @brief UPLATEAUCityObjectGroupのリストからplateauのModelを生成
  */
@@ -315,7 +303,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
         }
         else  {
             auto LodComp = Parents[LodCompIndex];
-            LodName = LodComp->GetName();
+            LodName = APLATEAUInstancedCityModel::GetOriginalComponentName(LodComp);
             RootName = LodComp->GetAttachParent()->GetName();
             Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
 
@@ -333,13 +321,13 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             if (Parents.Num() > 0) {    //最小地物の場合
                 Algo::Reverse(Parents);
                 for (auto p : Parents) {
-                    int ParentIndex = GetChildIndex(p->GetName(), Parent);
+                    int ParentIndex = GetChildIndex(APLATEAUInstancedCityModel::GetOriginalComponentName(p), Parent);
                     Parent = (ParentIndex == -1) ?
-                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*p->GetName())) :
+                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(p))) :
                         &Parent->getChildAt(ParentIndex);
                 }
             }
-            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*comp->GetName()));
+            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(comp)));
             auto Mesh = plateau::polygonMesh::Mesh();
             CreateMesh(Mesh, comp, Option);
             auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
