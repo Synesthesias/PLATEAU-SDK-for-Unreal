@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUBasemap.h"
-#include "PLATEAUGeometry.h"
 #include "SEditorViewport.h"
 
 class FPLATEAUEditorStyle;
@@ -31,7 +30,7 @@ protected:
     virtual void BindCommands() override;
 
 private:
-    int64 GetPackageMask() const;
+    int64 GetPackageMask(const bool bImportFromServer) const;
     
     // このインスタンスを保持しているExtentEditorへのポインタ
     TWeakPtr<class FPLATEAUExtentEditor> ExtentEditorPtr;

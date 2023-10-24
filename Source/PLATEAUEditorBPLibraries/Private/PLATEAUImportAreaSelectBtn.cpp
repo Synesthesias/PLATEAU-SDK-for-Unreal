@@ -107,8 +107,8 @@ FString UPLATEAUImportAreaSelectBtn::GetDefaultMapTileUrl() {
     return FString(UTF8_TO_TCHAR(plateau::polygonMesh::MeshExtractOptions().map_tile_url));
 }
 
-void UPLATEAUImportAreaSelectBtn::GetAvailableZoomLevels(const FString& Url, TArray<int>& OutLevels) {
-    const auto CenterLatLon = IPLATEAUEditorModule::Get().GetExtentEditor()->GetSelectedCenterLatLon();
+void UPLATEAUImportAreaSelectBtn::GetAvailableZoomLevels(const FString& Url, const bool bImportFromServer, TArray<int>& OutLevels) {
+    const auto CenterLatLon = IPLATEAUEditorModule::Get().GetExtentEditor()->GetSelectedCenterLatLon(bImportFromServer);
     const auto Result = plateau::texture::MapZoomLevelSearcher::search(TCHAR_TO_UTF8(*Url), CenterLatLon);
     const auto Min = Result.available_zoom_level_min_;
     const auto Max = Result.available_zoom_level_max_;
