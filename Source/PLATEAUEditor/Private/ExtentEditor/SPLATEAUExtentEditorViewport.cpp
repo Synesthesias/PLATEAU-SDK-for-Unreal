@@ -150,7 +150,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 //入力Window表示
                 TSharedRef<SWindow> InputWindow = SNew(SWindow)
                     .Title(FText::FromString(TEXT("メッシュコード入力")))
-                    .ClientSize(FVector2D(350, 150))
+                    .ClientSize(FVector2D(350, 140))
                     .SupportsMaximize(false)
                     .SupportsMinimize(false)
                     .AutoCenter(EAutoCenter::PrimaryWorkArea)
@@ -158,7 +158,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     .IsTopmostWindow(true)
                     .HasCloseButton(false);
                 MeshCodeInputWindow = InputWindow;
-
+                
                 InputWindow->SetContent(
                     SNew(SVerticalBox)
                     + SVerticalBox::Slot()
@@ -189,10 +189,12 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                         [
                             SNew(SButton)
                             .Text(FText::FromString(TEXT("キャンセル"))).
-                            OnClicked_Lambda([this, InputWindow] {
+                            OnClicked_Lambda([this] {
                                 //Windowを閉じる
-                                InputWindow->DestroyWindowImmediately();
-                                MeshCodeInputWindow.Reset();
+                                if (MeshCodeInputWindow.IsValid()) {
+                                    MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+                                    MeshCodeInputWindow.Reset();
+                                }
                                 return FReply::Handled();
                             })
                         ]
@@ -201,22 +203,27 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                             [
                                 SNew(SButton)
                                 .Text(FText::FromString(TEXT("OK"))).
-                                OnClicked_Lambda([this, InputWindow] {
+                                OnClicked_Lambda([this] {
                                     //メッシュコードの位置を表示
                                     FText Value = MeshCodeTextBox.Pin()->GetText();
                                     FString meshcode = Value.ToString();
                                     if (!meshcode.IsNumeric()) {
-                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
+                                        if(MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
                                     }
                                     else if (meshcode.Len() != 6 && meshcode.Len() != 8) {
-                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
+                                        if (MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
                                     }
                                     else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
-                                        MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
+                                        if (MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
                                     }
                                     else {
-                                        InputWindow->DestroyWindowImmediately();
-                                        MeshCodeInputWindow.Reset();
+                                        if (MeshCodeInputWindow.IsValid()) {
+                                            MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+                                            MeshCodeInputWindow.Reset();
+                                        }
                                     }     
                                     return FReply::Handled();
                                 })
