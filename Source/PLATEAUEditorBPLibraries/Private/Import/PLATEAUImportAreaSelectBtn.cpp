@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUImportAreaSelectBtn.h"
+#include "Import/PLATEAUImportAreaSelectBtn.h"
 #include <plateau/geometry/geo_reference.h>
 #include <plateau/texture/map_zoom_level_searcher.h>
 #include "PLATEAUImportSettings.h"

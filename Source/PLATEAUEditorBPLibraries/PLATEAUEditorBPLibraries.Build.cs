@@ -23,6 +23,7 @@ public class PLATEAUEditorBPLibraries : ModuleRules {
         PrivateDependencyModuleNames.AddRange(
             new[] {
                 "DesktopPlatform",
+                "MeshDescription",
                 "Slate",
                 "SlateCore",
                 "PLATEAUEditor",

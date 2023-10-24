@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUImportLocalFolderBtn.h"
+#include "Import/PLATEAUImportLocalFolderBtn.h"
 #include <plateau/dataset/dataset_source.h>
 #include "Interfaces/IMainFrameModule.h"
 #include "DesktopPlatform/Public/DesktopPlatformModule.h"

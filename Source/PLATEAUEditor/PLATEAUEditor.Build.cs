@@ -51,7 +51,6 @@ public class PLATEAUEditor : ModuleRules
                 "LevelEditor",
                 "UnrealEd",
                 "EditorStyle",
-                "MeshDescription",
                 "PLATEAURuntime",
                 "PropertyEditor",
                 "Projects",

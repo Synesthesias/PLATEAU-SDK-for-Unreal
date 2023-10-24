@@ -7,7 +7,7 @@
 #include "Misc/FileHelper.h"
 #include "HAL/FileManagerGeneric.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUImportModelBtn.h"
+#include "Import/PLATEAUImportModelBtn.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"

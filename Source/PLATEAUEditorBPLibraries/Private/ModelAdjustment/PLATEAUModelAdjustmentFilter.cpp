@@ -1,10 +1,10 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUModelAdjustmentFilter.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentFilter.h"
 #include "PLATEAUImportSettings.h"
-#include "PLATEAUModelAdjustmentBuilding.h"
-#include "PLATEAUModelAdjustmentRelief.h"
-#include "PLATEAUModelAdjustmentVegetation.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentBuilding.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentRelief.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentVegetation.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 using namespace citygml;
 

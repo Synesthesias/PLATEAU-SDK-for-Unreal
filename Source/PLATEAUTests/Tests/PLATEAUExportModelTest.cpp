@@ -3,7 +3,7 @@
 #include "FileHelpers.h"
 #include "PLATEAUAutomationTestBase.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUExportModelBtn.h"
+#include "Export/PLATEAUExportModelBtn.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "HAL/FileManagerGeneric.h"
 #include "Kismet/GameplayStatics.h"

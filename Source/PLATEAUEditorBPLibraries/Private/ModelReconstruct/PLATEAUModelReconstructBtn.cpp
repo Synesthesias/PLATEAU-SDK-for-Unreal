@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUModelReconstructBtn.h"
+#include "ModelReconstruct/PLATEAUModelReconstructBtn.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 
 TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponents(AActor* Actor) {
