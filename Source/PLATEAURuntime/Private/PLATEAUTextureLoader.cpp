@@ -137,12 +137,14 @@ namespace {
             Texture->UpdateResource();
         }
 
+        FGraphEventRef CompletionEvent;
         FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
             Width, Height,
             PixelFormat,
             1,
             TexCreate_ShaderResource,
-            MipData.GetData(), 1
+            MipData.GetData(), 1,
+            CompletionEvent
         );
 
         for (void* NewData : MipData) {
