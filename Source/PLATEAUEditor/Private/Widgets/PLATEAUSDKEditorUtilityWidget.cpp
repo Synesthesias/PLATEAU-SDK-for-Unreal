@@ -1,12 +1,11 @@
 // Copyright © 2023 Ministry of Land、Infrastructure and Transport
 
 #include "PLATEAUEditor/Public/Widgets/PLATEAUSDKEditorUtilityWidget.h"
-#include "PLATEAUCityObjectGroup.h"
 #include "Selection.h"
 #include "Async/Async.h"
 
 
-void UPLATEAUSDKEditorUtilityWidget::AreaSelectSuccessInvoke(const FVector3d& ReferencePoint, const int64& PackageMask) const {
+void UPLATEAUSDKEditorUtilityWidget::AreaSelectSuccessInvoke(const FVector& ReferencePoint, const int64& PackageMask) const {
     AreaSelectSuccessDelegate.Broadcast(ReferencePoint, PackageMask);
 }
 

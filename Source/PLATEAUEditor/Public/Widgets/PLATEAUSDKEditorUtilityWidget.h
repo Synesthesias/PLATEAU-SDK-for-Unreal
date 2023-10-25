@@ -43,7 +43,7 @@ struct FServerDatasetMetadataMap {
     TArray<FServerDatasetMetadata> ServerDatasetMetadataArray;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAreaSelectSuccessDelegate, FVector3d, ReferencePoint, int64, PackageMask);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAreaSelectSuccessDelegate, FVector, ReferencePoint, int64, PackageMask);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCloseAreaSelectionWindowDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetDatasetMetaDataAsyncSuccessDelegate, const TArray<FServerDatasetMetadataMap>&, PLATEAUServerDatasetMetadataMap);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSelectionChangedDelegate, AActor*, SelectionActor, USceneComponent*, SelectionComponent, bool, IsActorChanged);
@@ -58,7 +58,7 @@ public:
      * @param ReferencePoint リファレンス位置 
      * @param PackageMask パッケージマスク
      */
-    void AreaSelectSuccessInvoke(const FVector3d& ReferencePoint, const int64& PackageMask) const;
+    void AreaSelectSuccessInvoke(const FVector& ReferencePoint, const int64& PackageMask) const;
 
     /**
      * @brief 範囲選択ウィンドウクローズ通知
