@@ -446,10 +446,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestoroyOriginal) {
-
-    UE_LOG(LogTemp, Log, TEXT("PLATEAUInstancedCityModel ReconstructModel: %d %d %s"), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
-
+FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
     plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
     switch (ReconstructType)         {
     case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
@@ -457,7 +454,7 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
     case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
     }
 
-    UE_LOG(LogTemp, Log, TEXT("ReconstructType: %d"), static_cast<int>(MeshGranularity));
+    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetCityObjects.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
@@ -469,7 +466,7 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
     ExtOptions.TransformType = EMeshTransformType::Local;
     ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
 
-    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjectsWithChildren, ExtOptions, ConvOption,bDestoroyOriginal] {
+    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjectsWithChildren, ExtOptions, ConvOption, bDestroyOriginal] {
 
         FPLATEAUMeshExporter MeshExporter;
         GranularityConverter Converter;
@@ -480,11 +477,11 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjectsWithChildren, ExtOptions);
 
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-   
+
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjectsWithChildren]() {
             //コンポーネント削除
             for (auto comp : TargetCityObjectsWithChildren) {
-                if (bDestoroyOriginal)
+                if (bDestroyOriginal)
                     comp->DestroyComponent();
                 else
                     comp->SetVisibility(false);
@@ -498,16 +495,11 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
             //終了イベント通知
             OnReconstructFinished.Broadcast();
         }, TStatId(), NULL, ENamedThreads::GameThread);
-
-        UE_LOG(LogTemp, Log, TEXT("ReconstructModel Task Finished!"));
         });
     return ConvertTask;
 }
 
 void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
-
-    UE_LOG(LogTemp, Log, TEXT("GML Name: %s "), *this->GetActorNameOrLabel());
-
     FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
     FPLATEAUMeshLoader MeshLoader(false);
     for (int i = 0; i < Model->getRootNodeCount(); i++) {

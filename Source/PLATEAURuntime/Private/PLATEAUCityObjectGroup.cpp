@@ -471,7 +471,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
                         // 親は前の処理で既に情報抽出済み
                         continue;
 
-                    const auto& CityObjRef = CityObjMap.Find(InNodeName);
+                    const auto& CityObjRef = CityObjMap.Find(AtomicGmlId);
                     if (CityObjRef == nullptr) 
                         continue;
 
