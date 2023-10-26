@@ -23,6 +23,6 @@ TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponentsByCla
     return arr;
 }
 
-void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid) {
-    TargetCityModel->ReconstructModel(TargetCityObjects, ReconstructType, bDivideGrid);
+void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestoroyOriginal ) {
+    TargetCityModel->ReconstructModel(TargetCityObjects, ReconstructType, bDivideGrid, bDestoroyOriginal);
 }

@@ -21,5 +21,5 @@ public:
     static TArray<UActorComponent*> GetSelectedComponentsByClass(AActor* Actor, UClass* Class);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructPanel")
-    static void ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid);
+    static void ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestoroyOriginal);
 };

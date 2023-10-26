@@ -84,6 +84,32 @@ namespace {
     }
 
     /**
+     * @brief Componentがメッシュを持たない場合childrenをリストに追加します
+     */
+    TArray<UPLATEAUCityObjectGroup*> IncludeChildComponents(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+        TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
+        for (auto comp : TargetCityObjects) {
+            if (comp->GetStaticMesh() == nullptr){
+                TArray<USceneComponent*> children;
+                comp->GetChildrenComponents(true, children);
+                for (auto child : children) {
+                    if(child->IsA(UPLATEAUCityObjectGroup::StaticClass())){             
+                        auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
+                        if (childCityObj->GetStaticMesh() != nullptr) {
+                            UniqueComponents.Add(childCityObj);
+                        }                     
+                    }
+                }
+                UniqueComponents.Add(comp);
+            }
+            else {
+                UniqueComponents.Add(comp);
+            }     
+        }
+        return UniqueComponents.Array();
+    }
+
+    /**
      * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
      * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
      * @return Key: GmlID, Value: UPLATEAUCityObject の Map
@@ -420,7 +446,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid) {
+FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestoroyOriginal) {
 
     UE_LOG(LogTemp, Log, TEXT("PLATEAUInstancedCityModel ReconstructModel: %d %d %s"), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
 
@@ -435,35 +461,40 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
+    const auto& TargetCityObjectsWithChildren = IncludeChildComponents(TargetCityObjects);
+
     MeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;
     ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
 
-    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjects, ExtOptions, ConvOption] {
+    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjectsWithChildren, ExtOptions, ConvOption,bDestoroyOriginal] {
 
         FPLATEAUMeshExporter MeshExporter;
         GranularityConverter Converter;
 
         //属性情報を覚えておきます。
-        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
+        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjectsWithChildren);
 
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjectsWithChildren, ExtOptions);
 
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+   
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjectsWithChildren]() {
             //コンポーネント削除
-            for (auto comp : TargetCityObjects) {
-                comp->DestroyComponent();
+            for (auto comp : TargetCityObjectsWithChildren) {
+                if (bDestoroyOriginal)
+                    comp->DestroyComponent();
+                else
+                    comp->SetVisibility(false);
             }
-        }, TStatId(), NULL, ENamedThreads::GameThread)
-        ->Wait();
+            }, TStatId(), NULL, ENamedThreads::GameThread)
+            ->Wait();
 
         ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjectsWithChildren]() {
             //終了イベント通知
             OnReconstructFinished.Broadcast();
         }, TStatId(), NULL, ENamedThreads::GameThread);
