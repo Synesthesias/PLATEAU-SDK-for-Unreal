@@ -321,4 +321,19 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
     return FMath::SegmentPlaneIntersection(StartPoint, EndPoint, Plane, Position);
 }
 
+bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
+    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
+
+    std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
+    if (MeshCodes.find(MeshCode) == MeshCodes.end())
+        return false;
+
+    const auto ExtentEditor = ExtentEditorPtr.Pin();     
+    const auto Box = ExtentEditor->GetBoxByExtent(MeshCode.getExtent());
+    if (!Box.IsValid) return false;
+    FocusViewportOnBox(Box, true);
+    return true;
+}
+
+
 #undef LOCTEXT_NAMESPACE

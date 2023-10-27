@@ -200,4 +200,18 @@ void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::Predefin
     ServerPackageMask = InPackageMask;
 }
 
+const FVector3d FPLATEAUExtentEditor::GetCenterByExtent(const plateau::geometry::Extent Extent) const {
+    const auto CenterLatLon = Extent.centerPoint();
+    auto GeoRef = GetGeoReference();
+    const auto CenterPoint = GeoRef.GetData().project(CenterLatLon);
+    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
+}
+
+const FBox FPLATEAUExtentEditor::GetBoxByExtent(const plateau::geometry::Extent Extent) const {
+    auto GeoRef = GetGeoReference();
+    const auto Min = GeoRef.GetData().project(Extent.min);
+    const auto Max = GeoRef.GetData().project(Extent.max);
+    return FBox(FVector3d(Min.x, Min.y, Min.z), FVector3d(Max.x, Max.y, Max.z));
+}
+
 #undef LOCTEXT_NAMESPACE
