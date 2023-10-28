@@ -102,7 +102,6 @@ public:
     static void SetShowLevel5Mesh(const bool bValue);
 
 private:
-    int MeshCodeLevel;
     inline static bool bShowLevel5Mesh = false;
 
     plateau::dataset::MeshCode MeshCode;
