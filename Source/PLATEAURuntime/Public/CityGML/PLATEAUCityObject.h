@@ -25,11 +25,6 @@ enum class EPLATEAUCityObjectsType : uint8 {
     COT_SolitaryVegetationObject    = 13,
     COT_WaterBody                   = 14,
     COT_ReliefFeature               = 15,
-    COT_ReliefComponent             = 35,
-    COT_TINRelief                   = 36,
-    COT_MassPointRelief             = 37,
-    COT_BreaklineRelief             = 38,
-    COT_RasterRelief                = 39,
     COT_LandUse                     = 16,
     COT_Tunnel                      = 17,
     COT_Bridge                      = 18,
@@ -50,9 +45,19 @@ enum class EPLATEAUCityObjectsType : uint8 {
     COT_TransportationObject        = 33,
     COT_IntBuildingInstallation     = 34,
     COT_WaterSurface                = 35,
-    COT_Unknown                     = 40,
+    COT_ReliefComponent             = 36,
+    COT_TINRelief                   = 37,
+    COT_MassPointRelief             = 38,
+    COT_BreaklineRelief             = 39,
+    COT_RasterRelief                = 40,
+    COT_Unknown                     = 41,
     COT_All                         = 63
 };
+
+namespace plateau::CityObject {
+    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType);
+}
+
 
 USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct FPLATEAUCityObjectIndex {
@@ -87,7 +92,7 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
 
     void SetGmlID(const FString& InGmlID);
     void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
-    void SetCityObjectsType(const citygml::CityObject::CityObjectsType InType);
+    void SetCityObjectsType(const FString& InType);
     void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
 };
 

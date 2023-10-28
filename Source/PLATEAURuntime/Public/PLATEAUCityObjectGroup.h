@@ -6,7 +6,7 @@
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
-namespace plateau::CityObject {
+namespace plateau::CityObjectGroup {
     constexpr TCHAR GmlIdFieldName[]            = TEXT("gmlID");
     constexpr TCHAR CityObjectIndexFieldName[]  = TEXT("cityObjectIndex");
     constexpr TCHAR CityObjectTypeFieldName[]   = TEXT("cityObjectType");

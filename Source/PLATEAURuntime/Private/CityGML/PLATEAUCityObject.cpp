@@ -3,6 +3,51 @@
 
 
 namespace {
+    TArray<FString> EPLATEAUCityObjectsTypeNameArray = {
+        "GenericCityObject",
+        "Building",
+        "Room",
+        "BuildingInstallation",
+        "BuildingFurniture",
+        "Door",
+        "Window",
+        "CityFurniture",
+        "Track",
+        "Road",
+        "Railway",
+        "Square",
+        "PlantCover",
+        "SolitaryVegetationObject",
+        "WaterBody",
+        "ReliefFeature",
+        "LandUse",
+        "Tunnel",
+        "Bridge",
+        "BridgeConstructionElement",
+        "BridgeInstallation",
+        "BridgePart",
+        "BuildingPart",
+        "WallSurface",
+        "RoofSurface",
+        "GroundSurface",
+        "ClosureSurface",
+        "FloorSurface",
+        "InteriorWallSurface",
+        "CeilingSurface",
+        "CityObjectGroup",
+        "OuterCeilingSurface",
+        "OuterFloorSurface",
+        "TransportationObject",
+        "IntBuildingInstallation",
+        "WaterSurface",
+        "ReliefComponent",
+        "TINRelief",
+        "MassPointRelief",
+        "BreaklineRelief",
+        "RasterRelief",
+        "Unknown",
+    };
+    
     /**
      * @brief ビット数取得
      * @param Value 対象値
@@ -37,6 +82,14 @@ namespace {
     }
 }
 
+namespace plateau::CityObject {
+    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType) {
+        int32 TypeMsbBit;
+        MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
+        return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
+    }
+}
+
 void FPLATEAUCityObject::SetGmlID(const FString& InGmlID) {
     GmlID = InGmlID;
 }
@@ -45,10 +98,9 @@ void FPLATEAUCityObject::SetCityObjectIndex(const plateau::polygonMesh::CityObje
     CityObjectIndex = FPLATEAUCityObjectIndex(InIndex.primary_index, InIndex.atomic_index);
 }
 
-void FPLATEAUCityObject::SetCityObjectsType(const citygml::CityObject::CityObjectsType InType) {
-    int MsbBit;
-    MSB64Bit(static_cast<uint64_t>(InType), MsbBit);
-    Type = static_cast<EPLATEAUCityObjectsType>(MsbBit);
+void FPLATEAUCityObject::SetCityObjectsType(const FString& InType) {
+    int32 TypeMsbBit = EPLATEAUCityObjectsTypeNameArray.IndexOfByKey(InType);
+    Type = static_cast<EPLATEAUCityObjectsType>(TypeMsbBit);
 }
 
 void FPLATEAUCityObject::SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes) {
