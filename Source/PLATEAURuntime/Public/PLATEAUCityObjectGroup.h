@@ -29,7 +29,7 @@ namespace citygml {
     class CityObject;
 }
 
-class FPLATEAUCityObject;
+struct FPLATEAUCityObject;
 struct FLoadInputData;
 
 
@@ -71,7 +71,7 @@ public:
     FPLATEAUCityObject GetCityObjectByUV(const FVector2D& UV);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
-    FPLATEAUCityObject GetCityObjectByIndex(FPLATEAUCityObjectIndex Index);
+    FPLATEAUCityObject GetCityObjectByIndex(const FPLATEAUCityObjectIndex Index);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetCityObjectByID(const FString& GmlID);

@@ -8,13 +8,13 @@ namespace {
      * @param Value 対象値
      * @return ビット数
      */
-    int Count64Bit(const uint64_t Value) {
+    int32 Count64Bit(const uint64_t Value) {
         uint64_t Count = (Value & 0x5555555555555555) + (Value >> 1 & 0x5555555555555555);
         Count = (Count & 0x3333333333333333) + (Count >> 2 & 0x3333333333333333);
         Count = (Count & 0x0f0f0f0f0f0f0f0f) + (Count >> 4 & 0x0f0f0f0f0f0f0f0f);
         Count = (Count & 0x00ff00ff00ff00ff) + (Count >> 8 & 0x00ff00ff00ff00ff);
         Count = (Count & 0x0000ffff0000ffff) + (Count >> 16 & 0x0000ffff0000ffff);
-        return static_cast<int>((Count & 0x00000000ffffffff) + (Count >> 32 & 0x00000000ffffffff));
+        return static_cast<int32>((Count & 0x00000000ffffffff) + (Count >> 32 & 0x00000000ffffffff));
     }
 
     /**
@@ -22,7 +22,7 @@ namespace {
      * @param Value 対象値
      * @param Out 最大ビット
      */
-    void MSB64Bit(uint64_t Value, int& Out) {
+    void MSB64Bit(uint64_t Value, int32& Out) {
         if (Value == 0) {
             Out = 0;
             return;

@@ -117,8 +117,8 @@ namespace {
         const auto PrimaryIndexJsonValue = CityObjectIndexJsonValueArray[0];
         const auto AtomicIndexJsonValue = CityObjectIndexJsonValueArray[1];
         plateau::polygonMesh::CityObjectIndex CityObjectIndex{
-            static_cast<int>(PrimaryIndexJsonValue->AsNumber()),
-            static_cast<int>(AtomicIndexJsonValue->AsNumber())
+            static_cast<int32>(PrimaryIndexJsonValue->AsNumber()),
+            static_cast<int32>(AtomicIndexJsonValue->AsNumber())
         };
         CityObject.SetCityObjectIndex(CityObjectIndex);
 
@@ -203,7 +203,7 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
 
     // 子コンポーネント名取得
     TArray<TSharedPtr<FJsonValue>> OutsideChildrenJsonArray;
-    for (int i = 0; i < InNode.getChildCount(); i++) {
+    for (int32 i = 0; i < InNode.getChildCount(); i++) {
         OutsideChildrenJsonArray.Emplace(MakeShared<FJsonValueString>(UTF8_TO_TCHAR(InNode.getChildAt(i).getName().c_str())));
     }
     JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, OutsideChildrenJsonArray);
@@ -240,8 +240,8 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
         TArray<TSharedPtr<FJsonValue>> CityObjectJsonArray;
         TSharedPtr<FJsonObject> CityJsonObjectParent = MakeShareable(new FJsonObject);
         TArray<TSharedPtr<FJsonValue>> CityJsonObjectChildren;
-        int CurrentPrimaryIndex = -1;
-        for (int i = 0; i < CityObjectIndices.size(); i++) {
+        int32 CurrentPrimaryIndex = -1;
+        for (int32 i = 0; i < CityObjectIndices.size(); i++) {
             const auto& CityObjectIndex = CityObjectIndices[i];
             const auto& AtomicGmlId = CityObjectList.getAtomicGmlID(CityObjectIndex);
             const auto& CityObject = InCityModel->getCityObjectById(AtomicGmlId);
@@ -329,10 +329,10 @@ FPLATEAUCityObject UPLATEAUCityObjectGroup::GetAtomicCityObjectByRaycast(const F
 }
 
 FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByUV(const FVector2d& UV) {
-    return GetCityObjectByIndex(FPLATEAUCityObjectIndex(static_cast<int>(UV.X), static_cast<int>(UV.Y)));
+    return GetCityObjectByIndex(FPLATEAUCityObjectIndex(static_cast<int32>(UV.X), static_cast<int32>(UV.Y)));
 }
 
-FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByIndex(FPLATEAUCityObjectIndex Index) {
+FPLATEAUCityObject UPLATEAUCityObjectGroup::GetCityObjectByIndex(const FPLATEAUCityObjectIndex Index) {
     if (RootCityObjects.Num() <= 0) {
         GetAllRootCityObjects();
     }

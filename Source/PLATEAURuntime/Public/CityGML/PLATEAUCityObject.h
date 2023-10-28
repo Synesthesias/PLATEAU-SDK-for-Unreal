@@ -61,14 +61,14 @@ struct FPLATEAUCityObjectIndex {
     FPLATEAUCityObjectIndex() : PrimaryIndex(0), AtomicIndex(0) {
     }
 
-    FPLATEAUCityObjectIndex(const int InPrimaryIndex, const int InAtomicIndex) : PrimaryIndex(InPrimaryIndex), AtomicIndex(InAtomicIndex) {
+    FPLATEAUCityObjectIndex(const int32 InPrimaryIndex, const int32 InAtomicIndex) : PrimaryIndex(InPrimaryIndex), AtomicIndex(InAtomicIndex) {
     }
 
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    int PrimaryIndex;
+    int32 PrimaryIndex;
 
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU|CityGML")
-    int AtomicIndex;
+    int32 AtomicIndex;
 
     bool operator==(const FPLATEAUCityObjectIndex& Other) const {
         return PrimaryIndex == Other.PrimaryIndex && AtomicIndex == Other.AtomicIndex;
