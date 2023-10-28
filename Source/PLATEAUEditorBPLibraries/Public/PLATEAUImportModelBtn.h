@@ -16,14 +16,43 @@ struct FPackageInfoSettings {
     FPackageInfoSettings()
         : bImport(false)
         , bTextureImport(false)
-        , bIncludeAttrInfo(true)
+        , bIncludeAttrInfo(false)
+        , bEnableTexturePacking(false)
+        , TexturePackingResolution(static_cast<EPLATEAUTexturePackingResolution>(1))
         , MinLod(0)
         , MaxLod(0)
-        , Granularity(0) {
+        , Granularity(0)
+        , FallbackMaterial(nullptr)
+        , bAttachMapTile(false)
+        , MapTileUrl("")
+        , ZoomLevel(7) {
     }
 
-    FPackageInfoSettings(const bool InbImport, const bool InbTextureImport, const bool InbIncludeAttrInfo, const int InMinLod, const int InMaxLod, const int InGranularity):
-        bImport(InbImport), bTextureImport(InbTextureImport), bIncludeAttrInfo(InbIncludeAttrInfo), MinLod(InMinLod), MaxLod(InMaxLod), Granularity(InGranularity) {
+    FPackageInfoSettings(
+        const bool InbImport,
+        const bool InbTextureImport,
+        const bool InbIncludeAttrInfo,
+        const bool InbEnableTexturePacking,
+        const EPLATEAUTexturePackingResolution InTexturePackingResolution,
+        const int InMinLod,
+        const int InMaxLod,
+        const int InGranularity,
+        UMaterialInterface* InFallbackMaterial,
+        const bool InbAttachMapTile,
+        const FString InMapTileUrl,
+        const int InZoomLevel)
+        : bImport(InbImport)
+        , bTextureImport(InbTextureImport)
+        , bIncludeAttrInfo(InbIncludeAttrInfo)
+        , bEnableTexturePacking(InbEnableTexturePacking)
+        , TexturePackingResolution(static_cast<EPLATEAUTexturePackingResolution>(InTexturePackingResolution))
+        , MinLod(InMinLod)
+        , MaxLod(InMaxLod)
+        , Granularity(InGranularity)
+        , FallbackMaterial(InFallbackMaterial)
+        , bAttachMapTile(InbAttachMapTile)
+        , MapTileUrl(InMapTileUrl)
+        , ZoomLevel(InZoomLevel) {
     }
 
     UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportPanel")

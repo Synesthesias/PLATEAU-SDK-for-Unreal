@@ -14,7 +14,7 @@ namespace plateau {
 /**
  * @brief 各地域メッシュのメッシュコードのギズモを表します。
  */
-class FPLATEAUMeshCodeGizmo {
+class PLATEAUEDITOR_API FPLATEAUMeshCodeGizmo {
 public:
     FPLATEAUMeshCodeGizmo();
 

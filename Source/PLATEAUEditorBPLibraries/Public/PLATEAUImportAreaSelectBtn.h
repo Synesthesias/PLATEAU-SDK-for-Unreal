@@ -30,7 +30,7 @@ struct FPackageInfo {
 };
 
 UCLASS()
-class UPLATEAUImportAreaSelectBtn : public UBlueprintFunctionLibrary {
+class PLATEAUEDITORBPLIBRARIES_API UPLATEAUImportAreaSelectBtn : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ImportPanel")

@@ -38,7 +38,8 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelAdjustmentFilter_Apply
 
 bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(const FString& Parameters) {
     InitializeTest("ApplyFilter_Toggles_Visibility");
-    if (!OpenNewMap()) AddError("Failed to OpenNewMap");
+    if (!OpenNewMap())
+        AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
     Loader->LoadAsync(true);
@@ -49,7 +50,10 @@ bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(
 
         TArray<AActor*> CityModelActors;
         UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
+        if (CityModelActors.Num() <= 0) {
+            FinishTest(false, "CityModelActors.Num() <= 0");
+            return true;
+        }
 
         // フィルタリングによりBuildingパッケージを表示状態に変更
         for (auto* CityModelActor : CityModelActors) {
@@ -65,16 +69,23 @@ bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(
             for (const auto& GmlActor : GmlActors) {
                 TArray<USceneComponent*> LodActors;
                 GmlActor->GetChildrenComponents(false, LodActors);
-                
+
                 for (const auto& LodActor : LodActors) {
                     auto LodNum = LodActor->GetName().RightChop(3);
                     if (FCString::Atoi(*LodNum) != MaxLod)
                         continue;
-                    
+
                     TArray<USceneComponent*> PolygonMeshActors;
                     LodActor->GetChildrenComponents(false, PolygonMeshActors);
-                    if (PolygonMeshActors.Num() <= 0) AddError("PolygonMeshActors.Num() <= 0");
-                    if (!PolygonMeshActors[0]->IsVisible()) AddError("PolygonMeshActors[0]->IsVisible() == false");
+                    if (PolygonMeshActors.Num() <= 0) {
+                        FinishTest(false, "PolygonMeshActors.Num() <= 0");
+                        return true;
+                    }
+
+                    if (!PolygonMeshActors[0]->IsVisible()) {
+                        FinishTest(false, "PolygonMeshActors[0]->IsVisible() == false");
+                        return true;
+                    }
                 }
             }
         }
@@ -99,14 +110,17 @@ bool FPLATEAUTest_ModelAdjustmentFilter_ApplyFilter_Toggles_Visibility::RunTest(
                     
                     TArray<USceneComponent*> PolygonMeshActors;
                     LodActor->GetChildrenComponents(false, PolygonMeshActors);
-                    if (PolygonMeshActors[0]->IsVisible()) AddError("PolygonMeshActors[0]->IsVisible() == true");
+                    if (PolygonMeshActors[0]->IsVisible()) {
+                        FinishTest(false, "PolygonMeshActors[0]->IsVisible() == true");
+                        return true;
+                    }
                 }
             }
         }
         
+        FinishTest(true, "");
         return true;
     }));
 
-    FinishTest();
     return true;
 }
