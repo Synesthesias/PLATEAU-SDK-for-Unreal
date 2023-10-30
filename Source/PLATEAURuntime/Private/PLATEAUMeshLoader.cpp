@@ -49,7 +49,7 @@ bool FSubMeshMaterialSet::operator==(const FSubMeshMaterialSet& Other) const {
 }
 
 bool FSubMeshMaterialSet::Equals(const FSubMeshMaterialSet& Other) const {
-    float tl = 0.0001f;
+    float tl = 0.f;
     return Diffuse.Equals(Other.Diffuse, tl) &&
         Specular.Equals(Other.Specular, tl) &&
         Emissive.Equals(Other.Emissive, tl) &&
@@ -58,7 +58,7 @@ bool FSubMeshMaterialSet::Equals(const FSubMeshMaterialSet& Other) const {
         FMath::IsNearlyEqual(Ambient, Other.Ambient, tl) &&
         isSmooth == Other.isSmooth &&
         hasMaterial == Other.hasMaterial &&
-        TexturePath.Equals(Other.TexturePath);
+        TexturePath.Equals(Other.TexturePath);       
 }
 
 FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
@@ -123,7 +123,7 @@ namespace {
     }
 
     bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-        TSet<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal) {
+        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -159,7 +159,7 @@ namespace {
             FPolygonGroupID PolygonGroupID = 0;
             FSubMeshMaterialSet MaterialSet(MaterialValue,
                 TexturePath.empty() ? FString() : FString(TexturePath.c_str()));
-
+            
             if (!SubMeshMaterialSets.Contains(MaterialSet)) {
                 // マテリアル設定
                 PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
@@ -175,12 +175,13 @@ namespace {
                 SubMeshMaterialSets.Add(MaterialSet);
             }
             else {
-                FSubMeshMaterialSet* Found = SubMeshMaterialSets.Find(MaterialSet);
-                check(Found != nullptr);
+                int32 FoundIndex = SubMeshMaterialSets.Find(MaterialSet);
+                check(FoundIndex != -1);
+                FSubMeshMaterialSet* Found = &SubMeshMaterialSets[FoundIndex];
                 PolygonGroupID = Found->PolygonGroupID;
                 MaterialSet = *Found;
             }
-
+            
             //BPのUStaticMeshDescriptionのSetPolygonGroupMaterialSlotNameと同様の処理
             if (OutMeshDescription.IsPolygonGroupValid(PolygonGroupID)) {
                 const FName& SlotName = *MaterialSet.MaterialSlot;
@@ -348,7 +349,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     UStaticMesh* StaticMesh;
     UStaticMeshComponent* Component = nullptr;
     UStaticMeshComponent* ComponentRef = nullptr;
-    TSet<FSubMeshMaterialSet> SubMeshMaterialSets;
+    TArray<FSubMeshMaterialSet> SubMeshMaterialSets;
     FMeshDescription* MeshDescription;
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(

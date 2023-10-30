@@ -229,10 +229,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         if (Option.bExportTexture) {
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
 
-            if(MaterialInstance == nullptr)
-                UE_LOG(LogTemp, Error, TEXT("MaterialInstance is NULL : %s %d"), *StaticMeshComponent->GetFullName() , k );
-
-            if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
+            if (MaterialInstance->TextureParameterValues.Num() > 0) {
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                 if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
