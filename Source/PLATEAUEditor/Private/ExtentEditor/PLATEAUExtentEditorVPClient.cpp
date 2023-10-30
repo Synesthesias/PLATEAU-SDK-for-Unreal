@@ -90,9 +90,9 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
 }
 
 void FPLATEAUExtentEditorViewportClient::ResetSelectedArea() {
-    for (auto& Gizmo : MeshCodeGizmos) {
-        Gizmo.ResetSelectedArea();
-        ExtentEditorPtr.Pin()->SetAreaMeshCodeMap(Gizmo.GetRegionMeshID(), Gizmo);
+    for (auto& MeshCodeGizmo : MeshCodeGizmos) {
+        MeshCodeGizmo.ResetSelectedArea();
+        ExtentEditorPtr.Pin()->SetAreaMeshCodeMap(MeshCodeGizmo.GetRegionMeshID(), MeshCodeGizmo);
     }
 }
 
@@ -165,10 +165,10 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitiveDrawInterface* PDI) {
     FEditorViewportClient::Draw(View, PDI);
 
-    for (const auto& Gizmo : MeshCodeGizmos) {
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         // 範囲内のギズモのみ描画
-        if (GizmoContains(Gizmo)) {
-            Gizmo.DrawExtent(View, PDI);
+        if (GizmoContains(MeshCodeGizmo)) {
+            MeshCodeGizmo.DrawExtent(View, PDI);
         }
     }
 
@@ -188,30 +188,64 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
 
     int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
     int AddComponentCnt = 0;
-    for (const auto& Gizmo : MeshCodeGizmos) {
+    const auto& NearestMeshCodeGizmo = GetNearestMeshCodeGizmo();
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         // 範囲内のギズモのみ描画
-        if (GizmoContains(Gizmo)) {
+        if (GizmoContains(MeshCodeGizmo)) {
             if (CameraDistance < 4000.0) {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
+                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
+                if (LoadingPanelCnt < MaxLoadPanelParallelCount && NearestMeshCodeGizmo.GetRegionMeshID() != "" && FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor))
                     LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
+                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(MeshCodeGizmo))
                     AddComponentCnt++;
             } else if (CameraDistance < 9000.0) {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Visible);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
+                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
+                if (LoadingPanelCnt < MaxLoadPanelParallelCount && NearestMeshCodeGizmo.GetRegionMeshID() != "" && FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor))
                     LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
+                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(MeshCodeGizmo))
                     AddComponentCnt++;
             } else {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Hidden);
+                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
             }
 
-            if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(Gizmo.GetRegionMeshID()); 0 < ItemCount) {
-                Gizmo.DrawRegionMeshID(InViewport, View, Canvas, Gizmo.GetRegionMeshID(), CameraDistance, ItemCount);
+            if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
+                MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
             }
         }
     }
+}
+
+FPLATEAUMeshCodeGizmo FPLATEAUExtentEditorViewportClient::GetNearestMeshCodeGizmo() {
+    // View中心からロードを開始する対象MeshCodeGizmoを探索
+    TArray<FPLATEAUMeshCodeGizmo> LoadingTargetGizmos;
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
+        if (GizmoContains(MeshCodeGizmo)) {
+            // 読込済みのものは飛ばす
+            if (FeatureInfoDisplay->MeshCodeGizmoContains(MeshCodeGizmo))
+                continue;
+
+            LoadingTargetGizmos.Emplace(MeshCodeGizmo);
+        }
+    }
+
+    // ロードを開始する対象Gizmoの中で最もカメラ中心位置から近いGizmoのロードを開始
+    FPLATEAUMeshCodeGizmo NearestMeshCodeGizmo;
+    double MinSqrDist = MAX_dbl;
+    for (const auto& MeshCodeGizmo : LoadingTargetGizmos) {
+        auto DistFromCenter = MeshCodeGizmo.GetMeshCode().getExtent().centerPoint() - Extent.GetNativeData().centerPoint();
+        // 緯度・経度の値でそのまま距離を取ると、探索範囲が縦長になり、画面の上下にはみ出した箇所が探索されがちになります。
+        // これを補正するため、縦よりも横を優先します。
+        // 探索範囲が横長になり、横に長いディスプレイに映る範囲が優先的に探索されるようにします。
+        DistFromCenter.longitude *= 0.5;
+
+        const auto SqrDist = DistFromCenter.latitude * DistFromCenter.latitude + DistFromCenter.longitude * DistFromCenter.longitude;
+        if (SqrDist < MinSqrDist) {
+            MinSqrDist = SqrDist;
+            NearestMeshCodeGizmo = MeshCodeGizmo;
+        }
+    }
+
+    return NearestMeshCodeGizmo;
 }
 
 void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState& InInputState, bool bIsDragging, bool bNudge) {
@@ -300,7 +334,7 @@ void FPLATEAUExtentEditorViewportClient::SwitchFeatureInfoDisplay(const int Lod,
     FeatureInfoDisplay->SwitchFeatureInfoDisplay(MeshCodeGizmos, Lod, bCheck);
 }
 
-bool FPLATEAUExtentEditorViewportClient::GizmoContains(const FPLATEAUMeshCodeGizmo Gizmo) const {
+bool FPLATEAUExtentEditorViewportClient::GizmoContains(const FPLATEAUMeshCodeGizmo& Gizmo) const {
     const auto ExtentEditor = ExtentEditorPtr.Pin();
     const auto RawMin = ExtentEditor->GetGeoReference().GetData().project(Extent.GetNativeData().min);
     const auto RawMax = ExtentEditor->GetGeoReference().GetData().project(Extent.GetNativeData().max);

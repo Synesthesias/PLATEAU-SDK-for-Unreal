@@ -68,8 +68,9 @@ private:
     FVector TrackingStartedCameraPosition;
     TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
     
-    bool GizmoContains(const FPLATEAUMeshCodeGizmo Gizmo) const;
+    bool GizmoContains(const FPLATEAUMeshCodeGizmo& Gizmo) const;
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
     void InitCamera();
+    FPLATEAUMeshCodeGizmo GetNearestMeshCodeGizmo();
 };
