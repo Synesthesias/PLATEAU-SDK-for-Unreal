@@ -84,32 +84,6 @@ namespace {
     }
 
     /**
-     * @brief Componentがメッシュを持たない場合childrenをリストに追加します
-     */
-    TArray<UPLATEAUCityObjectGroup*> IncludeChildComponents(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
-        TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
-        for (auto comp : TargetCityObjects) {
-            if (comp->GetStaticMesh() == nullptr){
-                TArray<USceneComponent*> children;
-                comp->GetChildrenComponents(true, children);
-                for (auto child : children) {
-                    if(child->IsA(UPLATEAUCityObjectGroup::StaticClass())){             
-                        auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
-                        if (childCityObj->GetStaticMesh() != nullptr) {
-                            UniqueComponents.Add(childCityObj);
-                        }                     
-                    }
-                }
-                UniqueComponents.Add(comp);
-            }
-            else {
-                UniqueComponents.Add(comp);
-            }     
-        }
-        return UniqueComponents.Array();
-    }
-
-    /**
      * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
      * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
      * @return Key: GmlID, Value: UPLATEAUCityObject の Map
@@ -143,6 +117,30 @@ namespace {
             }
         }
         return cityObjMap;
+    }
+
+    /**
+     * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
+     */
+    TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
+        TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
+        for (auto comp : TargetComponents) {
+            if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr) {
+                TArray<USceneComponent*> children;
+                comp->GetChildrenComponents(true, children);
+                for (auto child : children) {
+                    if (child->IsA(UPLATEAUCityObjectGroup::StaticClass())) {
+                        auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
+                        if (childCityObj->GetStaticMesh() != nullptr) {
+                            UniqueComponents.Add(childCityObj);
+                        }
+                    }
+                }
+            }
+            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()))
+                UniqueComponents.Add(StaticCast<UPLATEAUCityObjectGroup*>(comp));
+        }
+        return UniqueComponents.Array();
     }
 }
 
@@ -446,19 +444,18 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
+UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)     {
+
     plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
-    switch (ReconstructType)         {
+    switch (ReconstructType) {
     case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
     case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;
     case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
     }
 
-    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetCityObjects.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
+    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
-
-    const auto& TargetCityObjectsWithChildren = IncludeChildComponents(TargetCityObjects);
 
     MeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
@@ -466,21 +463,27 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
     ExtOptions.TransformType = EMeshTransformType::Local;
     ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
 
-    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetCityObjectsWithChildren, ExtOptions, ConvOption, bDestroyOriginal] {
+    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetComponents, ExtOptions, ConvOption, bDestroyOriginal] {
 
         FPLATEAUMeshExporter MeshExporter;
         GranularityConverter Converter;
 
-        //属性情報を覚えておきます。
-        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjectsWithChildren);
+        const auto& TargetCityObjects = GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
 
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjectsWithChildren, ExtOptions);
+        //属性情報を覚えておきます。
+        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
+
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
+
+        UE_LOG(LogTemp, Warning, TEXT("Created Model: %s"), *FString(smodel->debugString().c_str()));
 
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjectsWithChildren]() {
+        UE_LOG(LogTemp, Warning, TEXT("Converted Model: %s"), *FString(converted->debugString().c_str()));
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
             //コンポーネント削除
-            for (auto comp : TargetCityObjectsWithChildren) {
+            for (auto comp : TargetCityObjects) {
                 if (bDestroyOriginal)
                     comp->DestroyComponent();
                 else
@@ -489,12 +492,12 @@ FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UPLATEAUCityObje
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-        ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
+            ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjectsWithChildren]() {
-            //終了イベント通知
-            OnReconstructFinished.Broadcast();
-        }, TStatId(), NULL, ENamedThreads::GameThread);
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+                //終了イベント通知
+                OnReconstructFinished.Broadcast();
+                }, TStatId(), NULL, ENamedThreads::GameThread);
         });
     return ConvertTask;
 }

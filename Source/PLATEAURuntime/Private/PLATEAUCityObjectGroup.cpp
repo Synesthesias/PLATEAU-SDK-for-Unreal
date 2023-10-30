@@ -567,6 +567,9 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectGroup::GetAllRootCityObjects() {
     TSharedPtr<FJsonObject> JsonRootObject;
     FJsonSerializer::Deserialize(JsonReader, JsonRootObject);
 
+    if(!JsonRootObject.IsValid())
+        return RootCityObjects;
+
     const auto& CityObjectsJsonArray = JsonRootObject->GetArrayField(plateau::CityObject::CityObjectsFieldName);
     for (const auto& CityJsonValue : CityObjectsJsonArray) {
         RootCityObjects.Emplace(GetCityObject(CityJsonValue));
