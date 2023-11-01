@@ -19,7 +19,8 @@ namespace plateau::granularityConvert {
 
         /// 引数で与えられたモデルの各ルートノードをキューに追加します。
         void pushRoot(const plateau::polygonMesh::Model* model) {
-            for(int i=0; i<model->getRootNodeCount(); i++) {
+            // indexの小さい方から処理したいので、stackには逆順に積みます。
+            for(int i=model->getRootNodeCount() - 1; i>=0; i--) {
                 push(NodePath({i}));
             }
         }

@@ -475,11 +475,7 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UScen
 
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
 
-        UE_LOG(LogTemp, Warning, TEXT("Model: %s"), *FString(smodel->debugString().c_str()));
-
         std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-
-        UE_LOG(LogTemp, Warning, TEXT("Converted: %s"), *FString(converted->debugString().c_str()));
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
             //コンポーネント削除
