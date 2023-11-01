@@ -6,7 +6,7 @@
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
-namespace plateau::CityObject {
+namespace plateau::CityObjectGroup {
     constexpr TCHAR GmlIdFieldName[]            = TEXT("gmlID");
     constexpr TCHAR CityObjectIndexFieldName[]  = TEXT("cityObjectIndex");
     constexpr TCHAR CityObjectTypeFieldName[]   = TEXT("cityObjectType");
@@ -29,7 +29,7 @@ namespace citygml {
     class CityObject;
 }
 
-class FPLATEAUCityObject;
+struct FPLATEAUCityObject;
 struct FLoadInputData;
 
 
@@ -87,7 +87,7 @@ public:
     FPLATEAUCityObject GetCityObjectByUV(const FVector2D& UV);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
-    FPLATEAUCityObject GetCityObjectByIndex(FPLATEAUCityObjectIndex Index);
+    FPLATEAUCityObject GetCityObjectByIndex(const FPLATEAUCityObjectIndex Index);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetCityObjectByID(const FString& GmlID);

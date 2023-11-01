@@ -51,8 +51,7 @@ namespace {
     }
 }
 
-FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCodeLevel(2), MeshCode(), Width(0), Height(0), MinX(-500), MinY(-500), MaxX(500), MaxY(500),
-                                                 LineThickness(1.0f) {
+FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCode(), Width(0), Height(0), MinX(-500), MinY(-500), MaxX(500), MaxY(500), LineThickness(1.0f) {
     AreaSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
     AreaSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), SelectedColor);
@@ -78,15 +77,12 @@ void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
 
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
-    const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor(10, 10, 130);
+    const auto Color = FColor(10, 10, 130);
 
     // エリア枠線
     DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
 
     if (!bShowLevel5Mesh)
-        return;
-
-    if (MeshCodeLevel == 2)
         return;
 
     // 格子状のライン
@@ -149,12 +145,10 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const 
     const auto HalfWidth = ViewFont->GetStringSize(*RegionMeshID) / 2;
     const auto HalfHeight = ViewFont->GetStringHeightSize(*RegionMeshID) / 2;
 
-    const auto Color = MeshCodeLevel == 2 ? FColor(10, 10, 10) : FColor::Blue;
+    const auto Color = FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
-        if (MeshCodeLevel == 2 && CameraDistance > NearOffset && CameraDistance < FarOffset) {
-            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
-        } else if (MeshCodeLevel != 2 && CameraDistance <= NearOffset) {
+        if (CameraDistance <= NearOffset) {
             Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
         }
     }
@@ -206,13 +200,7 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, c
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
     MaxY = FGenericPlatformMath::Max(RawMin.y, RawMax.y);
-    if (InMeshCode.get().size() == 6) {
-        LineThickness = 3.0f;
-        MeshCodeLevel = 2;
-    } else {
-        LineThickness = 2.0f;
-        MeshCodeLevel = 3;
-    }
+    LineThickness = 2.0f;
 }
 
 void FPLATEAUMeshCodeGizmo::ToggleSelectArea(const double X, const double Y) {
