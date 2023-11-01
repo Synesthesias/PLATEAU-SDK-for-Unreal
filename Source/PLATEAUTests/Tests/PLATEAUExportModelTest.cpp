@@ -36,11 +36,13 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_ModelExporter_Export_Genera
 
 bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& Parameters) {
     InitializeTest("Export_Generates_Files");
-    if (!OpenNewMap()) AddError("Failed to OpenNewMap");
+    if (!OpenNewMap())
+        AddError("Failed to OpenNewMap");
 
     const FString TestDir = FPaths::ProjectDir().Append("Tests");
     if (FPaths::DirectoryExists(TestDir)) {
-        if (!FFileManagerGeneric::Get().DeleteDirectory(*TestDir, true, true)) AddError("Failed to DeleteDirectory");
+        if (!FFileManagerGeneric::Get().DeleteDirectory(*TestDir, true, true))
+            AddError("Failed to DeleteDirectory");
     }
     
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
@@ -52,16 +54,26 @@ bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& P
 
         TArray<AActor*> CityModelActors;
         UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
-        if (!FFileManagerGeneric::Get().MakeDirectory(*TestDir, true)) AddError("Failed to MakeDirectory");
+        if (CityModelActors.Num() <= 0) {
+            FinishTest(false, "CityModelActors.Num() <= 0");
+            return true;
+        }
+
+        if (!FFileManagerGeneric::Get().MakeDirectory(*TestDir, true)) {
+            FinishTest(false, "Failed to MakeDirectory");
+            return true;
+        }
 
         UPLATEAUExportModelBtn::ExportModel(Cast<APLATEAUInstancedCityModel>(CityModelActors.GetData()[0]), TestDir, 0, false, true, true, 0, 0);
         const auto FoundFiles = FindFiles(TestDir, "*");
-        if (FoundFiles.Num() <= 0) AddError("Failed to FindFiles");
+        if (FoundFiles.Num() <= 0) {
+            FinishTest(false, "Failed to FindFiles");
+            return true;
+        }
 
+        FinishTest(true, "");
         return true;
     }));
 
-    FinishTest();
     return true;
 }

@@ -41,4 +41,8 @@ private:
     TWeakPtr<class SDockTab> OwnerTab;
     // エディタースタイル
     TSharedPtr<FPLATEAUEditorStyle> Style;
+    //メッシュコード入力パネル
+    TWeakPtr<SWindow> MeshCodeInputWindow;
+    TWeakPtr<SEditableTextBox> MeshCodeTextBox;
+    TWeakPtr<STextBlock> MeshCodeErrorText;
 };

@@ -67,6 +67,10 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
     auto GeoReference = ExtentEditor->GetGeoReference();
     MeshCodeGizmos.Reset();
     for (const auto& MeshCode : MeshCodes) {
+        // 2次メッシュ以下の次数は省く
+        if (MeshCode.getLevel() <= 2)
+            continue;
+
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
         if (ExtentEditor->GetAreaMeshCodeMap().Contains(UTF8_TO_TCHAR(MeshCode.get().c_str()))) {
@@ -320,5 +324,20 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
     const auto EndPoint = CursorLocation.GetOrigin() + CursorLocation.GetDirection() * 100000.0;
     return FMath::SegmentPlaneIntersection(StartPoint, EndPoint, Plane, Position);
 }
+
+bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
+    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
+
+    std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
+    if (MeshCodes.find(MeshCode) == MeshCodes.end())
+        return false;
+
+    const auto ExtentEditor = ExtentEditorPtr.Pin();     
+    const auto Box = ExtentEditor->GetBoxByExtent(MeshCode.getExtent());
+    if (!Box.IsValid) return false;
+    FocusViewportOnBox(Box, true);
+    return true;
+}
+
 
 #undef LOCTEXT_NAMESPACE
