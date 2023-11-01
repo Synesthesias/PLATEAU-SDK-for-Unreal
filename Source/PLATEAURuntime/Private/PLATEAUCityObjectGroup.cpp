@@ -64,40 +64,40 @@ namespace {
             if (EPLATEAUAttributeType::AttributeSets == value.Type) {
                 TArray<TSharedPtr<FJsonValue>> AttributeSetJsonObjectArray;
                 GetAttributesJsonObjectRecursive(*value.Attributes.Get(), AttributeSetJsonObjectArray);
-                AttributesJsonObject->SetStringField(plateau::CityObject::KeyFieldName, key);
-                AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "AttributeSets");
-                AttributesJsonObject->SetArrayField(plateau::CityObject::ValueFieldName, AttributeSetJsonObjectArray);
+                AttributesJsonObject->SetStringField(plateau::CityObjectGroup::KeyFieldName, key);
+                AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "AttributeSets");
+                AttributesJsonObject->SetArrayField(plateau::CityObjectGroup::ValueFieldName, AttributeSetJsonObjectArray);
                 InAttributesJsonObjectArray.Emplace(MakeShared<FJsonValueObject>(AttributesJsonObject));
             }
             else {
-                AttributesJsonObject->SetStringField(plateau::CityObject::KeyFieldName, key);
+                AttributesJsonObject->SetStringField(plateau::CityObjectGroup::KeyFieldName, key);
 
                 switch (value.Type) {
                 case EPLATEAUAttributeType::String:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "String");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "String");
                     break;
                 case EPLATEAUAttributeType::Double:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Double");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Double");
                     break;
                 case EPLATEAUAttributeType::Integer:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Integer");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Integer");
                     break;
                 case EPLATEAUAttributeType::Date:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Date");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Date");
                     break;
                 case EPLATEAUAttributeType::Uri:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Uri");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Uri");
                     break;
                 case EPLATEAUAttributeType::Measure:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Measure");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Measure");
                     break;
                 case EPLATEAUAttributeType::Boolean:
-                    AttributesJsonObject->SetStringField(plateau::CityObject::TypeFieldName, "Boolean");
+                    AttributesJsonObject->SetStringField(plateau::CityObjectGroup::TypeFieldName, "Boolean");
                     break;
                 default: UE_LOG(LogTemp, Log, TEXT("Error citygml::AttributeType"));
                 }
 
-                AttributesJsonObject->SetStringField(plateau::CityObject::ValueFieldName, value.StringValue);
+                AttributesJsonObject->SetStringField(plateau::CityObjectGroup::ValueFieldName, value.StringValue);
                 InAttributesJsonObjectArray.Emplace(MakeShared<FJsonValueObject>(AttributesJsonObject));
             }
         }
@@ -195,18 +195,18 @@ namespace {
     TSharedRef<FJsonObject> GetCityJsonObject(const FPLATEAUCityObject& InCityObject) {
         TSharedRef<FJsonObject> CityJsonObject = MakeShared<FJsonObject>();
  
-        CityJsonObject->SetStringField(plateau::CityObject::GmlIdFieldName, InCityObject.GmlID);
+        CityJsonObject->SetStringField(plateau::CityObjectGroup::GmlIdFieldName, InCityObject.GmlID);
 
         TArray<TSharedPtr<FJsonValue>> CityObjectIndexArray;
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(InCityObject.CityObjectIndex.PrimaryIndex));
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(InCityObject.CityObjectIndex.AtomicIndex));
-        CityJsonObject->SetArrayField(plateau::CityObject::CityObjectIndexFieldName, CityObjectIndexArray);
+        CityJsonObject->SetArrayField(plateau::CityObjectGroup::CityObjectIndexFieldName, CityObjectIndexArray);
 
-        CityJsonObject->SetNumberField(plateau::CityObject::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
+        CityJsonObject->SetNumberField(plateau::CityObjectGroup::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
         
         TArray<TSharedPtr<FJsonValue>> AttributesJsonObjectArray;
         GetAttributesJsonObjectRecursive(InCityObject.Attributes, AttributesJsonObjectArray);
-        CityJsonObject->SetArrayField(plateau::CityObject::AttributesFieldName, AttributesJsonObjectArray);
+        CityJsonObject->SetArrayField(plateau::CityObjectGroup::AttributesFieldName, AttributesJsonObjectArray);
 
         return CityJsonObject;
     }
@@ -214,18 +214,18 @@ namespace {
     TSharedRef<FJsonObject> GetCityJsonObject(const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::CityObjectIndex& CityObjectIndex) {
         TSharedRef<FJsonObject> CityJsonObject = MakeShared<FJsonObject>();
 
-        CityJsonObject->SetStringField(plateau::CityObject::GmlIdFieldName, InCityObject.GmlID);
+        CityJsonObject->SetStringField(plateau::CityObjectGroup::GmlIdFieldName, InCityObject.GmlID);
 
         TArray<TSharedPtr<FJsonValue>> CityObjectIndexArray;
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(CityObjectIndex.primary_index));
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(CityObjectIndex.atomic_index));
-        CityJsonObject->SetArrayField(plateau::CityObject::CityObjectIndexFieldName, CityObjectIndexArray);
+        CityJsonObject->SetArrayField(plateau::CityObjectGroup::CityObjectIndexFieldName, CityObjectIndexArray);
 
-        CityJsonObject->SetNumberField(plateau::CityObject::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
+        CityJsonObject->SetNumberField(plateau::CityObjectGroup::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
 
         TArray<TSharedPtr<FJsonValue>> AttributesJsonObjectArray;
         GetAttributesJsonObjectRecursive(InCityObject.Attributes, AttributesJsonObjectArray);
-        CityJsonObject->SetArrayField(plateau::CityObject::AttributesFieldName, AttributesJsonObjectArray);
+        CityJsonObject->SetArrayField(plateau::CityObjectGroup::AttributesFieldName, AttributesJsonObjectArray);
 
         return CityJsonObject;
     }
@@ -383,19 +383,19 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
 
     // 親はなし
-    JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
+    JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
 
     // 子コンポーネント名取得
     TArray<TSharedPtr<FJsonValue>> OutsideChildrenJsonArray;
     for (int i = 0; i < InNode.getChildCount(); i++) {
         OutsideChildrenJsonArray.Emplace(MakeShared<FJsonValueString>(UTF8_TO_TCHAR(InNode.getChildAt(i).getName().c_str())));
     }
-    JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, OutsideChildrenJsonArray);
+    JsonRootObject->SetArrayField(plateau::CityObjectGroup::OutsideChildrenFieldName, OutsideChildrenJsonArray);
 
     // CityObjects取得
     TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
     CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(InCityObject)));
-    JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectsJsonArray);
+    JsonRootObject->SetArrayField(plateau::CityObjectGroup::CityObjectsFieldName, CityObjectsJsonArray);
 
     // Json書き出し
     const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
@@ -406,15 +406,15 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
-    JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, "");
-    JsonRootObject->SetArrayField(plateau::CityObject::OutsideChildrenFieldName, {});
+    JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
+    JsonRootObject->SetArrayField(plateau::CityObjectGroup::OutsideChildrenFieldName, {});
 
     // 最小地物単位の親を求める（主要地物のIDを設定）
     if (plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject == Granularity) {
         for (const auto& CityObjectIndex : CityObjectIndices) {
             const FString& AtomicGmlId = FString(CityObjectList.getAtomicGmlID(CityObjectIndex).c_str());
             if (AtomicGmlId != InNodeName) {
-                JsonRootObject->SetStringField(plateau::CityObject::OutsideParentFieldName, AtomicGmlId);
+                JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, AtomicGmlId);
             }
         }
     }
@@ -447,10 +447,10 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
 
             // データの区切りか？
             if (i + 1 == CityObjectIndices.size() || CityObjectIndices[i + 1].primary_index != CurrentPrimaryIndex) {
-                CityJsonObjectParent->SetArrayField(plateau::CityObject::ChildrenFieldName, CityJsonObjectChildren);
+                CityJsonObjectParent->SetArrayField(plateau::CityObjectGroup::ChildrenFieldName, CityJsonObjectChildren);
             }
         }
-        JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectJsonArray);
+        JsonRootObject->SetArrayField(plateau::CityObjectGroup::CityObjectsFieldName, CityObjectJsonArray);
     } else {
         // 最小地物単位・主要地物単位共通
         const auto& CityObjParentRef = CityObjMap.Find(InNodeName);
@@ -477,9 +477,9 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, con
                     const auto& CityObject = *CityObjRef;
                     CityObjectsChildrenJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(CityObject, CityObjectIndex)));
                 }
-                CityJsonObjectParent->SetArrayField(plateau::CityObject::ChildrenFieldName, CityObjectsChildrenJsonArray);
+                CityJsonObjectParent->SetArrayField(plateau::CityObjectGroup::ChildrenFieldName, CityObjectsChildrenJsonArray);
             }
-            JsonRootObject->SetArrayField(plateau::CityObject::CityObjectsFieldName, CityObjectJsonArray);
+            JsonRootObject->SetArrayField(plateau::CityObjectGroup::CityObjectsFieldName, CityObjectJsonArray);
         }
     }
 
