@@ -121,15 +121,6 @@ bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUMeshCodeGizmo& M
     return true;
 }
 
-int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
-    int Count = 0;
-    for (const auto& Entry : AsyncLoadedPanels) {
-        if (Entry.Value->GetLoadMaxLodTaskStatus() == EPLATEAUFeatureInfoPanelStatus::Loading)
-            ++Count;
-    }
-    return Count;
-}
-
 bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
     if (MeshCodeGizmoContains(MeshCodeGizmo)) {
         return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->AddIconComponent(0.016f);

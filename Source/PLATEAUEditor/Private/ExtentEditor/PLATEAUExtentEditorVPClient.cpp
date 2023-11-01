@@ -25,20 +25,8 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUExtentEditor"), STATGROUP_PLATEAUExtentEditor, STATCAT_PLATEAUSDK);
 DECLARE_CYCLE_STAT(TEXT("FeatureInfoDisplay"), STAT_FeatureInfoDisplay, STATGROUP_PLATEAUExtentEditor);
 
-namespace {
-    /**
-     * @brief 最大パネル読み込み並列数
-     */
-    constexpr int MaxLoadPanelParallelCount = 8;
 
-    /**
-     * @brief 最大パネル追加並列数
-     */
-    constexpr int MaxAddComponentParallelCount = 8;
-}
-
-
-FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(TWeakPtr<FPLATEAUExtentEditor> InExtentEditor,
+FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(const TWeakPtr<FPLATEAUExtentEditor>& InExtentEditor,
                                                                        const TSharedRef<SPLATEAUExtentEditorViewport>& InPLATEAUExtentEditorViewport,
                                                                        const TSharedRef<FAdvancedPreviewScene>& InPreviewScene) : FEditorViewportClient(
     nullptr, &InPreviewScene.Get(), StaticCastSharedRef<SEditorViewport>(InPLATEAUExtentEditorViewport)), ExtentEditorPtr(InExtentEditor) {
@@ -49,7 +37,7 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
     UAssetViewerSettings::Get()->OnAssetViewerSettingsChanged().RemoveAll(this);
 }
 
-void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InDatasetAccessor) {
+void FPLATEAUExtentEditorViewportClient::Initialize(const std::shared_ptr<plateau::dataset::IDatasetAccessor>& InDatasetAccessor) {
     DatasetAccessor = InDatasetAccessor;
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -186,24 +174,20 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
         FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(ExtentEditorPtr.Pin().Get()->GetGeoReference(), SharedThis(this));
     }
 
-    int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
-    int AddComponentCnt = 0;
     const auto& NearestMeshCodeGizmo = GetNearestMeshCodeGizmo();
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         // 範囲内のギズモのみ描画
         if (GizmoContains(MeshCodeGizmo)) {
             if (CameraDistance < 4000.0) {
                 FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && NearestMeshCodeGizmo.GetRegionMeshID() != "" && FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor))
-                    LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(MeshCodeGizmo))
-                    AddComponentCnt++;
+                if (NearestMeshCodeGizmo.GetRegionMeshID() != "")
+                    FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
+                FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
             } else if (CameraDistance < 9000.0) {
                 FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && NearestMeshCodeGizmo.GetRegionMeshID() != "" && FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor))
-                    LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(MeshCodeGizmo))
-                    AddComponentCnt++;
+                if (NearestMeshCodeGizmo.GetRegionMeshID() != "")
+                    FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
+                FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
             } else {
                 FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
             }
