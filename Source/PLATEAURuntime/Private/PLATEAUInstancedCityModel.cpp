@@ -116,6 +116,14 @@ APLATEAUInstancedCityModel::APLATEAUInstancedCityModel() {
     PrimaryActorTick.bCanEverTick = true;
 }
 
+double APLATEAUInstancedCityModel::GetLatitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).latitude;
+}
+
+double APLATEAUInstancedCityModel::GetLongitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).longitude;
+}
+
 FPLATEAUCityObjectInfo APLATEAUInstancedCityModel::GetCityObjectInfo(USceneComponent* Component) {
     FPLATEAUCityObjectInfo Result;
     Result.DatasetName = DatasetName;
