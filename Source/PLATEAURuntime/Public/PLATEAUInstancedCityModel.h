@@ -78,6 +78,18 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FString DatasetName;
 
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLatitude)
+        double Latitude;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLongitude)
+        double Longitude;
+
+    UFUNCTION(BlueprintGetter)
+        double GetLatitude();
+
+    UFUNCTION(BlueprintGetter)
+        double GetLongitude();
+
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
 
