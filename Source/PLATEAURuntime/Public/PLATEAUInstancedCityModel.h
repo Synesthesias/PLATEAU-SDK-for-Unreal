@@ -51,17 +51,17 @@ public:
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU", BlueprintGetter = GetLatitude)
-        double Latitude;
-
-    UPROPERTY(EditAnywhere, Category = "PLATEAU", BlueprintGetter = GetLongitude)
-        double Longitude;
-
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FPLATEAUGeoReference GeoReference;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FString DatasetName;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLatitude)
+        double Latitude;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLongitude)
+        double Longitude;
 
     UFUNCTION(BlueprintGetter)
         double GetLatitude();
