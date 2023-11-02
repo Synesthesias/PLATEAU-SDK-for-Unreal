@@ -125,11 +125,11 @@ namespace {
     TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
         TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
         for (auto comp : TargetComponents) {
-            if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr) {
+            if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
                 TArray<USceneComponent*> children;
                 comp->GetChildrenComponents(true, children);
                 for (auto child : children) {
-                    if (child->IsA(UPLATEAUCityObjectGroup::StaticClass())) {
+                    if (child->IsA(UPLATEAUCityObjectGroup::StaticClass()) && child->IsVisible()) {
                         auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
                         if (childCityObj->GetStaticMesh() != nullptr) {
                             UniqueComponents.Add(childCityObj);
@@ -137,7 +137,7 @@ namespace {
                     }
                 }
             }
-            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()))
+            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible())
                 UniqueComponents.Add(StaticCast<UPLATEAUCityObjectGroup*>(comp));
         }
         return UniqueComponents.Array();
