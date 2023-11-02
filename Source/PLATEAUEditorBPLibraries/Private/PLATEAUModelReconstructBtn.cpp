@@ -23,11 +23,6 @@ TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponentsByCla
     return arr;
 }
 
-void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const uint8 ReconstructType, bool bDivideGrid) {
-    
-    //TODO: 分割・結合　処理
-    
-    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %s %d %d %s"), *TargetCityModel->GetActorNameOrLabel(), TargetCityObjects.Num(), ReconstructType, bDivideGrid ? TEXT("True"): TEXT("False"));
-
-
+void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal ) {
+    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDivideGrid, bDestroyOriginal);
 }
