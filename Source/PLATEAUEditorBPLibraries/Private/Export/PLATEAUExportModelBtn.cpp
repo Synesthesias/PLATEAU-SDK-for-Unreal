@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUExportModelBtn.h"
+#include "Export/PLATEAUExportModelBtn.h"
 #include "PLATEAUExportSettings.h"
 #include "PLATEAUMeshExporter.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -42,6 +42,11 @@ void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityM
     Options.TransformType = static_cast<EMeshTransformType>(TransformType);
     Options.CoordinateSystem = static_cast<ECoordinateSystem>(CoordinateSystem);
     FPLATEAUMeshExporter MeshExporter;
+
+    if (!FPaths::DirectoryExists(ExportPath)) {
+        FFileManagerGeneric::Get().MakeDirectory(*ExportPath, true);
+    }
+    
     if (MeshExporter.Export(ExportPath, TargetCityModel, Options)) {
         const auto OpenDirectlyPath = FString::Format(TEXT("file://{0}"), {ExportPath});
         if (UKismetSystemLibrary::CanLaunchURL(OpenDirectlyPath)) {
