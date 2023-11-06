@@ -37,7 +37,8 @@ struct FPLATEAUTileCoordinate {
 struct FPLATEAUAsyncLoadedVectorTile {
 public:
     FPLATEAUAsyncLoadedVectorTile()
-        : LoadPhase(EVectorTileLoadingPhase::Idle)
+        : bVisibility(false)
+        , LoadPhase(EVectorTileLoadingPhase::Idle)
         , TileComponent(nullptr) {
     }
 
@@ -56,12 +57,17 @@ public:
     }
 
     void StartLoading(const FPLATEAUTileCoordinate& InTileCoordinate, FPipe& VectorTilePipe);
-
+    void SetVisibility(const bool InbVisibility);
 private:
+    UStaticMeshComponent* CreateTileComponentInGameThread(UTexture* Texture);
+    void ApplyVisibility() const;
+    
+    bool bVisibility;
     FCriticalSection CriticalSection;
     TAtomic<EVectorTileLoadingPhase> LoadPhase;
     UStaticMeshComponent* TileComponent;
     FTask Task;
+    TMap<UStaticMeshComponent*, UMaterialInstanceDynamic*> TileMaterialInstanceDynamicsMap;
 };
 
 uint32 GetTypeHash(const FPLATEAUTileCoordinate& Value);
@@ -74,11 +80,12 @@ public:
     FPLATEAUBasemap(const FPLATEAUGeoReference& InGeoReference, const TSharedPtr<class FPLATEAUExtentEditorViewportClient> InViewportClient);
     ~FPLATEAUBasemap();
 
-    void UpdateAsync(const FPLATEAUExtent& InExtent);
+    void UpdateAsync(const FPLATEAUExtent& InExtent, float DeltaSeconds);
 
 private:
+    float DeltaTime;
     FPLATEAUGeoReference GeoReference;
-    TWeakPtr<class FPLATEAUExtentEditorViewportClient> ViewportClient;
+    TWeakPtr<FPLATEAUExtentEditorViewportClient> ViewportClient;
     FPipe VectorTilePipe;
     TMap<FPLATEAUTileCoordinate, TSharedPtr<FPLATEAUAsyncLoadedVectorTile>> AsyncLoadedTiles;
     TSet<UStaticMeshComponent*> TilesInScene;

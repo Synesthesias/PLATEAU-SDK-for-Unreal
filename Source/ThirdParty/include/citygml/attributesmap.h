@@ -23,7 +23,8 @@ enum class AttributeType
     Uri,
     Measure,
     AttributeSet,
-    Boolean
+    Boolean,
+    CodeList
 };
 
 /**

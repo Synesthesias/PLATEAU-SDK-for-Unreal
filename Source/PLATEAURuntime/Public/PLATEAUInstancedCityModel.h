@@ -6,6 +6,7 @@
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
 #include "PLATEAUCityObjectGroup.h"
+#include <plateau/polygon_mesh/model.h>
 
 #include <plateau/dataset/city_model_package.h>
 
@@ -32,6 +33,7 @@ public:
         FString ID;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -48,6 +50,25 @@ class PLATEAURUNTIME_API APLATEAUInstancedCityModel : public AActor {
     GENERATED_BODY()
 
 public:
+
+    /**
+     * @brief 分割・結合処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnReconstructFinishedDelegate OnReconstructFinished;
+
+    /**
+     * @brief Componentのユニーク化されていない元の名前を取得します。
+     * コンポーネント名の末尾に"__{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"__"以降を削除します。
+     * 元の名前に"__{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
+     */
+    static FString GetOriginalComponentName(const USceneComponent* InComponent);
+
+    /**
+     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
+     */
+    static int ParseLodComponent(const USceneComponent* InLodComponent);
+
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 
@@ -56,6 +77,18 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
         FString DatasetName;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLatitude)
+        double Latitude;
+
+    UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLongitude)
+        double Longitude;
+
+    UFUNCTION(BlueprintGetter)
+        double GetLatitude();
+
+    UFUNCTION(BlueprintGetter)
+        double GetLongitude();
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         FPLATEAUCityObjectInfo GetCityObjectInfo(USceneComponent* Component);
@@ -97,6 +130,12 @@ public:
     bool IsFiltering();
 
     /**
+     * @brief 選択されたComponentの結合・分割処理を行います。
+     * @param 
+     */
+    UE::Tasks::FTask ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+
+    /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
      * @param MinLod 可視化される最小のLOD
@@ -121,4 +160,5 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
+	void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

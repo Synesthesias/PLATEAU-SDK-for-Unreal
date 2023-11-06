@@ -5,6 +5,7 @@
 #include <set>
 #include <optional>
 #include "plateau/network/client.h"
+#include "city_model_package.h"
 
 namespace plateau::dataset {
 
@@ -21,6 +22,7 @@ namespace plateau::dataset {
         void setPath(const std::string& path);
         MeshCode getMeshCode() const;
         const std::string& getFeatureType() const;
+        PredefinedCityModelPackage getPackage() const;
         std::string getAppearanceDirectoryPath() const;
         bool isValid() const;
 

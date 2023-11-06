@@ -6,7 +6,6 @@
 #include "plateau/mesh_writer/fbx_writer.h"
 #include "PLATEAUExportSettings.h"
 #include "PLATEAUInstancedCityModel.h"
-#include "PLATEAUEditor/Private/SPLATEAUExportPanel.h"
 #include "plateau/polygon_mesh/model.h"
 #include "plateau/polygon_mesh/node.h"
 #include "plateau/polygon_mesh/mesh.h"
@@ -20,13 +19,49 @@
 #include "Engine/Classes/Engine/StaticMesh.h"
 #include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
-#include "StaticMeshResources.h"
 #include "HAL/FileManager.h"
 #include "filesystem"
 #include "EditorFramework/AssetImportData.h"
 #include "HAL/FileManager.h"
+#include "Algo/Reverse.h"
+using namespace plateau::polygonMesh;
 
 #if WITH_EDITOR
+
+namespace {
+    /**
+     * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
+        int num = Node->getChildCount();
+        for (int i = 0; i < num; i++) {
+            if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
+        }
+        return -1;
+    }
+    /**
+     * @brief ModelのRootChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
+     */
+    int GetChildIndex(FString name, plateau::polygonMesh::Model* Model) {
+        int num = Model->getRootNodeCount();
+        for (int i = 0; i < num; i++) {
+            if (Model->getRootNodeAt(i).getName() == TCHAR_TO_UTF8(*name))
+                return i;
+        }
+        return -1;
+    }
+
+    /**
+     * @brief FPLATEAUCityObjectからCityObjectIndexを取得してCityObjectListに追加します。
+     */
+    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, CityObjectList& cityObjList) {
+        CityObjectIndex cityObjIdx;
+        cityObjIdx.primary_index = cityObj.CityObjectIndex.PrimaryIndex;
+        cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
+        cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
+    }
+}
 
 void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
     ModelNames.Empty();
@@ -104,7 +139,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
         if (Components[i]->GetName().Contains("BillboardComponent")) continue;
 
         ModelArray.Add(CreateModel(Components[i], Option));
-        ModelNames.Add(RemoveSuffix(Components[i]->GetName()));
+        ModelNames.Add(APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i]));
     }
     return ModelArray;
 }
@@ -113,7 +148,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
     auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
-        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*RemoveSuffix(Components[i]->GetName())));
+        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i])));
         CreateNode(Node, Components[i], Option);
     }
     return OutModel;
@@ -144,6 +179,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     plateau::polygonMesh::UV UV1;
     plateau::polygonMesh::UV UV2;
     plateau::polygonMesh::UV UV3;
+    plateau::polygonMesh::UV UV4;
 
     const auto& RenderMesh = StaticMeshComponent->GetStaticMesh()->GetLODForExport(0);
 
@@ -151,6 +187,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
         const FVector2f& UV = InVertices.GetVertexUV(i, 0);
         UV1.push_back(TVec2f(UV.X, 1.0f - UV.Y));
+    }
+
+    //UV4
+    for (uint32 i = 0; i < InVertices.GetNumVertices(); ++i) {
+        const FVector2f& UV = InVertices.GetVertexUV(i, 3);
+        UV4.push_back(TVec2f(UV.X, UV.Y));
     }
 
     auto GeoRef = TargetActor->GeoReference.GetData();
@@ -186,6 +228,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
         if (Option.bExportTexture) {
             const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
+
             if (MaterialInstance->TextureParameterValues.Num() > 0) {
                 FMaterialParameterMetadata MetaData;
                 MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
@@ -217,20 +260,90 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
     OutMesh.addIndicesList(OutIndices, 0, false);
     OutMesh.addUV1(UV1, Vertices.size());
+    OutMesh.addUV4(UV4, Vertices.size());
     ensureAlwaysMsgf(OutMesh.getIndices().size() % 3 == 0, TEXT("Indice size should be multiple of 3."));
     ensureAlwaysMsgf(OutMesh.getVertices().size() == OutMesh.getUV1().size(), TEXT("Size of vertices and uv1 should be same."));
 }
 
-FString FPLATEAUMeshExporter::RemoveSuffix(const FString ComponentName) {
-    int Index = 0;
-    if (ComponentName.FindLastChar('_', Index)) {
-        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-            return ComponentName.LeftChop(ComponentName.Len() - Index);
-        } else {
-            return ComponentName;
-        }
-    } else
-        return ComponentName;
-}
+/**
+ * @brief UPLATEAUCityObjectGroupのリストからplateauのModelを生成
+ */
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option) {
 
+    TargetActor = ModelActor;
+    auto OutModel = plateau::polygonMesh::Model::createModel();
+
+    for (const auto comp : ModelComponents) {
+
+        plateau::polygonMesh::Node* Root;
+        plateau::polygonMesh::Node* Lod; 
+        FString RootName;
+        FString LodName;
+
+        TArray<USceneComponent*> Parents;
+        comp->GetParentComponents(Parents);
+        int LodCompIndex = Parents.IndexOfByPredicate([](const auto& Parent) {
+            return Parent->GetName().StartsWith("LOD");
+            });
+        if (LodCompIndex == -1) {
+
+            //LOD Nodeが存在しない場合 Nodeを１つ作ってModelに入れる
+            auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*comp->GetName()));
+            auto Mesh = plateau::polygonMesh::Mesh();
+            CreateMesh(Mesh, comp, Option);
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            CityObjectList cityObjList;
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+                SetCityObjectIndex(cityObj, cityObjList);
+                for (auto child : cityObj.Children) {
+                    SetCityObjectIndex(child, cityObjList);
+                }
+            }
+            MeshPtr->setCityObjectList(cityObjList);
+            Node.setMesh(std::move(MeshPtr));
+        }
+        else  {
+            auto LodComp = Parents[LodCompIndex];
+            LodName = APLATEAUInstancedCityModel::GetOriginalComponentName(LodComp);
+            RootName = LodComp->GetAttachParent()->GetName();
+            Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
+
+            int RootIndex = GetChildIndex(RootName, OutModel.get());
+            Root = (RootIndex == -1) ?
+                &OutModel->addEmptyNode(TCHAR_TO_UTF8(*RootName)) :
+                &OutModel->getRootNodeAt(RootIndex);
+
+            int LodIndex = GetChildIndex(LodName, Root);
+            Lod = (LodIndex == -1) ?
+                &Root->addEmptyChildNode(TCHAR_TO_UTF8(*LodName)) :
+                &Root->getChildAt(LodIndex);
+
+            plateau::polygonMesh::Node* Parent = Lod;
+            if (Parents.Num() > 0) {    //最小地物の場合
+                Algo::Reverse(Parents);
+                for (auto p : Parents) {
+                    int ParentIndex = GetChildIndex(APLATEAUInstancedCityModel::GetOriginalComponentName(p), Parent);
+                    Parent = (ParentIndex == -1) ?
+                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(p))) :
+                        &Parent->getChildAt(ParentIndex);
+                }
+            }
+            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(comp)));
+            auto Mesh = plateau::polygonMesh::Mesh();
+            CreateMesh(Mesh, comp, Option);
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+
+            CityObjectList cityObjList;
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+                SetCityObjectIndex(cityObj, cityObjList);
+                for (auto child : cityObj.Children) {
+                    SetCityObjectIndex(child, cityObjList);
+                }
+            }
+            MeshPtr->setCityObjectList(cityObjList);
+            Node.setMesh(std::move(MeshPtr));
+        }
+    }
+    return OutModel;
+}
 #endif

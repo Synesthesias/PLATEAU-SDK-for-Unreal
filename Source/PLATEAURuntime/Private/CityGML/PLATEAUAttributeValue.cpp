@@ -18,10 +18,10 @@ void FPLATEAUAttributeValue::SetType(const FString& InType) {
 
 void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const TSharedPtr<FJsonObject>& InValue) {
     if (EPLATEAUAttributeType::AttributeSets == InType) {
-        const auto& AttributeValue = InValue->GetArrayField(plateau::CityObject::ValueFieldName);
+        const auto& AttributeValue = InValue->GetArrayField(plateau::CityObjectGroup::ValueFieldName);
         SetValue(AttributeValue);
     } else {
-        const auto& AttributeValue = InValue->GetStringField(plateau::CityObject::ValueFieldName);
+        const auto& AttributeValue = InValue->GetStringField(plateau::CityObjectGroup::ValueFieldName);
         SetValue(InType, AttributeValue);
     }
 }
@@ -51,16 +51,16 @@ void FPLATEAUAttributeValue::SetValue(const TArray<TSharedPtr<FJsonValue>>& InVa
     Attributes = MakeShared<FPLATEAUAttributeMap>();
     for (const auto& AttributeJsonValue : InValue) {
         const auto& AttributeJsonObject = AttributeJsonValue->AsObject();
-        const auto& AttributeKey = AttributeJsonObject->GetStringField(plateau::CityObject::KeyFieldName);
-        const auto& AttributeType = AttributeJsonObject->GetStringField(plateau::CityObject::TypeFieldName);
+        const auto& AttributeKey = AttributeJsonObject->GetStringField(plateau::CityObjectGroup::KeyFieldName);
+        const auto& AttributeType = AttributeJsonObject->GetStringField(plateau::CityObjectGroup::TypeFieldName);
 
         FPLATEAUAttributeValue PLATEAUAttributeValue;
         PLATEAUAttributeValue.SetType(AttributeType);
         if (EPLATEAUAttributeType::AttributeSets == PLATEAUAttributeValue.Type) {
-            const auto& AttributeValue = AttributeJsonObject->GetArrayField(plateau::CityObject::ValueFieldName);
+            const auto& AttributeValue = AttributeJsonObject->GetArrayField(plateau::CityObjectGroup::ValueFieldName);
             PLATEAUAttributeValue.SetValue(AttributeValue);
         } else {
-            const auto& AttributeValue = AttributeJsonObject->GetStringField(plateau::CityObject::ValueFieldName);
+            const auto& AttributeValue = AttributeJsonObject->GetStringField(plateau::CityObjectGroup::ValueFieldName);
             PLATEAUAttributeValue.SetValue(PLATEAUAttributeValue.Type, AttributeValue);
         }
 

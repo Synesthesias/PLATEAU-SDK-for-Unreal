@@ -5,12 +5,12 @@
 namespace plateau::polygonMesh {
 
     /**
-     * Mesh‚ðŒ‹‡‚·‚é‹@”\‚ð’ñ‹Ÿ‚µ‚Ü‚·B
+     * Meshã‚’çµåˆã™ã‚‹æ©Ÿèƒ½ã‚’æä¾›ã—ã¾ã™ã€‚
      */
     class LIBPLATEAU_EXPORT MeshMerger {
     public:
         /**
-         * Mesh‚ðƒ}[ƒW‚µ‚Ü‚·B
+         * Meshã‚’ãƒžãƒ¼ã‚¸ã—ã¾ã™ã€‚
          */
         static void mergeMesh(
             Mesh& mesh, const Mesh& other_mesh, bool invert_mesh_front_back, bool include_textures);
