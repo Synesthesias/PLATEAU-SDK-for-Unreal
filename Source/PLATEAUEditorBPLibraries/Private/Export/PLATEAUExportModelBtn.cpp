@@ -24,7 +24,7 @@ void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityM
         FFormatOrderedArguments Args;
         Args.Add(FText::FromString(plateau::Export::MeshFileFormatToStr(static_cast<EMeshFileFormat>(FileFormat))));
         const FText DialogText = FText::Format(LOCTEXT("ConfirmOverwriteDesc", "出力先に{0}ファイルが既に存在しています。\n上書きしますか？"), Args);
-        if (FMessageDialog::Open(EAppMsgType::YesNo, DialogText, &Title) == EAppReturnType::No) {
+        if (FMessageDialog::Open(EAppMsgType::YesNo, DialogText, Title) == EAppReturnType::No) {
             return;
         }
     }
@@ -49,12 +49,12 @@ void UPLATEAUExportModelBtn::ExportModel(APLATEAUInstancedCityModel* TargetCityM
         } else {
             const FText Title = LOCTEXT("OpenDirectlyFailureResultTitle", "エラー");
             const FText DialogText = LOCTEXT("OpenDirectlyFailureResultDesc", "出力先のディレクトリが開けませんでした。");
-            FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+            FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
         }
     } else {
         const FText Title = LOCTEXT("FileExportFailureResultTitle", "エラー");
         const FText DialogText = LOCTEXT("FileExportFailureResultDesc", "ファイル出力に失敗しました。");
-        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+        FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
     }
 }
 
