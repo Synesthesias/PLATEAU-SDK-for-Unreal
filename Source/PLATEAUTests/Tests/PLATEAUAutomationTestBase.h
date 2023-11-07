@@ -7,13 +7,12 @@
 #include "Misc/FileHelper.h"
 #include "HAL/FileManagerGeneric.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUImportModelBtn.h"
+#include "Import/PLATEAUImportModelBtn.h"
+#include "Import/PLATEAUImportAreaSelectBtn.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include <plateau/dataset/dataset_source.h>
-
-#include "PLATEAUImportAreaSelectBtn.h"
 
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
