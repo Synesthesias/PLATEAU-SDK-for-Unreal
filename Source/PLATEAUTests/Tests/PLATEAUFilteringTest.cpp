@@ -4,8 +4,8 @@
 #include "PLATEAUAutomationTestBase.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUInstancedCityModel.h"
-#include "PLATEAUModelAdjustmentBuilding.h"
-#include "PLATEAUModelAdjustmentFilter.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentBuilding.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentFilter.h"
 #include "Kismet/GameplayStatics.h"
 
 

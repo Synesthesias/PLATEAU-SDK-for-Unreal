@@ -13,26 +13,9 @@ namespace plateau::dataset {
      */
     class LIBPLATEAU_EXPORT LodSearcher {
     public:
-        static plateau::dataset::LodFlag searchLodsInFile(const std::filesystem::path& file_path);
-        static plateau::dataset::LodFlag searchLodsInIstream(std::istream& ifs);
-    };
-
-    /// どのLODが含まれるかをフラグ(unsigned)で表現します。
-    struct LIBPLATEAU_EXPORT LodFlag {
-    public:
-        /// 下から n ビット目を1にします。
-        void setFlag(unsigned digit);
-        /// 下から n ビット目を0にします。
-        void unsetFlag(unsigned digit);
-        unsigned getFlag() const;
-        /// 立っているフラグのうちもっとも上位のものが何ビット目かを返します。
-        /// フラグがどれも0なら-1を返します。
-        int getMax() const;
-        /// searchLodsInFile の実装の都合上、LODは1桁とします。
-        static const int max_lod_ = 9;
-
-    private:
-        /// lod n が含まれるとき、flags の下から n ビット目が立ちます。
-        unsigned flags_ = 0;
+        /// ファイル中に含まれる最大LODを返します。
+        /// 引数 specification_max_lod は仕様上とりうるLODの最大値であり、そのLODが見つかった場合は探索を終了してその値を返します。
+        static int searchMaxLodInFile(const std::filesystem::path& file_path, int specification_max_lod);
+        static int searchMaxLodInIstream(std::istream& ifs, int specification_max_lod);
     };
 }

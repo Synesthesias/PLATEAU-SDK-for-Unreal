@@ -52,7 +52,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
     if (ViewportClient.IsValid()) {
         UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
         if (World != nullptr) {
-            World->ChangeFeatureLevel(GWorld->FeatureLevel);
+            World->ChangeFeatureLevel(GWorld->GetFeatureLevel());
         }
         const auto& SourcePath = ExtentEditorPtr.Pin()->GetSourcePath();
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
@@ -257,7 +257,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                         UE_LOG(LogTemp, Warning, TEXT("PLATEAU SDK Widget Error"));
                         const FText Title = LOCTEXT("Warning", "警告");
                         const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
-                        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+                        FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
                     }                                               
                     if (GetOwnerTab())
                         GetOwnerTab()->RequestCloseTab();

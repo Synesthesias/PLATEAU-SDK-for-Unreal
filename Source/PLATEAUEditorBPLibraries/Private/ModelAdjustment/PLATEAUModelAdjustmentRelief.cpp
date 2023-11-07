@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUModelAdjustmentRelief.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentRelief.h"
 #include "PLATEAUImportSettings.h"
 using namespace citygml;
 

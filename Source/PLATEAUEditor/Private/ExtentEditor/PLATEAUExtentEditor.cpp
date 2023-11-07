@@ -183,7 +183,7 @@ plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon(c
     return NativeExtent.centerPoint();
 }
 
-FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
+FVector FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
     // 中心点の緯度経度計算
     const auto CenterLatLon = GetSelectedCenterLatLon(InbImportFromServer);
 
@@ -193,7 +193,7 @@ FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const
     GeoReferenceWithoutOffset.UpdateNativeData();
 
     const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
-    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
+    return FVector(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
 void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {

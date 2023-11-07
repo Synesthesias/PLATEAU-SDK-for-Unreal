@@ -28,6 +28,7 @@ public class PLATEAUEditor : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
+	            "AdvancedPreviewScene",
                 "Blutility",
                 "Core",
                 "PLATEAURuntime",
@@ -40,7 +41,6 @@ public class PLATEAUEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "AdvancedPreviewScene",
                 "AssetTools",
                 "Core",
                 "CoreUObject",
@@ -51,7 +51,6 @@ public class PLATEAUEditor : ModuleRules
                 "LevelEditor",
                 "UnrealEd",
                 "EditorStyle",
-                "MeshDescription",
                 "PLATEAURuntime",
                 "PropertyEditor",
                 "Projects",
