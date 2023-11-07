@@ -7,7 +7,8 @@
 #include "Misc/FileHelper.h"
 #include "HAL/FileManagerGeneric.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUImportModelBtn.h"
+#include "Import/PLATEAUImportModelBtn.h"
+#include "Import/PLATEAUImportAreaSelectBtn.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
@@ -16,20 +17,6 @@
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
     FString MyTestName;
-    
-    struct FGizmoData {
-        FGizmoData(): MinX(0), MinY(0), MaxX(0), MaxY(0) {
-        }
-
-        FGizmoData(const double InMinX, const double InMinY, const double InMaxX, const double InMaxY): MinX(InMinX), MinY(InMinY), MaxX(InMaxX),
-            MaxY(InMaxY) {
-        }
-
-        double MinX;
-        double MinY;
-        double MaxX;
-        double MaxY;
-    };
 
     bool WriteToFile(const FString& Path, const FString& Text) const {
         const FString& DirectoryPath = FPaths::GetPath(Path);
@@ -40,7 +27,7 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
         return FFileHelper::SaveStringToFile(Text, *(DirectoryPath + "/" + FPaths::GetBaseFilename(Path) + ".txt"));
     }
 
-    APLATEAUCityModelLoader* GetLocalCityModelLoader(const int ZoneId, const FVector& ReferencePoint, const int64 PackageMask, const FString& SourcePath, const FGizmoData& GizmoData, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData) const {
+    static APLATEAUCityModelLoader* GetLocalCityModelLoader(const int ZoneId, const FVector& ReferencePoint, const int64 PackageMask, const FString& SourcePath, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData) {
         const auto& ExtentEditor = IPLATEAUEditorModule::Get().GetExtentEditor();
         ExtentEditor->SetImportFromServer(false);
         ExtentEditor->SetSourcePath(SourcePath);
@@ -54,20 +41,25 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
         const plateau::geometry::GeoReference RawGeoReference(ZoneId, {}, 1, plateau::geometry::CoordinateSystem::ESU);
         ExtentEditor->SetGeoReference(RawGeoReference);
 
+        const auto& MeshCodes = DatasetAccessor->getMeshCodes();
         auto GeoReference = ExtentEditor->GetGeoReference();
-        const auto RawCenterPoint = DatasetAccessor->calculateCenterPoint(GeoReference.GetData());
-        GeoReference.ReferencePoint.X = RawCenterPoint.x;
-        GeoReference.ReferencePoint.Y = RawCenterPoint.y;
-        GeoReference.ReferencePoint.Z = RawCenterPoint.z;
-        ExtentEditor->SetGeoReference(RawGeoReference);
-
-        // const auto ExtentGizmo = MakeUnique<FPLATEAUExtentGizmo>();
-        // ExtentGizmo->SetMaxX(GizmoData.MaxX);
-        // ExtentGizmo->SetMaxY(GizmoData.MaxY);
-        // ExtentGizmo->SetMinX(GizmoData.MinX);
-        // ExtentGizmo->SetMinY(GizmoData.MinY);
-        // ExtentEditor->SetExtent(ExtentGizmo->GetExtent(GeoReference));
-
+        TArray<FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
+        TArray<bool> bSelectedArray;
+        MeshCodeGizmos.Reset();
+        for (const auto& MeshCode : MeshCodes) {
+            MeshCodeGizmos.AddDefaulted();
+            MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
+            if ("53392642" != MeshCodeGizmos.Last().GetRegionMeshID())
+                continue;
+            
+            bSelectedArray.Reset();
+            for (int i = 0; i < MeshCodeGizmos.Last().GetbSelectedArray().Num(); i++) {
+                bSelectedArray.Emplace(true);
+            }
+            MeshCodeGizmos.Last().SetbSelectedArray(bSelectedArray);
+            IPLATEAUEditorModule::Get().GetExtentEditor()->SetAreaMeshCodeMap(TCHAR_TO_UTF8(MeshCode.get().c_str()), MeshCodeGizmos.Last());
+        }
+        
         return UPLATEAUImportModelBtn::GetCityModelLoader(ZoneId, ReferencePoint, PackageInfoSettingsData, false);
     }
 public:
@@ -105,14 +97,14 @@ protected:
             AddError(TEXT("0 < FoundActors.Num()"));
         } else {
             constexpr int ZoneId = 9;
-            const FVector ReferencePoint = FVector(-472995.5625, 5131221.5, 0);
+            const FVector ReferencePoint = FVector(-472281.96875, 5131018, 0);
             constexpr int64 PackageMask = static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building);
             const FString SourcePath = UKismetSystemLibrary::GetProjectContentDirectory().Append("data");
-            const FGizmoData GizmoData(4486.303033, 4728.534916, 6486.303033, 6728.534916);
-            const FPackageInfoSettings PackageInfoSettings(true, true, true, 0, 4, 1);
+            const auto defaultMat = UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building));
+            const FPackageInfoSettings PackageInfoSettings(true, true, true, true, EPLATEAUTexturePackingResolution::H4096W4096, 0, 4, 1, defaultMat, false, "", 7);
             TMap<int64, FPackageInfoSettings> PackageInfoSettingsData;
             PackageInfoSettingsData.Add(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building), PackageInfoSettings);
-            const auto& Loader = GetLocalCityModelLoader(ZoneId, ReferencePoint, PackageMask, SourcePath, GizmoData, PackageInfoSettingsData);
+            const auto& Loader = GetLocalCityModelLoader(ZoneId, ReferencePoint, PackageMask, SourcePath, PackageInfoSettingsData);
             if (Loader) {
                 return Loader;
             }
@@ -122,8 +114,8 @@ protected:
         return nullptr;
     }
 
-    void FinishTest() {
+    void FinishTest(const bool bSuccess, const FString Message) {
         const FString TestLogPath = FPaths::ProjectDir().Append("TestLogs/" + MyTestName + ".log");
-        if (!WriteToFile(TestLogPath, "Succeeded")) AddError("Failed to WriteToFile");
+        if (!WriteToFile(TestLogPath, bSuccess ? "Succeeded" : FString::Format(TEXT("Failed: {0}"), {Message}))) AddError("Failed to WriteToFile");
     }
 };

@@ -4,48 +4,22 @@
 #include "PLATEAUInstancedCityModel.h"
 
 #include "Tasks/Task.h"
-
 #include "Misc/DefaultValueHelper.h"
 
 #include <plateau/dataset/i_dataset_accessor.h>
+#include <plateau/granularity_convert/granularity_converter.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
 
 #include "CityGML/PLATEAUCityGmlProxy.h"
+#include <PLATEAUMeshExporter.h>
+#include <PLATEAUMeshLoader.h>
+#include <PLATEAUExportSettings.h>
 
 using namespace UE::Tasks;
+using namespace plateau::granularityConvert;
 
 namespace {
-    /**
-     * @brief Componentのユニーク化されていない元の名前を取得します。
-     * コンポーネント名の末尾に"_{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"_"以降を削除します。
-     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
-     */
-    FString GetOriginalComponentName(const USceneComponent* const InComponent) {
-        auto ComponentName = InComponent->GetName();
-        int Index = 0;
-        if (ComponentName.FindLastChar('_', Index)) {
-            if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
-            }
-        }
-        return ComponentName;
-    }
-
-    /**
-     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
-     */
-    int ParseLodComponent(const USceneComponent* const InLodComponent) {
-        auto LodString = GetOriginalComponentName(InLodComponent);
-        // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
-        LodString = LodString.RightChop(3);
-
-        int Lod;
-        FDefaultValueHelper::ParseInt(LodString, Lod);
-
-        return Lod;
-    }
-
     /**
      * @brief 3D都市モデル内のCityGMLファイルに相当するコンポーネントを入力として、CityGMLファイル名を返します。
      * @return CityGMLファイル名
@@ -108,12 +82,102 @@ namespace {
             }
         }
     }
+
+    /**
+     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
+     */
+    TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+        TMap<FString, FPLATEAUCityObject> cityObjMap;
+        for (auto comp : TargetCityObjects) {
+
+            if (comp->SerializedCityObjects.IsEmpty())
+                continue;
+
+            for (auto cityObj : comp->GetAllRootCityObjects()) {
+                if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
+                    // 親を探す
+                    TArray<USceneComponent*> Parents;
+                    comp->GetParentComponents(Parents);
+                    for (const auto& Parent : Parents)                         {
+                        if (Parent->GetName().Contains(comp->OutsideParent)) {
+                            for (auto pObj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
+                                cityObjMap.Add(pObj.GmlID, pObj);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                cityObjMap.Add(cityObj.GmlID, cityObj);
+                for (auto child : cityObj.Children) {
+                    cityObjMap.Add(child.GmlID, child);
+                }
+            }
+        }
+        return cityObjMap;
+    }
+
+    /**
+     * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
+     */
+    TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
+        TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
+        for (auto comp : TargetComponents) {
+            if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
+                TArray<USceneComponent*> children;
+                comp->GetChildrenComponents(true, children);
+                for (auto child : children) {
+                    if (child->IsA(UPLATEAUCityObjectGroup::StaticClass()) && child->IsVisible()) {
+                        auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
+                        if (childCityObj->GetStaticMesh() != nullptr) {
+                            UniqueComponents.Add(childCityObj);
+                        }
+                    }
+                }
+            }
+            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible())
+                UniqueComponents.Add(StaticCast<UPLATEAUCityObjectGroup*>(comp));
+        }
+        return UniqueComponents.Array();
+    }
+}
+
+FString APLATEAUInstancedCityModel::GetOriginalComponentName(const USceneComponent* const InComponent) {
+    auto ComponentName = InComponent->GetName();
+    int Index = 0;
+    if (ComponentName.FindLastChar('_', Index)) {
+        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index + 1);
+        }
+    }
+    return ComponentName;
+}
+
+int APLATEAUInstancedCityModel::ParseLodComponent(const USceneComponent* const InLodComponent) {
+    auto LodString = GetOriginalComponentName(InLodComponent);
+    // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
+    LodString = LodString.RightChop(3);
+
+    int Lod;
+    FDefaultValueHelper::ParseInt(LodString, Lod);
+
+    return Lod;
 }
 
 // Sets default values
 APLATEAUInstancedCityModel::APLATEAUInstancedCityModel() {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
+}
+
+double APLATEAUInstancedCityModel::GetLatitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).latitude;
+}
+
+double APLATEAUInstancedCityModel::GetLongitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).longitude;
 }
 
 FPLATEAUCityObjectInfo APLATEAUInstancedCityModel::GetCityObjectInfo(USceneComponent* Component) {
@@ -385,5 +449,71 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
                 FeatureComponent->SetVisibility(false);
             }
         }
+    }
+}
+
+UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)     {
+
+    plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+    switch (ReconstructType) {
+    case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
+    case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;
+    case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
+
+    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+
+    MeshExportOptions ExtOptions;
+    ExtOptions.bExportHiddenObjects = false;
+    ExtOptions.bExportTexture = true;
+    ExtOptions.TransformType = EMeshTransformType::Local;
+    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+
+    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetComponents, ExtOptions, ConvOption, bDestroyOriginal] {
+
+        FPLATEAUMeshExporter MeshExporter;
+        GranularityConverter Converter;
+
+        const auto& TargetCityObjects = GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+
+        //属性情報を覚えておきます。
+        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
+
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
+
+        std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+            //コンポーネント削除
+            for (auto comp : TargetCityObjects) {
+                if (bDestroyOriginal)
+                    comp->DestroyComponent();
+                else
+                    comp->SetVisibility(false);
+            }
+            }, TStatId(), NULL, ENamedThreads::GameThread)
+            ->Wait();
+
+            ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
+
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+                //終了イベント通知
+                OnReconstructFinished.Broadcast();
+                }, TStatId(), NULL, ENamedThreads::GameThread);
+        });
+    return ConvertTask;
+}
+
+void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
+    FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
+    FPLATEAUMeshLoader MeshLoader(false);
+    for (int i = 0; i < Model->getRootNodeCount(); i++) {
+        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [this, &MeshLoader, Model, Granularity, cityObjMap, i] {
+            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), Granularity, cityObjMap, *this );
+            });  
+        AddNested(LoadComponentTask);
+        LoadComponentTask.Wait();
     }
 }

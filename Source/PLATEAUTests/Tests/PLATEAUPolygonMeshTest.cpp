@@ -14,7 +14,8 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_CityModelLoader_Load_Genera
 
 bool FPLATEAUTest_CityModelLoader_Load_Generates_Components::RunTest(const FString& Parameters) {
     InitializeTest("Load_Generates_Components");
-    if (!OpenNewMap()) AddError("Failed to OpenNewMap");
+    if (!OpenNewMap())
+        AddError("Failed to OpenNewMap");
 
     const auto& Loader = GetInstancedCityLoader(*GetWorld());
     Loader->LoadAsync(true);
@@ -26,13 +27,19 @@ bool FPLATEAUTest_CityModelLoader_Load_Generates_Components::RunTest(const FStri
         bool bExistPolygonMesh = false;
         TArray<AActor*> CityModelActors;
         UGameplayStatics::GetAllActorsOfClass(Loader->GetWorld(), APLATEAUInstancedCityModel::StaticClass(), CityModelActors);
-        if (CityModelActors.Num() <= 0) AddError("CityModelActors.Num() <= 0");
+        if (CityModelActors.Num() <= 0) {
+            FinishTest(false, "CityModelActors.Num() <= 0");
+            return true;
+        }
 
         for (const auto& CityModelActor : CityModelActors) {
             TArray<USceneComponent*> GmlActors;
             CityModelActor->GetRootComponent()->GetChildrenComponents(false, GmlActors);
-            if (GmlActors.Num() <= 0) AddError("GmlActors.Num() <= 0");
-
+            if (GmlActors.Num() <= 0) {
+                FinishTest(false, "GmlActors.Num() <= 0");
+                return true;
+            }
+            
             for (const auto& GmlActor : GmlActors) {
                 TArray<USceneComponent*> LodActors;
                 GmlActor->GetChildrenComponents(false, LodActors);
@@ -45,10 +52,14 @@ bool FPLATEAUTest_CityModelLoader_Load_Generates_Components::RunTest(const FStri
             }
         }
 
-        if (!bExistPolygonMesh) AddError("bExistPolygonMesh == false"); 
+        if (!bExistPolygonMesh) {
+            FinishTest(false, "bExistPolygonMesh == false");
+            return true;
+        }
+        
+        FinishTest(true, "");
         return true;
     }));
 
-    FinishTest();
     return true;
 }

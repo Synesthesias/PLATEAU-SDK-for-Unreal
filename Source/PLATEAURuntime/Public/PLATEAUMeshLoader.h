@@ -7,11 +7,14 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 
+struct FPLATEAUCityObject;
+
 namespace citygml {
     class CityModel;
 }
 
 namespace plateau::polygonMesh {
+    enum class MeshGranularity;
     class Model;
     class Node;
     class SubMesh;
@@ -58,6 +61,13 @@ public:
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
 
+    //分割・結合時
+    void ReloadComponentFromNode(
+        USceneComponent* InParentComponent,
+        const plateau::polygonMesh::Node& InNode,
+        plateau::polygonMesh::MeshGranularity Granularity,
+        TMap<FString, FPLATEAUCityObject> cityObjMap,     
+        AActor& InActor);
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
@@ -66,14 +76,18 @@ private:
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
 
+    //分割・結合時に属性情報を保持
+    TMap<FString, FPLATEAUCityObject> CityObjMap;
+
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
-        const std::string& InNodeName);
-    UStaticMeshComponent* LoadNode(
+        const std::string& InNodeName,
+        bool IsReconstruct = false);
+    USceneComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
         const FLoadInputData& LoadInputData,
@@ -85,4 +99,16 @@ private:
         const FLoadInputData& InLoadInputData,
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
+
+    //分割・結合時
+    void ReloadNodeRecursive(
+        USceneComponent* InParentComponent,
+        const plateau::polygonMesh::Node& InNode,
+        plateau::polygonMesh::MeshGranularity Granularity,
+        AActor& InActor);
+    USceneComponent* ReloadNode(
+        USceneComponent* ParentComponent,
+        const plateau::polygonMesh::Node& Node,
+        plateau::polygonMesh::MeshGranularity Granularity,
+        AActor& Actor);
 };

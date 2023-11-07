@@ -24,13 +24,28 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_CityModelLoader_Load_Genera
 <br>
 
 実行したいテストにチェックを入れて上部メニューの`Start Tests`からテストを実行します。<br>
-テスト完了後`PLATEAU-SDK-for-Unreal-Dev/TestLogs`に結果が出力されます。
 
 <img src='UnitTestImages/image2.png' height='600px'> -->
 
 <br>
 <br>
 
+## 出力結果
+基本的にSession Frontend上でテスト自体は成功しますが、テスト内の複数フレーム間で判定している条件を満たさなかった場合の結果は別途テキストファイルに出力されます。  
+プロジェクトフォルダ内に`TestLogs`フォルダが生成され、各テスト結果がテキストファイルとして生成されます。
+
+<br>
+ 
+### テスト成功結果例
+<img src='UnitTestImages/SuccessTest.png' height='400px'> -->
+
+<br>
+ 
+### テスト失敗結果例
+<img src='UnitTestImages/FailureTest.png' height='400px'> -->
+
+<br>
+<br>
 
 ## コマンドラインからの実行
 ### PowerShell

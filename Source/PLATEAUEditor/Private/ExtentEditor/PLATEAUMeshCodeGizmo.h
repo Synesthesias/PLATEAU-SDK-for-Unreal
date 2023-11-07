@@ -14,7 +14,7 @@ namespace plateau {
 /**
  * @brief 各地域メッシュのメッシュコードのギズモを表します。
  */
-class FPLATEAUMeshCodeGizmo {
+class PLATEAUEDITOR_API FPLATEAUMeshCodeGizmo {
 public:
     FPLATEAUMeshCodeGizmo();
 
@@ -102,7 +102,6 @@ public:
     static void SetShowLevel5Mesh(const bool bValue);
 
 private:
-    int MeshCodeLevel;
     inline static bool bShowLevel5Mesh = false;
 
     plateau::dataset::MeshCode MeshCode;

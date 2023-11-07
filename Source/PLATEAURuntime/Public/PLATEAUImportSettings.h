@@ -343,6 +343,29 @@ public:
         default: return "";
         }
     }
+
+    static FString GetFallbackMaterialNameFromDiffuseTextureName(const FString DiffuseTextureName) {
+        if (DiffuseTextureName == "Tex_GenericBuildings_side_Diffuse.jpg") return "PlateauDefaultBuildingMaterialInstance";
+        if (DiffuseTextureName == "Tex_Road_Diffuse.jpg") return "PlateauDefaultRoadMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Planned.png") return "PlateauDefaultUrbanPlanningDecisionMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_landUse_Diffuse.png") return "PlateauDefaultLandUseMaterialInstance";
+        if (DiffuseTextureName == "Tex_GenericMetal_Diffuse.jpg") return "PlateauDefaultCityFurnitureMaterialInstance";
+        if (DiffuseTextureName == "Tex_Generic_Tree_Diffuse.jpg") return "PlateauDefaultVegetationMaterialInstance";
+        if (DiffuseTextureName == "Tex_Generic_Ground_Diffuse.jpg") return "PlateauDefaultReliefMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Disaster_Diffuse.png") return "PlateauDefaultDisasterMaterialInstance";
+        if (DiffuseTextureName == "Tex_Rail_Diffuse.jpg") return "PlateauDefaultRailwayMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Planned.png") return "PlateauDefaultWaterwayMaterialInstance";
+        if (DiffuseTextureName == "Tex_Water_Diffuse.jpg") return "PlateauDefaultWaterBodyMaterialInstance";
+        if (DiffuseTextureName == "Tex_Bridge_Diffuse.png") return "PlateauDefaultBridgeMaterialInstance";
+        if (DiffuseTextureName == "Tex_Track_Diffuse.jpg") return "PlateauDefaultTrackMaterialInstance";
+        if (DiffuseTextureName == "Tex_Park_Diffuse.jpg") return "PlateauDefaultSquareMaterialInstance";
+        if (DiffuseTextureName == "Tex_Tunnel_Diffuse.jpg") return "PlateauDefaultTunnelMaterialInstance";
+        if (DiffuseTextureName == "Tex_Underground_Props_Diffuse.jpg") return "PlateauDefaultUndergroundFacilityMaterialInstance";
+        if (DiffuseTextureName == "Tex_Underground_Diffuse.jpg") return "PlateauDefaultUndergroundBuildingMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_landUse_Diffuse.png") return "PlateauDefaultLandUseMaterialInstance";    
+        if (DiffuseTextureName == "Tex_Other_Diffuse.jpg") return "PlateauDefaultUnknownMaterialInstance";
+        else return "";
+    }
 };
 
 #undef LOCTEXT_NAMESPACE
