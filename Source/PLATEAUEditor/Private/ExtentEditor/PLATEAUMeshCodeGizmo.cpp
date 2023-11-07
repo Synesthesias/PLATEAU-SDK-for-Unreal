@@ -26,11 +26,6 @@ namespace {
     int GetNumAreaRowByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
         return IsAboveLevel4(MeshCode) ? 2 : 4;
     }
-    /*
-    int GetNumGridLineByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
-        return IsAboveLevel4(MeshCode) ? 1 : 3; //Grid数 - 1
-    }
-    */
 
     const TArray<FString> SuffixMeshIds = {
         TEXT("11"), TEXT("12"), TEXT("21"), TEXT("22"),
@@ -86,10 +81,8 @@ void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
 void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
     const auto Color = FColor(10, 10, 130);
-
     const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
     const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
-    //const int NumGridLine = GetNumGridLineByMeshCode(MeshCode);
 
     // エリア枠線
     DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
@@ -117,25 +110,6 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         const FVector Q2(Qx2, Y2, Z);
         PDI->DrawLine(P2, Q2, Color, SDPG_World, 1, 0, true);
     }
-
-    /*
-    for (int i = 1; i <= NumGridLine; ++i) {
-        const auto X1 = (Box.Min.X * i + Box.Max.X * (NumAreaColumn - i)) / NumAreaColumn;
-        const auto Py1 = Box.Min.Y;
-        const auto Qy1 = Box.Max.Y;
-        constexpr auto Z = 0.0;
-        const FVector P1(X1, Py1, Z);
-        const FVector Q1(X1, Qy1, Z);
-        PDI->DrawLine(P1, Q1, Color, SDPG_World, 1, 0, true);
-
-        const auto Y2 = (Box.Min.Y * i + Box.Max.Y * (NumAreaRow - i)) / NumAreaRow;
-        const auto Px2 = Box.Min.X;
-        const auto Qx2 = Box.Max.X;
-        const FVector P2(Px2, Y2, Z);
-        const FVector Q2(Qx2, Y2, Z);
-        PDI->DrawLine(P2, Q2, Color, SDPG_World, 1, 0, true);
-    }
-    */
 
     // エリア塗りつぶし
     const auto CellWidth = (Box.Max.X - Box.Min.X) / NumAreaRow;
