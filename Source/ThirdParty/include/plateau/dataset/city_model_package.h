@@ -88,7 +88,9 @@ namespace plateau::dataset {
             case PredefinedCityModelPackage::Road:
                 return { true, 1, 3 };
             case PredefinedCityModelPackage::UrbanPlanningDecision:
-                return { false, 1, 1 };
+                // 仕様書によると都市計画決定情報の最小LODは1のはずですが、
+                // 東京ビッグサイト周辺はLOD0に関するデータがあって1だと読込失敗するので0にしておきます。
+                return { false, 0, 1 };
             case PredefinedCityModelPackage::Railway:
                 return { true, 0, 3 };
             case PredefinedCityModelPackage::Waterway:

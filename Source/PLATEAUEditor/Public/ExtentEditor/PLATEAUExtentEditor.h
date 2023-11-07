@@ -59,7 +59,7 @@ public:
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
     plateau::geometry::GeoCoordinate GetSelectedCenterLatLon(const bool InbImportFromServer) const;
-    FVector3d GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
+    FVector GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
 
     const FVector3d GetCenterByExtent(const plateau::geometry::Extent Extent) const;

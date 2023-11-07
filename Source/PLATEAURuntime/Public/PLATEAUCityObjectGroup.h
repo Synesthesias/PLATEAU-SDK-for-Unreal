@@ -61,6 +61,22 @@ public:
      */
     void SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, std::shared_ptr<const citygml::CityModel> InCityModel);
 
+    /**
+     * @brief 結合・分割時のメッシュを持たないノードをシリアライズ
+     * @param InNode シリアライズ対象ノード
+     * @param InCityObject 結合・分割前に保存したFPLATEAUCityObject
+     */
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject);
+
+    /** 
+     * @brief 結合・分割時のメッシュを持つノードをシリアライズ
+     * @param InNodeName ノード名
+     * @param InMesh メッシュ情報
+     * @param InLoadInputData メッシュの結合単位を確認するために用いる
+     * @param CityObjMap 結合・分割前に保存したFPLATEAUCityObjectのMap
+     */
+    void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
+
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);
 

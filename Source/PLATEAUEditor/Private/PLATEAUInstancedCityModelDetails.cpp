@@ -25,7 +25,7 @@ void FPLATEAUInstancedCityModelDetails::CustomizeDetails(IDetailLayoutBuilder& D
     CityModelCategory.AddCustomRow(FText::FromString("Lat"))
         .NameContent()[SNew(STextBlock).Text(LOCTEXT("Lat", "緯度"))]
         .ValueContent()
-        [SNew(STextBlock)
+        [SNew(SEditableTextBox)
         .Text_Lambda(
             [CityModel]() {
                 const auto Latitude = CityModel->GeoReference.GetData().unproject(TVec3d(0, 0, 0)).latitude;
@@ -35,7 +35,7 @@ void FPLATEAUInstancedCityModelDetails::CustomizeDetails(IDetailLayoutBuilder& D
     CityModelCategory.AddCustomRow(FText::FromString("Lon"))
         .NameContent()[SNew(STextBlock).Text(LOCTEXT("Lon", "経度"))]
         .ValueContent()
-        [SNew(STextBlock)
+        [SNew(SEditableTextBox)
         .Text_Lambda(
             [CityModel]() {
                 const auto Longitude = CityModel->GeoReference.GetData().unproject(TVec3d(0, 0, 0)).longitude;
