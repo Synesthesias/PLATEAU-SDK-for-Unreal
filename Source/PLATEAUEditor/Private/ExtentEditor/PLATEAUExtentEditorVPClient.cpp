@@ -50,6 +50,9 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
 }
 
 void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InDatasetAccessor) {
+
+    UE_LOG(LogTemp, Warning, TEXT("Viewport Initialize!!!!!"));
+
     DatasetAccessor = InDatasetAccessor;
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -66,10 +69,21 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
     // メッシュコードギズモ生成と選択状態復帰
     auto GeoReference = ExtentEditor->GetGeoReference();
     MeshCodeGizmos.Reset();
+
     for (const auto& MeshCode : MeshCodes) {
         // 2次メッシュ以下の次数は省く
         if (MeshCode.getLevel() <= 2)
             continue;
+
+        // Level4以上のMeshCodeであって、別のLevel3の範囲に含まれているものは重複のため除外します。
+        if (MeshCode.getLevel() >= 4) {
+            FString code = UTF8_TO_TCHAR(MeshCode.get().c_str());
+            FString ThirdMeshCodeString = code.Mid(0, 8);
+            const auto ThirdMeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*ThirdMeshCodeString));
+            if (MeshCodes.find(ThirdMeshCode) != MeshCodes.end()) {             
+                continue;
+            }
+        }
 
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());

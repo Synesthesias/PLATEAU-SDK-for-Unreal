@@ -117,5 +117,6 @@ private:
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
 
-    bool IsThirdMeshCode() const;
+    //bool IsThirdMeshCode() const;
+    bool IsSelectable() const;
 };

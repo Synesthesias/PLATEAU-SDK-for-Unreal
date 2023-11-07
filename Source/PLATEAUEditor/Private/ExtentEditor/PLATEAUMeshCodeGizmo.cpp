@@ -15,11 +15,23 @@
 #include "Materials/MaterialRenderProxy.h"
 
 namespace {
-    // 範囲選択に関連する定義
-    constexpr int ThirdMeshCodeLength = 8;
-    constexpr int NumAreaColumn = 4;
-    constexpr int NumAreaRow = 4;
-    constexpr int NumGridLine = 3;
+    bool IsAboveLevel4(const plateau::dataset::MeshCode& MeshCode) {
+        return MeshCode.getLevel() >= 4;
+    }
+
+    int GetNumAreaColumnByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
+        return IsAboveLevel4(MeshCode) ? 2 : 4;
+    }
+
+    int GetNumAreaRowByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
+        return IsAboveLevel4(MeshCode) ? 2 : 4;
+    }
+    /*
+    int GetNumGridLineByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
+        return IsAboveLevel4(MeshCode) ? 1 : 3; //Grid数 - 1
+    }
+    */
+
     const TArray<FString> SuffixMeshIds = {
         TEXT("11"), TEXT("12"), TEXT("21"), TEXT("22"),
         TEXT("13"), TEXT("14"), TEXT("23"), TEXT("24"),
@@ -58,15 +70,11 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCode(), Width(0), Height(0)
     AreaUnSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
     AreaUnSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaUnSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), UnselectedColor);
-
-    bSelectedArray.Reset();
-    for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
-        bSelectedArray.Emplace(false);
-    }
 }
 
-bool FPLATEAUMeshCodeGizmo::IsThirdMeshCode() const {
-    return MeshCodeString.Len() == ThirdMeshCodeLength;
+bool FPLATEAUMeshCodeGizmo::IsSelectable() const {
+    if (MeshCode.getLevel() <= 2) return false;
+    return true;
 }
 
 void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
@@ -79,13 +87,38 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
     const auto Color = FColor(10, 10, 130);
 
+    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+    //const int NumGridLine = GetNumGridLineByMeshCode(MeshCode);
+
     // エリア枠線
     DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
 
     if (!bShowLevel5Mesh)
         return;
-
+   
     // 格子状のライン
+    for (int i = 1; i <= NumAreaColumn -1; ++i) {
+        const auto X1 = (Box.Min.X * i + Box.Max.X * (NumAreaColumn - i)) / NumAreaColumn;
+        const auto Py1 = Box.Min.Y;
+        const auto Qy1 = Box.Max.Y;
+        constexpr auto Z = 0.0;
+        const FVector P1(X1, Py1, Z);
+        const FVector Q1(X1, Qy1, Z);
+        PDI->DrawLine(P1, Q1, Color, SDPG_World, 1, 0, true);
+    }
+
+    for (int i = 1; i <= NumAreaRow - 1; ++i) {
+        const auto Y2 = (Box.Min.Y * i + Box.Max.Y * (NumAreaRow - i)) / NumAreaRow;
+        const auto Px2 = Box.Min.X;
+        const auto Qx2 = Box.Max.X;
+        constexpr auto Z = 0.0;
+        const FVector P2(Px2, Y2, Z);
+        const FVector Q2(Qx2, Y2, Z);
+        PDI->DrawLine(P2, Q2, Color, SDPG_World, 1, 0, true);
+    }
+
+    /*
     for (int i = 1; i <= NumGridLine; ++i) {
         const auto X1 = (Box.Min.X * i + Box.Max.X * (NumAreaColumn - i)) / NumAreaColumn;
         const auto Py1 = Box.Min.Y;
@@ -102,20 +135,26 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
         const FVector Q2(Qx2, Y2, Z);
         PDI->DrawLine(P2, Q2, Color, SDPG_World, 1, 0, true);
     }
+    */
 
     // エリア塗りつぶし
     const auto CellWidth = (Box.Max.X - Box.Min.X) / NumAreaRow;
     const auto CellHalfWidth = (Box.Max.X - Box.Min.X) / (NumAreaRow * 2);
     const auto CellHeight = (Box.Max.Y - Box.Min.Y) / NumAreaColumn;
     const auto CellHalfHeight = (Box.Max.Y - Box.Min.Y) / (NumAreaColumn * 2);
+
     for (int Col = 0; Col < NumAreaColumn; Col++) {
         for (int Row = 0; Row < NumAreaRow; Row++) {
             if (bSelectedArray[Row + Col * NumAreaColumn]) {
                 FMatrix ObjectToWorld = FMatrix::Identity;
                 ObjectToWorld.SetAxis(0, FVector(CellHalfWidth, 0, 0));
                 ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
-                ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * Row,
-                                                (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * Col, 0));
+
+                //Level4は1Gridずらす
+                int AdjustedRow = IsAboveLevel4(MeshCode) ? Row + 1 : Row;
+                int AdjustedCol = IsAboveLevel4(MeshCode) ? Col + 1 : Col;
+                ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
+                                                (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
                 DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
             }
         }
@@ -201,24 +240,39 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, c
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
     MaxY = FGenericPlatformMath::Max(RawMin.y, RawMax.y);
     LineThickness = 2.0f;
+
+    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+
+    bSelectedArray.Reset();
+    for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
+        bSelectedArray.Emplace(false);
+    }
 }
 
 void FPLATEAUMeshCodeGizmo::ToggleSelectArea(const double X, const double Y) {
-    if (!IsThirdMeshCode())
+
+    if (!IsSelectable()) 
         return;
-    
+
     if ((MinX <= X && X <= MaxX && MinY <= Y && Y <= MaxY) == false) {
         return;
     }
+
+    int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
 }
 
 void FPLATEAUMeshCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d InMax, const bool bSelect) {
-    if (!IsThirdMeshCode())
+
+    if (!IsSelectable()) 
         return;
-    
+
+    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);   
     const auto CellWidth = (MaxX - MinX) / NumAreaRow;
     const auto CellHeight = (MaxY - MinY) / NumAreaColumn;
     for (int Col = 0; Col < NumAreaColumn; Col++) {
@@ -236,18 +290,26 @@ void FPLATEAUMeshCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d
 }
 
 void FPLATEAUMeshCodeGizmo::SetSelectArea(const double X, const double Y, const bool bSelect) {
-    if (!IsThirdMeshCode())
+
+    if (!IsSelectable()) 
         return;
     
     if ((MinX <= X && X <= MaxX && MinY <= Y && Y <= MaxY) == false) {
         return;
     }
+
+    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = bSelect;
 }
 
 TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
+
+    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
+    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+
     TArray<FString> MeshIdArray;
     for (int Col = 0; Col < NumAreaColumn; Col++) {
         for (int Row = 0; Row < NumAreaRow; Row++) {
