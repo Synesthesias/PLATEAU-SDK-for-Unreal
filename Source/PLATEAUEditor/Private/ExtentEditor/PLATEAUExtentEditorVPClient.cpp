@@ -50,9 +50,6 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
 }
 
 void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InDatasetAccessor) {
-
-    UE_LOG(LogTemp, Warning, TEXT("Viewport Initialize!!!!!"));
-
     DatasetAccessor = InDatasetAccessor;
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -69,7 +66,6 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
     // メッシュコードギズモ生成と選択状態復帰
     auto GeoReference = ExtentEditor->GetGeoReference();
     MeshCodeGizmos.Reset();
-
     for (const auto& MeshCode : MeshCodes) {
         // 2次メッシュ以下の次数は省く
         if (MeshCode.getLevel() <= 2)
