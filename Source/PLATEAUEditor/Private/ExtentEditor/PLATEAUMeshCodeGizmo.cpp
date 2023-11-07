@@ -283,16 +283,26 @@ TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
 
     const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
     const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
-
     TArray<FString> MeshIdArray;
-    for (int Col = 0; Col < NumAreaColumn; Col++) {
-        for (int Row = 0; Row < NumAreaRow; Row++) {
-            if (bSelectedArray[Row + Col * NumAreaColumn]) {
-                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), {MeshCodeString, SuffixMeshIds[Row + Col * NumAreaColumn]}));
+
+    if (IsAboveLevel4(MeshCode)) {       
+        for (int i = 0; i < 4; i++)
+        {
+            if (bSelectedArray[i])
+            {
+                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, (i+1) }));
             }
         }
     }
-
+    else {
+        for (int Col = 0; Col < NumAreaColumn; Col++) {
+            for (int Row = 0; Row < NumAreaRow; Row++) {
+                if (bSelectedArray[Row + Col * NumAreaColumn]) {
+                    MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, SuffixMeshIds[Row + Col * NumAreaColumn] }));
+                }
+            }
+        }
+    }
     return MeshIdArray;
 }
 
