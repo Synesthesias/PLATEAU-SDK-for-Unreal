@@ -211,9 +211,9 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                         if(MeshCodeErrorText.IsValid())
                                             MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
                                     }
-                                    else if (meshcode.Len() < 6 || meshcode.Len() > 9) {
+                                    else if (meshcode.Len() != 6 && meshcode.Len() != 8) {
                                         if (MeshCodeErrorText.IsValid())
-                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
                                     }
                                     else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
                                         if (MeshCodeErrorText.IsValid())
