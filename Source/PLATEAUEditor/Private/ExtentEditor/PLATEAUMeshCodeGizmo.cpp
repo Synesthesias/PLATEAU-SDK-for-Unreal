@@ -137,6 +137,9 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
 
 void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& RegionMeshID,
                                              double CameraDistance, int IconCount) const {
+
+    if (IsLevel4OrAbove(MeshCode)) return;
+
     constexpr auto NearOffset = 8000;
     constexpr auto FarOffset = 100000;
 
