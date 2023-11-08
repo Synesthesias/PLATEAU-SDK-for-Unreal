@@ -337,6 +337,8 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
 
 bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
     const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
+    if (!MeshCode.isValid())
+        return false;
     try {
         std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
         if (MeshCodes.find(MeshCode) == MeshCodes.end())
