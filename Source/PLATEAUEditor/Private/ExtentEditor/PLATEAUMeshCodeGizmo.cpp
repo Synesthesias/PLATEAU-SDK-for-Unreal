@@ -15,16 +15,16 @@
 #include "Materials/MaterialRenderProxy.h"
 
 namespace {
-    bool IsAboveLevel4(const plateau::dataset::MeshCode& MeshCode) {
+    bool IsLevel4OrAbove(const plateau::dataset::MeshCode& MeshCode) {
         return MeshCode.getLevel() >= 4;
     }
 
     int GetNumAreaColumnByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
-        return IsAboveLevel4(MeshCode) ? 2 : 4;
+        return IsLevel4OrAbove(MeshCode) ? 2 : 4;
     }
 
     int GetNumAreaRowByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
-        return IsAboveLevel4(MeshCode) ? 2 : 4;
+        return IsLevel4OrAbove(MeshCode) ? 2 : 4;
     }
 
     const TArray<FString> SuffixMeshIds = {
@@ -125,8 +125,8 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
                 ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
 
                 //Level4は1Gridずらす
-                int AdjustedRow = IsAboveLevel4(MeshCode) ? Row + 1 : Row;
-                int AdjustedCol = IsAboveLevel4(MeshCode) ? Col + 1 : Col;
+                int AdjustedRow = IsLevel4OrAbove(MeshCode) ? Row + 1 : Row;
+                int AdjustedCol = IsLevel4OrAbove(MeshCode) ? Col + 1 : Col;
                 ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
                                                 (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
                 DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
@@ -217,7 +217,6 @@ void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, c
 
     const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
     const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
-
     bSelectedArray.Reset();
     for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
         bSelectedArray.Emplace(false);
@@ -285,15 +284,13 @@ TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
     const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
     TArray<FString> MeshIdArray;
 
-    if (IsAboveLevel4(MeshCode)) {       
-        for (int i = 0; i < 4; i++)
-        {
-            if (bSelectedArray[i])
-            {
-                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, (i+1) }));
+    if (bSelectedArray.Num() < SuffixMeshIds.Num()) { //Level4
+        for (int i = 0; i < bSelectedArray.Num(); i++) {
+            if (bSelectedArray[i]){
+                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, i + 1 }));
             }
         }
-    }
+    } 
     else {
         for (int Col = 0; Col < NumAreaColumn; Col++) {
             for (int Row = 0; Row < NumAreaRow; Row++) {
