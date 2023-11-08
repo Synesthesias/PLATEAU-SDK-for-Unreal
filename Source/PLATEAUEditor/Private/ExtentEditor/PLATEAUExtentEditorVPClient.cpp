@@ -71,6 +71,16 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
         if (MeshCode.getLevel() <= 2)
             continue;
 
+        // Level4以上のMeshCodeであって、別のLevel3の範囲に含まれているものは重複のため除外します。
+        if (MeshCode.getLevel() >= 4) {
+            FString code = UTF8_TO_TCHAR(MeshCode.get().c_str());
+            FString ThirdMeshCodeString = code.Mid(0, 8);
+            const auto ThirdMeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*ThirdMeshCodeString));
+            if (MeshCodes.find(ThirdMeshCode) != MeshCodes.end()) {             
+                continue;
+            }
+        }
+
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
         if (ExtentEditor->GetAreaMeshCodeMap().Contains(UTF8_TO_TCHAR(MeshCode.get().c_str()))) {
@@ -327,11 +337,11 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
 
 bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
     const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
-
-    std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
-    if (MeshCodes.find(MeshCode) == MeshCodes.end())
+    if (!MeshCode.isValid())
         return false;
-
+    std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
+    if( !std::any_of(MeshCodes.begin(), MeshCodes.end(), [&](plateau::dataset::MeshCode c) { return MeshCode.isWithin(c); }))
+        return false;       
     const auto ExtentEditor = ExtentEditorPtr.Pin();     
     const auto Box = ExtentEditor->GetBoxByExtent(MeshCode.getExtent());
     if (!Box.IsValid) return false;
