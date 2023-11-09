@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "HAL/FileManagerGeneric.h"
 #include "PLATEAUExportSettings.generated.h"
+
 
 UENUM(BlueprintType)
 enum class EMeshTransformType : uint8 {
@@ -32,3 +33,38 @@ enum class EMeshFileFormat : uint8 {
     GLTF,
     EMeshFileFormat_MAX,
 };
+
+namespace plateau::Export {
+    static TArray<FString> GetFoundFiles(const EMeshFileFormat InEMeshFileFormat, const FString& InExportPath) {
+        TArray<FString> FoundFileArray;
+        FoundFileArray.Empty();
+        switch (InEMeshFileFormat) {
+        case EMeshFileFormat::OBJ:
+            FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(InExportPath + "/*.obj"), true, false);
+            break;
+        case EMeshFileFormat::FBX:
+            FFileManagerGeneric::Get().FindFiles(FoundFileArray, *(InExportPath + "/*.fbx"), true, false);
+            break;
+        case EMeshFileFormat::GLTF:
+            FFileManagerGeneric::Get().FindFilesRecursive(FoundFileArray, *InExportPath, UTF8_TO_TCHAR("*.gltf"), true, false);
+            break;
+        default:
+            break;
+        }
+
+        return FoundFileArray;
+    }
+    
+    static FString MeshFileFormatToStr(const EMeshFileFormat InEMeshFileFormat) {
+        switch (InEMeshFileFormat) {
+        case EMeshFileFormat::OBJ:
+            return "OBJ";
+        case EMeshFileFormat::FBX:
+            return "FBX";
+        case EMeshFileFormat::GLTF:
+            return "GLTF";
+        default:
+            return "";
+        }
+    }
+}

@@ -9,9 +9,6 @@
 #include "plateau/polygon_mesh/model.h"
 #include "plateau/polygon_mesh/node.h"
 #include "plateau/polygon_mesh/mesh.h"
-#include "plateau/polygon_mesh/sub_mesh.h"
-#include "MeshDescription/Public/MeshDescription.h"
-#include "Runtime/StaticMeshDescription/Public/StaticMeshAttributes.h"
 #include "MaterialTypes.h"
 #include "Engine/Classes/Engine/Texture.h"
 #include "Engine/Classes/Components/StaticMeshComponent.h"
@@ -63,26 +60,22 @@ namespace {
     }
 }
 
-void FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
+bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
     ModelNames.Empty();
     TargetActor = ModelActor;
     switch (Option.FileFormat) {
     case EMeshFileFormat::OBJ:
-        ExportAsOBJ(ExportPath, ModelActor, Option);
-        break;
+        return ExportAsOBJ(ExportPath, ModelActor, Option);
     case EMeshFileFormat::FBX:
-        ExportAsFBX(ExportPath, ModelActor, Option);
-        break;
+        return ExportAsFBX(ExportPath, ModelActor, Option);
     case EMeshFileFormat::GLTF:
-        ExportAsGLTF(ExportPath, ModelActor, Option);
-        break;
+        return ExportAsGLTF(ExportPath, ModelActor, Option);
     default:
-        break;
+        return false;
     }
 }
 
-void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
-    UE_LOG(LogTemp, Log, TEXT("Export as OBJ"));
+bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
@@ -93,13 +86,15 @@ void FPLATEAUMeshExporter::ExportAsOBJ(const FString ExportPath, APLATEAUInstanc
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".obj";
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i]);
+            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i])) {
+                return false;
+            }
         }
     }
+    return true;
 }
 
-void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
-    UE_LOG(LogTemp, Log, TEXT("Export as FBX"));
+bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
     plateau::meshWriter::FbxWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
@@ -110,13 +105,15 @@ void FPLATEAUMeshExporter::ExportAsFBX(const FString ExportPath, APLATEAUInstanc
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".fbx";
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.FbxWriteOptions);
+            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.FbxWriteOptions)) {
+                return false;
+            }
         }
     }
+    return true;
 }
 
-void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
-    UE_LOG(LogTemp, Log, TEXT("Export as GLTF"));
+bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
     plateau::meshWriter::GltfWriter Writer;
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
@@ -125,9 +122,12 @@ void FPLATEAUMeshExporter::ExportAsGLTF(const FString ExportPath, APLATEAUInstan
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 
             std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
-            Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions);
+            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions)) {
+                return false;
+            }
         }
     }
+    return true;
 }
 
 TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
