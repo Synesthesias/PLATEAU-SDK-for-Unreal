@@ -323,7 +323,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                             // データセット名をGMLファイルパスから取得
                             // TODO: libplateauに委譲。データセット名を取得するAPI実装
                             auto DatasetName =
-                                CopiedGmlPath.RightChop((FPaths::ProjectContentDir() + "PLATEAU/Datasets/").Len());
+                                CopiedGmlPath.RightChop((FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) + "PLATEAU/Datasets/").Len());
 
                             // 最初のパスの区切りを探す。
                             int32 FirstSlashIndex, FirstBackSlashIndex;
