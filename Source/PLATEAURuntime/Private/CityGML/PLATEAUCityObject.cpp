@@ -91,7 +91,9 @@ namespace plateau::CityObject {
 
     static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
         int32 index = static_cast<int32>(InType);
-        return EPLATEAUCityObjectsTypeNameArray[index];
+        if(EPLATEAUCityObjectsTypeNameArray.IsValidIndex(index))
+            return EPLATEAUCityObjectsTypeNameArray[index];
+        return FString::FromInt(index);
     }
 }
 
