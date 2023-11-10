@@ -88,6 +88,11 @@ namespace plateau::CityObject {
         MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
         return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
     }
+
+    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
+        int32 index = static_cast<int32>(InType);
+        return EPLATEAUCityObjectsTypeNameArray[index];
+    }
 }
 
 void FPLATEAUCityObject::SetGmlID(const FString& InGmlID) {

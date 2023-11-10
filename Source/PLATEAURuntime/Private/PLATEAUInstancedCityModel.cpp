@@ -334,9 +334,6 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType) {
     if (!HasAttributeInfo())
         return FilterByFeatureTypesLegacy(InCityObjectType);
-
-    UE_LOG(LogTemp, Warning, TEXT("FilterByFeatureTypes"));
-
     bIsFiltering = true;
     for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
         // BillboardComponentを無視
