@@ -126,3 +126,7 @@ FPLATEAUAttributeMap UPLATEAUCityObjectBlueprintLibrary::GetAttributes(const FPL
 TArray<FPLATEAUCityObject> UPLATEAUCityObjectBlueprintLibrary::GetChildren(const FPLATEAUCityObject& Value) {
     return Value.Children;
 }
+
+uint64_t UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(const FPLATEAUCityObject& Value) {
+    return 1ll << static_cast<uint64_t>(Value.Type);
+}
