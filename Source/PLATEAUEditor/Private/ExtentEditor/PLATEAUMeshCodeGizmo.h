@@ -116,6 +116,5 @@ private:
     TArray<bool> bSelectedArray;
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
-
-    bool IsThirdMeshCode() const;
+    bool IsSelectable() const;
 };

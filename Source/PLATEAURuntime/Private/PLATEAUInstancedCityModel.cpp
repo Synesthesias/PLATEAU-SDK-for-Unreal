@@ -332,6 +332,54 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
 }
 
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType) {
+    if (!HasAttributeInfo())
+        return FilterByFeatureTypesLegacy(InCityObjectType);
+    bIsFiltering = true;
+    for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+        // BillboardComponentを無視
+        if (GmlComponent.GetName().Contains("BillboardComponent"))
+            continue;
+
+        // 起伏は重いため意図的に除外
+        const auto Package = GetCityModelPackage(GmlComponent);
+        if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
+            continue;
+
+        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            TArray<USceneComponent*> FeatureComponents;
+            LodComponent->GetChildrenComponents(true, FeatureComponents);
+            for (const auto& FeatureComponent : FeatureComponents) {
+                //この時点で不可視状態ならLodフィルタリングで不可視化されたことになるので無視
+                if (!FeatureComponent->IsVisible())
+                    continue;
+
+                auto FeatureID = FeatureComponent->GetName();
+                // BillboardComponentも混ざってるので無視
+                if (FeatureID.Contains("BillboardComponent"))
+                    continue;
+
+                if (!FeatureComponent->IsA(UPLATEAUCityObjectGroup::StaticClass()))
+                    continue;
+
+                const auto CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(FeatureComponent);
+                const auto ObjList = CityObjGrp->GetAllRootCityObjects();
+                if (ObjList.Num() != 1)
+                    continue;
+
+                const uint64_t CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(ObjList[0]);
+                if (static_cast<uint64_t>(InCityObjectType) & CityObjectType) 
+                    continue;
+
+                ApplyCollisionResponseBlockToChannel(FeatureComponent, false);
+                FeatureComponent->SetVisibility(false);
+            }
+        }
+    }  
+    bIsFiltering = false;
+    return this;
+}
+
+APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypesLegacy(const citygml::CityObject::CityObjectsType InCityObjectType) {
     bIsFiltering = true;
     Launch(
         TEXT("ParseGmlsTask"),
@@ -395,6 +443,14 @@ const TArray<TObjectPtr<USceneComponent>>& APLATEAUInstancedCityModel::GetGmlCom
     return GetRootComponent()->GetAttachChildren();
 }
 
+bool APLATEAUInstancedCityModel::HasAttributeInfo() {
+    TArray<USceneComponent*> Components;
+    GetRootComponent()->GetChildrenComponents(true, Components);
+    return Components.ContainsByPredicate([](const auto& Comp) {
+        return Comp->IsA(UPLATEAUCityObjectGroup::StaticClass());
+        });
+}
+
 void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType) {
     for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
         // BillboardComponentを無視
@@ -416,8 +472,8 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
 
                 auto FeatureID = FeatureComponent->GetName();
 
-                // TODO: 主要地物でない場合元の地物IDに_{数値}が入っている場合があるため、主要地物についてのみ処理する。よりロバストな方法検討必要
-                if (FeatureComponent->GetAttachParent() == LodComponent) {
+                // TODO: 最小地物の場合元の地物IDに_{数値}が入っている場合があるため、最小地物についてのみ処理する。よりロバストな方法検討必要
+                if (FeatureComponent->GetAttachParent() != LodComponent) {
                     FeatureID = GetOriginalComponentName(FeatureComponent);
                 }
 
@@ -452,7 +508,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)     {
+UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)  {
 
     plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
     switch (ReconstructType) {

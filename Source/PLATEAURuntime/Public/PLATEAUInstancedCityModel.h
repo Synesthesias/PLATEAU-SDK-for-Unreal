@@ -116,6 +116,7 @@ public:
      * @return thisを返します。
      */
     APLATEAUInstancedCityModel* FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType);
+    APLATEAUInstancedCityModel* FilterByFeatureTypesLegacy(const citygml::CityObject::CityObjectsType InCityObjectType); //属性情報がない場合Modelを取得して判定
 
     /**
      * @brief 3D都市モデル内に含まれるLodを取得します。
@@ -150,6 +151,11 @@ protected:
      * @brief 3D都市モデル内のGMLファイルComponentの一覧を取得します。
      */
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
+
+    /**
+     * @brief 属性情報の有無を取得します。
+     */
+    bool HasAttributeInfo();
 
 public:
     // Called every frame

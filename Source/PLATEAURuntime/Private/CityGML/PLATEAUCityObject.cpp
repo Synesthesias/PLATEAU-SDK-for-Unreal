@@ -88,6 +88,13 @@ namespace plateau::CityObject {
         MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
         return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
     }
+
+    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
+        int32 index = static_cast<int32>(InType);
+        if(EPLATEAUCityObjectsTypeNameArray.IsValidIndex(index))
+            return EPLATEAUCityObjectsTypeNameArray[index];
+        return FString::FromInt(index);
+    }
 }
 
 void FPLATEAUCityObject::SetGmlID(const FString& InGmlID) {
@@ -125,4 +132,8 @@ FPLATEAUAttributeMap UPLATEAUCityObjectBlueprintLibrary::GetAttributes(const FPL
 
 TArray<FPLATEAUCityObject> UPLATEAUCityObjectBlueprintLibrary::GetChildren(const FPLATEAUCityObject& Value) {
     return Value.Children;
+}
+
+uint64_t UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(const FPLATEAUCityObject& Value) {
+    return 1ll << static_cast<uint64_t>(Value.Type);
 }
