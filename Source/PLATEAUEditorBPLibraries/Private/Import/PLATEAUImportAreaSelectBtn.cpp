@@ -31,7 +31,7 @@ void UPLATEAUImportAreaSelectBtn::OpenAreaWindow(const int ZoneID, const FString
         } else {
             const FText Title = LOCTEXT("Warning", "警告");
             const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
-            FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+            FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
             return;
         }
     } else {

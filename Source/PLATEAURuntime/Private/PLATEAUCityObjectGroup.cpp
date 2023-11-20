@@ -202,7 +202,7 @@ namespace {
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(InCityObject.CityObjectIndex.AtomicIndex));
         CityJsonObject->SetArrayField(plateau::CityObjectGroup::CityObjectIndexFieldName, CityObjectIndexArray);
 
-        CityJsonObject->SetNumberField(plateau::CityObjectGroup::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
+        CityJsonObject->SetStringField(plateau::CityObjectGroup::CityObjectTypeFieldName, plateau::CityObject::CityObjectsTypeToString(InCityObject.Type));
         
         TArray<TSharedPtr<FJsonValue>> AttributesJsonObjectArray;
         GetAttributesJsonObjectRecursive(InCityObject.Attributes, AttributesJsonObjectArray);
@@ -221,7 +221,7 @@ namespace {
         CityObjectIndexArray.Emplace(MakeShared<FJsonValueNumber>(CityObjectIndex.atomic_index));
         CityJsonObject->SetArrayField(plateau::CityObjectGroup::CityObjectIndexFieldName, CityObjectIndexArray);
 
-        CityJsonObject->SetNumberField(plateau::CityObjectGroup::CityObjectTypeFieldName, static_cast<double>(InCityObject.Type));
+        CityJsonObject->SetStringField(plateau::CityObjectGroup::CityObjectTypeFieldName, plateau::CityObject::CityObjectsTypeToString(InCityObject.Type));
 
         TArray<TSharedPtr<FJsonValue>> AttributesJsonObjectArray;
         GetAttributesJsonObjectRecursive(InCityObject.Attributes, AttributesJsonObjectArray);

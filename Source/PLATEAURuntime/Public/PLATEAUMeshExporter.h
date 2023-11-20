@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "PLATEAUCityObjectGroup.h"
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/fbx_writer.h"
-#include "CityGML/PLATEAUCityObject.h"
 
 enum class EMeshTransformType : uint8_t;
 enum class ECoordinateSystem : uint8;
@@ -32,13 +31,13 @@ namespace plateau {
 
 class PLATEAURUNTIME_API FPLATEAUMeshExporter {
 public:
-    void Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
+    bool Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option);
     std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option);
 
 private:
-    void ExportAsOBJ(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
-    void ExportAsFBX(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
-    void ExportAsGLTF(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
+    bool ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option);
+    bool ExportAsFBX(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option);
+    bool ExportAsGLTF(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option);
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option);
     std::shared_ptr<plateau::polygonMesh::Model> CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option);
     void CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option);
