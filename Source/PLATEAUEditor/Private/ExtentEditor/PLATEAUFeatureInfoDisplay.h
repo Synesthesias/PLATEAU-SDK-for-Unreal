@@ -64,6 +64,8 @@ public:
     bool CreatePanelAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const plateau::dataset::IDatasetAccessor& InDatasetAccessor);
     bool AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
 
+    int CountLoadingPanels();
+
     UMaterialInstanceDynamic* GetFeatureInfoIconMaterial(const FPLATEAUFeatureInfoMaterialKey& Key);
     UMaterialInstanceDynamic* GetBackPanelMaterial() const;
 

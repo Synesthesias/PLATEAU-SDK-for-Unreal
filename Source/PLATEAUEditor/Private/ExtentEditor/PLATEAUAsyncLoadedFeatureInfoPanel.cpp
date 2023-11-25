@@ -115,9 +115,6 @@ EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetFeatureInf
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::SetFeatureInfoVisibility(const TArray<int>& ShowLods, const EPLATEAUFeatureInfoVisibility Value, const bool bForce) {
-    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
-        return;
-
     if (FeatureInfoVisibility == Value && !bForce)
         return;
 
@@ -271,9 +268,6 @@ bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeco
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::RecalculateIconTransform(const TArray<int>& ShowLods) {
-    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
-        return;
-
     const int NumFilteredIconComponents = std::accumulate(FeatureInfoMaterialMaps.begin(), FeatureInfoMaterialMaps.end(), 0, [ShowLods](const int Sum, const FPLATEAUFeatureInfoMaterialKey MaterialKey) {
         return Sum + (ShowLods.Contains(MaterialKey.Lod) ? 1 : 0);
     });

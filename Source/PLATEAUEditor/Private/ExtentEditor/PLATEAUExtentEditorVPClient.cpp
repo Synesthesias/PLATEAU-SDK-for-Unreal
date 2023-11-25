@@ -25,6 +25,12 @@
 DECLARE_STATS_GROUP(TEXT("PLATEAUExtentEditor"), STATGROUP_PLATEAUExtentEditor, STATCAT_PLATEAUSDK);
 DECLARE_CYCLE_STAT(TEXT("FeatureInfoDisplay"), STAT_FeatureInfoDisplay, STATGROUP_PLATEAUExtentEditor);
 
+namespace {
+    /**
+     * @brief 最大パネル読み込み並列数
+     */
+    constexpr int MaxLoadPanelParallelCount = 1;
+}
 
 FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(const TWeakPtr<FPLATEAUExtentEditor>& InExtentEditor,
                                                                        const TSharedRef<SPLATEAUExtentEditorViewport>& InPLATEAUExtentEditorViewport,
@@ -174,48 +180,38 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
         FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(ExtentEditorPtr.Pin().Get()->GetGeoReference(), SharedThis(this));
     }
 
+    const int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
     const auto& NearestMeshCodeGizmo = GetNearestMeshCodeGizmo();
+    if (NearestMeshCodeGizmo.GetRegionMeshID() != "" && LoadingPanelCnt < MaxLoadPanelParallelCount && 0 < CameraDistance && CameraDistance < 9000.0) {
+        FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
+    }
+    
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
-        // 範囲内のギズモのみ描画
-        if (GizmoContains(MeshCodeGizmo)) {
-            if (CameraDistance < 4000.0) {
-                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-                if (NearestMeshCodeGizmo.GetRegionMeshID() != "")
-                    FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
-                FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
-            } else if (CameraDistance < 9000.0) {
-                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
-                if (NearestMeshCodeGizmo.GetRegionMeshID() != "")
-                    FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
-                FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
-            } else {
-                FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
-            }
+        if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
+            MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
+        }
 
-            if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
-                MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
-            }
+        FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
+
+        if (CameraDistance < 4000.0) {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
+        } else if (CameraDistance < 9000.0) {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
+        } else {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
         }
     }
 }
 
 FPLATEAUMeshCodeGizmo FPLATEAUExtentEditorViewportClient::GetNearestMeshCodeGizmo() {
-    // View中心からロードを開始する対象MeshCodeGizmoを探索
-    TArray<FPLATEAUMeshCodeGizmo> LoadingTargetGizmos;
-    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
-        if (GizmoContains(MeshCodeGizmo)) {
-            // 読込済みのものは飛ばす
-            if (FeatureInfoDisplay->MeshCodeGizmoContains(MeshCodeGizmo))
-                continue;
-
-            LoadingTargetGizmos.Emplace(MeshCodeGizmo);
-        }
-    }
-
     // ロードを開始する対象Gizmoの中で最もカメラ中心位置から近いGizmoのロードを開始
     FPLATEAUMeshCodeGizmo NearestMeshCodeGizmo;
     double MinSqrDist = MAX_dbl;
-    for (const auto& MeshCodeGizmo : LoadingTargetGizmos) {
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
+        // 読込済みのものは飛ばす
+        if (FeatureInfoDisplay->MeshCodeGizmoContains(MeshCodeGizmo))
+            continue;
+        
         auto DistFromCenter = MeshCodeGizmo.GetMeshCode().getExtent().centerPoint() - Extent.GetNativeData().centerPoint();
         // 緯度・経度の値でそのまま距離を取ると、探索範囲が縦長になり、画面の上下にはみ出した箇所が探索されがちになります。
         // これを補正するため、縦よりも横を優先します。
