@@ -221,7 +221,7 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureI
     }, LowLevelTasks::ETaskPriority::BackgroundHigh);
 }
 
-bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeconds) {
+bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent() {
     if (AddComponentStatus == EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
         return false;
 
@@ -239,30 +239,21 @@ bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeco
         CreateComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
     }
 
-    AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::Loading;
-    DeltaTime = DeltaSeconds + DeltaTime;
-    if (AddPanelComponentSleepTime < DeltaTime && AddedIconComponentCnt < IconComponents.Num()) {
-        DeltaTime = 0;
-
-        check(IconComponents.Num() == DetailedIconComponents.Num());
+    if (AddedIconComponentCnt < IconComponents.Num()) {
         const auto Transform = CalculateIconTransform(Box, AddedIconComponentCnt % plateau::Feature::MaxIconCol, AddedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(IconComponents[AddedIconComponentCnt], Transform);
         AddedIconComponentCnt++;
-
         return true;
     }
 
-    if (AddPanelComponentSleepTime < DeltaTime && AddedDetailedIconComponentCnt < DetailedIconComponents.Num()) {
-        DeltaTime = 0;
-
+    if (AddedDetailedIconComponentCnt < DetailedIconComponents.Num()) {
         const auto Transform = CalculateIconTransform(Box, AddedDetailedIconComponentCnt % plateau::Feature::MaxIconCol, AddedDetailedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(DetailedIconComponents[AddedDetailedIconComponentCnt], Transform);
-        const auto IconCnt = FMath::Min(DetailedIconComponents.Num(), plateau::Feature::MaxIconCnt);
-        if (IconCnt - 1 <= AddedDetailedIconComponentCnt++)
-            AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
-
+        AddedDetailedIconComponentCnt++;
         return true;
     }
+
+    AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 
     return false;
 }

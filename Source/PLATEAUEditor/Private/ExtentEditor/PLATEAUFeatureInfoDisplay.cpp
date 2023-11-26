@@ -132,7 +132,7 @@ int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
 
 bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
     if (MeshCodeGizmoContains(MeshCodeGizmo)) {
-        return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->AddIconComponent(0.016f);
+        return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->AddIconComponent();
     }
 
     return false;
