@@ -192,7 +192,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                             OnClicked_Lambda([this] {
                                 //Windowを閉じる
                                 if (MeshCodeInputWindow.IsValid()) {
-                                    MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+                                    MeshCodeInputWindow.Pin()->RequestDestroyWindow();
                                     MeshCodeInputWindow.Reset();
                                 }
                                 return FReply::Handled();
@@ -221,7 +221,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                     }
                                     else {
                                         if (MeshCodeInputWindow.IsValid()) {
-                                            MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+                                            MeshCodeInputWindow.Pin()->RequestDestroyWindow();
                                             MeshCodeInputWindow.Reset();
                                         }
                                     }     
