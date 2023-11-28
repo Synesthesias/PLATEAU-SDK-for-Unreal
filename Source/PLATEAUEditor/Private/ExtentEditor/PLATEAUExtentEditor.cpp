@@ -46,7 +46,6 @@ TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
                 PlateauEuw->CloseAreaSelectionWindowInvoke();
             }            
         }
-
     }));
 
     return DockableTab;

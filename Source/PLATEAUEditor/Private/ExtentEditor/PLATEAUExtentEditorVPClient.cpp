@@ -185,7 +185,7 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
     if (NearestMeshCodeGizmo.GetRegionMeshID() != "" && LoadingPanelCnt < MaxLoadPanelParallelCount && 0 < CameraDistance && CameraDistance < 9000.0) {
         FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
     }
-    
+
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
             MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
@@ -193,9 +193,9 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
 
         FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
 
-        if (CameraDistance < 4000.0) {
+        if (CameraDistance < plateau::geometry::ShowFeatureDetailIconCameraDistance) {
             FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-        } else if (CameraDistance < 9000.0) {
+        } else if (CameraDistance < plateau::geometry::ShowFeatureIconCameraDistance) {
             FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
         } else {
             FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
