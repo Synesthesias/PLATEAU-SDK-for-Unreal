@@ -39,7 +39,7 @@ SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
     }
 
     if (MeshCodeInputWindow.IsValid()) {
-        MeshCodeInputWindow.Pin()->DestroyWindowImmediately();
+        MeshCodeInputWindow.Pin()->RequestDestroyWindow();
         MeshCodeInputWindow.Reset();
     }
 }
