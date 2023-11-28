@@ -2,9 +2,6 @@
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 
-#include "EditorViewportTabContent.h"
-#include "Engine/Selection.h"
-#include "Misc/ScopedSlowTask.h"
 #include "Algo/AnyOf.h"
 
 #include "PLATEAUEditor.h"
@@ -44,13 +41,12 @@ TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     Viewport->SetOwnerTab(DockableTab);
     DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([](TSharedRef<SDockTab> DockTab) {
         const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
-        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
-        if (EditorUtilityWidget != nullptr) {
-            const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
-            if (PLATEAUSDKEditorUtilityWidget != nullptr) {
-                PLATEAUSDKEditorUtilityWidget->CloseAreaSelectionWindowInvoke();
-            }
+        if (const auto& Euw = Window->GetEditorUtilityWidget(); Euw != nullptr) {
+            if (const auto& PlateauEuw = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Euw); PlateauEuw != nullptr) {
+                PlateauEuw->CloseAreaSelectionWindowInvoke();
+            }            
         }
+
     }));
 
     return DockableTab;
