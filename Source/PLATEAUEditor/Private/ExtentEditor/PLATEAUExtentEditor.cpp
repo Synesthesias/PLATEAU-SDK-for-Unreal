@@ -17,7 +17,7 @@
 const FName FPLATEAUExtentEditor::TabId(TEXT("PLATEAUExtentEditor"));
 
 void FPLATEAUExtentEditor::RegisterTabSpawner(const TSharedRef<class FTabManager>& InTabManager) {
-    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateSP(this, &FPLATEAUExtentEditor::SpawnTab))
+    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::CanSpawnTab))
         .SetDisplayName(LOCTEXT("ViewportTab", "Viewport"))
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
 }
@@ -49,6 +49,11 @@ TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     }));
 
     return DockableTab;
+}
+
+bool FPLATEAUExtentEditor::CanSpawnTab(const FSpawnTabArgs& Args) const {
+    const auto& UseSourcePath = IsImportFromServer() ? UTF8_TO_TCHAR(GetServerDatasetID().c_str()) : GetSourcePath();
+    return 0 < UseSourcePath.Len();
 }
 
 const FString& FPLATEAUExtentEditor::GetSourcePath() const {
