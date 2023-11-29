@@ -1,9 +1,9 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "ModelReconstruct/PLATEAUModelReconstructBtn.h"
+#include "ModelReconstruct/PLATEAUModelReconstructAPI.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 
-TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponents(AActor* Actor) {
+TArray<UActorComponent*> UPLATEAUModelReconstructAPI::GetSelectedComponents(AActor* Actor) {
     TArray<UActorComponent*> arr;
     if (Actor != nullptr) {
         for (auto& c : Actor->GetComponents())
@@ -13,7 +13,7 @@ TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponents(AAct
     return arr;
 }
 
-TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponentsByClass(AActor* Actor, UClass* Class) {
+TArray<UActorComponent*> UPLATEAUModelReconstructAPI::GetSelectedComponentsByClass(AActor* Actor, UClass* Class) {
     TArray<UActorComponent*> arr;
     if (Actor != nullptr) {
         for (auto& c : Actor->GetComponents())
@@ -23,6 +23,6 @@ TArray<UActorComponent*> UPLATEAUModelReconstructBtn::GetSelectedComponentsByCla
     return arr;
 }
 
-void UPLATEAUModelReconstructBtn::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal ) {
+void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal ) {
     TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDivideGrid, bDestroyOriginal);
 }

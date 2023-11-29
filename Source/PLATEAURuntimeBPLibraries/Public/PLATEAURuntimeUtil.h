@@ -4,14 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "PLATEAUEditorUtil.generated.h"
+#include "PLATEAURuntimeUtil.generated.h"
 
 
 UCLASS()
-class PLATEAUEDITORBPLIBRARIES_API UPLATEAUEditorUtil : public UBlueprintFunctionLibrary {
+class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAURuntimeUtil : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
-    static void* GetWindowHandle();
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|Util")
-    static bool OpenDirectoryDialog(UPARAM(ref) FString& SourcePath);
+    static TArray<int64> GetAllPackages();
 };

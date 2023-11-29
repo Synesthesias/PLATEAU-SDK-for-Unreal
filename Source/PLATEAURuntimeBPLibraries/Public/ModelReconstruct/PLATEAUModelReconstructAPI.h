@@ -4,22 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "PLATEAUModelReconstructBtn.generated.h"
+#include "PLATEAUModelReconstructAPI.generated.h"
 
 class APLATEAUInstancedCityModel;
 class UPLATEAUCityObjectGroup;
 
 UCLASS()
-class PLATEAUEDITORBPLIBRARIES_API UPLATEAUModelReconstructBtn : public UBlueprintFunctionLibrary
+class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelReconstructAPI : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructPanel")
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructAPI")
     static TArray<UActorComponent*> GetSelectedComponents(AActor* Actor);
 
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructPanel")
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructAPI")
     static TArray<UActorComponent*> GetSelectedComponentsByClass(AActor* Actor, UClass* Class);
 
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructPanel")
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructAPI")
     static void ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 };

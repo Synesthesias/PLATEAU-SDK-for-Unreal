@@ -521,7 +521,7 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UScen
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
-    MeshExportOptions ExtOptions;
+    FPLATEAUMeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;

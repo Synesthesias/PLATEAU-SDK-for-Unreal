@@ -396,7 +396,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             [Component](UStaticMesh* Mesh) {
                 if (Component == nullptr)
                     return;
+
+                // Runtime用にSetStaticMeshを行う際にMobilityを適切な値に変更
+                Component->SetMobility(EComponentMobility::Type::Stationary);
                 Component->SetStaticMesh(Mesh);
+                Component->SetMobility(EComponentMobility::Type::Static);
 
                 // Collision情報設定
                 Mesh->CreateBodySetup();
