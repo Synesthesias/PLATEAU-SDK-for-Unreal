@@ -61,7 +61,7 @@ void UPLATEAUModelAdjustmentFilterAPI::ApplyFilter(APLATEAUInstancedCityModel* T
     TargetCityModel->FilterByLods(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bOnlyMaxLod)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));
 }
 
-void UPLATEAUModelAdjustmentFilterAPI::ApplyFilterByArray(APLATEAUInstancedCityModel* TargetCityModel, const TArray<int64> EnablePackages, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<int64> EnableCityObjects) {
+void UPLATEAUModelAdjustmentFilterAPI::ApplyFilterWithArray(APLATEAUInstancedCityModel* TargetCityModel, const TArray<int64> EnablePackages, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<int64> EnableCityObjects) {
     int64 EnablePackage = 0, EnableCityObject = 0;
     for (const auto& Pkg : EnablePackages) {
         EnablePackage |= Pkg;
