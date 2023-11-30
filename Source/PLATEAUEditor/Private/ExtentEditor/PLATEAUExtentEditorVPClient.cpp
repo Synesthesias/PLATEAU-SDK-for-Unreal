@@ -30,6 +30,11 @@ namespace {
      * @brief 最大パネル読み込み並列数
      */
     constexpr int MaxLoadPanelParallelCount = 1;
+
+    /**
+     * @brief 1フレーム中の最大AddComponent数
+     */
+    constexpr int MaxAddComponentPerFrameCount = 2;
 }
 
 FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(const TWeakPtr<FPLATEAUExtentEditor>& InExtentEditor,
@@ -175,6 +180,7 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
 
 void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) {
     const double CameraDistance = GetViewTransform().GetLocation().Z;
+    
     // 地物アイコン
     if (FeatureInfoDisplay == nullptr) {
         FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(ExtentEditorPtr.Pin().Get()->GetGeoReference(), SharedThis(this));
@@ -184,15 +190,24 @@ void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FScen
     const auto& NearestMeshCodeGizmo = GetNearestMeshCodeGizmo();
     if (NearestMeshCodeGizmo.GetRegionMeshID() != "" && LoadingPanelCnt < MaxLoadPanelParallelCount && 0 < CameraDistance && CameraDistance < 9000.0) {
         FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
+        FeatureInfoDisplay->AddComponent(NearestMeshCodeGizmo);
     }
 
+    int32 AddedComponentCnt = 0;
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
             MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
         }
 
-        FeatureInfoDisplay->AddComponent(MeshCodeGizmo);
-
+        if (MaxAddComponentPerFrameCount <= AddedComponentCnt)
+            continue;
+        
+        if (FeatureInfoDisplay->AddComponent(MeshCodeGizmo)) {
+            AddedComponentCnt++;
+        } else {
+            continue;
+        }
+        
         if (CameraDistance < plateau::geometry::ShowFeatureDetailIconCameraDistance) {
             FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
         } else if (CameraDistance < plateau::geometry::ShowFeatureIconCameraDistance) {

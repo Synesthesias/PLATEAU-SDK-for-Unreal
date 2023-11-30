@@ -88,7 +88,7 @@ namespace {
         FVector Offset{
             XOffset,
             100.0f * RowIndex - 100.0f * RowCount / 2.0f + 50.0f,
-            0.0f
+            1.0f
         };
         Offset *= PanelScaleMultiplier;
         Transform.SetTranslation(Center + Offset);
