@@ -14,13 +14,21 @@ namespace plateau::polygonMesh {
      */
     class LIBPLATEAU_EXPORT SubMesh {
     public:
+        /**
+         * テクスチャパスとcitygml::MaterialからSubMeshを初期化します。
+         */
         SubMesh(size_t start_index, size_t end_index, const std::string& texture_path, std::shared_ptr<const citygml::Material> material);
+
+        /**
+         * GamemMaterialIDも含めてSubMeshを初期化します。
+         */
+         SubMesh(size_t start_index, size_t end_index, const std::string& texture_path, std::shared_ptr<const citygml::Material> material, int game_material_id);
 
         /**
          * 引数で与えられた SubMesh の vector に SubMesh を追加します。
          */
         static void addSubMesh(size_t start_index, size_t end_index,
-                               const std::string& texture_path, std::shared_ptr<const citygml::Material> material, std::vector<SubMesh>& vector);
+                               const std::string& texture_path, std::shared_ptr<const citygml::Material> material, int game_material_id, std::vector<SubMesh>& vector);
 
         size_t getStartIndex() const;
         size_t getEndIndex() const;
@@ -34,6 +42,10 @@ namespace plateau::polygonMesh {
 
         void setStartIndex(size_t start_index);
         void setEndIndex(size_t end_index);
+        void setGameMaterialID(int id);
+        int getGameMaterialID() const;
+
+        bool isSameAs(const SubMesh& other) const;
 
         bool operator==(const SubMesh& other) const;
 
@@ -49,5 +61,13 @@ namespace plateau::polygonMesh {
         size_t end_index_;
         std::string texture_path_;
         std::shared_ptr<const citygml::Material> material_;
+
+        /**
+         * ゲームエンジンのマテリアルを利用したい場合に、上の texture_path_ や material_ の代わりに利用するマテリアルIDです。
+         * 特に分割結合時にゲームエンジンのマテリアルを維持するために利用します。
+         * IDが具体的にどのマテリアルを指すかはゲームエンジンの責任で決めます。
+         * 初期値は-1です。
+         */
+        int game_material_id_;
     };
 }
