@@ -30,15 +30,13 @@
 ![](../resources/manual/changeColorByAttrs/ShowUrbanPlanningUI.png)<br><br>
 
 上のコードを解説します。<br>
-属性情報を取得するには、まず各地物ゲームオブジェクトに対してインポート時に付与されるPLATEAUCityObjectGroupコンポーネントにアクセスします。<br>
-Outlinerで対象のPlateauInstancedCityModelを選択すると下図の用にコンポーネントがいくつも確認できます。<br>
-土地計画区分で色分けするコンポーネントはurfという名前のコンポーネントであるため、BlueprintではObjectNameに```urf```を含む場合に処理をします。<br>
+属性情報を取得するには、まず各地物ゲームオブジェクトに対してインポート時に付与される```PLATEAUCityObjectGroupコンポーネント```にアクセスします。Outlinerで対象の```PlateauInstancedCityModel```を選択すると下図の用にコンポーネントがいくつも確認できます。土地計画区分で色分けするコンポーネントは```urf```という名前のコンポーネントであるため、BlueprintではObjectNameに```urf```を含む場合に処理をします。<br>
 
 <img src="../resources/manual/changeColorByAttrs/PlateauInstancedCityModel.png" height="400px" /><br>
 
 ![](../resources/manual/changeColorByAttrs/Urf_PLATEAUCityObjectGroup.png)<br><br>
 
-PLATEAUCityObjectGroupコンポーネント内には地物に関する情報が保存されています。<br>
+```PLATEAUCityObjectGroupコンポーネント```内には地物に関する情報が保存されています。
 インポート時に地域単位に設定した場合、1つのコンポーネントの中に複数の地物情報(CityObject)が入っています。<br>
 主要地物単位、または最小地物単位の場合はCityObjectは1つです。<br>
 いくつであっても、```GetAllCityObjects```でCityObjectを取得できます。<br>
@@ -46,8 +44,7 @@ PLATEAUCityObjectGroupコンポーネント内には地物に関する情報が�
 <img src="../resources/manual/changeColorByAttrs/GetAllRootCityObjects.png" height="300px" /><br><br>
 
 属性情報はキーとバリューのペアが集まったものです。<br>
-バリューの型は、String型または入れ子のAttributesMap(キーバリューの組が集まったもの)のどちらかであり、対応するgetterで値を取得できます。<br>
-なお、Double型など他の型のgetterもありますが、内部的には単にStringをパースしたものです。下図はString型の属性情報を取得する例です。
+バリューの型は、String型または入れ子のAttributesMap(キーバリューの組が集まったもの)のどちらかであり、対応するgetterで値を取得できます。なお、Double型など他の型のgetterもありますが、内部的には単にStringをパースしたものです。下図はString型の属性情報を取得する例です。
 
 <img src="../resources/manual/changeColorByAttrs/AttributeMap.png" height="300px" /><br><br>
 
