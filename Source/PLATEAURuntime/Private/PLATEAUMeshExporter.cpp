@@ -226,34 +226,47 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString TextureFilePath = FString("");
 
+        //マテリアル分け時のMaterialID
+        float MaterialID = -1;
+
         if (Option.bExportTexture) {
-            const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
+            
+            if (StaticMeshComponent->GetMaterial(k) != nullptr) {
+                auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
 
-            if (MaterialInstance->TextureParameterValues.Num() > 0) {
-                FMaterialParameterMetadata MetaData;
-                MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
-                if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
-                    if (TextureSourceFiles.Num() == 0) {
-                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
-
-                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex);
-                        continue;
+                //マテリアル分け時のMaterialID設定
+                if (MaterialInterface->GetMaterial()->GetName() == "ClassificationMaterial") {
+                    if (MaterialInterface->GetScalarParameterValue(FName("GameMaterialID"), MaterialID)) {
+                        UE_LOG(LogTemp, Log, TEXT("ClassificationMaterial Name : %s ID : %f "), *MeshComponent->GetName(), MaterialID);
                     }
+                }
+                
+                const auto  MaterialInstance = (UMaterialInstance*)MaterialInterface;
+                if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
 
-                    const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
-                    const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
-                    const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
-                    TextureFilePath = AssetBasePath / TextureFileRelativePath;
+                    FMaterialParameterMetadata MetaData;
+                    MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
+                    if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+                        const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
+                        if (TextureSourceFiles.Num() == 0) {
+                            UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                            // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, MaterialID);
+                            continue;
+                        }
+
+                        const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
+                        const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
+                        const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
+                        TextureFilePath = AssetBasePath / TextureFileRelativePath;
+                    }
                 }
             }
         }
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
 
         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, MaterialID);
     }
 
     OutMesh.addVerticesList(Vertices);

@@ -34,9 +34,10 @@ public:
     FString TexturePath;
     FPolygonGroupID PolygonGroupID = 0;
     FString MaterialSlot = FString("");
+    int GameMaterialID = 0;
 
     FSubMeshMaterialSet();
-    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath);
+    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath, int matId);
     bool operator==(const FSubMeshMaterialSet& Other) const;
     bool Equals(const FSubMeshMaterialSet& Other) const;
 private:
@@ -68,6 +69,12 @@ public:
         plateau::polygonMesh::MeshGranularity Granularity,
         TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
+
+    //Material分け時のマテリアルリストをセットします
+    void SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials);
+
+    //前回のロードで作成されたComponentのリストを返します
+    TArray<USceneComponent*> GetLastCreatedComponents();
 private:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
@@ -78,6 +85,12 @@ private:
 
     //分割・結合時に属性情報を保持
     TMap<FString, FPLATEAUCityObject> CityObjMap;
+
+    //Material分け時のマテリアルリスト
+    TMap<uint8, UMaterialInterface*> ClassificationMaterials;
+
+    // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
+    TArray<USceneComponent*> LastCreatedComponents;
 
     UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,

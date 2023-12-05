@@ -34,6 +34,7 @@ public:
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClassifyFinishedDelegate);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -56,6 +57,12 @@ public:
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnReconstructFinishedDelegate OnReconstructFinished;
+
+    /**
+     * @brief マテリアル分け処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnClassifyFinishedDelegate OnClassifyFinished;
 
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
@@ -134,7 +141,14 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::FTask ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+
+
+    /**
+     * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
+     * @param
+     */
+    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<uint8, UMaterialInterface*> Materials, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
@@ -165,6 +179,9 @@ private:
     TAtomic<bool> bIsFiltering;
     TArray<FPLATEAUCityObject> RootCityObjects;
 
+    //マテリアル分けのタイプに応じたマテリアル
+    TMap<uint8, UMaterialInterface*> ClassificationMaterials;
+
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-	void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
+    TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

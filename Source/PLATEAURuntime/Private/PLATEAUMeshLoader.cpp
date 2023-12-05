@@ -27,7 +27,7 @@ DECLARE_CYCLE_STAT(TEXT("Mesh.Build"), STAT_Mesh_Build, STATGROUP_PLATEAUMeshLoa
 FSubMeshMaterialSet::FSubMeshMaterialSet() {
 }
 
-FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath) {
+FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath, int matId) {
     hasMaterial = mat != nullptr;
     if (hasMaterial) {
         auto dif = mat->getDiffuse();
@@ -42,6 +42,7 @@ FSubMeshMaterialSet::FSubMeshMaterialSet(std::shared_ptr<const citygml::Material
         isSmooth = mat->isSmooth();
     }
     TexturePath = texPath;
+    GameMaterialID = matId;
 }
 
 bool FSubMeshMaterialSet::operator==(const FSubMeshMaterialSet& Other) const {
@@ -58,7 +59,8 @@ bool FSubMeshMaterialSet::Equals(const FSubMeshMaterialSet& Other) const {
         FMath::IsNearlyEqual(Ambient, Other.Ambient, tl) &&
         isSmooth == Other.isSmooth &&
         hasMaterial == Other.hasMaterial &&
-        TexturePath.Equals(Other.TexturePath);       
+        TexturePath.Equals(Other.TexturePath) &&
+        GameMaterialID == Other.GameMaterialID;
 }
 
 FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
@@ -71,6 +73,7 @@ FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
     HashArray.Add(FCrc::MemCrc32(&Value.Ambient, sizeof(float)));
     HashArray.Add(FCrc::MemCrc32(&Value.isSmooth, sizeof(bool)));
     HashArray.Add(FCrc::MemCrc32(&Value.TexturePath, sizeof(FString)));
+    HashArray.Add(FCrc::MemCrc32(&Value.GameMaterialID, sizeof(int)));
     uint32 Hash = 0;
     for (auto h : HashArray) {
         Hash = HashCombine(Hash, h);
@@ -156,9 +159,11 @@ namespace {
         for (const auto& SubMesh : InMesh.getSubMeshes()) {
             const auto& TexturePath = SubMesh.getTexturePath();
             const auto MaterialValue = SubMesh.getMaterial();
+            const auto GameMaterialID = SubMesh.getGameMaterialID();
             FPolygonGroupID PolygonGroupID = 0;
             FSubMeshMaterialSet MaterialSet(MaterialValue,
-                TexturePath.empty() ? FString() : FString(TexturePath.c_str()));
+                TexturePath.empty() ? FString() : FString(TexturePath.c_str()),
+                GameMaterialID);
             
             if (!SubMeshMaterialSets.Contains(MaterialSet)) {
                 // マテリアル設定
@@ -298,6 +303,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     UE_LOG(LogTemp, Log, TEXT("LoadModel: %s %d"), *FString(Model->debugString().c_str()), Model->getAllMeshes().size());
 
     UE_LOG(LogTemp, Log, TEXT("Model->getRootNodeCount(): %d"), Model->getRootNodeCount());
+    LastCreatedComponents.Empty();
     this->PathToTexture = FPathToTexture();
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         if (bCanceled->Load(EMemoryOrder::Relaxed))
@@ -312,7 +318,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
                 UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [&bCanceled](UStaticMesh* mesh) {
                     return bCanceled->Load(EMemoryOrder::Relaxed);
                     });
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
+            }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
         StaticMeshes.Reset();
     }
 
@@ -499,6 +505,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                                     DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
 
                             }
+                            else if (SubMeshValue.GameMaterialID > -1 && !ClassificationMaterials.IsEmpty() && ClassificationMaterials.Contains(SubMeshValue.GameMaterialID)) {
+                                // マテリアル分け設定
+                                DynMaterial = UMaterialInstanceDynamic::Create(ClassificationMaterials[SubMeshValue.GameMaterialID], Component);
+                            }
                             else {
                                 //デフォルトマテリアル設定
                                 const auto SourceMaterialPath =
@@ -560,6 +570,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         ComponentSetupTask->Wait();
 
+        LastCreatedComponents.Add(ComponentRef);
         return ComponentRef;
 }
 
@@ -624,6 +635,7 @@ void FPLATEAUMeshLoader::ReloadComponentFromNode(
     AActor& InActor) {
 
     CityObjMap = cityObjMap;
+    LastCreatedComponents.Empty();
 
     ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);
 
@@ -632,7 +644,7 @@ void FPLATEAUMeshLoader::ReloadComponentFromNode(
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [CopiedStaticMeshes]() {
             UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [](UStaticMesh* mesh) {return false; });
-        }, TStatId(), nullptr, ENamedThreads::GameThread);
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     StaticMeshes.Reset();
 }
 
@@ -689,7 +701,6 @@ USceneComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent
             Actor.AddInstanceComponent(Comp);
             Comp->RegisterComponent();
             Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
         return Comp;
@@ -707,5 +718,13 @@ USceneComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent
     };
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
+}
+
+void FPLATEAUMeshLoader::SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials) {
+    ClassificationMaterials = Materials;
+}
+
+TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
+    return LastCreatedComponents;
 }
 #endif
