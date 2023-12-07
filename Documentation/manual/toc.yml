@@ -1,6 +1,6 @@
 - name: PLATEAU SDK for Unreal
   href: ../index.md
-- name: 利用を開始する
+- name: SDKの使い方
   items:
   - name: インストール
     href: Installation.md
@@ -14,3 +14,8 @@
     href: AccessCityObject.md
   - name: ランタイムAPI
     href: RuntimeAPI.md
+- name: チュートリアル
+  items:
+    - name: 属性情報によって色分けする
+      href: ChangeColorByAttrs.md
+

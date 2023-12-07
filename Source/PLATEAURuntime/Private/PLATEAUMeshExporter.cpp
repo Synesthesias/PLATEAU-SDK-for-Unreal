@@ -240,10 +240,11 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                     if (TextureSourceFiles.Num() == 0) {
                         UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex);
+                        // TODO ここを含む以下の3箇所で GameMaterialID にデフォルト値である -1 を渡しています。今後GameMaterialIDを利用した実装をする際は調整が必要かもしれません。、
+                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex, -1);
 
                         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex);
+                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, -1);
                         continue;
                     }
 
@@ -257,7 +258,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
 
         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, -1);
     }
 
     OutMesh.addVerticesList(Vertices);
