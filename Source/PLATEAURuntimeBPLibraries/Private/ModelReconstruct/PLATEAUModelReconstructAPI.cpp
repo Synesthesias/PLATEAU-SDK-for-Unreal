@@ -2,6 +2,7 @@
 
 #include "ModelReconstruct/PLATEAUModelReconstructAPI.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
+#include "PLATEAUImportSettings.h"
 
 TArray<UActorComponent*> UPLATEAUModelReconstructAPI::GetSelectedComponents(AActor* Actor) {
     TArray<UActorComponent*> arr;
@@ -23,6 +24,15 @@ TArray<UActorComponent*> UPLATEAUModelReconstructAPI::GetSelectedComponentsByCla
     return arr;
 }
 
-void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal ) {
-    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDivideGrid, bDestroyOriginal);
+EPLATEAUMeshGranularity UPLATEAUModelReconstructAPI::GetMeshGranularityFromIndex(int index) {
+    switch (index) {
+    case 0: return EPLATEAUMeshGranularity::PerCityModelArea; 
+    case 1: return EPLATEAUMeshGranularity::PerPrimaryFeatureObject;
+    case 2: return EPLATEAUMeshGranularity::PerAtomicFeatureObject;
+    }
+    return EPLATEAUMeshGranularity::PerPrimaryFeatureObject;
+}
+
+void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal ) {
+    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, false, bDestroyOriginal);
 }

@@ -15,9 +15,9 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUImportModelRuntimeAPI : public UBlue
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ImportAPI")
-    static APLATEAUCityModelLoader* GetCityModelLoaderLocal(const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData);
+    static APLATEAUCityModelLoader* GetCityModelLoaderLocal(const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ImportAPI")
-    static APLATEAUCityModelLoader* GetCityModelLoaderServer(const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData);
+    static APLATEAUCityModelLoader* GetCityModelLoaderServer(const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData);
 
 };

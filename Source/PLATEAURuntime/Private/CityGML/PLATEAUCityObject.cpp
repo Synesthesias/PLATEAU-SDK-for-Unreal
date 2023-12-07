@@ -134,6 +134,6 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectBlueprintLibrary::GetChildren(const
     return Value.Children;
 }
 
-uint64_t UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(const FPLATEAUCityObject& Value) {
-    return 1ll << static_cast<uint64_t>(Value.Type);
+int64 UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(const EPLATEAUCityObjectsType& Type) {
+    return 1ll << static_cast<int64>(Type);
 }

@@ -8,7 +8,7 @@
 
 namespace {
 
-    APLATEAUCityModelLoader* GetCityModelLoader(const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
+    APLATEAUCityModelLoader* GetCityModelLoader(const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
         const auto EmptyActorAssetData = FAssetData(APLATEAUCityModelLoader::StaticClass());
         const auto EmptyActorAsset = EmptyActorAssetData.GetAsset();
         const auto Actor = FActorFactoryAssetProxy::AddActorForAsset(EmptyActorAsset, false);
@@ -27,8 +27,13 @@ namespace {
         const auto ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
         for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
             if ((Package & PackageMask) == plateau::dataset::PredefinedCityModelPackage::None) continue;
+            if (!PackageInfoSettingsData.Contains(UPLATEAUImportSettings::GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(Package))) {
+                auto& Feature = ImportSettings->GetFeatureSettingsRef(Package);
+                Feature.bImport = false;
+                continue;
+            }
 
-            const auto& PackageInfoSettings = PackageInfoSettingsData[static_cast<int64>(Package)];
+            const auto& PackageInfoSettings = PackageInfoSettingsData[UPLATEAUImportSettings::GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(Package)];
             auto& Feature = ImportSettings->GetFeatureSettingsRef(Package);
             Feature.bImport = PackageInfoSettings.bImport;
             Feature.bImportTexture = PackageInfoSettings.bTextureImport;
@@ -50,26 +55,37 @@ namespace {
     }
 }
 
-APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData) {
+APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
 
-    const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
-    const auto Loader = GetCityModelLoader(MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
-    
-    // ClientPtrは何か設定しないとクラッシュします
-    Loader->ClientPtr = std::make_shared<plateau::network::Client>("", "");
-    Loader->Source = SourcePath;
-    Loader->bImportFromServer = false;
-    return Loader;
+    try {
+        const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
+        const auto Loader = GetCityModelLoader(MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
+
+        // ClientPtrは何か設定しないとクラッシュします
+        Loader->ClientPtr = std::make_shared<plateau::network::Client>("", "");
+        Loader->Source = SourcePath;
+        Loader->bImportFromServer = false;
+        return Loader;
+    }
+    catch (const std::exception& e) {
+        UE_LOG(LogTemp, Error, TEXT("GetCityModelLoader Error : %s"), *FString(e.what()));
+        return nullptr;
+    }       
 }
 
-APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer(const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<int64, FPackageInfoSettings>& PackageInfoSettingsData) {
-
-    const auto ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
-    const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*DatasetID), *ClientPtr);
-    const auto Loader = GetCityModelLoader(MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
+APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer(const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
+    try {
+        const auto ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
+        const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*DatasetID), *ClientPtr);
+        const auto Loader = GetCityModelLoader(MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
   
-    Loader->ClientPtr = ClientPtr;
-    Loader->Source = DatasetID;
-    Loader->bImportFromServer = true;
-    return Loader;
+        Loader->ClientPtr = ClientPtr;
+        Loader->Source = DatasetID;
+        Loader->bImportFromServer = true;
+        return Loader;
+    }
+    catch (const std::exception& e) {
+        UE_LOG(LogTemp, Error, TEXT("GetCityModelLoader Error : %s"), *FString(e.what()));
+        return nullptr;
+    }
 }

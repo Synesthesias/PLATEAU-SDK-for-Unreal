@@ -42,5 +42,5 @@ public:
     static void ApplyFilter(APLATEAUInstancedCityModel* TargetCityModel, const int64 EnablePackage, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const int64 EnableCityObject);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentAPI")
-    static void ApplyFilterWithArray(APLATEAUInstancedCityModel* TargetCityModel, const TArray<int64> EnablePackages, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<int64> EnableCityObjects);
+    static void FilterModel(APLATEAUInstancedCityModel* TargetCityModel, const TArray<EPLATEAUCityModelPackage> EnablePackages, const TMap<EPLATEAUCityModelPackage, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<EPLATEAUCityObjectsType> EnableCityObjects);
 };

@@ -13,4 +13,7 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAURuntimeUtil : public UBlueprintFunct
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|Util")
     static TArray<int64> GetAllPackages();
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|Util")
+    static TArray<EPLATEAUCityModelPackage> GetAllCityModelPackages();
 };

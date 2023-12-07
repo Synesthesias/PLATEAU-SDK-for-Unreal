@@ -35,6 +35,53 @@ enum class EPLATEAUTexturePackingResolution : uint8 {
     H8192W8192 = 2 UMETA(DisplayName = "8192x8192")
 };
 
+UENUM(BlueprintType, meta = (Bitflags))
+enum class EPLATEAUCityModelPackage : uint8 {
+    None = 0,
+    //! 建築物
+    Building = 1,
+    //! 道路
+    Road = 2,
+    //! 都市計画決定情報
+    UrbanPlanningDecision = 3,
+    //! 土地利用
+    LandUse = 4,
+    //! 都市設備
+    CityFurniture = 5,
+    //! 植生
+    Vegetation = 6,
+    //! 起伏
+    Relief = 7,
+    //! 災害リスク
+    DisasterRisk = 8,
+    //! 交通(鉄道) : rwy
+    Railway = 9,
+    //! 交通(航路) : wwy
+    Waterway = 10,
+    //! 水部 : wtr
+    WaterBody = 11,
+    //! 橋梁　 : brid
+    Bridge = 12,
+    //! 徒歩道 : trk
+    Track = 13,
+    //! 広場 : squr
+    Square = 14,
+    //! トンネル : tun
+    Tunnel = 15,
+    //! 地下埋設物 : unf
+    UndergroundFacility = 16,
+    //! 地下街 : ubld
+    UndergroundBuilding = 17,
+    //! 区域 : area 
+    Area = 18,
+    //! その他の構造物 : cons 
+    OtherConstruction = 19,
+    //! 汎用都市: gen
+    Generic = 20,
+    //! その他
+    Unknown = 32
+};
+
 USTRUCT()
 struct PLATEAURUNTIME_API FPLATEAUFeatureImportSettings {
     GENERATED_USTRUCT_BODY()
@@ -309,7 +356,61 @@ public:
         default: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Unknown);
         }
     }
-    
+
+    static EPLATEAUCityModelPackage GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(plateau::dataset::PredefinedCityModelPackage Package) {
+        switch (Package) {
+        case plateau::dataset::PredefinedCityModelPackage::Building: return EPLATEAUCityModelPackage::Building;
+        case plateau::dataset::PredefinedCityModelPackage::Road: return EPLATEAUCityModelPackage::Road;
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return EPLATEAUCityModelPackage::Vegetation;
+        case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return EPLATEAUCityModelPackage::CityFurniture;
+        case plateau::dataset::PredefinedCityModelPackage::Relief: return EPLATEAUCityModelPackage::Relief;
+        case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return EPLATEAUCityModelPackage::DisasterRisk;
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return EPLATEAUCityModelPackage::LandUse;
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return EPLATEAUCityModelPackage::UrbanPlanningDecision;
+        case plateau::dataset::PredefinedCityModelPackage::Railway: return EPLATEAUCityModelPackage::Railway;
+        case plateau::dataset::PredefinedCityModelPackage::Waterway: return EPLATEAUCityModelPackage::Waterway;
+        case plateau::dataset::PredefinedCityModelPackage::WaterBody: return EPLATEAUCityModelPackage::WaterBody;
+        case plateau::dataset::PredefinedCityModelPackage::Bridge: return EPLATEAUCityModelPackage::Bridge;
+        case plateau::dataset::PredefinedCityModelPackage::Track: return EPLATEAUCityModelPackage::Track;
+        case plateau::dataset::PredefinedCityModelPackage::Square: return EPLATEAUCityModelPackage::Square;
+        case plateau::dataset::PredefinedCityModelPackage::Tunnel: return EPLATEAUCityModelPackage::Tunnel;
+        case plateau::dataset::PredefinedCityModelPackage::UndergroundFacility: return EPLATEAUCityModelPackage::UndergroundFacility;
+        case plateau::dataset::PredefinedCityModelPackage::UndergroundBuilding: return EPLATEAUCityModelPackage::UndergroundBuilding;
+        case plateau::dataset::PredefinedCityModelPackage::Area: return EPLATEAUCityModelPackage::Area;
+        case plateau::dataset::PredefinedCityModelPackage::OtherConstruction: return EPLATEAUCityModelPackage::OtherConstruction;
+        case plateau::dataset::PredefinedCityModelPackage::Generic: return EPLATEAUCityModelPackage::Generic;
+        case plateau::dataset::PredefinedCityModelPackage::Unknown: return EPLATEAUCityModelPackage::Unknown;
+        default: return EPLATEAUCityModelPackage::Unknown;
+        }
+    }
+
+    static plateau::dataset::PredefinedCityModelPackage GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(EPLATEAUCityModelPackage Package) {
+        switch (Package) {
+        case EPLATEAUCityModelPackage::Building: return plateau::dataset::PredefinedCityModelPackage::Building;
+        case EPLATEAUCityModelPackage::Road: return plateau::dataset::PredefinedCityModelPackage::Road;
+        case EPLATEAUCityModelPackage::Vegetation: return plateau::dataset::PredefinedCityModelPackage::Vegetation;
+        case EPLATEAUCityModelPackage::CityFurniture: return plateau::dataset::PredefinedCityModelPackage::CityFurniture;
+        case EPLATEAUCityModelPackage::Relief: return plateau::dataset::PredefinedCityModelPackage::Relief;
+        case EPLATEAUCityModelPackage::DisasterRisk: return plateau::dataset::PredefinedCityModelPackage::DisasterRisk;
+        case EPLATEAUCityModelPackage::LandUse: return plateau::dataset::PredefinedCityModelPackage::LandUse;
+        case EPLATEAUCityModelPackage::UrbanPlanningDecision: return plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision;
+        case EPLATEAUCityModelPackage::Railway: return plateau::dataset::PredefinedCityModelPackage::Railway;
+        case EPLATEAUCityModelPackage::Waterway: return plateau::dataset::PredefinedCityModelPackage::Waterway;
+        case EPLATEAUCityModelPackage::WaterBody: return plateau::dataset::PredefinedCityModelPackage::WaterBody;
+        case EPLATEAUCityModelPackage::Bridge: return plateau::dataset::PredefinedCityModelPackage::Bridge;
+        case EPLATEAUCityModelPackage::Track: return plateau::dataset::PredefinedCityModelPackage::Track;
+        case EPLATEAUCityModelPackage::Square: return plateau::dataset::PredefinedCityModelPackage::Square;
+        case EPLATEAUCityModelPackage::Tunnel: return plateau::dataset::PredefinedCityModelPackage::Tunnel;
+        case EPLATEAUCityModelPackage::UndergroundFacility: return plateau::dataset::PredefinedCityModelPackage::UndergroundFacility;
+        case EPLATEAUCityModelPackage::UndergroundBuilding: return plateau::dataset::PredefinedCityModelPackage::UndergroundBuilding;
+        case EPLATEAUCityModelPackage::Area: return plateau::dataset::PredefinedCityModelPackage::Area;
+        case EPLATEAUCityModelPackage::OtherConstruction: return plateau::dataset::PredefinedCityModelPackage::OtherConstruction;
+        case EPLATEAUCityModelPackage::Generic: return plateau::dataset::PredefinedCityModelPackage::Generic;
+        case EPLATEAUCityModelPackage::Unknown: return plateau::dataset::PredefinedCityModelPackage::Unknown;
+        default: return plateau::dataset::PredefinedCityModelPackage::Unknown;
+        }
+    }
+  
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetAllPackages() {
         return {
             plateau::dataset::PredefinedCityModelPackage::Building,

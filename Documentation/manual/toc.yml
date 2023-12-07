@@ -12,3 +12,5 @@
     href: ExportCityModels.md
   - name: 属性情報へのアクセス
     href: AccessCityObject.md
+  - name: ランタイムAPI
+    href: RuntimeAPI.md

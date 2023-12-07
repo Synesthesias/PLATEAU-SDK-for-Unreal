@@ -61,13 +61,17 @@ void UPLATEAUModelAdjustmentFilterAPI::ApplyFilter(APLATEAUInstancedCityModel* T
     TargetCityModel->FilterByLods(static_cast<plateau::dataset::PredefinedCityModelPackage>(EnablePackage), CastPackageToLodRangeMap, bOnlyMaxLod)->FilterByFeatureTypes(static_cast<CityObject::CityObjectsType>(EnableCityObject | HiddenFeatureTypes));
 }
 
-void UPLATEAUModelAdjustmentFilterAPI::ApplyFilterWithArray(APLATEAUInstancedCityModel* TargetCityModel, const TArray<int64> EnablePackages, const TMap<int64, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<int64> EnableCityObjects) {
+void UPLATEAUModelAdjustmentFilterAPI::FilterModel(APLATEAUInstancedCityModel* TargetCityModel, const TArray<EPLATEAUCityModelPackage> EnablePackages, const TMap<EPLATEAUCityModelPackage, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<EPLATEAUCityObjectsType> EnableCityObjects) {
     int64 EnablePackage = 0, EnableCityObject = 0;
     for (const auto& Pkg : EnablePackages) {
-        EnablePackage |= Pkg;
+        EnablePackage |= static_cast<int64>(UPLATEAUImportSettings::GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(Pkg));
     }
     for (const auto& Obj : EnableCityObjects) {
-        EnableCityObject |= Obj;
+        EnableCityObject |= UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Obj);
     }
-    ApplyFilter(TargetCityModel, EnablePackage, PackageToLodRangeMap, bOnlyMaxLod, EnableCityObject);
+    TMap<int64, FPLATEAUPackageLod> LodMap;
+    for (const auto& kv : PackageToLodRangeMap) {
+        LodMap.Add(static_cast<int64>(UPLATEAUImportSettings::GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(kv.Key)), kv.Value);
+    }
+    ApplyFilter(TargetCityModel, EnablePackage, LodMap, bOnlyMaxLod, EnableCityObject);
 }

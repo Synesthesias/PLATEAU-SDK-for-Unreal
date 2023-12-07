@@ -14,3 +14,12 @@ TArray<int64> UPLATEAURuntimeUtil::GetAllPackages() {
     }
     return Packages;
 }
+
+
+TArray<EPLATEAUCityModelPackage> UPLATEAURuntimeUtil::GetAllCityModelPackages() {
+    TArray<EPLATEAUCityModelPackage> Packages;
+    for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {
+        Packages.Add(UPLATEAUImportSettings::GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(Package));
+    }
+    return Packages;
+}
