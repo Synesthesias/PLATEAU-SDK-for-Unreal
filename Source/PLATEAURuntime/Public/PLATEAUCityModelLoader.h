@@ -126,6 +126,9 @@ public:
         void LoadAsync(const bool bAutomationTest=false);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+        void LoadModel();
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Cancel();
 
 

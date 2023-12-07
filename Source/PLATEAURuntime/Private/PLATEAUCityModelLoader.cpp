@@ -209,6 +209,10 @@ namespace {
     }
 }
 
+void APLATEAUCityModelLoader::LoadModel() {
+    LoadAsync(false);
+}
+
 void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 #if WITH_EDITOR
 

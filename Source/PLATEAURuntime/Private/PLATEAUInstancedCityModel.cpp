@@ -366,8 +366,8 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
                 if (ObjList.Num() != 1)
                     continue;
 
-                const uint64_t CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(ObjList[0]);
-                if (static_cast<uint64_t>(InCityObjectType) & CityObjectType) 
+                const int64 CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(ObjList[0].Type);
+                if (static_cast<int64>(InCityObjectType) & CityObjectType) 
                     continue;
 
                 ApplyCollisionResponseBlockToChannel(FeatureComponent, false);
@@ -508,20 +508,15 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)  {
+UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal)  {
 
-    plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
-    switch (ReconstructType) {
-    case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
-    case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;
-    case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
-    }
+    plateau::polygonMesh::MeshGranularity MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
 
     UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
-    MeshExportOptions ExtOptions;
+    FPLATEAUMeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;

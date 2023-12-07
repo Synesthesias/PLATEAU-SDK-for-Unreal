@@ -29,6 +29,8 @@ void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const
 void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const FString& InValue) {
     switch (InType) {
     case EPLATEAUAttributeType::String:
+    case EPLATEAUAttributeType::Date:
+    case EPLATEAUAttributeType::Uri:
         StringValue = InValue;
         break;
     case EPLATEAUAttributeType::Double:
@@ -36,6 +38,7 @@ void FPLATEAUAttributeValue::SetValue(const EPLATEAUAttributeType& InType, const
         DoubleValue = FCString::Atod(*InValue);
         break;
     case EPLATEAUAttributeType::Integer:
+    case EPLATEAUAttributeType::Boolean:
         StringValue = InValue;
         IntValue = FCString::Atoi(*InValue);
         break;

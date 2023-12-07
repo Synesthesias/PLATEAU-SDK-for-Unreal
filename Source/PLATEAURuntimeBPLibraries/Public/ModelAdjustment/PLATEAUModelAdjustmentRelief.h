@@ -8,12 +8,12 @@
 
 
 UCLASS()
-class PLATEAUEDITORBPLIBRARIES_API UPLATEAUModelAdjustmentRelief : public UBlueprintFunctionLibrary {
+class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelAdjustmentRelief : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentAPI")
     static bool IsReliefPackage(const int64 Package);
 
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentPanel")
+    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|ModelAdjustmentAPI")
     static TArray<int64> GetAllReliefSettingFlags();
 };
