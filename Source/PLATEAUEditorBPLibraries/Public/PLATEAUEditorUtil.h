@@ -14,7 +14,4 @@ class PLATEAUEDITORBPLIBRARIES_API UPLATEAUEditorUtil : public UBlueprintFunctio
 public:
     UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|Util")
     static bool OpenDirectoryDialog(UPARAM(ref) FString& SourcePath);
-
-    UFUNCTION(BlueprintCallable, Category="PLATEAU|BPLibraries|Util")
-    static TArray<int64> GetAllPackages();
 };
