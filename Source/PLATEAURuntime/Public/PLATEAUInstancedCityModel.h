@@ -141,14 +141,14 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
 
     /**
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<uint8, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
@@ -157,6 +157,8 @@ public:
      * @param MaxLod 可視化される最大のLOD
      */
     static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
+
+    void CallOnReconstructFinished();
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -180,8 +182,8 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     //マテリアル分けのタイプに応じたマテリアル
-    TMap<uint8, UMaterialInterface*> ClassificationMaterials;
+    //TMap<uint8, UMaterialInterface*> ClassificationMaterials;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-    TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
+    //TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

@@ -51,9 +51,13 @@ class UPLATEAUCityObjectGroup;
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
     using FPathToTexture = TMap<FString, UTexture2D*>;
 public:
+    FPLATEAUMeshLoader() {
+        bAutomationTest = false;
+    }
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
     }
+
     void LoadModel(
         AActor* ModelActor,
         USceneComponent* ParentComponent,
@@ -70,12 +74,21 @@ public:
         TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
 
+
+    //Material分け時のタイプリストをセットします
+    //void SetClassificationTypes(TArray<uint8> &Types);
+
     //Material分け時のマテリアルリストをセットします
-    void SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials);
+    //void SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials);
 
     //前回のロードで作成されたComponentのリストを返します
     TArray<USceneComponent*> GetLastCreatedComponents();
-private:
+
+protected:
+    virtual bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    virtual UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+
+protected:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
     TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
@@ -86,8 +99,12 @@ private:
     //分割・結合時に属性情報を保持
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
+
+    //Material分け時のタイプリスト
+    //TArray<uint8>  ClassificationTypes;
+
     //Material分け時のマテリアルリスト
-    TMap<uint8, UMaterialInterface*> ClassificationMaterials;
+    //TMap<uint8, UMaterialInterface*> ClassificationMaterials;
 
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
     TArray<USceneComponent*> LastCreatedComponents;

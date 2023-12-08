@@ -42,6 +42,6 @@ TSet<EPLATEAUCityObjectsType> UPLATEAUModelClassificationAPI::SearchTypes(const 
     return UniqueTypes;
 }
 
-void UPLATEAUModelClassificationAPI::ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<uint8, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+void UPLATEAUModelClassificationAPI::ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
     TargetCityModel->ClassifyModel(TargetComponents, Materials, ReconstructType, false, bDestroyOriginal);
 }
