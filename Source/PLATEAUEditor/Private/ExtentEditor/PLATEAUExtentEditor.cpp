@@ -2,9 +2,6 @@
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 
-#include "EditorViewportTabContent.h"
-#include "Engine/Selection.h"
-#include "Misc/ScopedSlowTask.h"
 #include "Algo/AnyOf.h"
 
 #include "PLATEAUEditor.h"
@@ -20,7 +17,7 @@
 const FName FPLATEAUExtentEditor::TabId(TEXT("PLATEAUExtentEditor"));
 
 void FPLATEAUExtentEditor::RegisterTabSpawner(const TSharedRef<class FTabManager>& InTabManager) {
-    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateSP(this, &FPLATEAUExtentEditor::SpawnTab))
+    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::CanSpawnTab))
         .SetDisplayName(LOCTEXT("ViewportTab", "Viewport"))
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
 }
@@ -44,16 +41,19 @@ TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     Viewport->SetOwnerTab(DockableTab);
     DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([](TSharedRef<SDockTab> DockTab) {
         const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
-        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
-        if (EditorUtilityWidget != nullptr) {
-            const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
-            if (PLATEAUSDKEditorUtilityWidget != nullptr) {
-                PLATEAUSDKEditorUtilityWidget->CloseAreaSelectionWindowInvoke();
-            }
+        if (const auto& Euw = Window->GetEditorUtilityWidget(); Euw != nullptr) {
+            if (const auto& PlateauEuw = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Euw); PlateauEuw != nullptr) {
+                PlateauEuw->CloseAreaSelectionWindowInvoke();
+            }            
         }
     }));
 
     return DockableTab;
+}
+
+bool FPLATEAUExtentEditor::CanSpawnTab(const FSpawnTabArgs& Args) const {
+    const auto& UseSourcePath = IsImportFromServer() ? UTF8_TO_TCHAR(GetServerDatasetID().c_str()) : GetSourcePath();
+    return 0 < UseSourcePath.Len();
 }
 
 const FString& FPLATEAUExtentEditor::GetSourcePath() const {

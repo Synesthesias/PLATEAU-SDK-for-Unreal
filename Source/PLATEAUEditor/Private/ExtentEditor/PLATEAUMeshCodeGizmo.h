@@ -8,6 +8,9 @@
 namespace plateau {
     namespace geometry {
         class GeoReference;
+        constexpr auto ShowFeatureDetailIconCameraDistance = 4000;
+        constexpr auto ShowFeatureIconCameraDistance = 9000;
+        constexpr auto ShowRegionMeshIdCameraDistance = 9000;
     }
 }
 

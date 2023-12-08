@@ -88,7 +88,7 @@ namespace {
         FVector Offset{
             XOffset,
             100.0f * RowIndex - 100.0f * RowCount / 2.0f + 50.0f,
-            0.0f
+            1.0f
         };
         Offset *= PanelScaleMultiplier;
         Transform.SetTranslation(Center + Offset);
@@ -115,9 +115,6 @@ EPLATEAUFeatureInfoVisibility FPLATEAUAsyncLoadedFeatureInfoPanel::GetFeatureInf
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::SetFeatureInfoVisibility(const TArray<int>& ShowLods, const EPLATEAUFeatureInfoVisibility Value, const bool bForce) {
-    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
-        return;
-
     if (FeatureInfoVisibility == Value && !bForce)
         return;
 
@@ -224,7 +221,7 @@ void FPLATEAUAsyncLoadedFeatureInfoPanel::LoadMaxLodAsync(const FPLATEAUFeatureI
     }, LowLevelTasks::ETaskPriority::BackgroundHigh);
 }
 
-bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeconds) {
+bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent() {
     if (AddComponentStatus == EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
         return false;
 
@@ -242,38 +239,26 @@ bool FPLATEAUAsyncLoadedFeatureInfoPanel::AddIconComponent(const float DeltaSeco
         CreateComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
     }
 
-    AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::Loading;
-    DeltaTime = DeltaSeconds + DeltaTime;
-    if (AddPanelComponentSleepTime < DeltaTime && AddedIconComponentCnt < IconComponents.Num()) {
-        DeltaTime = 0;
-
-        check(IconComponents.Num() == DetailedIconComponents.Num());
+    if (AddedIconComponentCnt < IconComponents.Num()) {
         const auto Transform = CalculateIconTransform(Box, AddedIconComponentCnt % plateau::Feature::MaxIconCol, AddedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(IconComponents[AddedIconComponentCnt], Transform);
         AddedIconComponentCnt++;
-
         return true;
     }
 
-    if (AddPanelComponentSleepTime < DeltaTime && AddedDetailedIconComponentCnt < DetailedIconComponents.Num()) {
-        DeltaTime = 0;
-
+    if (AddedDetailedIconComponentCnt < DetailedIconComponents.Num()) {
         const auto Transform = CalculateIconTransform(Box, AddedDetailedIconComponentCnt % plateau::Feature::MaxIconCol, AddedDetailedIconComponentCnt / plateau::Feature::MaxIconCol, IconComponents.Num());
         PreviewScene->AddComponent(DetailedIconComponents[AddedDetailedIconComponentCnt], Transform);
-        const auto IconCnt = FMath::Min(DetailedIconComponents.Num(), plateau::Feature::MaxIconCnt);
-        if (IconCnt - 1 <= AddedDetailedIconComponentCnt++)
-            AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
-
+        AddedDetailedIconComponentCnt++;
         return true;
     }
+
+    AddComponentStatus = EPLATEAUFeatureInfoPanelStatus::FullyLoaded;
 
     return false;
 }
 
 void FPLATEAUAsyncLoadedFeatureInfoPanel::RecalculateIconTransform(const TArray<int>& ShowLods) {
-    if (CreateComponentStatus != EPLATEAUFeatureInfoPanelStatus::FullyLoaded)
-        return;
-
     const int NumFilteredIconComponents = std::accumulate(FeatureInfoMaterialMaps.begin(), FeatureInfoMaterialMaps.end(), 0, [ShowLods](const int Sum, const FPLATEAUFeatureInfoMaterialKey MaterialKey) {
         return Sum + (ShowLods.Contains(MaterialKey.Lod) ? 1 : 0);
     });
