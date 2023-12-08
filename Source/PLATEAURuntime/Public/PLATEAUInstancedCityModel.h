@@ -7,10 +7,10 @@
 #include "GameFramework/Actor.h"
 #include "PLATEAUCityObjectGroup.h"
 #include <plateau/polygon_mesh/model.h>
-
 #include <plateau/dataset/city_model_package.h>
-
+#include <PLATEAUImportSettings.h>
 #include "PLATEAUInstancedCityModel.generated.h"
+
 
 class FPLATEAUCityObject;
 struct FPLATEAUMinMaxLod {
@@ -141,14 +141,14 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 
 
     /**
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<uint8, UMaterialInterface*> Materials, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<uint8, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。

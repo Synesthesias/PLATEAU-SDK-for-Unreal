@@ -1,11 +1,11 @@
-﻿// Copyright © 2023 Ministry of Land, Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "FileHelpers.h"
 #include "PLATEAUAutomationTestBase.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "ModelAdjustment/PLATEAUModelAdjustmentBuilding.h"
-#include "ModelAdjustment/PLATEAUModelAdjustmentFilter.h"
+#include "ModelAdjustment/PLATEAUModelAdjustmentFilterAPI.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -26,7 +26,7 @@ namespace {
             TMap<int64, FPLATEAUPackageLod> PackageToLodRangeMap;
             const auto [MinLod, MaxLod] = CityModel->GetMinMaxLod(Package);
             PackageToLodRangeMap.Add(static_cast<int64>(Package), FPLATEAUPackageLod(MinLod, MaxLod));
-            UPLATEAUModelAdjustmentFilter::ApplyFilter(CityModel, EnablePackage, PackageToLodRangeMap, true, CityObjectType);
+            UPLATEAUModelAdjustmentFilterAPI::ApplyFilter(CityModel, EnablePackage, PackageToLodRangeMap, true, CityObjectType);
         }
     }
 }

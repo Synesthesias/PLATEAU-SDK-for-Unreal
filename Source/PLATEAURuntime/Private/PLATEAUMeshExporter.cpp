@@ -60,7 +60,7 @@ namespace {
     }
 }
 
-bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     ModelNames.Empty();
     TargetActor = ModelActor;
     switch (Option.FileFormat) {
@@ -75,7 +75,7 @@ bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCit
     }
 }
 
-bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
@@ -94,18 +94,20 @@ bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstan
     return true;
 }
 
-bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     plateau::meshWriter::FbxWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {
         ReferencePoint = ModelActor->GeoReference.ReferencePoint;
     } else {
         ReferencePoint = FVector::ZeroVector;
     }
+    plateau::meshWriter::FbxWriteOptions FbxOptions;
+    FbxOptions.file_format = Option.bExportAsBinary ? plateau::meshWriter::FbxFileFormat::Binary : plateau::meshWriter::FbxFileFormat::ASCII;
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + ".fbx";
-            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.FbxWriteOptions)) {
+            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], FbxOptions)) {
                 return false;
             }
         }
@@ -113,16 +115,18 @@ bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstan
     return true;
 }
 
-bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     plateau::meshWriter::GltfWriter Writer;
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
+    plateau::meshWriter::GltfWriteOptions GltfOptions;
+    GltfOptions.mesh_file_format = Option.bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLTF : plateau::meshWriter::GltfFileFormat::GLB;
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 
             std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
-            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], Option.GltfWriteOptions)) {
+            if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], GltfOptions)) {
                 return false;
             }
         }
@@ -130,7 +134,7 @@ bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInsta
     return true;
 }
 
-TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const MeshExportOptions Option) {
+TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::CreateModelFromActor(APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions Option) {
     TArray<std::shared_ptr<plateau::polygonMesh::Model>> ModelArray;
     const auto RootComponent = ModelActor->GetRootComponent();
     const auto Components = RootComponent->GetAttachChildren();
@@ -144,7 +148,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
     return ModelArray;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(USceneComponent* ModelRootComponent, const MeshExportOptions Option) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(USceneComponent* ModelRootComponent, const FPLATEAUMeshExportOptions Option) {
     auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
@@ -154,7 +158,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
     return OutModel;
 }
 
-void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const MeshExportOptions Option) {
+void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, USceneComponent* NodeRootComponent, const FPLATEAUMeshExportOptions Option) {
     for (const auto& Component : NodeRootComponent->GetAttachChildren()) {
         if (!Option.bExportHiddenObjects && !Component->IsVisible())
             continue;
@@ -167,7 +171,7 @@ void FPLATEAUMeshExporter::CreateNode(plateau::polygonMesh::Node& OutNode, UScen
     }
 }
 
-void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const MeshExportOptions Option) {
+void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, USceneComponent* MeshComponent, const FPLATEAUMeshExportOptions Option) {
     const auto StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
 
     if (StaticMeshComponent == nullptr || StaticMeshComponent->GetStaticMesh() == nullptr)
@@ -234,10 +238,27 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             if (StaticMeshComponent->GetMaterial(k) != nullptr) {
                 auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
 
+
                 //マテリアル分け時のMaterialID設定
                 if (MaterialInterface->GetMaterial()->GetName() == "ClassificationMaterial") {
                     if (MaterialInterface->GetScalarParameterValue(FName("GameMaterialID"), MaterialID)) {
                         UE_LOG(LogTemp, Log, TEXT("ClassificationMaterial Name : %s ID : %f "), *MeshComponent->GetName(), MaterialID);
+
+            /*
+            if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
+                FMaterialParameterMetadata MetaData;
+                MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
+                if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
+                    if (TextureSourceFiles.Num() == 0) {
+                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                        // TODO ここを含む以下の3箇所で GameMaterialID にデフォルト値である -1 を渡しています。今後GameMaterialIDを利用した実装をする際は調整が必要かもしれません。、
+                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex, -1);
+
+                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, -1);
+                        continue;
+                        */
                     }
                 }
                 
@@ -281,7 +302,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 /**
  * @brief UPLATEAUCityObjectGroupのリストからplateauのModelを生成
  */
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const MeshExportOptions Option) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const FPLATEAUMeshExportOptions Option) {
 
     TargetActor = ModelActor;
     auto OutModel = plateau::polygonMesh::Model::createModel();
