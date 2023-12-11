@@ -232,19 +232,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
 
         //マテリアル分け時のMaterialID
         float MaterialID = -1;
-
         if (Option.bExportTexture) {
             
             if (StaticMeshComponent->GetMaterial(k) != nullptr) {
                 auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
-
-                //マテリアル分け時のMaterialID設定
-                if (MaterialInterface->GetMaterial()->GetName() == "ClassificationMaterial") {
-                    if (MaterialInterface->GetScalarParameterValue(FName("GameMaterialID"), MaterialID)) {
-                        UE_LOG(LogTemp, Log, TEXT("ClassificationMaterial Name : %s ID : %f "), *MeshComponent->GetName(), MaterialID);
-                    }
-                }
-                
                 const auto  MaterialInstance = (UMaterialInstance*)MaterialInterface;
                 if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
 

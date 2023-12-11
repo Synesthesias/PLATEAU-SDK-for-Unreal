@@ -17,8 +17,7 @@
 #include <PLATEAUExportSettings.h>
 
 #include "Reconstruct/PLATEAUModelReconstruct.h"
-#include <Reconstruct/PLATEAUModelReconstructForClassificationPreprocess.h>
-#include <Reconstruct/PLATEAUModelReconstructForClassificationPostprocess.h>
+#include <Reconstruct/PLATEAUModelReconstructForClassification.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -497,9 +496,9 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         }
 
         //FPLATEAUModelReconstructForClassificationPreprocess ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
-        FPLATEAUModelReconstructForClassificationPreprocess ModelReconstruct_Pre(this, ReconstructType);
-        const auto& TargetCityObjects_Pre = ModelReconstruct_Pre.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
-        std::shared_ptr<plateau::polygonMesh::Model> Converted_Pre = ModelReconstruct_Pre.ConvertModelForReconstructPreprocess(TargetCityObjects_Pre, Types);
+        FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType);
+        const auto& TargetCityObjects_Pre = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+        std::shared_ptr<plateau::polygonMesh::Model> Converted_Pre = ModelReconstruct.ConvertModelForReconstructForClassification(TargetCityObjects_Pre, Types);
 
         
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
@@ -513,8 +512,8 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-         FPLATEAUModelReconstructForClassificationPostprocess ModelReconstruct_Post(this, ReconstructType);
-         const auto ResultComponents = ModelReconstruct_Post.ReconstructFromConvertedModelForClassificationPostprocess(Converted_Pre, Materials);
+         //FPLATEAUModelReconstructForClassificationPostprocess ModelReconstruct_Post(this, ReconstructType);
+         const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModelForClassification(Converted_Pre, Materials);
 
 
         /*

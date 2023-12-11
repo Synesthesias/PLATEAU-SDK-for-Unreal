@@ -1,10 +1,10 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "Reconstruct/PLATEAUMeshLoaderForClassificationPostprocess.h"
+#include "Reconstruct/PLATEAUMeshLoaderForClassification.h"
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 
-bool FPLATEAUMeshLoaderForClassificationPostprocess::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+bool FPLATEAUMeshLoaderForClassification::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
     const auto& type = StaticCast<EPLATEAUCityObjectsType>(SubMeshValue.GameMaterialID);
 
 
@@ -20,12 +20,12 @@ bool FPLATEAUMeshLoaderForClassificationPostprocess::CheckMaterialAvailability(c
 
 
 }
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassificationPostprocess::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
     const auto& type = StaticCast<EPLATEAUCityObjectsType>(SubMeshValue.GameMaterialID);
     return UMaterialInstanceDynamic::Create(ClassificationMaterials[type], Component);
 }
 
-void FPLATEAUMeshLoaderForClassificationPostprocess::SetClassificationMaterials(TMap<EPLATEAUCityObjectsType, UMaterialInterface*>& Materials) {
+void FPLATEAUMeshLoaderForClassification::SetClassificationMaterials(TMap<EPLATEAUCityObjectsType, UMaterialInterface*>& Materials) {
     ClassificationMaterials = Materials;
 }
 
