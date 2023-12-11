@@ -563,8 +563,6 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         for (auto kv : Materials) {
             if (kv.Value != nullptr) {
                 Types.Add(kv.Key);
-
-                UE_LOG(LogTemp, Error, TEXT("Type added %s"), *UEnum::GetValueAsString(kv.Key));
             }         
         }
 
@@ -591,9 +589,6 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
                     }, 3);
             }
         }
-
-        UE_LOG(LogTemp, Error, TEXT("ModelReconstruct_Post Start type %d"), ReconstructType);
-
         FPLATEAUModelReconstructForClassificationGet ModelReconstruct_Post(this, ReconstructType);
         const auto& TargetCityObjects_Post = ModelReconstruct_Post.GetUPLATEAUCityObjectGroupsFromSceneComponents(CreatedComponents);
 
