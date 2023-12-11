@@ -24,7 +24,7 @@ public:
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
      */
-    TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents);
+    virtual TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents);
 
     /**
      * @brief 選択されたComponentの結合・分割処理を行います。
@@ -33,10 +33,6 @@ public:
     std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
-
-    //マテリアル分け
-    TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationSet(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
-    TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationGet(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials);
 
 protected:
     

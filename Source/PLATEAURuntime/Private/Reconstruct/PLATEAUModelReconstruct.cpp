@@ -111,23 +111,6 @@ TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel
     return ReconstructFromConvertedModel(MeshLoader, Model);
 }
 
-TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModelForClassificationSet(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes) {
-    FPLATEAUMeshLoaderForClassificationSet MeshLoader(false);
-
-    // マテリアル分けのマテリアル設定
-    MeshLoader.SetClassificationTypes(ClassificationTypes);
-    return ReconstructFromConvertedModel(MeshLoader, Model);
-}
-
-TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModelForClassificationGet(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials) {
-
-    FPLATEAUMeshLoaderForClassificationGet MeshLoader(false);
-
-    // マテリアル分けのマテリアル設定
-    MeshLoader.SetClassificationMaterials(ClassificationMaterials);  
-    return ReconstructFromConvertedModel(MeshLoader, Model);
-}
-
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(FPLATEAUMeshLoader& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), MeshGranularity, CityObjMap, *CityModelActor);

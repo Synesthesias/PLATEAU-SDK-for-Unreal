@@ -17,6 +17,8 @@
 #include <PLATEAUExportSettings.h>
 
 #include "Reconstruct/PLATEAUModelReconstruct.h"
+#include <Reconstruct/PLATEAUModelReconstructForClassificationSet.h>
+#include <Reconstruct/PLATEAUModelReconstructForClassificationGet.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -623,7 +625,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
 
     FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
-        FPLATEAUModelReconstruct ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
+        FPLATEAUModelReconstructForClassificationSet ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
         const auto& TargetCityObjects_Pre = ModelReconstruct_Pre.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
         std::shared_ptr<plateau::polygonMesh::Model> Converted_Pre = ModelReconstruct_Pre.ConvertModelForReconstruct(TargetCityObjects_Pre);
 
@@ -650,7 +652,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationSet(Converted_Pre, Types);
 
         /*  */
-        //FPlatformProcess::Sleep(4);
+        //SleepでStaticMesh生成を待機
         for (auto comp : CreatedComponents) {
             if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
                 auto CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(comp);
@@ -663,8 +665,9 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
 
         UE_LOG(LogTemp, Error, TEXT("ModelReconstruct_Post Start type %d"), ReconstructType);
 
-        FPLATEAUModelReconstruct ModelReconstruct_Post(this, ReconstructType);
+        FPLATEAUModelReconstructForClassificationGet ModelReconstruct_Post(this, ReconstructType);
         const auto& TargetCityObjects_Post = ModelReconstruct_Post.GetUPLATEAUCityObjectGroupsFromSceneComponents(CreatedComponents);
+
         std::shared_ptr<plateau::polygonMesh::Model> Converted_Post = ModelReconstruct_Post.ConvertModelForReconstruct(TargetCityObjects_Post);
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
