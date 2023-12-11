@@ -649,7 +649,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         
         const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationSet(Converted_Pre, Types);
 
-        /* 
+        /*  */
         //FPlatformProcess::Sleep(4);
         for (auto comp : CreatedComponents) {
             if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
@@ -659,7 +659,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
                         return CityObjGrp->GetStaticMesh() != nullptr;
                     }, 3);
             }
-        }*/
+        }
 
         UE_LOG(LogTemp, Error, TEXT("ModelReconstruct_Post Start type %d"), ReconstructType);
 
