@@ -552,7 +552,6 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
 
 FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
 
-
     FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
         FPLATEAUModelReconstructForClassificationSet ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
@@ -608,13 +607,10 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             //終了イベント通知
             OnClassifyFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
-
-
         });
 
     return ClassifyTask;
 }
-
 
 void APLATEAUInstancedCityModel::CallOnReconstructFinished() {
     OnReconstructFinished.Broadcast();

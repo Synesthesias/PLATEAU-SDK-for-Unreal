@@ -25,5 +25,4 @@ public:
     TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationSet(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
 
 protected:
-    
 };

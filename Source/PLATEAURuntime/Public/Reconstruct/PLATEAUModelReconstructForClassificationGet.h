@@ -30,6 +30,4 @@ public:
     TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationGet(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials);
 
 protected:
-
-
 };

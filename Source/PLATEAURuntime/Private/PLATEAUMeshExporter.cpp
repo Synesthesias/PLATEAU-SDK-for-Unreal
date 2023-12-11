@@ -238,27 +238,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             if (StaticMeshComponent->GetMaterial(k) != nullptr) {
                 auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
 
-
                 //マテリアル分け時のMaterialID設定
                 if (MaterialInterface->GetMaterial()->GetName() == "ClassificationMaterial") {
                     if (MaterialInterface->GetScalarParameterValue(FName("GameMaterialID"), MaterialID)) {
                         UE_LOG(LogTemp, Log, TEXT("ClassificationMaterial Name : %s ID : %f "), *MeshComponent->GetName(), MaterialID);
-
-            /*
-            if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
-                FMaterialParameterMetadata MetaData;
-                MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
-                if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
-                    if (TextureSourceFiles.Num() == 0) {
-                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        // TODO ここを含む以下の3箇所で GameMaterialID にデフォルト値である -1 を渡しています。今後GameMaterialIDを利用した実装をする際は調整が必要かもしれません。、
-                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex, -1);
-
-                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, -1);
-                        continue;
-                        */
                     }
                 }
                 
