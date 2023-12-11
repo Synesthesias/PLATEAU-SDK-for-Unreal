@@ -495,15 +495,13 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }
         }
 
-        //FPLATEAUModelReconstructForClassificationPreprocess ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
         FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType);
-        const auto& TargetCityObjects_Pre = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
-        std::shared_ptr<plateau::polygonMesh::Model> Converted_Pre = ModelReconstruct.ConvertModelForReconstructForClassification(TargetCityObjects_Pre, Types);
-
-        
+        const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+        std::shared_ptr<plateau::polygonMesh::Model> Converted = ModelReconstruct.ConvertModelForReconstructForClassification(TargetCityObjects, Types);
+ 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
-            for (auto comp : TargetCityObjects_Pre) {
+            for (auto comp : TargetCityObjects) {
                 if (bDestroyOriginal)
                     comp->DestroyComponent();
                 else
@@ -512,38 +510,8 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-         //FPLATEAUModelReconstructForClassificationPostprocess ModelReconstruct_Post(this, ReconstructType);
-         const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModelForClassification(Converted_Pre, Materials);
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModelForClassification(Converted, Materials);
 
-
-        /*
-        const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationPreprocess(Converted_Pre, Types);
-
-        //SleepでStaticMesh生成を待機
-        for (auto comp : CreatedComponents) {
-            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
-                auto CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(comp);
-                FGenericPlatformProcess::ConditionalSleep(
-                    [&]() {
-                        return CityObjGrp->GetStaticMesh() != nullptr;
-                    }, 3);
-            }
-        }
-        FPLATEAUModelReconstructForClassificationPostprocess ModelReconstruct_Post(this, ReconstructType);
-        const auto& TargetCityObjects_Post = ModelReconstruct_Post.GetUPLATEAUCityObjectGroupsFromSceneComponents(CreatedComponents);
-
-        std::shared_ptr<plateau::polygonMesh::Model> Converted_Post = ModelReconstruct_Post.ConvertModelForReconstruct(TargetCityObjects_Post);
-        
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
-            //コンポーネント削除
-            for (auto comp : TargetCityObjects_Post) {
-                    comp->DestroyComponent();
-            }
-            }, TStatId(), NULL, ENamedThreads::GameThread)
-            ->Wait();
-        
-        const auto ResultComponents = ModelReconstruct_Post.ReconstructFromConvertedModelForClassificationPostprocess(Converted_Post, Materials);
-        */
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //終了イベント通知
             OnClassifyFinished.Broadcast();

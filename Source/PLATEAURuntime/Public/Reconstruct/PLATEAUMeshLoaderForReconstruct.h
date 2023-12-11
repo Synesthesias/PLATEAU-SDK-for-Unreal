@@ -16,7 +16,6 @@ public:
         bAutomationTest = InbAutomationTest;
     }
 
-    //分割・結合時
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
@@ -26,7 +25,6 @@ public:
 
 protected:
 
-    //分割・結合時
     void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,

@@ -65,15 +65,7 @@ public:
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
-    /*
-    //分割・結合時
-    void ReloadComponentFromNode(
-        USceneComponent* InParentComponent,
-        const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        TMap<FString, FPLATEAUCityObject> cityObjMap,     
-        AActor& InActor);
-        */
+
     //前回のロードで作成されたComponentのリストを返します
     TArray<USceneComponent*> GetLastCreatedComponents();
 
@@ -120,17 +112,4 @@ protected:
         const FLoadInputData& InLoadInputData,
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
-    /*
-    //分割・結合時
-    void ReloadNodeRecursive(
-        USceneComponent* InParentComponent,
-        const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        AActor& InActor);
-    USceneComponent* ReloadNode(
-        USceneComponent* ParentComponent,
-        const plateau::polygonMesh::Node& Node,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        AActor& Actor);
-        */
 };
