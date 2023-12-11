@@ -6,14 +6,21 @@
 ![](../resources/manual/changeColorByAttrs/AttributeColorSampleFlood.png)
 上図は水害リスクを色分けするサンプルです。  
   
-このサンプルでは、土地計画決定情報および水害時の想定浸水高に関する属性情報を読み取り、それに応じてランタイムで色を変えます。レベルの負荷を考慮し、上図の範囲を縮小したレベルを提供しています。
+このサンプルでは、土地計画決定情報および水害時の想定浸水高に関する属性情報を読み取り、それに応じてランタイムで色を変えます。  
 
-# サンプルBlueprintを開く
+# サンプルLevel、Blueprintを開く
 
-属性情報を読み取り、色を変えるBlueprintは次の場所にあります:<br>
-`Plugins > PLATEAU SDK for Unreal Content > Samples > AttributesColorSample`
+属性情報によって色分けするサンプルLevelは次の場所にあります。  
+レベルの負荷とファイルサイズを考慮し、都市範囲を縮小して提供しています。  
+`Plugins > PLATEAU SDK for Unreal Content > Samples > AttributesColorSample > AttributesColorSample`  
 
-![](../resources/manual/changeColorByAttrs/SampleBP.png)
+![](../resources/manual/changeColorByAttrs/SampleLevel.png)
+
+
+属性情報を読み取り、色を変えるBlueprintは次の場所にあります。  
+`Plugins > PLATEAU SDK for Unreal Content > Samples > AttributesColorSample > AttributesColorSampleLogic`
+
+![](../resources/manual/changeColorByAttrs/SampleBlueprint.png)
 
 プラグインフォルダが表示されていない場合は設定からチェックボックスを入れることで表示できます。  
 
