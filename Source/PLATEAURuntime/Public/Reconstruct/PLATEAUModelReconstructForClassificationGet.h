@@ -15,7 +15,6 @@
 class PLATEAURUNTIME_API FPLATEAUModelReconstructForClassificationGet : public FPLATEAUModelReconstruct {
 
 public:
-    
     FPLATEAUModelReconstructForClassificationGet() {}
     FPLATEAUModelReconstructForClassificationGet(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
         CityModelActor = Actor;

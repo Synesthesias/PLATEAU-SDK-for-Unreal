@@ -1,7 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "PLATEAUMeshLoader.h"
 #include "Reconstruct/PLATEAUMeshLoaderForClassificationSet.h"
+#include "PLATEAUMeshLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 
 bool FPLATEAUMeshLoaderForClassificationSet::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
@@ -12,14 +12,8 @@ bool FPLATEAUMeshLoaderForClassificationSet::CheckMaterialAvailability(const FSu
         EPLATEAUCityObjectsType type = GetCityObjectsTypeFromComponent(Grp);
 
         if (ClassificationTypes.Contains(type)) {
-
-            UE_LOG(LogTemp, Error, TEXT("CheckMaterialAvailability True : %s  %s"), *UEnum::GetValueAsString(type) , *Grp->GetAllRootCityObjects().Last().GmlID);
-
             return true;
         }
-
-
-        //return ClassificationTypes.Contains(type);
     }
     return false;
 }
@@ -33,10 +27,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassificationSet::GetMaterialFor
     EPLATEAUCityObjectsType type = GetCityObjectsTypeFromComponent(StaticCast<UPLATEAUCityObjectGroup*>(Component));
     float MaterialID = static_cast<float>(type);
     ClassificationMaterial->SetScalarParameterValue(FName("GameMaterialID"), MaterialID);
-
     auto Grp = StaticCast<UPLATEAUCityObjectGroup*>(Component);
-    UE_LOG(LogTemp, Error, TEXT("ClassificationMaterial : %d %s"), MaterialID, *Grp->GetAllRootCityObjects().Last().GmlID);
-
     return ClassificationMaterial;
 }
 

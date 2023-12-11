@@ -181,9 +181,5 @@ private:
     TAtomic<bool> bIsFiltering;
     TArray<FPLATEAUCityObject> RootCityObjects;
 
-    //マテリアル分けのタイプに応じたマテリアル
-    //TMap<uint8, UMaterialInterface*> ClassificationMaterials;
-
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-    //TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

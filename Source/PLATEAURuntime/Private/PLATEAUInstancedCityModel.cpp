@@ -548,77 +548,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
 
     });
     return ConvertTask;
-
-    /*
-    plateau::polygonMesh::MeshGranularity MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
-
-    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
-
-    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
-
-    FPLATEAUMeshExportOptions ExtOptions;
-    ExtOptions.bExportHiddenObjects = false;
-    ExtOptions.bExportTexture = true;
-    ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
-
-    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetComponents, ExtOptions, ConvOption, bDestroyOriginal] {
-
-        FPLATEAUMeshExporter MeshExporter;
-        GranularityConverter Converter;
-
-        const auto& TargetCityObjects = GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
-
-        //属性情報を覚えておきます。
-        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
-
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-
-        std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
-            //コンポーネント削除
-            for (auto comp : TargetCityObjects) {
-                if (bDestroyOriginal)
-                    comp->DestroyComponent();
-                else
-                    comp->SetVisibility(false);
-            }
-            }, TStatId(), NULL, ENamedThreads::GameThread)
-            ->Wait();
-
-        const auto components = ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
-            //終了イベント通知
-            OnReconstructFinished.Broadcast();
-            }, TStatId(), NULL, ENamedThreads::GameThread);
-
-         return components;
-        });
-    return ConvertTask;
-    */
 }
-/*
-TArray<USceneComponent*> APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
-    FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
-    FPLATEAUMeshLoader MeshLoader(false);
-
-    // マテリアル分けのマテリアルが設定されている場合
-    if (!ClassificationMaterials.IsEmpty()) 
-        MeshLoader.SetClassificationMaterials(ClassificationMaterials);
-
-    for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [this, &MeshLoader, Model, Granularity, cityObjMap, i] {
-            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), Granularity, cityObjMap, *this );
-            });  
-        AddNested(LoadComponentTask);
-        LoadComponentTask.Wait();
-    }
-    LoadComponentPipe.WaitUntilEmpty();
-    return MeshLoader.GetLastCreatedComponents();
-}
-*/
 
 FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
 
@@ -651,7 +581,6 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         
         const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationSet(Converted_Pre, Types);
 
-        /*  */
         //SleepでStaticMesh生成を待機
         for (auto comp : CreatedComponents) {
             if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
@@ -689,76 +618,6 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
         });
 
     return ClassifyTask;
-
-    /*
-    FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
-        
-        TTask<TArray<USceneComponent*>> ConvertToAtomicTask = ReconstructModel(TargetComponents, EPLATEAUMeshGranularity::PerAtomicFeatureObject, bDestroyOriginal);
-        AddNested(ConvertToAtomicTask);
-        ConvertToAtomicTask.Wait();    
-
-        //　Convert したTargetComponentsの取得
-        const auto& CreatedComponents = ConvertToAtomicTask.GetResult();
-
-        // Typeに応じてカスタムシェーダーMaterialを設定
-        for (auto comp : CreatedComponents) {
-            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
-                auto CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(comp);
-
-                FGenericPlatformProcess::ConditionalSleep(
-                    [&]() {
-                        return CityObjGrp->GetStaticMesh() != nullptr;
-                    }, 3);
-                const auto& StaticMesh = CityObjGrp->GetStaticMesh();
-                if (StaticMesh != nullptr) {   
-                    const auto& CityObjs = CityObjGrp->GetAllRootCityObjects();
-                    if (CityObjs.Num() == 1) {
-
-                        const auto& CityObj = CityObjs[0];
-                        const auto& CityObjType = StaticCast<uint8>(CityObj.Type);
-                        if (Materials.Contains(CityObjType)) {
-                            UMaterialInterface* Material = Materials[CityObjType];
-                            if (Material != nullptr) {
-                                FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {     
-                                        comp->SetMobility(EComponentMobility::Stationary);
-                                        const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/ClassificationMaterial");
-                                        UMaterial* Mat = Cast<UMaterial>(
-                                            StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                                        auto ClassificationMaterial = UMaterialInstanceDynamic::Create(Mat, comp);
-                                        float MaterialID = static_cast<float>(CityObj.Type);
-                                        ClassificationMaterial->SetScalarParameterValue(FName("GameMaterialID"), MaterialID);
-                                        StaticMesh->SetMaterial(0, ClassificationMaterial);
-                                    }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
-                            }
-                        }
-                    }
-                }
-                else {
-                    UE_LOG(LogTemp, Error, TEXT("StaticMesh Null : %s"), *comp->GetName());
-                }
-            }
-        }
-
-        UE_LOG(LogTemp, Error, TEXT("Reconvert Start type %d") , ReconstructType);
-
-        //ClassificationMaterials = Materials;
-
-        TTask<TArray<USceneComponent*>> ReconvertTask = ReconstructModel(CreatedComponents, ReconstructType, false, true);
-        AddNested(ReconvertTask);
-        ReconvertTask.Wait();
-
-        //ClassificationMaterials.Reset();
-       
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
-            //終了イベント通知
-            OnClassifyFinished.Broadcast();
-            }, TStatId(), NULL, ENamedThreads::GameThread);
-        
-        UE_LOG(LogTemp, Error, TEXT("ClassifyModel Finished"));
-        });
-        
-    return ClassifyTask;
-    */
 }
 
 

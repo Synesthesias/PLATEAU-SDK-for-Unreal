@@ -18,7 +18,6 @@
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
 
-
 TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstructForClassificationGet::GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
     TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
     for (auto comp : TargetComponents) {
@@ -37,7 +36,6 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstructForClassificationGet::G
     }
     return UniqueComponents.Array();
 }
-
 
 TArray<USceneComponent*> FPLATEAUModelReconstructForClassificationGet::ReconstructFromConvertedModelForClassificationGet(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials) {
 

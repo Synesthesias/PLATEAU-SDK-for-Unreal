@@ -81,8 +81,6 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::GetUPLATEAUCityObject
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
-    //MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
-
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
 
     FPLATEAUMeshExportOptions ExtOptions;

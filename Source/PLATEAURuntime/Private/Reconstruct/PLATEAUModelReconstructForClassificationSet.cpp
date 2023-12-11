@@ -19,7 +19,6 @@
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
 
-
 TArray<USceneComponent*> FPLATEAUModelReconstructForClassificationSet::ReconstructFromConvertedModelForClassificationSet(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes) {
     FPLATEAUMeshLoaderForClassificationSet MeshLoader(false);
 

@@ -175,7 +175,6 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
     const auto StaticMeshComponent = Cast<UStaticMeshComponent>(MeshComponent);
 
     if (StaticMeshComponent == nullptr || StaticMeshComponent->GetStaticMesh() == nullptr)
-    //if (StaticMeshComponent == nullptr)
         return;
 
     //渡すためのデータ各種
