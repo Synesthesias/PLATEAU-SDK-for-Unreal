@@ -1,10 +1,10 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#include "Reconstruct/PLATEAUMeshLoaderForClassificationSet.h"
+#include "Reconstruct/PLATEAUMeshLoaderForClassificationPreprocess.h"
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 
-bool FPLATEAUMeshLoaderForClassificationSet::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+bool FPLATEAUMeshLoaderForClassificationPreprocess::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
 
     if (!ClassificationTypes.IsEmpty() && Component->IsA(UPLATEAUCityObjectGroup::StaticClass())) {
 
@@ -18,7 +18,7 @@ bool FPLATEAUMeshLoaderForClassificationSet::CheckMaterialAvailability(const FSu
     return false;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassificationSet::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassificationPreprocess::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
     const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/ClassificationMaterial");
     UMaterial* Mat = Cast<UMaterial>(
         StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
@@ -32,11 +32,11 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassificationSet::GetMaterialFor
 }
 
 
-void FPLATEAUMeshLoaderForClassificationSet::SetClassificationTypes(TArray<EPLATEAUCityObjectsType> Types) {
+void FPLATEAUMeshLoaderForClassificationPreprocess::SetClassificationTypes(TArray<EPLATEAUCityObjectsType> Types) {
     ClassificationTypes = Types;
 }
 
-EPLATEAUCityObjectsType FPLATEAUMeshLoaderForClassificationSet::GetCityObjectsTypeFromComponent(UPLATEAUCityObjectGroup* Component) {
+EPLATEAUCityObjectsType FPLATEAUMeshLoaderForClassificationPreprocess::GetCityObjectsTypeFromComponent(UPLATEAUCityObjectGroup* Component) {
     const auto& CityObjects = Component->GetAllRootCityObjects();
     if (CityObjects.Num() == 1) {
 
@@ -46,7 +46,7 @@ EPLATEAUCityObjectsType FPLATEAUMeshLoaderForClassificationSet::GetCityObjectsTy
     return EPLATEAUCityObjectsType::COT_Unknown;
 }
 
-bool FPLATEAUMeshLoaderForClassificationSet::UseCachedMaterial() {
+bool FPLATEAUMeshLoaderForClassificationPreprocess::UseCachedMaterial() {
     return false;
 }
 

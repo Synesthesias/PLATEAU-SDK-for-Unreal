@@ -1,6 +1,6 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
-#include "Reconstruct/PLATEAUModelReconstructForClassificationGet.h"
+#include "Reconstruct/PLATEAUModelReconstructForClassificationPostprocess.h"
 #include "Tasks/Task.h"
 #include "Misc/DefaultValueHelper.h"
 
@@ -13,12 +13,11 @@
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
-#include <Reconstruct/PLATEAUMeshLoaderForClassificationGet.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
 
-TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstructForClassificationGet::GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
+TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstructForClassificationPostprocess::GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
     TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
     for (auto comp : TargetComponents) {
         if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && comp->IsVisible()) {
@@ -37,9 +36,9 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstructForClassificationGet::G
     return UniqueComponents.Array();
 }
 
-TArray<USceneComponent*> FPLATEAUModelReconstructForClassificationGet::ReconstructFromConvertedModelForClassificationGet(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials) {
+TArray<USceneComponent*> FPLATEAUModelReconstructForClassificationPostprocess::ReconstructFromConvertedModelForClassificationPostprocess(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials) {
 
-    FPLATEAUMeshLoaderForClassificationGet MeshLoader(false);
+    FPLATEAUMeshLoaderForClassificationPostprocess MeshLoader(false);
 
     // マテリアル分けのマテリアル設定
     MeshLoader.SetClassificationMaterials(ClassificationMaterials);  

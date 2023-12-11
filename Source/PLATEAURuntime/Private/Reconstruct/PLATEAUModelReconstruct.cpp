@@ -13,8 +13,6 @@
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
-#include <Reconstruct/PLATEAUMeshLoaderForClassificationSet.h>
-#include <Reconstruct/PLATEAUMeshLoaderForClassificationGet.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;

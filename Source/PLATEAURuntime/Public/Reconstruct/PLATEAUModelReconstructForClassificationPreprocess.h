@@ -12,17 +12,17 @@
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 
 
-class PLATEAURUNTIME_API FPLATEAUModelReconstructForClassificationSet : public FPLATEAUModelReconstruct {
+class PLATEAURUNTIME_API FPLATEAUModelReconstructForClassificationPreprocess : public FPLATEAUModelReconstruct {
 
 public:
-    FPLATEAUModelReconstructForClassificationSet() {}
-    FPLATEAUModelReconstructForClassificationSet(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
+    FPLATEAUModelReconstructForClassificationPreprocess() {}
+    FPLATEAUModelReconstructForClassificationPreprocess(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
         CityModelActor = Actor;
         MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
         bDivideGrid = false;
     }
     
-    TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationSet(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
+    TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationPreprocess(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
 
 protected:
 };

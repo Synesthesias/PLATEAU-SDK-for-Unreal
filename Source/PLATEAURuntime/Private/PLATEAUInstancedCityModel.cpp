@@ -17,8 +17,8 @@
 #include <PLATEAUExportSettings.h>
 
 #include "Reconstruct/PLATEAUModelReconstruct.h"
-#include <Reconstruct/PLATEAUModelReconstructForClassificationSet.h>
-#include <Reconstruct/PLATEAUModelReconstructForClassificationGet.h>
+#include <Reconstruct/PLATEAUModelReconstructForClassificationPreprocess.h>
+#include <Reconstruct/PLATEAUModelReconstructForClassificationPostprocess.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -554,7 +554,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
 
     FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
-        FPLATEAUModelReconstructForClassificationSet ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
+        FPLATEAUModelReconstructForClassificationPreprocess ModelReconstruct_Pre(this, EPLATEAUMeshGranularity::PerAtomicFeatureObject);
         const auto& TargetCityObjects_Pre = ModelReconstruct_Pre.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
         std::shared_ptr<plateau::polygonMesh::Model> Converted_Pre = ModelReconstruct_Pre.ConvertModelForReconstruct(TargetCityObjects_Pre);
 
@@ -576,7 +576,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
         
-        const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationSet(Converted_Pre, Types);
+        const auto CreatedComponents = ModelReconstruct_Pre.ReconstructFromConvertedModelForClassificationPreprocess(Converted_Pre, Types);
 
         //SleepでStaticMesh生成を待機
         for (auto comp : CreatedComponents) {
@@ -588,7 +588,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
                     }, 3);
             }
         }
-        FPLATEAUModelReconstructForClassificationGet ModelReconstruct_Post(this, ReconstructType);
+        FPLATEAUModelReconstructForClassificationPostprocess ModelReconstruct_Post(this, ReconstructType);
         const auto& TargetCityObjects_Post = ModelReconstruct_Post.GetUPLATEAUCityObjectGroupsFromSceneComponents(CreatedComponents);
 
         std::shared_ptr<plateau::polygonMesh::Model> Converted_Post = ModelReconstruct_Post.ConvertModelForReconstruct(TargetCityObjects_Post);
@@ -601,7 +601,7 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-        const auto ResultComponents = ModelReconstruct_Post.ReconstructFromConvertedModelForClassificationGet(Converted_Post, Materials);
+        const auto ResultComponents = ModelReconstruct_Post.ReconstructFromConvertedModelForClassificationPostprocess(Converted_Post, Materials);
         
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //終了イベント通知

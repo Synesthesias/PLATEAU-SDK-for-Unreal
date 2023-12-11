@@ -5,14 +5,14 @@
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
 
-class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassificationGet : public FPLATEAUMeshLoader {
+class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassificationPostprocess : public FPLATEAUMeshLoader {
 
 public:
-    FPLATEAUMeshLoaderForClassificationGet() {
+    FPLATEAUMeshLoaderForClassificationPostprocess() {
         bAutomationTest = false;
     }
 
-    FPLATEAUMeshLoaderForClassificationGet(const bool InbAutomationTest) {
+    FPLATEAUMeshLoaderForClassificationPostprocess(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
     }
 
