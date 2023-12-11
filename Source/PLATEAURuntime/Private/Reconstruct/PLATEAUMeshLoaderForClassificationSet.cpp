@@ -55,3 +55,7 @@ EPLATEAUCityObjectsType FPLATEAUMeshLoaderForClassificationSet::GetCityObjectsTy
     return EPLATEAUCityObjectsType::COT_Unknown;
 }
 
+bool FPLATEAUMeshLoaderForClassificationSet::UseCachedMaterial() {
+    return false;
+}
+

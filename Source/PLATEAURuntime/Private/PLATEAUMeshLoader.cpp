@@ -548,8 +548,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
-                        //Materialをキャッシュに保存
-                        CachedMaterials.Add(SubMeshValue, DynMaterial);
+
+                        if (UseCachedMaterial()) {
+                            //Materialをキャッシュに保存
+                            CachedMaterials.Add(SubMeshValue, DynMaterial);
+                        }
 
                         //SubMeshのPolygonGroupIDとMeshDescriptionのPolygonGroupIDの整合性チェック
                         TAttributesSet<FPolygonGroupID> PolygonGroupAttributes = MeshDescription->PolygonGroupAttributes();
@@ -747,6 +750,10 @@ bool FPLATEAUMeshLoader::CheckMaterialAvailability(const FSubMeshMaterialSet& Su
 }
 UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
     return nullptr;
+}
+
+bool FPLATEAUMeshLoader::UseCachedMaterial() {
+    return true;
 }
 
 #endif

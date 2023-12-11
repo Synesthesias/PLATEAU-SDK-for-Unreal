@@ -87,6 +87,7 @@ public:
 protected:
     virtual bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
     virtual UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    virtual bool UseCachedMaterial();
 
 protected:
     bool bAutomationTest;

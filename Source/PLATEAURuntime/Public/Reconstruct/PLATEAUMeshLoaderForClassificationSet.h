@@ -23,6 +23,7 @@ public:
 protected:
     bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) override;
     UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) override;
+    bool UseCachedMaterial() override;
 
 private:
 
