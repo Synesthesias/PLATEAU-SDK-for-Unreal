@@ -19,6 +19,30 @@
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
 
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassificationPreprocess::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+
+    std::shared_ptr<plateau::polygonMesh::Model> converted = FPLATEAUModelReconstruct::ConvertModelForReconstruct(TargetCityObjects);
+
+    /*
+    auto meshes = converted.get()->getAllMeshes();
+
+    for (auto mesh : meshes) {
+        auto cityObjList = mesh->getCityObjectList();
+        auto subMeshes = mesh->getSubMeshes();
+
+        for (auto cityobj : cityObjList) {
+
+            UE_LOG(LogTemp, Error, TEXT("cityobj : %d : %d, %s"), cityobj.first.primary_index, cityobj.first.atomic_index,  *FString(cityobj.second.c_str()));
+
+
+        }
+
+
+    }
+    */
+    return converted;
+}
+
 TArray<USceneComponent*> FPLATEAUModelReconstructForClassificationPreprocess::ReconstructFromConvertedModelForClassificationPreprocess(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes) {
     FPLATEAUMeshLoaderForClassificationPreprocess MeshLoader(false);
 

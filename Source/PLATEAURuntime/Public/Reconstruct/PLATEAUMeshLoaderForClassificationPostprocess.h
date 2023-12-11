@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PLATEAUMeshLoader.h"
+#include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
 
-class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassificationPostprocess : public FPLATEAUMeshLoader {
+class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassificationPostprocess : public FPLATEAUMeshLoaderForReconstruct {
 
 public:
     FPLATEAUMeshLoaderForClassificationPostprocess() {

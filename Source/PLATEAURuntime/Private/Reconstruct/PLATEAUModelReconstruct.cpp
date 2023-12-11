@@ -103,11 +103,11 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
 }
 
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
-    FPLATEAUMeshLoader MeshLoader(false);
+    FPLATEAUMeshLoaderForReconstruct MeshLoader(false);
     return ReconstructFromConvertedModel(MeshLoader, Model);
 }
 
-TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(FPLATEAUMeshLoader& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
+TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), MeshGranularity, CityObjMap, *CityModelActor);
     }

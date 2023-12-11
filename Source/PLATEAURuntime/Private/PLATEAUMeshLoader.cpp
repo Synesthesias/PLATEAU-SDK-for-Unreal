@@ -277,23 +277,24 @@ namespace {
         return StaticMesh;
     }
 
-    USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName) {
-        for (const auto& Component : ParentComponent->GetAttachChildren()) {
-            const auto TargetName = APLATEAUInstancedCityModel::GetOriginalComponentName(Component);
-            if (TargetName == OriginalName)
-                return Component;
-        }
-        return nullptr;
-    }
 
-    FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName)
-    {
-        // 元の名前の末尾に_{数値}がある場合元の名前が復元不可能になるため毎回ユニーク化
-        // ユニーク化後は{元の名前}__{数値}
-        auto Name = BaseName;
-        Name.AppendChar(TEXT('_'));
-        return MakeUniqueObjectName(Actor, Class, FName(Name)).ToString();
+}
+
+USceneComponent* FPLATEAUMeshLoader::FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName) {
+    for (const auto& Component : ParentComponent->GetAttachChildren()) {
+        const auto TargetName = APLATEAUInstancedCityModel::GetOriginalComponentName(Component);
+        if (TargetName == OriginalName)
+            return Component;
     }
+    return nullptr;
+}
+
+FString FPLATEAUMeshLoader::MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName) {
+    // 元の名前の末尾に_{数値}がある場合元の名前が復元不可能になるため毎回ユニーク化
+    // ユニーク化後は{元の名前}__{数値}
+    auto Name = BaseName;
+    Name.AppendChar(TEXT('_'));
+    return MakeUniqueObjectName(Actor, Class, FName(Name)).ToString();
 }
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent,
@@ -632,7 +633,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel,
         Node.getName());
 }
-
+/*
 void FPLATEAUMeshLoader::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
@@ -725,6 +726,7 @@ USceneComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
 }
+*/
 
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;

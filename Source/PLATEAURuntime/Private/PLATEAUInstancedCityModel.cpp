@@ -461,7 +461,6 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
         FPLATEAUModelReconstruct ModelReconstruct(this, ReconstructType);
         const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
         std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
-
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
             for (auto comp : TargetCityObjects) {

@@ -21,6 +21,8 @@ public:
         MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
         bDivideGrid = false;
     }
+
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
     
     TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationPreprocess(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
 

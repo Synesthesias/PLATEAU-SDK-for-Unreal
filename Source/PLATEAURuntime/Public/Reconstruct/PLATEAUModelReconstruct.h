@@ -9,6 +9,7 @@
 #include <plateau/polygon_mesh/model.h>
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
+#include "PLATEAUMeshLoaderForReconstruct.h"
 
 
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
@@ -30,7 +31,7 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param
      */
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
@@ -49,6 +50,6 @@ protected:
 
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
-    TArray<USceneComponent*> ReconstructFromConvertedModel(FPLATEAUMeshLoader& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
+    TArray<USceneComponent*> ReconstructFromConvertedModel(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
 
 };

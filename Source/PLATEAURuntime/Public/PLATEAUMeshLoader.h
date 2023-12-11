@@ -65,7 +65,7 @@ public:
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
-
+    /*
     //分割・結合時
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
@@ -73,11 +73,14 @@ public:
         plateau::polygonMesh::MeshGranularity Granularity,
         TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
-
+        */
     //前回のロードで作成されたComponentのリストを返します
     TArray<USceneComponent*> GetLastCreatedComponents();
 
 protected:
+    USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName);
+    FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
+
     virtual bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
     virtual UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
     virtual bool UseCachedMaterial();
@@ -96,7 +99,8 @@ protected:
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
     TArray<USceneComponent*> LastCreatedComponents;
 
-    UStaticMeshComponent* CreateStaticMeshComponent(
+    // TODO: IsReconstructフラグを消して分割・結合処理をFPLATEAUModelReconstructと分ける
+    virtual UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
@@ -116,7 +120,7 @@ protected:
         const FLoadInputData& InLoadInputData,
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
-
+    /*
     //分割・結合時
     void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
@@ -128,4 +132,5 @@ protected:
         const plateau::polygonMesh::Node& Node,
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& Actor);
+        */
 };
