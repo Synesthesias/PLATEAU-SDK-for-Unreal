@@ -34,7 +34,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
         for (auto& cityobj : cityObjList) {
-            const auto AttrInfoPtr = CityObjMap.Find(FString(cityobj.second.c_str()));
+            const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(cityobj.second.c_str()));
             if (AttrInfoPtr != nullptr) {
                 auto Type = AttrInfoPtr->Type;
                 if (ClassificationTypes.Contains(Type)) {
