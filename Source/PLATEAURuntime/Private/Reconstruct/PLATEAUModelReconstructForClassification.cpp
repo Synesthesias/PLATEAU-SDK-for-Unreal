@@ -24,28 +24,21 @@ using namespace plateau::granularityConvert;
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassification::ConvertModelForReconstructForClassification(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const TArray<EPLATEAUCityObjectsType>  ClassificationTypes) {
 
+    //最小地物単位のModelを生成
     auto OriginalMeshGranularity = MeshGranularity;
     MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
-
     std::shared_ptr<plateau::polygonMesh::Model> converted = FPLATEAUModelReconstruct::ConvertModelForReconstruct(TargetCityObjects);
-
-    
+   
+    //指定されたタイプのModelのSubMeshにGameMaterialIDを追加
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
-        //auto subMeshes = mesh->getSubMeshes();
-
         for (auto& cityobj : cityObjList) {
-
             const auto AttrInfoPtr = CityObjMap.Find(FString(cityobj.second.c_str()));
             if (AttrInfoPtr != nullptr) {
                 auto Type = AttrInfoPtr->Type;
                 if (ClassificationTypes.Contains(Type)) {
-
                     int MaterialID = static_cast<int>(Type);
-
-                    UE_LOG(LogTemp, Error, TEXT("cityobj : %d : %d, %s => %d"), cityobj.first.primary_index, cityobj.first.atomic_index, *FString(cityobj.second.c_str()), MaterialID);
-
                     auto subMeshes = mesh->getSubMeshes();
                     for (auto& subMesh : subMeshes) {
                         subMesh.setGameMaterialID(MaterialID);
@@ -56,39 +49,11 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
         }
     }
 
-    //debug
-    auto meshes2 = converted.get()->getAllMeshes();
-    for (auto& mesh : meshes2) {
-        auto cityObjList = mesh->getCityObjectList();
-        //auto subMeshes = mesh->getSubMeshes();
-
-        for (auto& cityobj : cityObjList) {
-
-            const auto AttrInfoPtr = CityObjMap.Find(FString(cityobj.second.c_str()));
-            if (AttrInfoPtr != nullptr) {
-                auto Type = AttrInfoPtr->Type;
-                if (ClassificationTypes.Contains(Type)) {
-
-                    //int MaterialID = static_cast<int>(Type);
-
-                    //UE_LOG(LogTemp, Error, TEXT("cityobj : %d : %d, %s => %d"), cityobj.first.primary_index, cityobj.first.atomic_index, *FString(cityobj.second.c_str()), MaterialID);
-
-                    auto subMeshes = mesh->getSubMeshes();
-                    for (auto& subMesh : subMeshes) {
-                        //subMesh.setGameMaterialID(MaterialID);
-
-                        UE_LOG(LogTemp, Error, TEXT("subMesh id : %d "), subMesh.getGameMaterialID());
-                    }
-                }
-            }
-        }
-    }
-
+    //地物単位に応じたModelを再生成
     MeshGranularity = OriginalMeshGranularity;
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
     GranularityConverter Converter;
-    std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));
-    
+    std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
     return finalConverted;
 }
 
