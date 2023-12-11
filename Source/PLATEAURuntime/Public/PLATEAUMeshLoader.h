@@ -74,13 +74,6 @@ public:
         TMap<FString, FPLATEAUCityObject> cityObjMap,     
         AActor& InActor);
 
-
-    //Material分け時のタイプリストをセットします
-    //void SetClassificationTypes(TArray<uint8> &Types);
-
-    //Material分け時のマテリアルリストをセットします
-    //void SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials);
-
     //前回のロードで作成されたComponentのリストを返します
     TArray<USceneComponent*> GetLastCreatedComponents();
 
@@ -99,13 +92,6 @@ protected:
 
     //分割・結合時に属性情報を保持
     TMap<FString, FPLATEAUCityObject> CityObjMap;
-
-
-    //Material分け時のタイプリスト
-    //TArray<uint8>  ClassificationTypes;
-
-    //Material分け時のマテリアルリスト
-    //TMap<uint8, UMaterialInterface*> ClassificationMaterials;
 
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
     TArray<USceneComponent*> LastCreatedComponents;

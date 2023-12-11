@@ -509,16 +509,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                                     DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
 
                             }
-                            //else if (!ClassificationTypes.IsEmpty() && Component->IsA(UPLATEAUCityObjectGroup::StaticClass())) {
                             else if(CheckMaterialAvailability(SubMeshValue, Component)){
-
                                 DynMaterial = GetMaterialForCondition(SubMeshValue, Component);
-
-                            }/*
-                            else if (SubMeshValue.GameMaterialID > -1 && !ClassificationMaterials.IsEmpty() && ClassificationMaterials.Contains(SubMeshValue.GameMaterialID)) {
-                                // マテリアル分け設定
-                                DynMaterial = UMaterialInstanceDynamic::Create(ClassificationMaterials[SubMeshValue.GameMaterialID], Component);
-                            }*/
+                            }
                             else {
                                 //デフォルトマテリアル設定
                                 const auto SourceMaterialPath =
@@ -732,15 +725,7 @@ USceneComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
         Node.getName(), true);
 }
-/*
-void FPLATEAUMeshLoader::SetClassificationMaterials(TMap<uint8, UMaterialInterface*> &Materials) {
-    ClassificationMaterials = Materials;
-}
 
-void FPLATEAUMeshLoader::SetClassificationTypes(TArray<uint8>& Types) {
-    ClassificationTypes = Types;
-}
-*/
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
 }
