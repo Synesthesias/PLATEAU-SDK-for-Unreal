@@ -25,6 +25,7 @@ protected:
     UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) override;
     bool UseCachedMaterial() override;
 
+
 private:
 
     EPLATEAUCityObjectsType GetCityObjectsTypeFromComponent(UPLATEAUCityObjectGroup* Component);

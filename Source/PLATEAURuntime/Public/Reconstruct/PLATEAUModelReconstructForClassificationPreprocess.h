@@ -22,7 +22,7 @@ public:
         bDivideGrid = false;
     }
 
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstructPreprocess(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
     
     TArray<USceneComponent*> ReconstructFromConvertedModelForClassificationPreprocess(std::shared_ptr<plateau::polygonMesh::Model> Model, TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
 
