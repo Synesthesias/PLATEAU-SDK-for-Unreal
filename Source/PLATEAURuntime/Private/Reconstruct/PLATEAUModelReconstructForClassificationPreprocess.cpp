@@ -13,6 +13,7 @@
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
+#include <Reconstruct/PLATEAUMeshLoaderForClassificationPreprocess.h>
 
 
 using namespace UE::Tasks;
