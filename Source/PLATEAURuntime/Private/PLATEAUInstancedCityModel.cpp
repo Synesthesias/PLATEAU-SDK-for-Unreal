@@ -461,12 +461,11 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
         auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, ReconstructType, bDestroyOriginal);
         AddNested(Task);
         Task.Wait();
-
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //終了イベント通知
             OnReconstructFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
-
+            
         return Task.GetResult();
         });
     return ConvertTask;
@@ -482,12 +481,12 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
         auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, ReconstructType, bDestroyOriginal);
         AddNested(Task);
         Task.Wait();
-
+        
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //終了イベント通知
             OnClassifyFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
-
+        
         return Task.GetResult();
         });
 
