@@ -13,6 +13,7 @@
 
 
 class FPLATEAUCityObject;
+class FPLATEAUModelReconstruct;
 struct FPLATEAUMinMaxLod {
     int MinLod = 0;
     int MaxLod = 0;
@@ -148,7 +149,7 @@ public:
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
@@ -165,6 +166,8 @@ protected:
      * @brief 3D都市モデル内のGMLファイルComponentの一覧を取得します。
      */
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
+
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。
