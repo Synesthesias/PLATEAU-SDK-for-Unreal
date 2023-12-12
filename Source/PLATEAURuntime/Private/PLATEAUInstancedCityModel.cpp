@@ -454,8 +454,7 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
 TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal)  {
 
     UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
-
-    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {
+    TTask<TArray<USceneComponent*>> ReconstructTask = Launch(TEXT("ReconstructTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {
 
         FPLATEAUModelReconstruct ModelReconstruct(this, ReconstructType);
         auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, ReconstructType, bDestroyOriginal);
@@ -467,14 +466,13 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
             }, TStatId(), NULL, ENamedThreads::GameThread);
             
         return Task.GetResult();
-        });
-    return ConvertTask;
+    });
+    return ReconstructTask;
 }
 
 TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
     
     UE_LOG(LogTemp, Log, TEXT("ClassifyModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
-
     TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassificationTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
         FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType, Materials);
@@ -488,8 +486,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
             }, TStatId(), NULL, ENamedThreads::GameThread);
         
         return Task.GetResult();
-        });
-
+    });
     return ClassifyTask; 
 }
 
@@ -509,8 +506,8 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-            const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(converted);
-            return ResultComponents;
-        });
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(converted);
+        return ResultComponents;
+    });
     return ConvertTask;
 }

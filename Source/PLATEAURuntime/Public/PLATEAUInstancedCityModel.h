@@ -167,6 +167,9 @@ protected:
      */
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
 
+    /**
+     * @brief 結合分離 / マテリアル分け　共通処理
+     */
     UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
