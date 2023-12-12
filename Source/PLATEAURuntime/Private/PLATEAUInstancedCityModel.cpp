@@ -471,33 +471,26 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-        const auto components = ModelReconstruct.ReconstructFromConvertedModel(converted);
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(converted);
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
             //終了イベント通知
             OnReconstructFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
 
-        return components;
+        return ResultComponents;
 
     });
     return ConvertTask;
 }
 
-FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
 
-    FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
+    TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
-        TArray<EPLATEAUCityObjectsType> Types;
-        for (auto kv : Materials) {
-            if (kv.Value != nullptr) {
-                Types.Add(kv.Key);
-            }
-        }
-
-        FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType);
+        FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType, Materials);
         const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
-        std::shared_ptr<plateau::polygonMesh::Model> Converted = ModelReconstruct.ConvertModelForReconstructForClassification(TargetCityObjects, Types);
+        std::shared_ptr<plateau::polygonMesh::Model> Converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
  
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
@@ -510,17 +503,15 @@ FTask APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> T
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModelForClassification(Converted, Materials);
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(Converted);
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //終了イベント通知
             OnClassifyFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
+
+        return ResultComponents;
         });
 
     return ClassifyTask;
-}
-
-void APLATEAUInstancedCityModel::CallOnReconstructFinished() {
-    OnReconstructFinished.Broadcast();
 }

@@ -3,28 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PLATEAUGeometry.h"
-#include "GameFramework/Actor.h"
-#include "PLATEAUCityObjectGroup.h"
-#include <plateau/polygon_mesh/model.h>
-#include <plateau/dataset/city_model_package.h>
-#include <PLATEAUImportSettings.h>
 #include "Reconstruct/PLATEAUModelReconstruct.h"
-
 
 class PLATEAURUNTIME_API FPLATEAUModelReconstructForClassification : public FPLATEAUModelReconstruct {
 
 public:
-    FPLATEAUModelReconstructForClassification() {}
-    FPLATEAUModelReconstructForClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
-        CityModelActor = Actor;
-        MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
-        bDivideGrid = false;
-    }
+    FPLATEAUModelReconstructForClassification();
+    FPLATEAUModelReconstructForClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
 
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstructForClassification(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const TArray<EPLATEAUCityObjectsType>  ClassificationTypes);
-    
-    TArray<USceneComponent*> ReconstructFromConvertedModelForClassification(std::shared_ptr<plateau::polygonMesh::Model> Model, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials);
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;    
+    TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;
 
 protected:
+
+    TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials;
 };

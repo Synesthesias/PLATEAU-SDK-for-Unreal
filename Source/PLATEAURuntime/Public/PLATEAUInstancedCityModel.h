@@ -148,7 +148,7 @@ public:
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::FTask ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
@@ -157,8 +157,6 @@ public:
      * @param MaxLod 可視化される最大のLOD
      */
     static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
-
-    void CallOnReconstructFinished();
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;

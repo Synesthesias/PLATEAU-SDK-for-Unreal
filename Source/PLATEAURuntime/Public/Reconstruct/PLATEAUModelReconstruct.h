@@ -3,24 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PLATEAUGeometry.h"
-#include "GameFramework/Actor.h"
-#include "PLATEAUCityObjectGroup.h"
-#include <plateau/polygon_mesh/model.h>
-#include <plateau/dataset/city_model_package.h>
-#include <PLATEAUImportSettings.h>
+#include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
-
 
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:
-    FPLATEAUModelReconstruct() {}
-    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
-        CityModelActor = Actor;
-        MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
-        bDivideGrid = false;
-    }
+    FPLATEAUModelReconstruct();
+    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType);
 
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
@@ -28,12 +18,16 @@ public:
     virtual TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents);
 
     /**
-     * @brief 選択されたComponentの結合・分割処理を行います。
+     * @brief 選択されたComponentの結合・分割処理用のModelを生成します
      * @param
      */
     virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
-    TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
+    /**
+     * @brief 生成されたModelからStaticMeshコンポーネントを再生成します
+     * @param
+     */
+    virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
 protected:
     

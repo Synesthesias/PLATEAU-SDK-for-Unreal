@@ -91,7 +91,7 @@ protected:
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
     TArray<USceneComponent*> LastCreatedComponents;
 
-    // TODO: IsReconstructフラグを消して分割・結合処理をFPLATEAUModelReconstructと分ける
+    // TODO: IsReconstructフラグを消して分割・結合処理を抽出しFPLATEAUModelReconstructに移行
     virtual UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,

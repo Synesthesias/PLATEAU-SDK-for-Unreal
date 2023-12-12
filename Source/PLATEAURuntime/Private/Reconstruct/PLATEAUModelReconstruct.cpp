@@ -1,21 +1,21 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 #include "Reconstruct/PLATEAUModelReconstruct.h"
-#include "Tasks/Task.h"
-#include "Misc/DefaultValueHelper.h"
-
-#include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/granularity_convert/granularity_converter.h>
-#include <citygml/citygml.h>
-#include <citygml/citymodel.h>
-
-#include "CityGML/PLATEAUCityGmlProxy.h"
 #include <PLATEAUMeshExporter.h>
-#include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
+#include "PLATEAUInstancedCityModel.h"
 
-using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
+
+
+FPLATEAUModelReconstruct::FPLATEAUModelReconstruct() {}
+
+FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
+    CityModelActor = Actor;
+    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
+    bDivideGrid = false;
+}
 
 /**
 * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成

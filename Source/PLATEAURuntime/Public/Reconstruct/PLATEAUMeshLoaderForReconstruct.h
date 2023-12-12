@@ -8,13 +8,8 @@
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForReconstruct : public FPLATEAUMeshLoader {
 
 public:
-    FPLATEAUMeshLoaderForReconstruct() {
-        bAutomationTest = false;
-    }
-
-    FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest) {
-        bAutomationTest = InbAutomationTest;
-    }
+    FPLATEAUMeshLoaderForReconstruct();
+    FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest);
 
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,

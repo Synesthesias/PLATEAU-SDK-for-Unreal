@@ -2,10 +2,15 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
 #include "PLATEAUCityModelLoader.h"
-#include "plateau/polygon_mesh/mesh_extractor.h"
-#include "citygml/citygml.h"
 #include "PLATEAUCityObjectGroup.h"
-#include "Engine/StaticMesh.h"
+
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct() {
+    bAutomationTest = false;
+}
+
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest) {
+    bAutomationTest = InbAutomationTest;
+}
 
 void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
     USceneComponent* InParentComponent,

@@ -117,7 +117,6 @@ namespace {
             Normals[FaceOffset + 0] += N;
             Normals[FaceOffset + 1] += N;
             Normals[FaceOffset + 2] += N;
-
         }
 
         for (int i = 0; i < Normals.GetNumElements(); ++i) {
@@ -276,8 +275,6 @@ namespace {
 
         return StaticMesh;
     }
-
-
 }
 
 USceneComponent* FPLATEAUMeshLoader::FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName) {
