@@ -30,7 +30,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
             ClassificationTypes.Add(kv.Key);
         }
     }
-   
+
     //指定されたタイプのModelのSubMeshにGameMaterialIDを追加
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
@@ -38,9 +38,9 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
         for (auto& cityobj : cityObjList) {
             const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(cityobj.second.c_str()));
             if (AttrInfoPtr != nullptr) {
-                auto Type = AttrInfoPtr->Type;
+                const auto Type = AttrInfoPtr->Type;
                 if (ClassificationTypes.Contains(Type)) {
-                    int MaterialID = static_cast<int>(Type);
+                    const int MaterialID = static_cast<int>(Type);
                     auto subMeshes = mesh->getSubMeshes();
                     for (auto& subMesh : subMeshes) {
                         subMesh.setGameMaterialID(MaterialID);
@@ -62,5 +62,5 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
 TArray<USceneComponent*> FPLATEAUModelReconstructForClassification::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
 
     FPLATEAUMeshLoaderForClassification MeshLoader(ClassificationMaterials, false);
-    return FPLATEAUModelReconstruct::ReconstructFromConvertedModel(MeshLoader, Model);
+    return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }

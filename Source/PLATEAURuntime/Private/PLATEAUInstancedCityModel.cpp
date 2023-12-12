@@ -486,7 +486,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
 
 TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDivideGrid, bool bDestroyOriginal) {
 
-    TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
+    TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassificationTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
         FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType, Materials);
         const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);

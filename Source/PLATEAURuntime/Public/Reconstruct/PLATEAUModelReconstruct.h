@@ -44,6 +44,10 @@ protected:
 
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
-    TArray<USceneComponent*> ReconstructFromConvertedModel(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
+    /**
+     * @brief 指定したMeshLoaderで、生成されたModelからStaticMeshコンポーネントを再生成します
+     * @param
+     */
+    TArray<USceneComponent*> ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
 
 };

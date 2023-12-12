@@ -4,10 +4,8 @@
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUExportSettings.h>
-#include "PLATEAUInstancedCityModel.h"
 
 using namespace plateau::granularityConvert;
-
 
 FPLATEAUModelReconstruct::FPLATEAUModelReconstruct() {}
 
@@ -104,10 +102,10 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
 
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
     FPLATEAUMeshLoaderForReconstruct MeshLoader(false);
-    return ReconstructFromConvertedModel(MeshLoader, Model);
+    return ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }
 
-TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
+TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), MeshGranularity, CityObjMap, *CityModelActor);
     }

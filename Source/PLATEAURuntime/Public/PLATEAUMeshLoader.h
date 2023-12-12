@@ -73,7 +73,9 @@ protected:
     USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName);
     FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
 
+    // Materialの差替えが行えるかの判定
     virtual bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    // CheckMaterialAvailability:Trueの場合に差替えるMaterialを取得
     virtual UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
     virtual bool UseCachedMaterial();
 
@@ -85,7 +87,7 @@ protected:
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
 
-    //分割・結合時に属性情報を保持
+    //分割・結合時に属性情報を保持　// TODO: FPLATEAUModelReconstructに移行
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
