@@ -17,7 +17,7 @@
 #include <PLATEAUExportSettings.h>
 
 #include "Reconstruct/PLATEAUModelReconstruct.h"
-#include <Reconstruct/PLATEAUModelReconstructForClassification.h>
+#include <Reconstruct/PLATEAUModelClassification.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -475,8 +475,8 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
     UE_LOG(LogTemp, Log, TEXT("ClassifyModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassificationTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
-        FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType, Materials);
-        auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, bDestroyOriginal);
+        FPLATEAUModelClassification ModelClassification(this, ReconstructType, Materials);
+        auto Task = ReconstructSharedTask(ModelClassification, TargetComponents, bDestroyOriginal);
         AddNested(Task);
         Task.Wait();
         

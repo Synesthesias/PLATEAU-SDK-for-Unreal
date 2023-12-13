@@ -1,15 +1,15 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
-#include <Reconstruct/PLATEAUModelReconstructForClassification.h>
+#include <Reconstruct/PLATEAUModelClassification.h>
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include <PLATEAUCityObjectGroup.h>
 
 using namespace plateau::granularityConvert;
 
-FPLATEAUModelReconstructForClassification::FPLATEAUModelReconstructForClassification() {}
+FPLATEAUModelClassification::FPLATEAUModelClassification() {}
 
-FPLATEAUModelReconstructForClassification::FPLATEAUModelReconstructForClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
+FPLATEAUModelClassification::FPLATEAUModelClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
 {
     CityModelActor = Actor;
     MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
@@ -17,7 +17,7 @@ FPLATEAUModelReconstructForClassification::FPLATEAUModelReconstructForClassifica
     bDivideGrid = false;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassification::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassification::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
     auto OriginalMeshGranularity = MeshGranularity;
@@ -59,7 +59,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstructForClassifi
     return finalConverted;
 }
 
-TArray<USceneComponent*> FPLATEAUModelReconstructForClassification::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
+TArray<USceneComponent*> FPLATEAUModelClassification::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
 
     FPLATEAUMeshLoaderForClassification MeshLoader(ClassificationMaterials, false);
     return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
