@@ -31,7 +31,7 @@ protected:
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& Actor);
 
-    UMaterialInstanceDynamic* ReplaceMaterialForTexture(const FString TexturePath) override;
+    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) override;
 
     UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 

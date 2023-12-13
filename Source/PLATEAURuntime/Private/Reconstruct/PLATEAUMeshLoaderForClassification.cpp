@@ -14,18 +14,12 @@ FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(const T
     bAutomationTest = InbAutomationTest;
 }
 
-bool FPLATEAUMeshLoaderForClassification::CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
     const auto& type = StaticCast<EPLATEAUCityObjectsType>(SubMeshValue.GameMaterialID);
-    return SubMeshValue.GameMaterialID > -1 && !ClassificationMaterials.IsEmpty() && ClassificationMaterials.Contains(type);
-}
-
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
-    const auto& type = StaticCast<EPLATEAUCityObjectsType>(SubMeshValue.GameMaterialID);
-    return UMaterialInstanceDynamic::Create(ClassificationMaterials[type], Component);
-}
-
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::ReplaceMaterialForTexture(const FString TexturePath) {
-    return nullptr;
+    if (SubMeshValue.GameMaterialID > -1 && !ClassificationMaterials.IsEmpty() && ClassificationMaterials.Contains(type)) {
+        return UMaterialInstanceDynamic::Create(ClassificationMaterials[type], Component);
+    }
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
 }
 
 

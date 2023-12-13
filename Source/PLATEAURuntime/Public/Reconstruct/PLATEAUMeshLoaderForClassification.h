@@ -12,10 +12,7 @@ public:
     FPLATEAUMeshLoaderForClassification(const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const bool InbAutomationTest);
 
 protected:
-    bool CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) override;
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) override;
-    UMaterialInstanceDynamic* ReplaceMaterialForTexture(const FString TexturePath) override;
-
+    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) override;
 private:
     //Material分け時のマテリアルリスト
     TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials;

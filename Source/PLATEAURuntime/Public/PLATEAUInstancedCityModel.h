@@ -170,7 +170,7 @@ protected:
     /**
      * @brief 結合分離 / マテリアル分け　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。

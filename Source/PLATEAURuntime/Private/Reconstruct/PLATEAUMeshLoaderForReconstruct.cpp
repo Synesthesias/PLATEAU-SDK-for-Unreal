@@ -105,7 +105,9 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
         Node.getName());
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::ReplaceMaterialForTexture(const FString TexturePath) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+
+    FString TexturePath = SubMeshValue.TexturePath;
     //分割・結合時のFallback Material取得
     if (!TexturePath.IsEmpty()) {
         FString Path, FileName;
@@ -118,7 +120,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::ReplaceMaterialForTe
             return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
         }
     }
-    return nullptr;
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,

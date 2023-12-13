@@ -457,7 +457,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
     TTask<TArray<USceneComponent*>> ReconstructTask = Launch(TEXT("ReconstructTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {
 
         FPLATEAUModelReconstruct ModelReconstruct(this, ReconstructType);
-        auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, ReconstructType, bDestroyOriginal);
+        auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, bDestroyOriginal);
         AddNested(Task);
         Task.Wait();
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
@@ -476,7 +476,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
     TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassificationTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
         FPLATEAUModelReconstructForClassification ModelReconstruct(this, ReconstructType, Materials);
-        auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, ReconstructType, bDestroyOriginal);
+        auto Task = ReconstructSharedTask(ModelReconstruct, TargetComponents, bDestroyOriginal);
         AddNested(Task);
         Task.Wait();
         
@@ -490,9 +490,9 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
     return ClassifyTask; 
 }
 
-UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructSharedTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
 
-    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ReconstructSharedTask"), [&, this, TargetComponents, ReconstructType, bDestroyOriginal] {
+    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ReconstructSharedTask"), [&, TargetComponents, bDestroyOriginal] {
         const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
         std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {

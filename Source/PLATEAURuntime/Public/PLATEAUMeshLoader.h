@@ -73,12 +73,8 @@ protected:
     USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName);
     FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
 
-    // Materialの差替えが行えるかの判定
-    virtual bool CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
-    // CheckMaterialAvailability:Trueの場合に差替えるMaterialを取得
-    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
-    // Textureの有無に応じてMaterialを差替える場合の処理
-    virtual UMaterialInstanceDynamic* ReplaceMaterialForTexture(const FString TexturePath);
+    // SubMesh情報等に応じてMaterialを作成
+    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture);
     // Loaderのタイプに応じて異なるStaticMeshComponentを作成
     virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 

@@ -437,84 +437,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             }
                         }
 
-                        if (SubMeshValue.hasMaterial) {
-                            //Material情報が存在する場合
-                            const auto SourceMaterialPath = SubMeshValue.Transparency > 0
-                                ? TEXT(
-                                    "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent")
-                                : TEXT(
-                                    "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-
-                            UMaterial* Mat = Cast<UMaterial>(
-                                StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-
-                            DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
-                            DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
-                            DynMaterial->SetScalarParameterValue("Ambient", SubMeshValue.Ambient);
-                            DynMaterial->SetScalarParameterValue("Shininess", SubMeshValue.Shininess);
-                            DynMaterial->SetScalarParameterValue("Transparency", SubMeshValue.Transparency);
-
-                            //base color とスペキュラの R:G:B の比率がほぼ同じ場合
-                            if (FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Y)
-                                && FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Z)
-                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
-                                && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z)) {
-                                //metallic = (PLATEAUのスペキュラのR) / (PLATEAUのベースカラーのR)
-                                DynMaterial->SetScalarParameterValue("Metallic", SubMeshValue.Specular.X / SubMeshValue.Diffuse.X);
-                                DynMaterial->SetScalarParameterValue("Specular", 0.f);
-                            }
-                            else {
-                                //metallicは0でその値を Specularにする。
-                                DynMaterial->SetScalarParameterValue("Metallic", 0.f);
-                                DynMaterial->SetScalarParameterValue("Specular", (SubMeshValue.Specular.X + SubMeshValue.Specular.Y + SubMeshValue.Specular.Z) / 3.0f);
-                            }
-
-                        }
-                        else {
-                            //Fallbackマテリアル設定
-                            if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
-                                DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
-
-                                // 分割・結合で使用するためにテクスチャ情報を保持
-                                TArray<UTexture*> UsedTextures;
-                                LoadInputData.FallbackMaterial->GetUsedTextures(UsedTextures, EMaterialQualityLevel::Epic, true, ERHIFeatureLevel::ES2_REMOVED, true);
-                                UTexture* ReferencedTexture = nullptr;
-                                for (const auto& UsedTexture : UsedTextures) {
-                                    const auto TextureSourceFiles = UsedTexture->AssetImportData->SourceData.SourceFiles;
-                                    // diffuseかつside(topでない)テクスチャを探す
-                                    if (!TextureSourceFiles.IsEmpty() && TextureSourceFiles[0].RelativeFilename.Contains("diffuse")
-                                        && !TextureSourceFiles[0].RelativeFilename.Contains("top")) {
-                                        ReferencedTexture = UsedTexture;
-                                        break;
-                                    }
-                                }
-                                if (ReferencedTexture != nullptr)
-                                    DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
-
-                            }
-                            else if(CheckMaterialAvailabilityForSubMesh(SubMeshValue, Component)){
-                                DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component);
-                            }
-                            else {
-                                //デフォルトマテリアル設定
-                                const auto SourceMaterialPath =
-                                    Texture != nullptr
-                                    ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
-                                    : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
-                                UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-                                DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
-                            }
-                        }
-                        //Textureが存在する場合
-                        if (Texture != nullptr)
-                            DynMaterial->SetTextureParameterValue("Texture", Texture);
-
-                        //分割・結合時のFallback Material取得
-                        UMaterialInstanceDynamic* ReplacementMat = ReplaceMaterialForTexture(TexturePath);
-                        if (ReplacementMat != nullptr)
-                            DynMaterial = ReplacementMat;
-
+                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
 
@@ -556,13 +479,90 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         return ComponentRef;
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, const std::shared_ptr <const citygml::CityModel> CityModel) {
+UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+    const plateau::polygonMesh::Mesh& InMesh, 
+    const FLoadInputData& LoadInputData, const std::shared_ptr <const citygml::CityModel> CityModel) {
     if (LoadInputData.bIncludeAttrInfo) {
         const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
         PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
         return PLATEAUCityObjectGroup;
     }
     return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+}
+
+UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+
+    UMaterialInstanceDynamic* DynMaterial = nullptr;
+    if (SubMeshValue.hasMaterial) {
+        //Material情報が存在する場合
+        const auto SourceMaterialPath = SubMeshValue.Transparency > 0
+            ? TEXT(
+                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial_Transparent")
+            : TEXT(
+                "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
+
+        UMaterial* Mat = Cast<UMaterial>(
+            StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+        DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+
+        DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
+        DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
+        DynMaterial->SetScalarParameterValue("Ambient", SubMeshValue.Ambient);
+        DynMaterial->SetScalarParameterValue("Shininess", SubMeshValue.Shininess);
+        DynMaterial->SetScalarParameterValue("Transparency", SubMeshValue.Transparency);
+
+        //base color とスペキュラの R:G:B の比率がほぼ同じ場合
+        if (FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Y)
+            && FMath::IsNearlyEqual(SubMeshValue.Diffuse.X, SubMeshValue.Diffuse.Z)
+            && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Y)
+            && FMath::IsNearlyEqual(SubMeshValue.Specular.X, SubMeshValue.Specular.Z)) {
+            //metallic = (PLATEAUのスペキュラのR) / (PLATEAUのベースカラーのR)
+            DynMaterial->SetScalarParameterValue("Metallic", SubMeshValue.Specular.X / SubMeshValue.Diffuse.X);
+            DynMaterial->SetScalarParameterValue("Specular", 0.f);
+        }
+        else {
+            //metallicは0でその値を Specularにする。
+            DynMaterial->SetScalarParameterValue("Metallic", 0.f);
+            DynMaterial->SetScalarParameterValue("Specular", (SubMeshValue.Specular.X + SubMeshValue.Specular.Y + SubMeshValue.Specular.Z) / 3.0f);
+        }
+    }
+    else {
+        //Fallbackマテリアル設定
+        if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
+            DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
+
+            // 分割・結合で使用するためにテクスチャ情報を保持
+            TArray<UTexture*> UsedTextures;
+            LoadInputData.FallbackMaterial->GetUsedTextures(UsedTextures, EMaterialQualityLevel::Epic, true, ERHIFeatureLevel::ES2_REMOVED, true);
+            UTexture* ReferencedTexture = nullptr;
+            for (const auto& UsedTexture : UsedTextures) {
+                const auto TextureSourceFiles = UsedTexture->AssetImportData->SourceData.SourceFiles;
+                // diffuseかつside(topでない)テクスチャを探す
+                if (!TextureSourceFiles.IsEmpty() && TextureSourceFiles[0].RelativeFilename.Contains("diffuse")
+                    && !TextureSourceFiles[0].RelativeFilename.Contains("top")) {
+                    ReferencedTexture = UsedTexture;
+                    break;
+                }
+            }
+            if (ReferencedTexture != nullptr)
+                DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
+
+        }
+        else {
+            //デフォルトマテリアル設定
+            const auto SourceMaterialPath =
+                Texture != nullptr
+                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
+                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+        }
+    }
+    //Textureが存在する場合
+    if (Texture != nullptr)
+        DynMaterial->SetTextureParameterValue("Texture", Texture);
+
+    return DynMaterial;
 }
 
 USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
@@ -620,18 +620,6 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
 
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
-}
-
-bool FPLATEAUMeshLoader::CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
-    return false;
-}
-
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
-    return nullptr;
-}
-
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::ReplaceMaterialForTexture(const FString TexturePath) {
-    return nullptr;
 }
 
 bool FPLATEAUMeshLoader::UseCachedMaterial() {
