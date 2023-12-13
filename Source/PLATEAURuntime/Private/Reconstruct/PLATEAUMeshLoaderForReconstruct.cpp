@@ -102,7 +102,36 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
         nullptr
     };
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
-        Node.getName(), true);
+        Node.getName());
 }
 
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::ReplaceMaterialForTexture(const FString TexturePath) {
+    //分割・結合時のFallback Material取得
+    if (!TexturePath.IsEmpty()) {
+        FString Path, FileName;
+        TexturePath.Split("/", &Path, &FileName, ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+        FString FallbackName = UPLATEAUImportSettings::GetFallbackMaterialNameFromDiffuseTextureName(FileName);
+        if (!FallbackName.IsEmpty()) {
+            FString SourcePath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback/" / FallbackName;
+            UMaterialInstance* FallbackMat = Cast<UMaterialInstance>(
+                StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
+            return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
+        }
+    }
+    return nullptr;
+}
 
+UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+    const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
+    const std::shared_ptr <const citygml::CityModel> CityModel) {
+
+    //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
+    const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
+    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
+    return PLATEAUCityObjectGroup;
+}
+
+bool FPLATEAUMeshLoaderForReconstruct::InvertMeshNormal() {
+    return false;
+}

@@ -31,6 +31,16 @@ protected:
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& Actor);
 
-private:
+    UMaterialInstanceDynamic* ReplaceMaterialForTexture(const FString TexturePath) override;
 
+    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+        const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
+        const std::shared_ptr <const citygml::CityModel> CityModel) override;
+
+    bool InvertMeshNormal() override;
+
+    //分割・結合時に属性情報を保持　
+    TMap<FString, FPLATEAUCityObject> CityObjMap;
+
+private:
 };

@@ -74,10 +74,18 @@ protected:
     FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
 
     // Materialの差替えが行えるかの判定
-    virtual bool CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    virtual bool CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
     // CheckMaterialAvailability:Trueの場合に差替えるMaterialを取得
-    virtual UMaterialInstanceDynamic* GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component);
+    // Textureの有無に応じてMaterialを差替える場合の処理
+    virtual UMaterialInstanceDynamic* ReplaceMaterialForTexture(const FString TexturePath);
+    // Loaderのタイプに応じて異なるStaticMeshComponentを作成
+    virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+        const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
+        const std::shared_ptr <const citygml::CityModel> CityModel);
+
     virtual bool UseCachedMaterial();
+    virtual bool InvertMeshNormal();
 
 protected:
     bool bAutomationTest;
@@ -87,21 +95,16 @@ protected:
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
 
-    //分割・結合時に属性情報を保持　// TODO: FPLATEAUModelReconstructに移行
-    TMap<FString, FPLATEAUCityObject> CityObjMap;
-
     // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
     TArray<USceneComponent*> LastCreatedComponents;
 
-    // TODO: IsReconstructフラグを消して分割・結合処理を抽出しFPLATEAUModelReconstructに移行
     virtual UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
-        const std::string& InNodeName,
-        bool IsReconstruct = false);
+        const std::string& InNodeName);
     USceneComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,

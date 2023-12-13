@@ -346,8 +346,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     const plateau::polygonMesh::Mesh& InMesh,
     const FLoadInputData& LoadInputData,
     const std::shared_ptr<const citygml::CityModel>
-    CityModel, const std::string& InNodeName,
-    bool IsReconstruct) {
+    CityModel, const std::string& InNodeName) {
     // コンポーネント作成
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     UStaticMesh* StaticMesh;
@@ -358,22 +357,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
             [this, &LoadInputData, &InNodeName, &InMesh, &CityModel, &Component, &Actor, &StaticMesh, &MeshDescription,
-            &NodeName, IsReconstruct]() {
-                if (LoadInputData.bIncludeAttrInfo) {
-                    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
-                    Component = PLATEAUCityObjectGroup;
-                }
-                else if (IsReconstruct) {
-                    //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
-                    const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
-                    Component = PLATEAUCityObjectGroup;
-                }
-                else {
-                    Component = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-                }
+            &NodeName]() {
 
+                Component = GetStaticMeshComponentForCondition(Actor, NAME_None, InNodeName, InMesh, LoadInputData, CityModel);
                 if (bAutomationTest) {
                     Component->Mobility = EComponentMobility::Movable;
                 }
@@ -388,7 +374,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, !IsReconstruct);
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal());
 
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&StaticMesh]() {
@@ -426,7 +412,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, &IsReconstruct] {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData] {
                 for (const auto& SubMeshValue : SubMeshMaterialSets) {
                     UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
                     if (SharedMatPtr == nullptr) {
@@ -507,8 +493,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                                     DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
 
                             }
-                            else if(CheckMaterialAvailability(SubMeshValue, Component)){
-                                DynMaterial = GetMaterialForCondition(SubMeshValue, Component);
+                            else if(CheckMaterialAvailabilityForSubMesh(SubMeshValue, Component)){
+                                DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component);
                             }
                             else {
                                 //デフォルトマテリアル設定
@@ -525,17 +511,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             DynMaterial->SetTextureParameterValue("Texture", Texture);
 
                         //分割・結合時のFallback Material取得
-                        if (IsReconstruct && !TexturePath.IsEmpty()) {
-                            FString Path, FileName;
-                            TexturePath.Split("/", &Path, &FileName, ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-                            FString FallbackName = UPLATEAUImportSettings::GetFallbackMaterialNameFromDiffuseTextureName(FileName);
-                            if (!FallbackName.IsEmpty()) {
-                                FString SourcePath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback/" / FallbackName;
-                                UMaterialInstance* FallbackMat = Cast<UMaterialInstance>(
-                                    StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-                                DynMaterial = StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
-                            }
-                        }
+                        UMaterialInstanceDynamic* ReplacementMat = ReplaceMaterialForTexture(TexturePath);
+                        if (ReplacementMat != nullptr)
+                            DynMaterial = ReplacementMat;
 
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
@@ -576,6 +554,15 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
         LastCreatedComponents.Add(ComponentRef);
         return ComponentRef;
+}
+
+UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, const std::shared_ptr <const citygml::CityModel> CityModel) {
+    if (LoadInputData.bIncludeAttrInfo) {
+        const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
+        PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
+        return PLATEAUCityObjectGroup;
+    }
+    return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
 }
 
 USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
@@ -630,113 +617,28 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel,
         Node.getName());
 }
-/*
-void FPLATEAUMeshLoader::ReloadComponentFromNode(
-    USceneComponent* InParentComponent,
-    const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
-    TMap<FString, FPLATEAUCityObject> cityObjMap,
-    AActor& InActor) {
-
-    CityObjMap = cityObjMap;
-    LastCreatedComponents.Empty();
-
-    ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);
-
-    // メッシュをワールド内にビルド
-    const auto CopiedStaticMeshes = StaticMeshes;
-    FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [CopiedStaticMeshes]() {
-            UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [](UStaticMesh* mesh) {return false; });
-        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-    StaticMeshes.Reset();
-}
-
-void FPLATEAUMeshLoader::ReloadNodeRecursive(
-    USceneComponent* InParentComponent,
-    const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
-    AActor& InActor) {
-    const auto Component = ReloadNode(InParentComponent, InNode, Granularity, InActor);
-    const size_t ChildNodeCount = InNode.getChildCount();
-    for (int i = 0; i < ChildNodeCount; i++) {
-        const auto& TargetNode = InNode.getChildAt(i);
-        ReloadNodeRecursive(Component, TargetNode, Granularity, InActor);
-    }
-}
-
-USceneComponent* FPLATEAUMeshLoader::ReloadNode(USceneComponent* ParentComponent,
-    const plateau::polygonMesh::Node& Node,
-    plateau::polygonMesh::MeshGranularity Granularity,
-    AActor& Actor) {
-    if (Node.getMesh() == nullptr || Node.getMesh()->getVertices().size() == 0) {
-        USceneComponent* Comp = nullptr;
-        UClass* StaticClass;
-        const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
-        const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
-
-            // すでに同名、同階層のComponentが存在する場合は再利用
-            if (const auto ExistComponent = FindChildComponentWithOriginalName(ParentComponent, DesiredName)) {
-                Comp = ExistComponent;
-                return;
-            }
-
-            StaticClass = UPLATEAUCityObjectGroup::StaticClass();
-            const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-            Comp = PLATEAUCityObjectGroup;
-
-            auto cityObjRef = CityObjMap.Find(DesiredName);
-            if (cityObjRef != nullptr) {
-                const FPLATEAUCityObject cityObj = *cityObjRef;
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj);
-            }
-
-            const FString NewUniqueName = MakeUniqueGmlObjectName(&Actor, StaticClass, DesiredName);
-            Comp->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
-
-            check(Comp != nullptr);
-            if (bAutomationTest) {
-                Comp->Mobility = EComponentMobility::Movable;
-            }
-            else {
-                Comp->Mobility = EComponentMobility::Static;
-            }
-
-            Actor.AddInstanceComponent(Comp);
-            Comp->RegisterComponent();
-            Comp->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
-            }, TStatId(), nullptr, ENamedThreads::GameThread);
-        Task->Wait();
-        return Comp;
-    }
-
-    plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
-    MeshExtractOptions.mesh_granularity = Granularity;
-    FLoadInputData LoadInputData
-    {
-        MeshExtractOptions,
-        std::vector<plateau::geometry::Extent>{},
-        FString(),
-        false,
-        nullptr
-    };
-    return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
-        Node.getName(), true);
-}
-*/
 
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
 }
 
-bool FPLATEAUMeshLoader::CheckMaterialAvailability(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+bool FPLATEAUMeshLoader::CheckMaterialAvailabilityForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
     return false;
 }
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForCondition(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+
+UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component) {
+    return nullptr;
+}
+
+UMaterialInstanceDynamic* FPLATEAUMeshLoader::ReplaceMaterialForTexture(const FString TexturePath) {
     return nullptr;
 }
 
 bool FPLATEAUMeshLoader::UseCachedMaterial() {
+    return true;
+}
+
+bool FPLATEAUMeshLoader::InvertMeshNormal() {
     return true;
 }
 
