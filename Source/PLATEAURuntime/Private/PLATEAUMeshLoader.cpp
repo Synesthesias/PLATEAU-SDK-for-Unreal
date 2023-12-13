@@ -438,6 +438,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         }
 
                         DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+
+                        //Textureが存在する場合
+                        if (Texture != nullptr)
+                            DynMaterial->SetTextureParameterValue("Texture", Texture);
+
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
 
@@ -558,10 +563,6 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
         }
     }
-    //Textureが存在する場合
-    if (Texture != nullptr)
-        DynMaterial->SetTextureParameterValue("Texture", Texture);
-
     return DynMaterial;
 }
 
