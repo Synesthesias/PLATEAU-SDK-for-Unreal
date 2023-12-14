@@ -6,8 +6,38 @@
 
 ## Unrealプロジェクトの作成
 - 先ほどインストールしたバージョンを起動します。
+- Project Defaultsで`C++`を選択します。
 - 適宜設定を行い`作成`を押します。
 ![](../resources/manual/installation/unrealEngineNewProjectCategory.png)
+
+<a id="blueprint_project"></a>
+
+## 既存のBlueprintプロジェクトを利用する場合
+> [!Note]
+> C++プロジェクトへのSDKを導入される場合はこの章の対応は必要ございません。  
+
+BlueprintプロジェクトにSDKを導入し、パッケージを作成した場合はアプリケーション起動時にエラーダイアログが表示されます。パッケージを利用される場合は下記の手順を追加で行って頂く必要がございます。  
+
+### ダミーのC++クラスを追加
+1. メニューからC++クラスを追加します
+   ![](../resources/manual/installation/addCppCodes.png)
+
+2. 親クラスにNoneを選択します
+   ![](../resources/manual/installation/parentClass.png)
+
+3. 新しいクラス名をつけます
+   ![](../resources/manual/installation/newClass.png)
+
+4. ダイアログを閉じた後、エディタを閉じます
+   ![](../resources/manual/installation/includeDialog.png)
+
+5. YES選択後に作成されたC++クラスがIDEで開かれます
+   ![](../resources/manual/installation/openCodes.png)
+
+6. コードをビルドします（エディタを閉じていないとビルドエラーが出ます）
+   ![](../resources/manual/installation/buildCodes.png)
+
+7. エディターを起動してプロジェクトを開いた後、パッケージを作成してアプリケーションを起動できます
 
 ## PLATEAU SDK for Unrealの導入
  - [リリースページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)から提供されている`PLATEAU-SDK-for-Unreal-{バージョン名}.zip`をダウンロードします。
@@ -49,3 +79,5 @@
 # トラブルシューティング
 うまく導入できない場合、次のことをご確認ください。
 - お使いのウイルス対策ソフトによっては、SDKに含まれるバイナリファイルが削除されることがあります。ウィルス対策ソフトによってSDKのファイルが削除されないよう設定をお願いします。
+- 既存のBlueprintプロジェクトにSDKを導入してパッケージしたアプリケーションを起動した際に下図のエラーが出ます。[こちら](#blueprint_project) を参照して下さい。
+  ![](../resources/manual/installation/moduleError.png)

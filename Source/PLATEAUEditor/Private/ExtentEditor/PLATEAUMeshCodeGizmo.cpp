@@ -12,7 +12,6 @@
 #include "Algo/AnyOf.h"
 #include "Engine/Font.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "Materials/MaterialRenderProxy.h"
 
 namespace {
     bool IsLevel4OrAbove(const plateau::dataset::MeshCode& MeshCode) {
@@ -137,12 +136,8 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
 
 void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& RegionMeshID,
                                              double CameraDistance, int IconCount) const {
-
     if (IsLevel4OrAbove(MeshCode)) return;
-
-    constexpr auto NearOffset = 8000;
-    constexpr auto FarOffset = 100000;
-
+    
     const auto CenterX = MinX + (MaxX - MinX) / 2;
     const auto Coef = 4 < IconCount ? 1.52 : 1.28;
     const auto CenterY = MinY + (MaxY - MinY) / 2 * Coef;
@@ -164,7 +159,7 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const 
     const auto Color = FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
-        if (CameraDistance <= NearOffset) {
+        if (CameraDistance < plateau::geometry::ShowRegionMeshIdCameraDistance) {
             Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
         }
     }

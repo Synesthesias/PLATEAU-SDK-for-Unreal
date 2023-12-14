@@ -83,6 +83,8 @@ TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs)
 }
 
 UEditorUtilityWidget* FPLATEAUWindow::GetEditorUtilityWidget() const {
+    if (!EditorUtilityWidgetBlueprint.IsValid())
+        return nullptr;
     return EditorUtilityWidgetBlueprint->GetCreatedWidget();
 }
 

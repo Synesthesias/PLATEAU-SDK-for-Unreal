@@ -60,7 +60,7 @@ public:
     /**
      * @brief アイコンコンポーネント追加
      */
-    bool AddIconComponent(float DeltaSeconds);
+    bool AddIconComponent();
 
     int GetIconCount() const {
         return IconComponents.Num();

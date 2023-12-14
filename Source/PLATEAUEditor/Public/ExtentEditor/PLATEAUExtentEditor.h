@@ -29,6 +29,7 @@ public:
     void UnregisterTabSpawner(const TSharedRef<class FTabManager>& TabManager);
 
     TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
+    bool CanSpawnTab(const FSpawnTabArgs& Args) const;
 
     const FString& GetSourcePath() const;
     void SetSourcePath(const FString& Path);
