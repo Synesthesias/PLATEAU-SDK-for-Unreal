@@ -137,3 +137,7 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentFo
 bool FPLATEAUMeshLoaderForReconstruct::InvertMeshNormal() {
     return false;
 }
+
+bool FPLATEAUMeshLoaderForReconstruct::OverwriteTexture() {
+    return false;
+}

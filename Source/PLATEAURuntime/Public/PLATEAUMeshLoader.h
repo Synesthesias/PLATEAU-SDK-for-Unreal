@@ -113,4 +113,6 @@ protected:
         const FLoadInputData& InLoadInputData,
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
+
+    virtual bool OverwriteTexture();
 };

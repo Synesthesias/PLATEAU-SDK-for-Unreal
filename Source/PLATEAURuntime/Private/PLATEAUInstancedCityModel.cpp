@@ -2,20 +2,15 @@
 
 
 #include "PLATEAUInstancedCityModel.h"
-
-#include "Tasks/Task.h"
 #include "Misc/DefaultValueHelper.h"
-
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
-
 #include "CityGML/PLATEAUCityGmlProxy.h"
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
-
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <Reconstruct/PLATEAUModelClassification.h>
 

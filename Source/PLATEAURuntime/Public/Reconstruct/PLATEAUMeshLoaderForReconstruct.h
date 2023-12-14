@@ -38,6 +38,7 @@ protected:
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 
     bool InvertMeshNormal() override;
+    bool OverwriteTexture() override;
 
     //分割・結合時に属性情報を保持　
     TMap<FString, FPLATEAUCityObject> CityObjMap;

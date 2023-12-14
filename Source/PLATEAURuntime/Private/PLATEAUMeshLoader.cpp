@@ -431,7 +431,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             }
                             else // テクスチャ未ロードの場合、ロードします。
                             {
-                                Texture = FPLATEAUTextureLoader::Load(TexturePath);
+                                Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
                                 // なければnullptrを返します。
                                 PathToTexture.Add(TexturePath, Texture);
                             }
@@ -628,6 +628,10 @@ bool FPLATEAUMeshLoader::UseCachedMaterial() {
 }
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {
+    return true;
+}
+
+bool FPLATEAUMeshLoader::OverwriteTexture() {
     return true;
 }
 

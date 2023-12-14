@@ -2,7 +2,7 @@
 
 #include "PLATEAUEditorUtil.h"
 #include "Interfaces/IMainFrameModule.h"
-#include "DesktopPlatform/Public/DesktopPlatformModule.h"
+#include "DesktopPlatformModule.h"
 #include "PLATEAUImportSettings.h"
 
 static constexpr TCHAR OpenDirectoryDialogTitle[] = TEXT("フォルダ選択");

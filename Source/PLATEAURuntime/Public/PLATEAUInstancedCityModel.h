@@ -9,6 +9,7 @@
 #include <plateau/polygon_mesh/model.h>
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
+#include "Tasks/Task.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
