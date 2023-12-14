@@ -165,7 +165,7 @@ namespace {
     }
 }
 
-UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSlash) {
+UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSlash, bool OverwriteTextre) {
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
@@ -205,6 +205,9 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
         NewTexture->NeverStream = true; // NeverStreamをtrueにしないと、レベルを保存して開き直したときにテクスチャ解像度が極端に低く見えます。
 
         NewTexture->AddToRoot();
+    }
+    else if (!OverwriteTextre) {
+        return NewTexture;
     }
 
     // テクスチャ上書き開始

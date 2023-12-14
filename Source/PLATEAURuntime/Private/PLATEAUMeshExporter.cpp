@@ -10,10 +10,10 @@
 #include "plateau/polygon_mesh/node.h"
 #include "plateau/polygon_mesh/mesh.h"
 #include "MaterialTypes.h"
-#include "Engine/Classes/Engine/Texture.h"
-#include "Engine/Classes/Components/StaticMeshComponent.h"
-#include "Engine/Classes/Materials/MaterialInstance.h"
-#include "Engine/Classes/Engine/StaticMesh.h"
+#include "Engine/Texture.h"
+#include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstance.h"
+#include "Engine/StaticMesh.h"
 #include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
 #include "HAL/FileManager.h"
@@ -230,35 +230,38 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString TextureFilePath = FString("");
 
+        //マテリアル分け時のMaterialID
+        float MaterialID = -1;
         if (Option.bExportTexture) {
-            const auto  MaterialInstance = (UMaterialInstance*)StaticMeshComponent->GetMaterial(k);
+            
+            if (StaticMeshComponent->GetMaterial(k) != nullptr) {
+                auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
+                const auto  MaterialInstance = (UMaterialInstance*)MaterialInterface;
+                if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
 
-            if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
-                FMaterialParameterMetadata MetaData;
-                MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
-                if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
-                    const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
-                    if (TextureSourceFiles.Num() == 0) {
-                        UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
-                        // TODO ここを含む以下の3箇所で GameMaterialID にデフォルト値である -1 を渡しています。今後GameMaterialIDを利用した実装をする際は調整が必要かもしれません。、
-                        OutMesh.addSubMesh("",nullptr, FirstIndex, EndIndex, -1);
+                    FMaterialParameterMetadata MetaData;
+                    MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
+                    if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+                        const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
+                        if (TextureSourceFiles.Num() == 0) {
+                            UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
+                            // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
+                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, MaterialID);
+                            continue;
+                        }
 
-                        // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                        OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, -1);
-                        continue;
+                        const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
+                        const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
+                        const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
+                        TextureFilePath = AssetBasePath / TextureFileRelativePath;
                     }
-
-                    const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
-                    const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
-                    const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
-                    TextureFilePath = AssetBasePath / TextureFileRelativePath;
                 }
             }
         }
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
 
         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, -1);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, MaterialID);
     }
 
     OutMesh.addVerticesList(Vertices);
