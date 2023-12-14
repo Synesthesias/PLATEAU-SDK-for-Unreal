@@ -34,6 +34,38 @@ enum class EMeshFileFormat : uint8 {
     EMeshFileFormat_MAX,
 };
 
+USTRUCT(BlueprintType)
+struct FPLATEAUMeshExportOptions {
+    GENERATED_BODY()
+
+    FPLATEAUMeshExportOptions() :
+        TransformType(EMeshTransformType::Local)
+        , bExportHiddenObjects(false)
+        , bExportTexture(true)
+        , CoordinateSystem(ECoordinateSystem::ENU)
+        , FileFormat(EMeshFileFormat::FBX)
+        , bExportAsBinary(false) {
+    }
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    EMeshTransformType TransformType;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    bool bExportHiddenObjects;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    bool bExportTexture;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    ECoordinateSystem CoordinateSystem;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    EMeshFileFormat FileFormat;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ExportSettings")
+    bool bExportAsBinary;
+};
+
 namespace plateau::Export {
     static TArray<FString> GetFoundFiles(const EMeshFileFormat InEMeshFileFormat, const FString& InExportPath) {
         TArray<FString> FoundFileArray;

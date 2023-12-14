@@ -2,19 +2,17 @@
 
 
 #include "PLATEAUInstancedCityModel.h"
-
-#include "Tasks/Task.h"
 #include "Misc/DefaultValueHelper.h"
-
 #include <plateau/dataset/i_dataset_accessor.h>
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
-
 #include "CityGML/PLATEAUCityGmlProxy.h"
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUMeshLoader.h>
 #include <PLATEAUExportSettings.h>
+#include "Reconstruct/PLATEAUModelReconstruct.h"
+#include <Reconstruct/PLATEAUModelClassification.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -81,66 +79,6 @@ namespace {
                 }
             }
         }
-    }
-
-    /**
-     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
-     */
-    TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
-        TMap<FString, FPLATEAUCityObject> cityObjMap;
-        for (auto comp : TargetCityObjects) {
-
-            if (comp->SerializedCityObjects.IsEmpty())
-                continue;
-
-            for (auto cityObj : comp->GetAllRootCityObjects()) {
-                if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
-                    // 親を探す
-                    TArray<USceneComponent*> Parents;
-                    comp->GetParentComponents(Parents);
-                    for (const auto& Parent : Parents)                         {
-                        if (Parent->GetName().Contains(comp->OutsideParent)) {
-                            for (auto pObj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
-                                cityObjMap.Add(pObj.GmlID, pObj);
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                cityObjMap.Add(cityObj.GmlID, cityObj);
-                for (auto child : cityObj.Children) {
-                    cityObjMap.Add(child.GmlID, child);
-                }
-            }
-        }
-        return cityObjMap;
-    }
-
-    /**
-     * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
-     */
-    TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
-        TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
-        for (auto comp : TargetComponents) {
-            if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
-                TArray<USceneComponent*> children;
-                comp->GetChildrenComponents(true, children);
-                for (auto child : children) {
-                    if (child->IsA(UPLATEAUCityObjectGroup::StaticClass()) && child->IsVisible()) {
-                        auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
-                        if (childCityObj->GetStaticMesh() != nullptr) {
-                            UniqueComponents.Add(childCityObj);
-                        }
-                    }
-                }
-            }
-            if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible())
-                UniqueComponents.Add(StaticCast<UPLATEAUCityObjectGroup*>(comp));
-        }
-        return UniqueComponents.Array();
     }
 }
 
@@ -366,8 +304,8 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(con
                 if (ObjList.Num() != 1)
                     continue;
 
-                const uint64_t CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(ObjList[0]);
-                if (static_cast<uint64_t>(InCityObjectType) & CityObjectType) 
+                const int64 CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(ObjList[0].Type);
+                if (static_cast<int64>(InCityObjectType) & CityObjectType) 
                     continue;
 
                 ApplyCollisionResponseBlockToChannel(FeatureComponent, false);
@@ -508,40 +446,51 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
     }
 }
 
-UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal)  {
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal)  {
 
-    plateau::polygonMesh::MeshGranularity MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
-    switch (ReconstructType) {
-    case 0: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerCityModelArea; break;
-    case 1: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject; break;
-    case 2: MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject; break;
-    }
+    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    TTask<TArray<USceneComponent*>> ReconstructModelTask = Launch(TEXT("ReconstructModelTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {
 
-    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(MeshGranularity), bDivideGrid ? TEXT("True") : TEXT("False"));
+        FPLATEAUModelReconstruct ModelReconstruct(this, ReconstructType);
+        auto Task = ReconstructTask(ModelReconstruct, TargetComponents, bDestroyOriginal);
+        AddNested(Task);
+        Task.Wait();
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //終了イベント通知
+            OnReconstructFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+            
+        return Task.GetResult();
+    });
+    return ReconstructModelTask;
+}
 
-    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+    
+    UE_LOG(LogTemp, Log, TEXT("ClassifyModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    TTask<TArray<USceneComponent*>> ClassifyModelTask = Launch(TEXT("ClassifyModelTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
 
-    MeshExportOptions ExtOptions;
-    ExtOptions.bExportHiddenObjects = false;
-    ExtOptions.bExportTexture = true;
-    ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+        FPLATEAUModelClassification ModelClassification(this, ReconstructType, Materials);
+        auto Task = ReconstructTask(ModelClassification, TargetComponents, bDestroyOriginal);
+        AddNested(Task);
+        Task.Wait();
+        
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //終了イベント通知
+            OnClassifyFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+        
+        return Task.GetResult();
+    });
+    return ClassifyModelTask;
+}
 
-    FTask ConvertTask = Launch(TEXT("ConvertTask"), [this, TargetComponents, ExtOptions, ConvOption, bDestroyOriginal] {
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
 
-        FPLATEAUMeshExporter MeshExporter;
-        GranularityConverter Converter;
-
-        const auto& TargetCityObjects = GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
-
-        //属性情報を覚えておきます。
-        TMap<FString, FPLATEAUCityObject> cityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
-
-        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-
-        std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
+    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ReconstructTask"), [&, TargetComponents, bDestroyOriginal] {
+        const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+        std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
             for (auto comp : TargetCityObjects) {
                 if (bDestroyOriginal)
@@ -552,24 +501,8 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::ReconstructModel(const TArray<UScen
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
-            ReconstructFromConvertedModel(converted, ConvOption.granularity_, cityObjMap);
-
-            FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects]() {
-                //終了イベント通知
-                OnReconstructFinished.Broadcast();
-                }, TStatId(), NULL, ENamedThreads::GameThread);
-        });
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(converted);
+        return ResultComponents;
+    });
     return ConvertTask;
-}
-
-void APLATEAUInstancedCityModel::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap)     {
-    FPipe LoadComponentPipe{ TEXT("LoadComponentPipe") };
-    FPLATEAUMeshLoader MeshLoader(false);
-    for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        FTask LoadComponentTask = LoadComponentPipe.Launch(TEXT("LoadComponentTask"), [this, &MeshLoader, Model, Granularity, cityObjMap, i] {
-            MeshLoader.ReloadComponentFromNode(this->GetRootComponent(), Model->getRootNodeAt(i), Granularity, cityObjMap, *this );
-            });  
-        AddNested(LoadComponentTask);
-        LoadComponentTask.Wait();
-    }
 }

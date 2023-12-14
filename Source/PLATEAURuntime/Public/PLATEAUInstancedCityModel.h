@@ -7,12 +7,14 @@
 #include "GameFramework/Actor.h"
 #include "PLATEAUCityObjectGroup.h"
 #include <plateau/polygon_mesh/model.h>
-
 #include <plateau/dataset/city_model_package.h>
-
+#include <PLATEAUImportSettings.h>
+#include "Tasks/Task.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
+
 class FPLATEAUCityObject;
+class FPLATEAUModelReconstruct;
 struct FPLATEAUMinMaxLod {
     int MinLod = 0;
     int MaxLod = 0;
@@ -34,6 +36,7 @@ public:
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClassifyFinishedDelegate);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -56,6 +59,12 @@ public:
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnReconstructFinishedDelegate OnReconstructFinished;
+
+    /**
+     * @brief マテリアル分け処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnClassifyFinishedDelegate OnClassifyFinished;
 
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
@@ -134,7 +143,14 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::FTask ReconstructModel(const TArray<USceneComponent*> TargetComponents, const uint8 ReconstructType, bool bDivideGrid, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+
+    /**
+     * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
+     * @param
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
@@ -153,6 +169,11 @@ protected:
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
 
     /**
+     * @brief 結合分離 / マテリアル分け　共通処理
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
+
+    /**
      * @brief 属性情報の有無を取得します。
      */
     bool HasAttributeInfo();
@@ -166,5 +187,4 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
 
     void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
-	void ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model, plateau::polygonMesh::MeshGranularity Granularity, const TMap<FString, FPLATEAUCityObject> cityObjMap);
 };

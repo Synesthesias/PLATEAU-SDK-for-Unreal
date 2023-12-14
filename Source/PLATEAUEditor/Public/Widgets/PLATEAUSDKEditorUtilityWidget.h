@@ -4,7 +4,7 @@
 
 #include <plateau/network/client.h>
 #include "CoreMinimal.h"
-#include "Blutility/Classes/EditorUtilityWidget.h"
+#include "EditorUtilityWidget.h"
 #include "PLATEAUSDKEditorUtilityWidget.generated.h"
 
 class UPLATEAUCityObjectGroup;

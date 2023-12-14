@@ -1,10 +1,11 @@
-﻿// Copyright © 2023 Ministry of Land, Infrastructure and Transport
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "FileHelpers.h"
 #include "PLATEAUAutomationTestBase.h"
 #include "PLATEAUCityModelLoader.h"
-#include "Export/PLATEAUExportModelBtn.h"
+#include "Export/PLATEAUExportModelAPI.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "PLATEAUExportSettings.h"
 #include "HAL/FileManagerGeneric.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -64,7 +65,15 @@ bool FPLATEAUTest_ModelExporter_Export_Generates_Files::RunTest(const FString& P
             return true;
         }
 
-        UPLATEAUExportModelBtn::ExportModel(Cast<APLATEAUInstancedCityModel>(CityModelActors.GetData()[0]), TestDir, 0, false, true, true, 0, 0);
+        FPLATEAUMeshExportOptions Options;
+        Options.FileFormat = EMeshFileFormat::FBX;
+        Options.bExportAsBinary = false;
+        Options.bExportHiddenObjects = true;
+        Options.bExportTexture = true;
+        Options.TransformType = EMeshTransformType::Local;
+        Options.CoordinateSystem = ECoordinateSystem::ENU;
+
+        UPLATEAUExportModelAPI::ExportModel(Cast<APLATEAUInstancedCityModel>(CityModelActors.GetData()[0]), TestDir, Options);
         const auto FoundFiles = FindFiles(TestDir, "*");
         if (FoundFiles.Num() <= 0) {
             FinishTest(false, "Failed to FindFiles");

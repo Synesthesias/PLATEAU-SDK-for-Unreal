@@ -134,6 +134,39 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectBlueprintLibrary::GetChildren(const
     return Value.Children;
 }
 
-uint64_t UPLATEAUCityObjectBlueprintLibrary::GetTypeAsUint64(const FPLATEAUCityObject& Value) {
-    return 1ll << static_cast<uint64_t>(Value.Type);
+int64 UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(const EPLATEAUCityObjectsType& Type) {
+    return 1ll << static_cast<int64>(Type);
+}
+
+FString UPLATEAUCityObjectBlueprintLibrary::GetTypeAsString(const EPLATEAUCityObjectsType& Value) {
+    switch (Value) {
+    case EPLATEAUCityObjectsType::COT_GenericCityObject: return TEXT("汎用都市 (Generic)");
+    case EPLATEAUCityObjectsType::COT_Building: return TEXT("建築物 (Building)");
+    case EPLATEAUCityObjectsType::COT_BuildingInstallation: return TEXT("建築物付属設備 (BuildingInstallation)");
+    case EPLATEAUCityObjectsType::COT_Door: return TEXT("ドア (Door)");
+    case EPLATEAUCityObjectsType::COT_Window: return TEXT("窓 (Window)");
+    case EPLATEAUCityObjectsType::COT_BuildingPart: return TEXT("建築物パーツ (BuildingPart)");
+    case EPLATEAUCityObjectsType::COT_WallSurface: return TEXT("壁面 (WallSurface)");
+    case EPLATEAUCityObjectsType::COT_RoofSurface: return TEXT("屋根面 (RoofSurface)");
+    case EPLATEAUCityObjectsType::COT_GroundSurface: return TEXT("接地面 (GroundSurface)");
+    case EPLATEAUCityObjectsType::COT_ClosureSurface: return TEXT("開口部 (ClosureSurface)");
+    case EPLATEAUCityObjectsType::COT_OuterCeilingSurface: return TEXT("外側の天井 (OuterCeilingSurface)");
+    case EPLATEAUCityObjectsType::COT_OuterFloorSurface: return TEXT("屋根の通行可能部分 (OuterFloorSurface)");
+    case EPLATEAUCityObjectsType::COT_CityFurniture: return TEXT("都市設備 (CityFurniture)");
+    case EPLATEAUCityObjectsType::COT_Track: return TEXT("徒歩道 (Track)");
+    case EPLATEAUCityObjectsType::COT_Road: return TEXT("道路 (Road)");
+    case EPLATEAUCityObjectsType::COT_Railway: return TEXT("鉄道 (Railway)");
+    case EPLATEAUCityObjectsType::COT_Square: return TEXT("広場 (Square)");
+    case EPLATEAUCityObjectsType::COT_PlantCover: return TEXT("植生 (Vegetation)");
+    case EPLATEAUCityObjectsType::COT_SolitaryVegetationObject: return TEXT("植生 (Vegetation)");
+    case EPLATEAUCityObjectsType::COT_WaterBody: return TEXT("水部 (WaterBody)");
+    case EPLATEAUCityObjectsType::COT_LandUse: return TEXT("土地利用 (LandUse)");
+    case EPLATEAUCityObjectsType::COT_Tunnel: return TEXT("トンネル (Tunnel)");
+    case EPLATEAUCityObjectsType::COT_Bridge: return TEXT("橋梁 (Bridge)");
+    case EPLATEAUCityObjectsType::COT_ReliefComponent: return TEXT("土地起伏 (Relief)");
+    case EPLATEAUCityObjectsType::COT_TINRelief: return TEXT("ポリゴンによる起伏表現 (TINRelief)");
+    case EPLATEAUCityObjectsType::COT_MassPointRelief: return TEXT("点群による起伏表現 (MassPointRelief)");
+    case EPLATEAUCityObjectsType::COT_Unknown: return TEXT("その他 (Unknown)");
+    default: return UEnum::GetValueAsString(Value);
+    }
 }

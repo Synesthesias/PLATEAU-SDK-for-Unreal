@@ -77,7 +77,7 @@ public:
     /**
      * @brief 地物情報パネルの可視性を設定します。
      */
-    void SetVisibility(const FPLATEAUMeshCodeGizmo& Gizmo, const EPLATEAUFeatureInfoVisibility Value);
+    void SetVisibility(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const EPLATEAUFeatureInfoVisibility Value);
 
     /**
      * @brief 範囲選択画面に表示する各パッケージリストを取得
@@ -94,9 +94,13 @@ public:
      */  
     static TArray<FString> GetIconFileNameList();
 
-    int GetItemCount(const FString& RegionMeshID) {
-        if (AsyncLoadedPanels.Contains(RegionMeshID)) {
-            return AsyncLoadedPanels[RegionMeshID].Get()->GetIconCount();
+    bool MeshCodeGizmoContains(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) const {
+        return AsyncLoadedPanels.Contains(MeshCodeGizmo.GetRegionMeshID());
+    }
+    
+    int GetItemCount(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
+        if (MeshCodeGizmoContains(MeshCodeGizmo)) {
+            return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->GetIconCount();
         }
         return 0;
     }
