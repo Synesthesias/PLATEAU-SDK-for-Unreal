@@ -12,7 +12,7 @@ public class PLATEAURuntimeBPLibraries : ModuleRules {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
-            new [] {
+            new string[] {
                 "Core",
                 "CoreUObject",
                 "Engine",
@@ -21,11 +21,6 @@ public class PLATEAURuntimeBPLibraries : ModuleRules {
 
         PrivateDependencyModuleNames.AddRange(
             new string[] {
-                "DesktopPlatform",
-                "MeshDescription",
-                "Slate",
-                "SlateCore",
-                "PLATEAUEditor",
                 "PLATEAURuntime",
                 "UnrealEd",
             });
