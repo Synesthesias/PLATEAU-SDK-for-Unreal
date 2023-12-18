@@ -16,14 +16,15 @@
 #include "Engine/StaticMesh.h"
 #include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
+#include "Algo/Reverse.h"
+
+#if WITH_EDITOR
 #include "HAL/FileManager.h"
 #include "filesystem"
 #include "EditorFramework/AssetImportData.h"
-#include "HAL/FileManager.h"
-#include "Algo/Reverse.h"
-using namespace plateau::polygonMesh;
+#endif
 
-#if WITH_EDITOR
+using namespace plateau::polygonMesh;
 
 namespace {
     /**
@@ -124,11 +125,12 @@ bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInsta
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
             const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
             const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
-
+#if WITH_EDITOR
             std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
             if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], GltfOptions)) {
                 return false;
             }
+#endif
         }
     }
     return true;
@@ -242,6 +244,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                     FMaterialParameterMetadata MetaData;
                     MaterialInstance->TextureParameterValues[0].GetValue(MetaData);
                     if (const auto Texture = MetaData.Value.Texture; Texture != nullptr) {
+#if WITH_EDITOR
                         const auto TextureSourceFiles = Texture->AssetImportData->GetSourceData().SourceFiles;
                         if (TextureSourceFiles.Num() == 0) {
                             UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
@@ -254,6 +257,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                         const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
                         const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
                         TextureFilePath = AssetBasePath / TextureFileRelativePath;
+#endif
                     }
                 }
             }
@@ -354,4 +358,3 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
     }
     return OutModel;
 }
-#endif

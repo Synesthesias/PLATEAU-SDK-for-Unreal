@@ -9,10 +9,10 @@
 #include "UObject/SavePackage.h"
 #include <filesystem>
 
-#include "EditorFramework/AssetImportData.h"
-namespace fs = std::filesystem;
-
 #if WITH_EDITOR
+#include "EditorFramework/AssetImportData.h"
+#endif
+namespace fs = std::filesystem;
 
 DECLARE_STATS_GROUP(TEXT("PLATEAUTextureLoader"), STATGROUP_PLATEAUTextureLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, STATGROUP_PLATEAUTextureLoader);
@@ -209,7 +209,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     else if (!OverwriteTextre) {
         return NewTexture;
     }
-
+#if WITH_EDITOR
     // テクスチャ上書き開始
     NewTexture->PreEditChange(nullptr);
 
@@ -234,7 +234,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
     // テクスチャ上書き終了
     NewTexture->PostEditChange();
-
+#endif
     // TODO: 関数化(SaveTexturePackage)
     Package->MarkPackageDirty();
 
@@ -303,5 +303,3 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
 
     return NewTexture;
 }
-
-#endif
