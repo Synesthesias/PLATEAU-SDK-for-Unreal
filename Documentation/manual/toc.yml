@@ -12,8 +12,8 @@
     href: ExportCityModels.md
   - name: 属性情報へのアクセス
     href: AccessCityObject.md
-  - name: ランタイムAPI
-    href: RuntimeAPI.md
+  - name: エディタAPI
+    href: EditorAPI.md
 - name: チュートリアル
   items:
     - name: 属性情報によって色分けする
