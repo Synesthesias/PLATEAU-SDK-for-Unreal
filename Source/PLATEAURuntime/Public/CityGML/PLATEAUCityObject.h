@@ -115,6 +115,9 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static TArray<FPLATEAUCityObject> GetChildren(UPARAM(ref) const FPLATEAUCityObject& Value);
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static FString GetTypeAsString(UPARAM(ref) const EPLATEAUCityObjectsType& Value);
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static int64 GetTypeAsInt64(UPARAM(ref) const EPLATEAUCityObjectsType& Type);

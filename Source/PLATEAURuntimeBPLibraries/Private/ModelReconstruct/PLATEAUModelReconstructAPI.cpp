@@ -34,5 +34,5 @@ EPLATEAUMeshGranularity UPLATEAUModelReconstructAPI::GetMeshGranularityFromIndex
 }
 
 void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal ) {
-    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, false, bDestroyOriginal);
+    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDestroyOriginal);
 }

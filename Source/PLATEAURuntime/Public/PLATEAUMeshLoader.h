@@ -34,9 +34,10 @@ public:
     FString TexturePath;
     FPolygonGroupID PolygonGroupID = 0;
     FString MaterialSlot = FString("");
+    int GameMaterialID = 0;
 
     FSubMeshMaterialSet();
-    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath);
+    FSubMeshMaterialSet(std::shared_ptr<const citygml::Material> mat, FString texPath, int matId);
     bool operator==(const FSubMeshMaterialSet& Other) const;
     bool Equals(const FSubMeshMaterialSet& Other) const;
 private:
@@ -50,9 +51,13 @@ class UPLATEAUCityObjectGroup;
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
     using FPathToTexture = TMap<FString, UTexture2D*>;
 public:
+    FPLATEAUMeshLoader() {
+        bAutomationTest = false;
+    }
     FPLATEAUMeshLoader(const bool InbAutomationTest) {
         bAutomationTest = InbAutomationTest;
     }
+
     void LoadModel(
         AActor* ModelActor,
         USceneComponent* ParentComponent,
@@ -61,14 +66,24 @@ public:
         const std::shared_ptr<const citygml::CityModel> CityModel,
         TAtomic<bool>* bCanceled);
 
-    //分割・結合時
-    void ReloadComponentFromNode(
-        USceneComponent* InParentComponent,
-        const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        TMap<FString, FPLATEAUCityObject> cityObjMap,     
-        AActor& InActor);
-private:
+    //前回のロードで作成されたComponentのリストを返します
+    TArray<USceneComponent*> GetLastCreatedComponents();
+
+protected:
+    USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName);
+    FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
+
+    // SubMesh情報等に応じてMaterialを作成
+    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture);
+    // Loaderのタイプに応じて異なるStaticMeshComponentを作成
+    virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+        const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
+        const std::shared_ptr <const citygml::CityModel> CityModel);
+
+    virtual bool UseCachedMaterial();
+    virtual bool InvertMeshNormal();
+
+protected:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
     TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
@@ -76,17 +91,16 @@ private:
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
 
-    //分割・結合時に属性情報を保持
-    TMap<FString, FPLATEAUCityObject> CityObjMap;
+    // 前回のLoadModel, ReloadComponentFromNode実行時に作成されたComponentを保持しておきます
+    TArray<USceneComponent*> LastCreatedComponents;
 
-    UStaticMeshComponent* CreateStaticMeshComponent(
+    virtual UStaticMeshComponent* CreateStaticMeshComponent(
         AActor& Actor,
         USceneComponent& ParentComponent,
         const plateau::polygonMesh::Mesh& InMesh,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
-        const std::string& InNodeName,
-        bool IsReconstruct = false);
+        const std::string& InNodeName);
     USceneComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
@@ -100,15 +114,5 @@ private:
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
 
-    //分割・結合時
-    void ReloadNodeRecursive(
-        USceneComponent* InParentComponent,
-        const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        AActor& InActor);
-    USceneComponent* ReloadNode(
-        USceneComponent* ParentComponent,
-        const plateau::polygonMesh::Node& Node,
-        plateau::polygonMesh::MeshGranularity Granularity,
-        AActor& Actor);
+    virtual bool OverwriteTexture();
 };

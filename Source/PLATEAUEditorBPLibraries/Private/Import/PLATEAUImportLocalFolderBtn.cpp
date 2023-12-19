@@ -3,7 +3,7 @@
 #include "Import/PLATEAUImportLocalFolderBtn.h"
 #include <plateau/dataset/dataset_source.h>
 #include "Interfaces/IMainFrameModule.h"
-#include "DesktopPlatform/Public/DesktopPlatformModule.h"
+#include "DesktopPlatformModule.h"
 
 static constexpr TCHAR OpenImportDirectoryDialogTitle[] = TEXT("入力フォルダ選択");
 
