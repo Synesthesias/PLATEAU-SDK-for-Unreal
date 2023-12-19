@@ -366,11 +366,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 else {
                     Component->Mobility = EComponentMobility::Static;
                 }
-#if WITH_EDITOR
-                Component->bVisualizeComponent = true;
-
                 // StaticMesh作成
                 StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
+#if WITH_EDITOR
+                Component->bVisualizeComponent = true;
                 MeshDescription = StaticMesh->CreateMeshDescription(0);
 #endif
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
@@ -383,13 +382,13 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         [&StaticMesh]() {
             StaticMesh->CommitMeshDescription(0);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-
+#endif
         StaticMeshes.Add(StaticMesh);
+#if WITH_EDITOR
         StaticMesh->OnPostMeshBuild().AddLambda(
             [Component](UStaticMesh* Mesh) {
                 if (Component == nullptr)
                     return;
-
                 // Runtime用にSetStaticMeshを行う際にMobilityを適切な値に変更
                 Component->SetMobility(EComponentMobility::Type::Stationary);
                 Component->SetStaticMesh(Mesh);
