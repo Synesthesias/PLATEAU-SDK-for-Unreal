@@ -54,6 +54,11 @@ namespace {
 
 APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(const UObject* Context, const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
 
+#if !WITH_EDITOR
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
+    return nullptr;
+#endif  
+
     try {
         const auto World = Context->GetWorld();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
@@ -72,6 +77,12 @@ APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(
 }
 
 APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer(const UObject* Context, const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
+ 
+#if !WITH_EDITOR
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
+    return nullptr;
+#endif  
+
     try {
         const auto World = Context->GetWorld();
         const auto ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
