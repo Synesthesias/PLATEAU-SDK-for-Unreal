@@ -1,5 +1,5 @@
-# ランタイムAPI
-このページではブループリントで、ランタイムAPIを使用する方法を記載します。
+# エディタAPI
+このページではブループリントで、エディタAPIを使用する方法を記載します。
 
 ## インポート
 PLATEAU SDKウィンドウの`インポート`の機能をAPIにてご利用いただけます。
@@ -7,24 +7,24 @@ PLATEAU SDKウィンドウの`インポート`の機能をAPIにてご利用い�
 #### 準備
 インポートを行うためにPLATEAUCityModelPackageをKeyとして、PackageInfoSettingsをValueとしたMapデータを作成します。
 
-![](../resources/manual/runtimeAPI/importSettings.png)
+![](../resources/manual/editorAPI/importSettings.png)
 
 #### 特定の地物のみ読み込む場合のインポートデータ設定
 インポートするPLATEAUCityModelPackageとPackageInfoSettingsをMapデータに格納します。
  - PackageInfoSettingsの各項目はの設定は、PLATEAU SDKウィンドウの`インポート`に対応しています。
 	
-![](../resources/manual/runtimeAPI/importSingle.png)
+![](../resources/manual/editorAPI/importSingle.png)
 
 
 #### 全ての地物を読み込む場合のインポートデータ設定
 PLATEAU|BPLibraries|Util|GetAllCityModelPackagesにて全てのパッケージを取得し、Mapデータに格納します。
  - PackageInfoSettingsの各項目はの設定は、PLATEAU SDKウィンドウの`インポート`に対応しています。
 
-![](../resources/manual/runtimeAPI/importMultiple.png)
+![](../resources/manual/editorAPI/importMultiple.png)
 
 #### ローカルからのインポート
 
-![](../resources/manual/runtimeAPI/importLocal.png)
+![](../resources/manual/editorAPI/importLocal.png)
 
 1. PLATEAU|BPLibraries|ImportAPI|Get City Model Loader Localを配置します。
 2. 参照するローカルのCityGMLまでのパスをSource Pathにセットします。
@@ -36,7 +36,7 @@ PLATEAU|BPLibraries|Util|GetAllCityModelPackagesにて全てのパッケージ�
 
 #### サーバーからのインポート
 
-![](../resources/manual/runtimeAPI/importServer.png)
+![](../resources/manual/editorAPI/importServer.png)
 
 1. PLATEAU|BPLibraries|ImportAPI|Get City Model Loader Serverを配置します。
 2. 接続先を上書きする場合は、In　Server URL, In Tokenの値をセットします。上書きしない場合は空欄にします。
@@ -63,13 +63,13 @@ PLATEAU|BPLibraries|Util|GetAllCityModelPackagesにて全てのパッケージ�
 
 #### ロード完了通知
 
-![](../resources/manual/runtimeAPI/importFinish.png)
+![](../resources/manual/editorAPI/importFinish.png)
 
 PLATEAUCityModelLoaderにImport Finished Delegate Eventをバインドすることで、ロード完了通知を受け取る事ができます。
 
 #### ロードキャンセル
 
-![](../resources/manual/runtimeAPI/importCancel.png)
+![](../resources/manual/editorAPI/importCancel.png)
 
 PLATEAUCityModelLoaderをTargetとしてPLATEAU|Cancelを配置することでロードをキャンセルする事ができます。
 
@@ -78,7 +78,7 @@ PLATEAUCityModelLoaderをTargetとしてPLATEAU|Cancelを配置することで�
 ## エクスポート
 PLATEAU SDKウィンドウの`エクスポート`の機能をAPIにてご利用いただけます。
 
-![](../resources/manual/runtimeAPI/exportModel.png)
+![](../resources/manual/editorAPI/exportModel.png)
 
 1. エクスポートするModelを含むPLATEAUInstancedCityModelを取得します。
 2. PLATEAU|BPLibraries|ExportAPI|Export Modelを配置し、Target City Modelに取得したPLATEAUInstancedCityModelをセットします。
@@ -91,7 +91,7 @@ PLATEAU SDKウィンドウの`エクスポート`の機能をAPIにてご利用�
 ## ゲームオブジェクトON/OFF
 PLATEAU SDKウィンドウの`ゲームオブジェクトON/OFF`の機能をAPIにてご利用いただけます。
 
-![](../resources/manual/runtimeAPI/filterModel.png)
+![](../resources/manual/editorAPI/filterModel.png)
 
 1. フィルタするModelを含むPLATEAUInstancedCityModelを取得します。
 2. PLATEAU|BPLibraries|ModelAdjustmentAPI|Filter Modelを配置し、Target City Modelに取得したPLATEAUInstancedCityModelをセットします。
@@ -105,7 +105,7 @@ PLATEAU SDKウィンドウの`ゲームオブジェクトON/OFF`の機能をAPI�
 ## 結合・分離
 PLATEAU SDKウィンドウの`結合・分離`の機能をAPIにてご利用いただけます。
 
-![](../resources/manual/runtimeAPI/reconstructModel.png)
+![](../resources/manual/editorAPI/reconstructModel.png)
 
 1. 結合・分離するModelを含むPLATEAUInstancedCityModelを取得します。
 2. PLATEAU|BPLibraries|ReconstructAPI|Reconstruct Modelを配置し、Target City Modelに取得したPLATEAUInstancedCityModelをセットします。

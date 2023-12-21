@@ -16,13 +16,13 @@ public class PLATEAURuntimeBPLibraries : ModuleRules {
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "InputCore"
             }
         );
 
         PrivateDependencyModuleNames.AddRange(
             new string[] {
                 "PLATEAURuntime",
-                "UnrealEd",
             });
 
         DynamicallyLoadedModuleNames.AddRange(
