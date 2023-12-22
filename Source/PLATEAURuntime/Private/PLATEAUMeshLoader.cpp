@@ -2,7 +2,6 @@
 
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUTextureLoader.h"
-
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include "citygml/citygml.h"
 #include "Engine/StaticMesh.h"
@@ -15,10 +14,11 @@
 #include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
-#include "EditorFramework/AssetImportData.h"
 #include "Misc/DefaultValueHelper.h"
 
 #if WITH_EDITOR
+#include "EditorFramework/AssetImportData.h"
+#endif
 
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 
@@ -263,7 +263,7 @@ namespace {
         // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
         StaticMesh->SetLightMapResolution(64);
         StaticMesh->SetLightMapCoordinateIndex(1);
-
+#if WITH_EDITOR
         FStaticMeshSourceModel& SrcModel = StaticMesh->AddSourceModel();
         /*Don't allow the engine to recalculate normals*/
         SrcModel.BuildSettings.bRecomputeNormals = false;
@@ -272,7 +272,7 @@ namespace {
         SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
         SrcModel.BuildSettings.bUseFullPrecisionUVs = false;
         SrcModel.BuildSettings.bBuildReversedIndexBuffer = false;
-
+#endif
         return StaticMesh;
     }
 }
@@ -366,27 +366,29 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 else {
                     Component->Mobility = EComponentMobility::Static;
                 }
-                Component->bVisualizeComponent = true;
-
                 // StaticMesh作成
                 StaticMesh = CreateStaticMesh(InMesh, Component, FName(NodeName));
+#if WITH_EDITOR
+                Component->bVisualizeComponent = true;
                 MeshDescription = StaticMesh->CreateMeshDescription(0);
+#endif
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
     ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal());
 
+#if WITH_EDITOR
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&StaticMesh]() {
             StaticMesh->CommitMeshDescription(0);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
-
+#endif
         StaticMeshes.Add(StaticMesh);
+#if WITH_EDITOR
         StaticMesh->OnPostMeshBuild().AddLambda(
             [Component](UStaticMesh* Mesh) {
                 if (Component == nullptr)
                     return;
-
                 // Runtime用にSetStaticMeshを行う際にMobilityを適切な値に変更
                 Component->SetMobility(EComponentMobility::Type::Stationary);
                 Component->SetStaticMesh(Mesh);
@@ -406,7 +408,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             //StaticMesh->SetFlags();
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         Task->Wait();
-
+#endif
         //PolygonGroup数の整合性チェック
         if (SubMeshMaterialSets.Num() != MeshDescription->PolygonGroups().Num())
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
@@ -475,7 +477,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 Actor.AddInstanceComponent(Component);
                 Component->RegisterComponent();
                 Component->AttachToComponent(&ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+#if WITH_EDITOR
                 Component->PostEditChange();
+#endif
                 ComponentRef = Component;
             }, TStatId(), nullptr, ENamedThreads::GameThread);
         ComponentSetupTask->Wait();
@@ -540,6 +544,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
             TArray<UTexture*> UsedTextures;
             LoadInputData.FallbackMaterial->GetUsedTextures(UsedTextures, EMaterialQualityLevel::Epic, true, ERHIFeatureLevel::ES2_REMOVED, true);
             UTexture* ReferencedTexture = nullptr;
+#if WITH_EDITOR
             for (const auto& UsedTexture : UsedTextures) {
                 const auto TextureSourceFiles = UsedTexture->AssetImportData->SourceData.SourceFiles;
                 // diffuseかつside(topでない)テクスチャを探す
@@ -549,6 +554,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
                     break;
                 }
             }
+#endif
             if (ReferencedTexture != nullptr)
                 DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);
 
@@ -634,5 +640,3 @@ bool FPLATEAUMeshLoader::InvertMeshNormal() {
 bool FPLATEAUMeshLoader::OverwriteTexture() {
     return true;
 }
-
-#endif

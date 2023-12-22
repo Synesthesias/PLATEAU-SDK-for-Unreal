@@ -43,5 +43,9 @@ TSet<EPLATEAUCityObjectsType> UPLATEAUModelClassificationAPI::SearchTypes(const 
 }
 
 void UPLATEAUModelClassificationAPI::ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+#if WITH_EDITOR
     TargetCityModel->ClassifyModel(TargetComponents, Materials, ReconstructType, bDestroyOriginal);
+#else
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
+#endif  
 }
