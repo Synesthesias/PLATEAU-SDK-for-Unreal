@@ -34,5 +34,9 @@ EPLATEAUMeshGranularity UPLATEAUModelReconstructAPI::GetMeshGranularityFromIndex
 }
 
 void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal ) {
-    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDestroyOriginal);
+#if WITH_EDITOR
+    TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDestroyOriginal); 
+#else
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
+#endif
 }
