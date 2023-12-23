@@ -6,9 +6,13 @@ PLATEAU SDK for Unrealは、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都�
 - CityGMLの直感的なインポート
   - 地図上での範囲選択による3D都市モデルの抽出
   - PLATEAUのサーバーで提供されるCityGMLへのアクセス
+  - 地形への航空写真の付与
+  - テクスチャの自動結合
 - 3D都市モデルに含まれる地物のフィルタリング
 - 3D都市モデルの3Dファイル形式へのエクスポート
 - 3D都市モデルの属性にアクセスするためのBlueprint API
+- 3D都市モデルに含まれる地物の分割・結合
+- 地物型によるマテリアル分割
 
 ![](README_Images/SDK_Outline.png)
 
