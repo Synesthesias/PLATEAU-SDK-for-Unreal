@@ -3,9 +3,8 @@
 #pragma once
 
 #include <citygml/material.h>
-
+#include "MeshTypes.h"
 #include "CoreMinimal.h"
-#include "PLATEAUGeometry.h"
 
 struct FPLATEAUCityObject;
 

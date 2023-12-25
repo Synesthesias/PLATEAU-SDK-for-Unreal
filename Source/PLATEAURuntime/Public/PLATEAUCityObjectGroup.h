@@ -4,6 +4,9 @@
 #include <plateau/polygon_mesh/node.h>
 #include "Components/StaticMeshComponent.h"
 #include "CityGML/PLATEAUCityObject.h"
+#include "Serialization/JsonWriter.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
 namespace plateau::CityObjectGroup {

@@ -7,14 +7,13 @@
 #include "Engine/StaticMesh.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
-#include "PhysicsEngine/BodySetup.h"
-#include "ImageUtils.h"
 #include "MeshElementRemappings.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
-#include "Misc/DefaultValueHelper.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
@@ -443,7 +442,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
                         //Textureが存在する場合
                         if (Texture != nullptr)
-                            DynMaterial->SetTextureParameterValue("Texture", Texture);
+                            DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
 
                         DynMaterial->TwoSided = false;
                         StaticMesh->AddMaterial(DynMaterial);
@@ -510,8 +509,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
             : TEXT(
                 "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
 
-        UMaterial* Mat = Cast<UMaterial>(
-            StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+        UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
         DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
 
         DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
