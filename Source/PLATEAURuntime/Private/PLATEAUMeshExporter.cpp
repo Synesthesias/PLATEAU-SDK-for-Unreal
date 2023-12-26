@@ -109,6 +109,7 @@ bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstan
     }
     plateau::meshWriter::FbxWriteOptions FbxOptions;
     FbxOptions.file_format = Option.bExportAsBinary ? plateau::meshWriter::FbxFileFormat::Binary : plateau::meshWriter::FbxFileFormat::ASCII;
+    FbxOptions.coordinate_system = static_cast<plateau::geometry::CoordinateSystem>(Option.CoordinateSystem);
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
