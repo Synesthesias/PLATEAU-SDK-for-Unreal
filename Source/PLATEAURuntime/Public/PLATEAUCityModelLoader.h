@@ -129,6 +129,9 @@ public:
         void LoadModel();
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
+        void LoadGmlAsync(const FString& GmlPath);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
         void Cancel();
 
 
