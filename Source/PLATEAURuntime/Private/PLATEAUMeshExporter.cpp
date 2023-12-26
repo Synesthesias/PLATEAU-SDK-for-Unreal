@@ -229,10 +229,18 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         Vertices.push_back(Vertex);
     }
 
+    bool invertMesh = (Option.CoordinateSystem == ECoordinateSystem::EUN || Option.CoordinateSystem == ECoordinateSystem::ESU);
     for (int32 TriangleIndex = 0; TriangleIndex < RenderMesh.IndexBuffer.GetNumIndices() / 3; ++TriangleIndex) {
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+        if (!invertMesh) {
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+        }
+        else {
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
+        }
     }
 
     for (int k = 0; k < RenderMesh.Sections.Num(); k++) {
