@@ -510,8 +510,8 @@ void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
             // コンポーネントは拡張子無しgml名に設定
             const auto GmlRootComponentName = FPaths::GetBaseFilename(GmlPath);
             const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
-            TAtomic<bool> bCanceled = false;
-            FPLATEAUMeshLoader(false).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, &bCanceled);
+            TAtomic<bool> Canceled = false;
+            FPLATEAUMeshLoader(false).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, &Canceled);
 
             return true;
         });
