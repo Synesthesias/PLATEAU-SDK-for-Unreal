@@ -227,6 +227,11 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             Vertex = TVec3d(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
         Vertex = GeoRef.convertAxisToENU(plateau::geometry::CoordinateSystem::ESU, Vertex);
         Vertex = GeoRef.convertAxisFromENUTo(StaticCast<plateau::geometry::CoordinateSystem>(Option.CoordinateSystem), Vertex);
+
+        // glTFの場合はm単位で出力
+        if (Option.FileFormat == EMeshFileFormat::GLTF)
+            Vertex = TVec3d(Vertex.x * 0.01f, Vertex.y * 0.01f, Vertex.z * 0.01f);
+
         Vertices.push_back(Vertex);
     }
 
