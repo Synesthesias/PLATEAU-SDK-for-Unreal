@@ -4,6 +4,8 @@
 #include "PLATEAUExportSettings.h"
 #include "PLATEAUMeshExporter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Misc/MessageDialog.h"
+#include "Misc/Paths.h"
 #define LOCTEXT_NAMESPACE "PLATEAUExportModelAPI"
 
 /**
@@ -17,7 +19,7 @@ void UPLATEAUExportModelAPI::ExportModel(APLATEAUInstancedCityModel* TargetCityM
 #if !WITH_EDITOR
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
     return;
-#endif  
+#endif
 
     const auto& FoundFileArray = plateau::Export::GetFoundFiles(Options.FileFormat, ExportPath);
     if (0 < FoundFileArray.Num()) {
