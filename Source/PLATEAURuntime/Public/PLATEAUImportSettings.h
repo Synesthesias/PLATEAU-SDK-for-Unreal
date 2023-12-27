@@ -3,11 +3,9 @@
 #pragma once
 
 #include <plateau/polygon_mesh/mesh_extract_options.h>
-
 #include "CoreMinimal.h"
-
+#include "Materials/MaterialInterface.h"
 #include <plateau/dataset/city_model_package.h>
-
 #include "PLATEAUImportSettings.generated.h"
 
 #define LOCTEXT_NAMESPACE "PLATEAUImportSettings"
@@ -33,6 +31,53 @@ enum class EPLATEAUTexturePackingResolution : uint8 {
     H2048W2048 = 0 UMETA(DisplayName = "2048x2048"),
     H4096W4096 = 1 UMETA(DisplayName = "4096x4096"),
     H8192W8192 = 2 UMETA(DisplayName = "8192x8192")
+};
+
+UENUM(BlueprintType, meta = (Bitflags))
+enum class EPLATEAUCityModelPackage : uint8 {
+    None = 0,
+    //! 建築物
+    Building = 1,
+    //! 道路
+    Road = 2,
+    //! 都市計画決定情報
+    UrbanPlanningDecision = 3,
+    //! 土地利用
+    LandUse = 4,
+    //! 都市設備
+    CityFurniture = 5,
+    //! 植生
+    Vegetation = 6,
+    //! 起伏
+    Relief = 7,
+    //! 災害リスク
+    DisasterRisk = 8,
+    //! 交通(鉄道) : rwy
+    Railway = 9,
+    //! 交通(航路) : wwy
+    Waterway = 10,
+    //! 水部 : wtr
+    WaterBody = 11,
+    //! 橋梁　 : brid
+    Bridge = 12,
+    //! 徒歩道 : trk
+    Track = 13,
+    //! 広場 : squr
+    Square = 14,
+    //! トンネル : tun
+    Tunnel = 15,
+    //! 地下埋設物 : unf
+    UndergroundFacility = 16,
+    //! 地下街 : ubld
+    UndergroundBuilding = 17,
+    //! 区域 : area 
+    Area = 18,
+    //! その他の構造物 : cons 
+    OtherConstruction = 19,
+    //! 汎用都市: gen
+    Generic = 20,
+    //! その他
+    Unknown = 32
 };
 
 USTRUCT()
@@ -87,6 +132,98 @@ public:
     */
     UPROPERTY(EditAnywhere, Category = "Import Settings")
         int ZoomLevel;
+};
+
+USTRUCT(BlueprintType)
+struct FPackageInfoSettings {
+    GENERATED_BODY()
+
+    FPackageInfoSettings()
+        : bImport(false)
+        , bTextureImport(false)
+        , bIncludeAttrInfo(false)
+        , bEnableTexturePacking(false)
+        , TexturePackingResolution(static_cast<EPLATEAUTexturePackingResolution>(1))
+        , MinLod(0)
+        , MaxLod(0)
+        , Granularity(0)
+        , FallbackMaterial(nullptr)
+        , bAttachMapTile(false)
+        , MapTileUrl("")
+        , ZoomLevel(7) {
+    }
+
+    FPackageInfoSettings(
+        const bool InbImport,
+        const bool InbTextureImport,
+        const bool InbIncludeAttrInfo,
+        const bool InbEnableTexturePacking,
+        const EPLATEAUTexturePackingResolution InTexturePackingResolution,
+        const int InMinLod,
+        const int InMaxLod,
+        const int InGranularity,
+        UMaterialInterface* InFallbackMaterial,
+        const bool InbAttachMapTile,
+        const FString& InMapTileUrl,
+        const int InZoomLevel)
+        : bImport(InbImport)
+        , bTextureImport(InbTextureImport)
+        , bIncludeAttrInfo(InbIncludeAttrInfo)
+        , bEnableTexturePacking(InbEnableTexturePacking)
+        , TexturePackingResolution(static_cast<EPLATEAUTexturePackingResolution>(InTexturePackingResolution))
+        , MinLod(InMinLod)
+        , MaxLod(InMaxLod)
+        , Granularity(InGranularity)
+        , FallbackMaterial(InFallbackMaterial)
+        , bAttachMapTile(InbAttachMapTile)
+        , MapTileUrl(InMapTileUrl)
+        , ZoomLevel(InZoomLevel) {
+    }
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    bool bImport;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    bool bTextureImport;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    bool bIncludeAttrInfo;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    bool bEnableTexturePacking;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    EPLATEAUTexturePackingResolution TexturePackingResolution;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    int MinLod;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    int MaxLod;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    int Granularity;
+
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    UMaterialInterface* FallbackMaterial;
+
+    /*
+    * @brief 地図タイルを付与するかどうかを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    bool bAttachMapTile;
+
+    /*
+    * @brief 地図タイルのURLを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    FString MapTileUrl;
+
+    /*
+    * @brief 地図タイルのズームレベルを指定します。地形パッケージでのみ使用されます。
+    */
+    UPROPERTY(BlueprintReadWrite, Category = "PLATEAU|ImportSettings")
+    int ZoomLevel;
 };
 
 UCLASS()
@@ -217,7 +354,61 @@ public:
         default: return GET_MEMBER_NAME_CHECKED(UPLATEAUImportSettings, Unknown);
         }
     }
-    
+
+    static EPLATEAUCityModelPackage GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(plateau::dataset::PredefinedCityModelPackage Package) {
+        switch (Package) {
+        case plateau::dataset::PredefinedCityModelPackage::Building: return EPLATEAUCityModelPackage::Building;
+        case plateau::dataset::PredefinedCityModelPackage::Road: return EPLATEAUCityModelPackage::Road;
+        case plateau::dataset::PredefinedCityModelPackage::Vegetation: return EPLATEAUCityModelPackage::Vegetation;
+        case plateau::dataset::PredefinedCityModelPackage::CityFurniture: return EPLATEAUCityModelPackage::CityFurniture;
+        case plateau::dataset::PredefinedCityModelPackage::Relief: return EPLATEAUCityModelPackage::Relief;
+        case plateau::dataset::PredefinedCityModelPackage::DisasterRisk: return EPLATEAUCityModelPackage::DisasterRisk;
+        case plateau::dataset::PredefinedCityModelPackage::LandUse: return EPLATEAUCityModelPackage::LandUse;
+        case plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision: return EPLATEAUCityModelPackage::UrbanPlanningDecision;
+        case plateau::dataset::PredefinedCityModelPackage::Railway: return EPLATEAUCityModelPackage::Railway;
+        case plateau::dataset::PredefinedCityModelPackage::Waterway: return EPLATEAUCityModelPackage::Waterway;
+        case plateau::dataset::PredefinedCityModelPackage::WaterBody: return EPLATEAUCityModelPackage::WaterBody;
+        case plateau::dataset::PredefinedCityModelPackage::Bridge: return EPLATEAUCityModelPackage::Bridge;
+        case plateau::dataset::PredefinedCityModelPackage::Track: return EPLATEAUCityModelPackage::Track;
+        case plateau::dataset::PredefinedCityModelPackage::Square: return EPLATEAUCityModelPackage::Square;
+        case plateau::dataset::PredefinedCityModelPackage::Tunnel: return EPLATEAUCityModelPackage::Tunnel;
+        case plateau::dataset::PredefinedCityModelPackage::UndergroundFacility: return EPLATEAUCityModelPackage::UndergroundFacility;
+        case plateau::dataset::PredefinedCityModelPackage::UndergroundBuilding: return EPLATEAUCityModelPackage::UndergroundBuilding;
+        case plateau::dataset::PredefinedCityModelPackage::Area: return EPLATEAUCityModelPackage::Area;
+        case plateau::dataset::PredefinedCityModelPackage::OtherConstruction: return EPLATEAUCityModelPackage::OtherConstruction;
+        case plateau::dataset::PredefinedCityModelPackage::Generic: return EPLATEAUCityModelPackage::Generic;
+        case plateau::dataset::PredefinedCityModelPackage::Unknown: return EPLATEAUCityModelPackage::Unknown;
+        default: return EPLATEAUCityModelPackage::Unknown;
+        }
+    }
+
+    static plateau::dataset::PredefinedCityModelPackage GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(EPLATEAUCityModelPackage Package) {
+        switch (Package) {
+        case EPLATEAUCityModelPackage::Building: return plateau::dataset::PredefinedCityModelPackage::Building;
+        case EPLATEAUCityModelPackage::Road: return plateau::dataset::PredefinedCityModelPackage::Road;
+        case EPLATEAUCityModelPackage::Vegetation: return plateau::dataset::PredefinedCityModelPackage::Vegetation;
+        case EPLATEAUCityModelPackage::CityFurniture: return plateau::dataset::PredefinedCityModelPackage::CityFurniture;
+        case EPLATEAUCityModelPackage::Relief: return plateau::dataset::PredefinedCityModelPackage::Relief;
+        case EPLATEAUCityModelPackage::DisasterRisk: return plateau::dataset::PredefinedCityModelPackage::DisasterRisk;
+        case EPLATEAUCityModelPackage::LandUse: return plateau::dataset::PredefinedCityModelPackage::LandUse;
+        case EPLATEAUCityModelPackage::UrbanPlanningDecision: return plateau::dataset::PredefinedCityModelPackage::UrbanPlanningDecision;
+        case EPLATEAUCityModelPackage::Railway: return plateau::dataset::PredefinedCityModelPackage::Railway;
+        case EPLATEAUCityModelPackage::Waterway: return plateau::dataset::PredefinedCityModelPackage::Waterway;
+        case EPLATEAUCityModelPackage::WaterBody: return plateau::dataset::PredefinedCityModelPackage::WaterBody;
+        case EPLATEAUCityModelPackage::Bridge: return plateau::dataset::PredefinedCityModelPackage::Bridge;
+        case EPLATEAUCityModelPackage::Track: return plateau::dataset::PredefinedCityModelPackage::Track;
+        case EPLATEAUCityModelPackage::Square: return plateau::dataset::PredefinedCityModelPackage::Square;
+        case EPLATEAUCityModelPackage::Tunnel: return plateau::dataset::PredefinedCityModelPackage::Tunnel;
+        case EPLATEAUCityModelPackage::UndergroundFacility: return plateau::dataset::PredefinedCityModelPackage::UndergroundFacility;
+        case EPLATEAUCityModelPackage::UndergroundBuilding: return plateau::dataset::PredefinedCityModelPackage::UndergroundBuilding;
+        case EPLATEAUCityModelPackage::Area: return plateau::dataset::PredefinedCityModelPackage::Area;
+        case EPLATEAUCityModelPackage::OtherConstruction: return plateau::dataset::PredefinedCityModelPackage::OtherConstruction;
+        case EPLATEAUCityModelPackage::Generic: return plateau::dataset::PredefinedCityModelPackage::Generic;
+        case EPLATEAUCityModelPackage::Unknown: return plateau::dataset::PredefinedCityModelPackage::Unknown;
+        default: return plateau::dataset::PredefinedCityModelPackage::Unknown;
+        }
+    }
+  
     static TArray<plateau::dataset::PredefinedCityModelPackage> GetAllPackages() {
         return {
             plateau::dataset::PredefinedCityModelPackage::Building,
@@ -342,6 +533,29 @@ public:
         case plateau::dataset::PredefinedCityModelPackage::Unknown: return "PlateauDefaultUnknownMaterialInstance";
         default: return "";
         }
+    }
+
+    static FString GetFallbackMaterialNameFromDiffuseTextureName(const FString DiffuseTextureName) {
+        if (DiffuseTextureName == "Tex_GenericBuildings_side_Diffuse.jpg") return "PlateauDefaultBuildingMaterialInstance";
+        if (DiffuseTextureName == "Tex_Road_Diffuse.jpg") return "PlateauDefaultRoadMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Planned.png") return "PlateauDefaultUrbanPlanningDecisionMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_landUse_Diffuse.png") return "PlateauDefaultLandUseMaterialInstance";
+        if (DiffuseTextureName == "Tex_GenericMetal_Diffuse.jpg") return "PlateauDefaultCityFurnitureMaterialInstance";
+        if (DiffuseTextureName == "Tex_Generic_Tree_Diffuse.jpg") return "PlateauDefaultVegetationMaterialInstance";
+        if (DiffuseTextureName == "Tex_Generic_Ground_Diffuse.jpg") return "PlateauDefaultReliefMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Disaster_Diffuse.png") return "PlateauDefaultDisasterMaterialInstance";
+        if (DiffuseTextureName == "Tex_Rail_Diffuse.jpg") return "PlateauDefaultRailwayMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_Planned.png") return "PlateauDefaultWaterwayMaterialInstance";
+        if (DiffuseTextureName == "Tex_Water_Diffuse.jpg") return "PlateauDefaultWaterBodyMaterialInstance";
+        if (DiffuseTextureName == "Tex_Bridge_Diffuse.png") return "PlateauDefaultBridgeMaterialInstance";
+        if (DiffuseTextureName == "Tex_Track_Diffuse.jpg") return "PlateauDefaultTrackMaterialInstance";
+        if (DiffuseTextureName == "Tex_Park_Diffuse.jpg") return "PlateauDefaultSquareMaterialInstance";
+        if (DiffuseTextureName == "Tex_Tunnel_Diffuse.jpg") return "PlateauDefaultTunnelMaterialInstance";
+        if (DiffuseTextureName == "Tex_Underground_Props_Diffuse.jpg") return "PlateauDefaultUndergroundFacilityMaterialInstance";
+        if (DiffuseTextureName == "Tex_Underground_Diffuse.jpg") return "PlateauDefaultUndergroundBuildingMaterialInstance";
+        if (DiffuseTextureName == "Tex_Area_landUse_Diffuse.png") return "PlateauDefaultLandUseMaterialInstance";    
+        if (DiffuseTextureName == "Tex_Other_Diffuse.jpg") return "PlateauDefaultUnknownMaterialInstance";
+        else return "";
     }
 };
 

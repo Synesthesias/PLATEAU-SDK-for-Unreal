@@ -2,9 +2,6 @@
 
 #include "ExtentEditor/PLATEAUExtentEditor.h"
 
-#include "EditorViewportTabContent.h"
-#include "Engine/Selection.h"
-#include "Misc/ScopedSlowTask.h"
 #include "Algo/AnyOf.h"
 
 #include "PLATEAUEditor.h"
@@ -20,7 +17,7 @@
 const FName FPLATEAUExtentEditor::TabId(TEXT("PLATEAUExtentEditor"));
 
 void FPLATEAUExtentEditor::RegisterTabSpawner(const TSharedRef<class FTabManager>& InTabManager) {
-    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateSP(this, &FPLATEAUExtentEditor::SpawnTab))
+    InTabManager->RegisterTabSpawner(TabId, FOnSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::SpawnTab), FCanSpawnTab::CreateRaw(this, &FPLATEAUExtentEditor::CanSpawnTab))
         .SetDisplayName(LOCTEXT("ViewportTab", "Viewport"))
         .SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
 }
@@ -44,16 +41,19 @@ TSharedRef<SDockTab> FPLATEAUExtentEditor::SpawnTab(const FSpawnTabArgs& Args) {
     Viewport->SetOwnerTab(DockableTab);
     DockableTab->SetOnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda([](TSharedRef<SDockTab> DockTab) {
         const auto& Window = IPLATEAUEditorModule::Get().GetWindow();
-        const auto& EditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Window->GetEditorUtilityWidget());
-        if (EditorUtilityWidget != nullptr) {
-            const auto& PLATEAUSDKEditorUtilityWidget = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(EditorUtilityWidget);
-            if (PLATEAUSDKEditorUtilityWidget != nullptr) {
-                PLATEAUSDKEditorUtilityWidget->CloseAreaSelectionWindowInvoke();
-            }
+        if (const auto& Euw = Window->GetEditorUtilityWidget(); Euw != nullptr) {
+            if (const auto& PlateauEuw = dynamic_cast<UPLATEAUSDKEditorUtilityWidget*>(Euw); PlateauEuw != nullptr) {
+                PlateauEuw->CloseAreaSelectionWindowInvoke();
+            }            
         }
     }));
 
     return DockableTab;
+}
+
+bool FPLATEAUExtentEditor::CanSpawnTab(const FSpawnTabArgs& Args) const {
+    const auto& UseSourcePath = IsImportFromServer() ? UTF8_TO_TCHAR(GetServerDatasetID().c_str()) : GetSourcePath();
+    return 0 < UseSourcePath.Len();
 }
 
 const FString& FPLATEAUExtentEditor::GetSourcePath() const {
@@ -183,7 +183,7 @@ plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon(c
     return NativeExtent.centerPoint();
 }
 
-FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
+FVector FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const {
     // 中心点の緯度経度計算
     const auto CenterLatLon = GetSelectedCenterLatLon(InbImportFromServer);
 
@@ -193,11 +193,25 @@ FVector3d FPLATEAUExtentEditor::GetSelectedCenterPoint(const int InZoneID, const
     GeoReferenceWithoutOffset.UpdateNativeData();
 
     const auto CenterPoint = GeoReferenceWithoutOffset.GetData().project(CenterLatLon);
-    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
+    return FVector(CenterPoint.x, CenterPoint.y, CenterPoint.z);
 }
 
 void FPLATEAUExtentEditor::SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask) {
     ServerPackageMask = InPackageMask;
+}
+
+const FVector3d FPLATEAUExtentEditor::GetCenterByExtent(const plateau::geometry::Extent Extent) const {
+    const auto CenterLatLon = Extent.centerPoint();
+    auto GeoRef = GetGeoReference();
+    const auto CenterPoint = GeoRef.GetData().project(CenterLatLon);
+    return FVector3d(CenterPoint.x, CenterPoint.y, CenterPoint.z);
+}
+
+const FBox FPLATEAUExtentEditor::GetBoxByExtent(const plateau::geometry::Extent Extent) const {
+    auto GeoRef = GetGeoReference();
+    const auto Min = GeoRef.GetData().project(Extent.min);
+    const auto Max = GeoRef.GetData().project(Extent.max);
+    return FBox(FVector3d(Min.x, Min.y, Min.z), FVector3d(Max.x, Max.y, Max.z));
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -37,6 +37,11 @@ SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
     if (ViewportClient.IsValid()) {
         ViewportClient->Viewport = nullptr;
     }
+
+    if (MeshCodeInputWindow.IsValid()) {
+        MeshCodeInputWindow.Pin()->RequestDestroyWindow();
+        MeshCodeInputWindow.Reset();
+    }
 }
 
 void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
@@ -47,7 +52,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
     if (ViewportClient.IsValid()) {
         UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
         if (World != nullptr) {
-            World->ChangeFeatureLevel(GWorld->FeatureLevel);
+            World->ChangeFeatureLevel(GWorld->GetFeatureLevel());
         }
         const auto& SourcePath = ExtentEditorPtr.Pin()->GetSourcePath();
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
@@ -133,6 +138,107 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Area Reset Button", "全選択解除"))
                 ]
             ]
+
+            + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
+            [
+                SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
+                OnClicked_Lambda([this] {
+
+                if (MeshCodeInputWindow.IsValid()) 
+                    return FReply::Handled();
+
+                //入力Window表示
+                TSharedRef<SWindow> InputWindow = SNew(SWindow)
+                    .Title(FText::FromString(TEXT("メッシュコード入力")))
+                    .ClientSize(FVector2D(350, 140))
+                    .SupportsMaximize(false)
+                    .SupportsMinimize(false)
+                    .AutoCenter(EAutoCenter::PrimaryWorkArea)
+                    .FocusWhenFirstShown(true)
+                    .IsTopmostWindow(true)
+                    .HasCloseButton(false);
+                MeshCodeInputWindow = InputWindow;
+                
+                InputWindow->SetContent(
+                    SNew(SVerticalBox)
+                    + SVerticalBox::Slot()
+                    .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString(TEXT("メッシュコードを入力してください\n（6桁または８桁の数字）")))
+                    ]
+                    + SVerticalBox::Slot()
+                    .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
+                    [
+                        SAssignNew(MeshCodeTextBox, SEditableTextBox)
+                        .HintText(FText::FromString(TEXT("メッシュコード")))
+                    ]
+                    + SVerticalBox::Slot()
+                    .AutoHeight().Padding(FMargin(5.f, 2.f, 5.f, 2.f))
+                    [
+                        SAssignNew(MeshCodeErrorText, STextBlock)
+                        .ColorAndOpacity(FLinearColor::Red)
+                        .Text(FText())
+                    ]
+                    + SVerticalBox::Slot()
+                    .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .AutoWidth().Padding(FMargin(2.f, 0.f, 2.f, 0.f))
+                        [
+                            SNew(SButton)
+                            .Text(FText::FromString(TEXT("キャンセル"))).
+                            OnClicked_Lambda([this] {
+                                //Windowを閉じる
+                                if (MeshCodeInputWindow.IsValid()) {
+                                    MeshCodeInputWindow.Pin()->RequestDestroyWindow();
+                                    MeshCodeInputWindow.Reset();
+                                }
+                                return FReply::Handled();
+                            })
+                        ]
+                        + SHorizontalBox::Slot()
+                            .AutoWidth().Padding(FMargin(2.f, 0.f, 2.f, 0.f))
+                            [
+                                SNew(SButton)
+                                .Text(FText::FromString(TEXT("OK"))).
+                                OnClicked_Lambda([this] {
+                                    //メッシュコードの位置を表示
+                                    FText Value = MeshCodeTextBox.Pin()->GetText();
+                                    FString meshcode = Value.ToString();
+                                    if (!meshcode.IsNumeric()) {
+                                        if(MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
+                                    }
+                                    else if (meshcode.Len() != 6 && meshcode.Len() != 8) {
+                                        if (MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
+                                    }
+                                    else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
+                                        if (MeshCodeErrorText.IsValid())
+                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
+                                    }
+                                    else {
+                                        if (MeshCodeInputWindow.IsValid()) {
+                                            MeshCodeInputWindow.Pin()->RequestDestroyWindow();
+                                            MeshCodeInputWindow.Reset();
+                                        }
+                                    }     
+                                    return FReply::Handled();
+                                })
+                            ]
+                        ]
+                    );
+                    FSlateApplication::Get().AddWindow(InputWindow, true);
+                    return FReply::Handled();
+                }).
+                Content()
+                [
+                    SNew(STextBlock).Justification(ETextJustify::Center).Margin(FMargin(15.f, 2.f, 15.f, 2.f)).Text(LOCTEXT("Search By Mesh Code Button", "メッシュコード検索"))
+                ]
+            ]
+
             + SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.f))
             [
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
@@ -149,7 +255,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                         UE_LOG(LogTemp, Warning, TEXT("PLATEAU SDK Widget Error"));
                         const FText Title = LOCTEXT("Warning", "警告");
                         const FText DialogText = LOCTEXT("WidgetError", "PLATEAU SDKに問題が発生しました。PLATEAU SDKを再起動して下さい。");
-                        FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+                        FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
                     }                                               
                     if (GetOwnerTab())
                         GetOwnerTab()->RequestCloseTab();

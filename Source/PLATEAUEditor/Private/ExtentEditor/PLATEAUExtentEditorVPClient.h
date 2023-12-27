@@ -19,16 +19,15 @@ namespace plateau::dataset {
 /** Viewport Client for the preview viewport */
 class FPLATEAUExtentEditorViewportClient : public FEditorViewportClient, public TSharedFromThis<FPLATEAUExtentEditorViewportClient> {
 public:
-    FPLATEAUExtentEditorViewportClient(
-        TWeakPtr<class FPLATEAUExtentEditor> InExtentEditor,
-        const TSharedRef<class SPLATEAUExtentEditorViewport>& InPLATEAUExtentEditorViewport,
-        const TSharedRef<class FAdvancedPreviewScene>& InPreviewScene);
+    FPLATEAUExtentEditorViewportClient(const TWeakPtr<class FPLATEAUExtentEditor>& InExtentEditor,
+                                       const TSharedRef<class SPLATEAUExtentEditorViewport>& InPLATEAUExtentEditorViewport,
+                                       const TSharedRef<class FAdvancedPreviewScene>& InPreviewScene);
     virtual ~FPLATEAUExtentEditorViewportClient() override;
 
     /**
      * @brief ViewportのConstructから呼び出される初期化処理です。
      */
-    void Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InFileCollection);
+    void Initialize(const std::shared_ptr<plateau::dataset::IDatasetAccessor>& InFileCollection);
 
     /**
      * @brief 選択状態を初期化
@@ -45,6 +44,7 @@ public:
     virtual bool ShouldScaleCameraSpeedByDistance() const override;
 
     void SwitchFeatureInfoDisplay(const int Lod, const bool bCheck) const;
+    bool SetViewLocationByMeshCode(FString meshCode);
 
 private:
     // このインスタンスを保持しているExtentEditorへのポインタ
@@ -67,8 +67,9 @@ private:
     FVector TrackingStartedCameraPosition;
     TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
     
-    bool GizmoContains(const FPLATEAUMeshCodeGizmo Gizmo) const;
+    bool GizmoContains(const FPLATEAUMeshCodeGizmo& Gizmo) const;
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
     void InitCamera();
+    FPLATEAUMeshCodeGizmo GetNearestMeshCodeGizmo();
 };

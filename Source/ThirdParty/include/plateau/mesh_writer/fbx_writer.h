@@ -16,6 +16,7 @@ namespace plateau::meshWriter {
      */
     struct FbxWriteOptions {
         FbxFileFormat file_format;
+        geometry::CoordinateSystem coordinate_system;
     };
 
     class LIBPLATEAU_EXPORT FbxWriter {

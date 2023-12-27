@@ -209,6 +209,10 @@ namespace {
     }
 }
 
+void APLATEAUCityModelLoader::LoadModel() {
+    LoadAsync(false);
+}
+
 void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 #if WITH_EDITOR
 
@@ -220,6 +224,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
     CreateRootComponent(*ModelActor);
 
     ModelActor->GeoReference = GeoReference;
+    ModelActor->MeshCodes = MeshCodes;
+    ModelActor->Loader = this;
 
     Async(EAsyncExecution::Thread,
         [
@@ -323,7 +329,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                             // データセット名をGMLファイルパスから取得
                             // TODO: libplateauに委譲。データセット名を取得するAPI実装
                             auto DatasetName =
-                                CopiedGmlPath.RightChop((FPaths::ProjectContentDir() + "PLATEAU/Datasets/").Len());
+                                CopiedGmlPath.RightChop((FPaths::ConvertRelativePathToFull(FPaths::ProjectContentDir()) + "PLATEAU/Datasets/").Len());
 
                             // 最初のパスの区切りを探す。
                             int32 FirstSlashIndex, FirstBackSlashIndex;
@@ -459,6 +465,56 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                     }, TStatId(), nullptr, ENamedThreads::GameThread);
             });
 
+#endif
+}
+
+void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
+#if WITH_EDITOR
+    // アクター生成
+    APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
+    CreateRootComponent(*ModelActor);
+
+    ModelActor->GeoReference = GeoReference;
+
+    // 最初のパスの区切りを探す。
+    TArray<FString> Sections;
+    FString CopiedGmlPath = GmlPath;
+    CopiedGmlPath.ParseIntoArray(Sections, TEXT("\\"), true);
+
+    // 3D都市モデルアクタにデータセット名を登録
+    ModelActor->DatasetName = Sections.Last();
+    ModelActor->SetActorLabel(ModelActor->DatasetName);
+    ModelActor->Loader = this;
+
+    Async(EAsyncExecution::Thread,
+        [
+            ModelActor, GmlPath,
+            GeoReference = GeoReference
+        ]() mutable {
+
+            const auto CityModel = FCityModelLoaderImpl::ParseCityGml(GmlPath);
+            auto ExtractOptions = plateau::polygonMesh::MeshExtractOptions();
+            ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
+            ExtractOptions.exclude_city_object_outside_extent = false;
+            ExtractOptions.unit_scale = 0.01;
+            ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
+            ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
+
+            const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
+
+            FLoadInputData InputData;
+            InputData.ExtractOptions = ExtractOptions;
+            InputData.bIncludeAttrInfo = true;
+            InputData.FallbackMaterial = nullptr;
+            // GMLについて親Componentを作成
+            // コンポーネントは拡張子無しgml名に設定
+            const auto GmlRootComponentName = FPaths::GetBaseFilename(GmlPath);
+            const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
+            TAtomic<bool> Canceled = false;
+            FPLATEAUMeshLoader(false).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, &Canceled);
+
+            return true;
+        });
 #endif
 }
 

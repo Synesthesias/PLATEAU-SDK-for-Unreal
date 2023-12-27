@@ -7,12 +7,15 @@
 #include "RHICommandList.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/SavePackage.h"
+#include "Engine/Texture2D.h"
+#include "Misc/FileHelper.h"
+#include "TextureResource.h"
 #include <filesystem>
 
-#include "EditorFramework/AssetImportData.h"
-namespace fs = std::filesystem;
-
 #if WITH_EDITOR
+#include "EditorFramework/AssetImportData.h"
+#endif
+namespace fs = std::filesystem;
 
 DECLARE_STATS_GROUP(TEXT("PLATEAUTextureLoader"), STATGROUP_PLATEAUTextureLoader, STATCAT_Advanced);
 DECLARE_CYCLE_STAT(TEXT("Texture.UpdateResource"), STAT_Texture_UpdateResource, STATGROUP_PLATEAUTextureLoader);
@@ -137,12 +140,14 @@ namespace {
             Texture->UpdateResource();
         }
 
+        FGraphEventRef CompletionEvent;
         FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
             Width, Height,
             PixelFormat,
             1,
             TexCreate_ShaderResource,
-            MipData.GetData(), 1
+            MipData.GetData(), 1,
+            CompletionEvent
         );
 
         for (void* NewData : MipData) {
@@ -163,7 +168,7 @@ namespace {
     }
 }
 
-UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSlash) {
+UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSlash, bool OverwriteTextre) {
     int32 Width, Height;
     EPixelFormat PixelFormat;
     TArray64<uint8> UncompressedData;
@@ -191,11 +196,6 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());
     if (NewTexture == nullptr) {
         NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
-        const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
-            *(FPaths::ProjectContentDir() + FString("PLATEAU/")));
-        // アセットからテクスチャファイルへの相対パス
-        auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
-        NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
 
         // テクスチャのアセット名設定
         // "."はパッケージの階層とみなされるためリプレース
@@ -209,9 +209,19 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
         NewTexture->AddToRoot();
     }
-
+    else if (!OverwriteTextre) {
+        return NewTexture;
+    }
+#if WITH_EDITOR
     // テクスチャ上書き開始
     NewTexture->PreEditChange(nullptr);
+
+    // ソースパス設定
+    const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
+        *(FPaths::ProjectContentDir() + FString("PLATEAU/")));
+    // アセットからテクスチャファイルへの相対パス
+    auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
+    NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
 
     if (GRHISupportsAsyncTextureCreation)
         UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
@@ -227,7 +237,7 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
 
     // テクスチャ上書き終了
     NewTexture->PostEditChange();
-
+#endif
     // TODO: 関数化(SaveTexturePackage)
     Package->MarkPackageDirty();
 
@@ -296,5 +306,3 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
 
     return NewTexture;
 }
-
-#endif

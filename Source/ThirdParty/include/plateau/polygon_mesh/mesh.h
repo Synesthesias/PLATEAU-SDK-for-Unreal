@@ -32,7 +32,7 @@ namespace plateau::polygonMesh {
     public:
         Mesh();
 
-        Mesh(std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1,
+        Mesh(std::vector<TVec3d>&& vertices, std::vector<unsigned>&& indices, UV&& uv_1, UV&& uv_4,
             std::vector<SubMesh>&& sub_meshes, CityObjectList&& city_object_list);
 
         std::vector<TVec3d>& getVertices();
@@ -55,8 +55,8 @@ namespace plateau::polygonMesh {
         void addIndicesList(const std::vector<unsigned>& other_indices, unsigned prev_num_vertices,
                             bool invert_mesh_front_back);
 
-        void setUV1(const std::vector<TVec2f>& other_uv_1);
         void setUV1(UV&& uv);
+        void setUV4(UV&& uv4);
 
         /// UV1を追加します。追加した結果、UV1の要素数が頂点数に足りなければ、足りない分を 0 で埋めます。
         void addUV1(const std::vector<TVec2f>& other_uv_1, unsigned long long other_vertices_size);
@@ -75,7 +75,7 @@ namespace plateau::polygonMesh {
          * 代わりに extendLastSubMesh を実行します。
          * なぜなら、同じテクスチャであればサブメッシュを分けるのは無意味で描画負荷を増やすだけと思われるためです。
          */
-        void addSubMesh(const std::string& texture_path, std::shared_ptr<const citygml::Material> material, size_t sub_mesh_start_index, size_t sub_mesh_end_index);
+        void addSubMesh(const std::string& texture_path, std::shared_ptr<const citygml::Material> material, size_t sub_mesh_start_index, size_t sub_mesh_end_index, int game_material_id);
 
         /**
          * 直前の SubMesh の範囲を拡大し、範囲の終わりがindicesリストの最後を指すようにします。
@@ -88,9 +88,14 @@ namespace plateau::polygonMesh {
         void debugString(std::stringstream& ss, int indent) const;
 
         const CityObjectList& getCityObjectList() const;
+        CityObjectList& getCityObjectList();
+        void setCityObjectList(const CityObjectList& city_obj_list);
 
         /// 頂点座標の最小・最大をタプル形式(min, max)で返します。
         std::tuple<TVec3d, TVec3d> calcBoundingBox() const;
+        bool hasVertices() const;
+
+        void merge(const Mesh& other_mesh, const bool invert_mesh_front_back, const bool include_textures);
 
     private:
         friend class MeshFactory;

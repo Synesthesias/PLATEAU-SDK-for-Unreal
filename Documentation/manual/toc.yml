@@ -1,6 +1,6 @@
 - name: PLATEAU SDK for Unreal
   href: ../index.md
-- name: 利用を開始する
+- name: SDKの使い方
   items:
   - name: インストール
     href: Installation.md
@@ -8,7 +8,18 @@
     href: ImportCityModels.md
   - name: 3D都市モデルのフィルタリング
     href: FilterCityModels.md
+  - name: 3D都市モデルの結合・分離
+    href: ReconstructModel.md
+  - name: 3D都市モデルのマテリアル分け
+    href: ClassifyModel.md    
   - name: 3D都市モデルのエクスポート
     href: ExportCityModels.md
   - name: 属性情報へのアクセス
     href: AccessCityObject.md
+  - name: エディタAPI
+    href: EditorAPI.md
+- name: チュートリアル
+  items:
+    - name: 属性情報によって色分けする
+      href: ChangeColorByAttrs.md
+

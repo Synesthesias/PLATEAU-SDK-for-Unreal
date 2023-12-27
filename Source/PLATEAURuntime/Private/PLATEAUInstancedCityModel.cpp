@@ -2,50 +2,22 @@
 
 
 #include "PLATEAUInstancedCityModel.h"
-
-#include "Tasks/Task.h"
-
 #include "Misc/DefaultValueHelper.h"
-
 #include <plateau/dataset/i_dataset_accessor.h>
+#include <plateau/granularity_convert/granularity_converter.h>
 #include <citygml/citygml.h>
 #include <citygml/citymodel.h>
-
 #include "CityGML/PLATEAUCityGmlProxy.h"
+#include <PLATEAUMeshExporter.h>
+#include <PLATEAUMeshLoader.h>
+#include <PLATEAUExportSettings.h>
+#include "Reconstruct/PLATEAUModelReconstruct.h"
+#include <Reconstruct/PLATEAUModelClassification.h>
 
 using namespace UE::Tasks;
+using namespace plateau::granularityConvert;
 
 namespace {
-    /**
-     * @brief Componentのユニーク化されていない元の名前を取得します。
-     * コンポーネント名の末尾に"_{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"_"以降を削除します。
-     * 元の名前に"_{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
-     */
-    FString GetOriginalComponentName(const USceneComponent* const InComponent) {
-        auto ComponentName = InComponent->GetName();
-        int Index = 0;
-        if (ComponentName.FindLastChar('_', Index)) {
-            if (ComponentName.RightChop(Index + 1).IsNumeric()) {
-                ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index);
-            }
-        }
-        return ComponentName;
-    }
-
-    /**
-     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
-     */
-    int ParseLodComponent(const USceneComponent* const InLodComponent) {
-        auto LodString = GetOriginalComponentName(InLodComponent);
-        // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
-        LodString = LodString.RightChop(3);
-
-        int Lod;
-        FDefaultValueHelper::ParseInt(LodString, Lod);
-
-        return Lod;
-    }
-
     /**
      * @brief 3D都市モデル内のCityGMLファイルに相当するコンポーネントを入力として、CityGMLファイル名を返します。
      * @return CityGMLファイル名
@@ -110,10 +82,40 @@ namespace {
     }
 }
 
+FString APLATEAUInstancedCityModel::GetOriginalComponentName(const USceneComponent* const InComponent) {
+    auto ComponentName = InComponent->GetName();
+    int Index = 0;
+    if (ComponentName.FindLastChar('_', Index)) {
+        if (ComponentName.RightChop(Index + 1).IsNumeric()) {
+            ComponentName = ComponentName.LeftChop(ComponentName.Len() - Index + 1);
+        }
+    }
+    return ComponentName;
+}
+
+int APLATEAUInstancedCityModel::ParseLodComponent(const USceneComponent* const InLodComponent) {
+    auto LodString = GetOriginalComponentName(InLodComponent);
+    // "Lod{数字}"から先頭3文字除外することで数字を抜き出す。
+    LodString = LodString.RightChop(3);
+
+    int Lod;
+    FDefaultValueHelper::ParseInt(LodString, Lod);
+
+    return Lod;
+}
+
 // Sets default values
 APLATEAUInstancedCityModel::APLATEAUInstancedCityModel() {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
+}
+
+double APLATEAUInstancedCityModel::GetLatitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).latitude;
+}
+
+double APLATEAUInstancedCityModel::GetLongitude() {
+    return GeoReference.GetData().unproject(TVec3d(0, 0, 0)).longitude;
 }
 
 FPLATEAUCityObjectInfo APLATEAUInstancedCityModel::GetCityObjectInfo(USceneComponent* Component) {
@@ -268,6 +270,54 @@ APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByLods(const plate
 }
 
 APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypes(const citygml::CityObject::CityObjectsType InCityObjectType) {
+    if (!HasAttributeInfo())
+        return FilterByFeatureTypesLegacy(InCityObjectType);
+    bIsFiltering = true;
+    for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
+        // BillboardComponentを無視
+        if (GmlComponent.GetName().Contains("BillboardComponent"))
+            continue;
+
+        // 起伏は重いため意図的に除外
+        const auto Package = GetCityModelPackage(GmlComponent);
+        if (Package == plateau::dataset::PredefinedCityModelPackage::Relief)
+            continue;
+
+        for (const auto& LodComponent : GmlComponent->GetAttachChildren()) {
+            TArray<USceneComponent*> FeatureComponents;
+            LodComponent->GetChildrenComponents(true, FeatureComponents);
+            for (const auto& FeatureComponent : FeatureComponents) {
+                //この時点で不可視状態ならLodフィルタリングで不可視化されたことになるので無視
+                if (!FeatureComponent->IsVisible())
+                    continue;
+
+                auto FeatureID = FeatureComponent->GetName();
+                // BillboardComponentも混ざってるので無視
+                if (FeatureID.Contains("BillboardComponent"))
+                    continue;
+
+                if (!FeatureComponent->IsA(UPLATEAUCityObjectGroup::StaticClass()))
+                    continue;
+
+                const auto CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(FeatureComponent);
+                const auto ObjList = CityObjGrp->GetAllRootCityObjects();
+                if (ObjList.Num() != 1)
+                    continue;
+
+                const int64 CityObjectType = UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(ObjList[0].Type);
+                if (static_cast<int64>(InCityObjectType) & CityObjectType) 
+                    continue;
+
+                ApplyCollisionResponseBlockToChannel(FeatureComponent, false);
+                FeatureComponent->SetVisibility(false);
+            }
+        }
+    }  
+    bIsFiltering = false;
+    return this;
+}
+
+APLATEAUInstancedCityModel* APLATEAUInstancedCityModel::FilterByFeatureTypesLegacy(const citygml::CityObject::CityObjectsType InCityObjectType) {
     bIsFiltering = true;
     Launch(
         TEXT("ParseGmlsTask"),
@@ -331,6 +381,14 @@ const TArray<TObjectPtr<USceneComponent>>& APLATEAUInstancedCityModel::GetGmlCom
     return GetRootComponent()->GetAttachChildren();
 }
 
+bool APLATEAUInstancedCityModel::HasAttributeInfo() {
+    TArray<USceneComponent*> Components;
+    GetRootComponent()->GetChildrenComponents(true, Components);
+    return Components.ContainsByPredicate([](const auto& Comp) {
+        return Comp->IsA(UPLATEAUCityObjectGroup::StaticClass());
+        });
+}
+
 void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType) {
     for (const auto& GmlComponent : GetRootComponent()->GetAttachChildren()) {
         // BillboardComponentを無視
@@ -352,8 +410,8 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
 
                 auto FeatureID = FeatureComponent->GetName();
 
-                // TODO: 主要地物でない場合元の地物IDに_{数値}が入っている場合があるため、主要地物についてのみ処理する。よりロバストな方法検討必要
-                if (FeatureComponent->GetAttachParent() == LodComponent) {
+                // TODO: 最小地物の場合元の地物IDに_{数値}が入っている場合があるため、最小地物についてのみ処理する。よりロバストな方法検討必要
+                if (FeatureComponent->GetAttachParent() != LodComponent) {
                     FeatureID = GetOriginalComponentName(FeatureComponent);
                 }
 
@@ -386,4 +444,65 @@ void APLATEAUInstancedCityModel::FilterByFeatureTypesInternal(const citygml::Cit
             }
         }
     }
+}
+
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal)  {
+
+    UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    TTask<TArray<USceneComponent*>> ReconstructModelTask = Launch(TEXT("ReconstructModelTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {
+
+        FPLATEAUModelReconstruct ModelReconstruct(this, ReconstructType);
+        auto Task = ReconstructTask(ModelReconstruct, TargetComponents, bDestroyOriginal);
+        AddNested(Task);
+        Task.Wait();
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //終了イベント通知
+            OnReconstructFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+            
+        return Task.GetResult();
+    });
+    return ReconstructModelTask;
+}
+
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+    
+    UE_LOG(LogTemp, Log, TEXT("ClassifyModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    TTask<TArray<USceneComponent*>> ClassifyModelTask = Launch(TEXT("ClassifyModelTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
+
+        FPLATEAUModelClassification ModelClassification(this, ReconstructType, Materials);
+        auto Task = ReconstructTask(ModelClassification, TargetComponents, bDestroyOriginal);
+        AddNested(Task);
+        Task.Wait();
+        
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //終了イベント通知
+            OnClassifyFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+        
+        return Task.GetResult();
+    });
+    return ClassifyModelTask;
+}
+
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
+
+    TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ReconstructTask"), [&, TargetComponents, bDestroyOriginal] {
+        const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+        std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //コンポーネント削除
+            for (auto comp : TargetCityObjects) {
+                if (bDestroyOriginal)
+                    comp->DestroyComponent();
+                else
+                    comp->SetVisibility(false);
+            }
+            }, TStatId(), NULL, ENamedThreads::GameThread)
+            ->Wait();
+
+        const auto ResultComponents = ModelReconstruct.ReconstructFromConvertedModel(converted);
+        return ResultComponents;
+    });
+    return ConvertTask;
 }

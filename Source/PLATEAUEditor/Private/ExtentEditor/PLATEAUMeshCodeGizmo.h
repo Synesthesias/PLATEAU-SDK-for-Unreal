@@ -8,13 +8,16 @@
 namespace plateau {
     namespace geometry {
         class GeoReference;
+        constexpr auto ShowFeatureDetailIconCameraDistance = 4000;
+        constexpr auto ShowFeatureIconCameraDistance = 9000;
+        constexpr auto ShowRegionMeshIdCameraDistance = 9000;
     }
 }
 
 /**
  * @brief 各地域メッシュのメッシュコードのギズモを表します。
  */
-class FPLATEAUMeshCodeGizmo {
+class PLATEAUEDITOR_API FPLATEAUMeshCodeGizmo {
 public:
     FPLATEAUMeshCodeGizmo();
 
@@ -102,7 +105,6 @@ public:
     static void SetShowLevel5Mesh(const bool bValue);
 
 private:
-    int MeshCodeLevel;
     inline static bool bShowLevel5Mesh = false;
 
     plateau::dataset::MeshCode MeshCode;
@@ -117,6 +119,5 @@ private:
     TArray<bool> bSelectedArray;
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
-
-    bool IsThirdMeshCode() const;
+    bool IsSelectable() const;
 };

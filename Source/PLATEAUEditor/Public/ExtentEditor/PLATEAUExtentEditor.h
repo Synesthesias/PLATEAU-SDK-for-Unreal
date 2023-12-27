@@ -29,6 +29,7 @@ public:
     void UnregisterTabSpawner(const TSharedRef<class FTabManager>& TabManager);
 
     TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
+    bool CanSpawnTab(const FSpawnTabArgs& Args) const;
 
     const FString& GetSourcePath() const;
     void SetSourcePath(const FString& Path);
@@ -59,8 +60,12 @@ public:
 
     const plateau::dataset::PredefinedCityModelPackage& GetServerPackageMask() const;
     plateau::geometry::GeoCoordinate GetSelectedCenterLatLon(const bool InbImportFromServer) const;
-    FVector3d GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
+    FVector GetSelectedCenterPoint(const int InZoneID, const bool InbImportFromServer) const;
     void SetServerPackageMask(const plateau::dataset::PredefinedCityModelPackage& InPackageMask);
+
+    const FVector3d GetCenterByExtent(const plateau::geometry::Extent Extent) const;
+    const FBox GetBoxByExtent(const plateau::geometry::Extent Extent) const;
+
 private:
     FString SourcePath;
     FString AreaSourcePath;

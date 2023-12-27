@@ -29,16 +29,15 @@ namespace {
     /**
      * @brief 最大パネル読み込み並列数
      */
-    constexpr int MaxLoadPanelParallelCount = 8;
+    constexpr int MaxLoadPanelParallelCount = 1;
 
     /**
-     * @brief 最大パネル追加並列数
+     * @brief 1フレーム中の最大AddComponent数
      */
-    constexpr int MaxAddComponentParallelCount = 8;
+    constexpr int MaxAddComponentPerFrameCount = 2;
 }
 
-
-FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(TWeakPtr<FPLATEAUExtentEditor> InExtentEditor,
+FPLATEAUExtentEditorViewportClient::FPLATEAUExtentEditorViewportClient(const TWeakPtr<FPLATEAUExtentEditor>& InExtentEditor,
                                                                        const TSharedRef<SPLATEAUExtentEditorViewport>& InPLATEAUExtentEditorViewport,
                                                                        const TSharedRef<FAdvancedPreviewScene>& InPreviewScene) : FEditorViewportClient(
     nullptr, &InPreviewScene.Get(), StaticCastSharedRef<SEditorViewport>(InPLATEAUExtentEditorViewport)), ExtentEditorPtr(InExtentEditor) {
@@ -49,7 +48,7 @@ FPLATEAUExtentEditorViewportClient::~FPLATEAUExtentEditorViewportClient() {
     UAssetViewerSettings::Get()->OnAssetViewerSettingsChanged().RemoveAll(this);
 }
 
-void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dataset::IDatasetAccessor> InDatasetAccessor) {
+void FPLATEAUExtentEditorViewportClient::Initialize(const std::shared_ptr<plateau::dataset::IDatasetAccessor>& InDatasetAccessor) {
     DatasetAccessor = InDatasetAccessor;
     const auto& MeshCodes = DatasetAccessor->getMeshCodes();
     const auto ExtentEditor = ExtentEditorPtr.Pin();
@@ -67,6 +66,20 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
     auto GeoReference = ExtentEditor->GetGeoReference();
     MeshCodeGizmos.Reset();
     for (const auto& MeshCode : MeshCodes) {
+        // 2次メッシュ以下の次数は省く
+        if (MeshCode.getLevel() <= 2)
+            continue;
+
+        // Level4以上のMeshCodeであって、別のLevel3の範囲に含まれているものは重複のため除外します。
+        if (MeshCode.getLevel() >= 4) {
+            FString code = UTF8_TO_TCHAR(MeshCode.get().c_str());
+            FString ThirdMeshCodeString = code.Mid(0, 8);
+            const auto ThirdMeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*ThirdMeshCodeString));
+            if (MeshCodes.find(ThirdMeshCode) != MeshCodes.end()) {             
+                continue;
+            }
+        }
+
         MeshCodeGizmos.AddDefaulted();
         MeshCodeGizmos.Last().Init(MeshCode, GeoReference.GetData());
         if (ExtentEditor->GetAreaMeshCodeMap().Contains(UTF8_TO_TCHAR(MeshCode.get().c_str()))) {
@@ -76,9 +89,9 @@ void FPLATEAUExtentEditorViewportClient::Initialize(std::shared_ptr<plateau::dat
 }
 
 void FPLATEAUExtentEditorViewportClient::ResetSelectedArea() {
-    for (auto& Gizmo : MeshCodeGizmos) {
-        Gizmo.ResetSelectedArea();
-        ExtentEditorPtr.Pin()->SetAreaMeshCodeMap(Gizmo.GetRegionMeshID(), Gizmo);
+    for (auto& MeshCodeGizmo : MeshCodeGizmos) {
+        MeshCodeGizmo.ResetSelectedArea();
+        ExtentEditorPtr.Pin()->SetAreaMeshCodeMap(MeshCodeGizmo.GetRegionMeshID(), MeshCodeGizmo);
     }
 }
 
@@ -151,10 +164,10 @@ void FPLATEAUExtentEditorViewportClient::Tick(float DeltaSeconds) {
 void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitiveDrawInterface* PDI) {
     FEditorViewportClient::Draw(View, PDI);
 
-    for (const auto& Gizmo : MeshCodeGizmos) {
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
         // 範囲内のギズモのみ描画
-        if (GizmoContains(Gizmo)) {
-            Gizmo.DrawExtent(View, PDI);
+        if (GizmoContains(MeshCodeGizmo)) {
+            MeshCodeGizmo.DrawExtent(View, PDI);
         }
     }
 
@@ -167,37 +180,67 @@ void FPLATEAUExtentEditorViewportClient::Draw(const FSceneView* View, FPrimitive
 
 void FPLATEAUExtentEditorViewportClient::DrawCanvas(FViewport& InViewport, FSceneView& View, FCanvas& Canvas) {
     const double CameraDistance = GetViewTransform().GetLocation().Z;
+    
     // 地物アイコン
     if (FeatureInfoDisplay == nullptr) {
         FeatureInfoDisplay = MakeShared<FPLATEAUFeatureInfoDisplay>(ExtentEditorPtr.Pin().Get()->GetGeoReference(), SharedThis(this));
     }
 
-    int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
-    int AddComponentCnt = 0;
-    for (const auto& Gizmo : MeshCodeGizmos) {
-        // 範囲内のギズモのみ描画
-        if (GizmoContains(Gizmo)) {
-            if (CameraDistance < 4000.0) {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Detailed);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
-                    LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
-                    AddComponentCnt++;
-            } else if (CameraDistance < 9000.0) {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Visible);
-                if (LoadingPanelCnt < MaxLoadPanelParallelCount && FeatureInfoDisplay->CreatePanelAsync(Gizmo, *DatasetAccessor))
-                    LoadingPanelCnt++;
-                if (AddComponentCnt < MaxAddComponentParallelCount && FeatureInfoDisplay->AddComponent(Gizmo))
-                    AddComponentCnt++;
-            } else {
-                FeatureInfoDisplay->SetVisibility(Gizmo, EPLATEAUFeatureInfoVisibility::Hidden);
-            }
+    const int LoadingPanelCnt = FeatureInfoDisplay->CountLoadingPanels();
+    const auto& NearestMeshCodeGizmo = GetNearestMeshCodeGizmo();
+    if (NearestMeshCodeGizmo.GetRegionMeshID() != "" && LoadingPanelCnt < MaxLoadPanelParallelCount && 0 < CameraDistance && CameraDistance < 9000.0) {
+        FeatureInfoDisplay->CreatePanelAsync(NearestMeshCodeGizmo, *DatasetAccessor);
+        FeatureInfoDisplay->AddComponent(NearestMeshCodeGizmo);
+    }
 
-            if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(Gizmo.GetRegionMeshID()); 0 < ItemCount) {
-                Gizmo.DrawRegionMeshID(InViewport, View, Canvas, Gizmo.GetRegionMeshID(), CameraDistance, ItemCount);
-            }
+    int32 AddedComponentCnt = 0;
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
+        if (const auto ItemCount = FeatureInfoDisplay.Get()->GetItemCount(MeshCodeGizmo); 0 < ItemCount) {
+            MeshCodeGizmo.DrawRegionMeshID(InViewport, View, Canvas, MeshCodeGizmo.GetRegionMeshID(), CameraDistance, ItemCount);
+        }
+
+        if (MaxAddComponentPerFrameCount <= AddedComponentCnt)
+            continue;
+        
+        if (FeatureInfoDisplay->AddComponent(MeshCodeGizmo)) {
+            AddedComponentCnt++;
+        } else {
+            continue;
+        }
+        
+        if (CameraDistance < plateau::geometry::ShowFeatureDetailIconCameraDistance) {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Detailed);
+        } else if (CameraDistance < plateau::geometry::ShowFeatureIconCameraDistance) {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Visible);
+        } else {
+            FeatureInfoDisplay->SetVisibility(MeshCodeGizmo, EPLATEAUFeatureInfoVisibility::Hidden);
         }
     }
+}
+
+FPLATEAUMeshCodeGizmo FPLATEAUExtentEditorViewportClient::GetNearestMeshCodeGizmo() {
+    // ロードを開始する対象Gizmoの中で最もカメラ中心位置から近いGizmoのロードを開始
+    FPLATEAUMeshCodeGizmo NearestMeshCodeGizmo;
+    double MinSqrDist = MAX_dbl;
+    for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
+        // 読込済みのものは飛ばす
+        if (FeatureInfoDisplay->MeshCodeGizmoContains(MeshCodeGizmo))
+            continue;
+        
+        auto DistFromCenter = MeshCodeGizmo.GetMeshCode().getExtent().centerPoint() - Extent.GetNativeData().centerPoint();
+        // 緯度・経度の値でそのまま距離を取ると、探索範囲が縦長になり、画面の上下にはみ出した箇所が探索されがちになります。
+        // これを補正するため、縦よりも横を優先します。
+        // 探索範囲が横長になり、横に長いディスプレイに映る範囲が優先的に探索されるようにします。
+        DistFromCenter.longitude *= 0.5;
+
+        const auto SqrDist = DistFromCenter.latitude * DistFromCenter.latitude + DistFromCenter.longitude * DistFromCenter.longitude;
+        if (SqrDist < MinSqrDist) {
+            MinSqrDist = SqrDist;
+            NearestMeshCodeGizmo = MeshCodeGizmo;
+        }
+    }
+
+    return NearestMeshCodeGizmo;
 }
 
 void FPLATEAUExtentEditorViewportClient::TrackingStarted(const FInputEventState& InInputState, bool bIsDragging, bool bNudge) {
@@ -286,7 +329,7 @@ void FPLATEAUExtentEditorViewportClient::SwitchFeatureInfoDisplay(const int Lod,
     FeatureInfoDisplay->SwitchFeatureInfoDisplay(MeshCodeGizmos, Lod, bCheck);
 }
 
-bool FPLATEAUExtentEditorViewportClient::GizmoContains(const FPLATEAUMeshCodeGizmo Gizmo) const {
+bool FPLATEAUExtentEditorViewportClient::GizmoContains(const FPLATEAUMeshCodeGizmo& Gizmo) const {
     const auto ExtentEditor = ExtentEditorPtr.Pin();
     const auto RawMin = ExtentEditor->GetGeoReference().GetData().project(Extent.GetNativeData().min);
     const auto RawMax = ExtentEditor->GetGeoReference().GetData().project(Extent.GetNativeData().max);
@@ -320,5 +363,20 @@ bool FPLATEAUExtentEditorViewportClient::TryGetWorldPositionOfCursor(FVector& Po
     const auto EndPoint = CursorLocation.GetOrigin() + CursorLocation.GetDirection() * 100000.0;
     return FMath::SegmentPlaneIntersection(StartPoint, EndPoint, Plane, Position);
 }
+
+bool FPLATEAUExtentEditorViewportClient::SetViewLocationByMeshCode(FString meshCode) {
+    const auto MeshCode = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*meshCode));
+    if (!MeshCode.isValid())
+        return false;
+    std::set<plateau::dataset::MeshCode> MeshCodes = DatasetAccessor->getMeshCodes();
+    if( !std::any_of(MeshCodes.begin(), MeshCodes.end(), [&](plateau::dataset::MeshCode c) { return MeshCode.isWithin(c); }))
+        return false;       
+    const auto ExtentEditor = ExtentEditorPtr.Pin();     
+    const auto Box = ExtentEditor->GetBoxByExtent(MeshCode.getExtent());
+    if (!Box.IsValid) return false;
+    FocusViewportOnBox(Box, true);
+    return true;
+}
+
 
 #undef LOCTEXT_NAMESPACE

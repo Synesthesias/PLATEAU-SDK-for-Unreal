@@ -78,11 +78,13 @@ TSharedRef<SDockTab> FPLATEAUWindow::SpawnTab(const FSpawnTabArgs& TabSpawnArgs)
 
     const FText Title = LOCTEXT("WidgetWarning", "ウィジェット破損");
     const FText DialogText = LOCTEXT("WidgetWarningDetail", "PLATEAU SDKのウィジェットが破損しています。");
-    FMessageDialog::Open(EAppMsgType::Ok, DialogText, &Title);
+    FMessageDialog::Open(EAppMsgType::Ok, DialogText, Title);
     return SNew(SDockTab).ShouldAutosize(false).TabRole(NomadTab);
 }
 
 UEditorUtilityWidget* FPLATEAUWindow::GetEditorUtilityWidget() const {
+    if (!EditorUtilityWidgetBlueprint.IsValid())
+        return nullptr;
     return EditorUtilityWidgetBlueprint->GetCreatedWidget();
 }
 
