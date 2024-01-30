@@ -42,7 +42,6 @@ PLATEAU SDK for Unityは利用者アンケートを実施しています。 今�
 # 利用手順
 - SDKの最新版は[Releaseページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)からダウンロードしてください。
 - 詳しい利用方法については、こちらの [マニュアル](https://Project-PLATEAU.github.io/PLATEAU-SDK-for-Unreal/index.html) をご覧ください。
-- PLATEAU公式ウェブサイトでは当SDKの [チュートリアル記事](https://www.mlit.go.jp/plateau/learning/tpc17-2/) も公開しています。 
 
 # プロジェクトに貢献する
 このプロジェクトでは、バグ報告・プルリクエストなど皆さんの貢献を歓迎しています。
