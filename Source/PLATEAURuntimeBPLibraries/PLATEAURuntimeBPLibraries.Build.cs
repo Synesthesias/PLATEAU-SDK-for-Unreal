@@ -45,10 +45,15 @@ public class PLATEAURuntimeBPLibraries : ModuleRules {
 
         if (Target.Platform == UnrealTargetPlatform.Win64) {
             libPlateauPath = libPlateauPath + "/windows/plateau_combined.lib";
+            PublicAdditionalLibraries.Add(libPlateauPath);
             PublicAdditionalLibraries.Add("glu32.lib");
             PublicAdditionalLibraries.Add("opengl32.lib");
         } else if (Target.Platform == UnrealTargetPlatform.Mac) {
-            libPlateauPath = libPlateauPath + "/macos/arm64/libplateau_combined.a";
+            
+            PublicAdditionalLibraries.Add(libPlateauPath + "/macos/arm64/libplateau_combined.a");
+            PublicAdditionalLibraries.Add(libPlateauPath + "/macos/x86_64/libplateau_combined.a");
+            
+            
             PublicAdditionalLibraries.Add(
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/liblzma.tbd");
@@ -56,11 +61,10 @@ public class PLATEAURuntimeBPLibraries : ModuleRules {
                 "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL.tbd");
         } else if (Target.Platform == UnrealTargetPlatform.Linux) {
             libPlateauPath = libPlateauPath + "/linux/libplateau.a";
+            PublicAdditionalLibraries.Add(libPlateauPath);
         } else {
             throw new Exception("Unknown OS.");
         }
-
-        PublicAdditionalLibraries.Add(libPlateauPath);
 
         //using c++17
         CppStandard = CppStandardVersion.Cpp17;
