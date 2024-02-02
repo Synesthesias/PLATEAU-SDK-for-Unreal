@@ -57,13 +57,21 @@ namespace plateau::polygonMesh {
         /// Node 以下の階層構造を stringstream に書き込みます。
         void debugString(std::stringstream& ss, int indent) const;
 
-        void setIsPrimary(bool is_primary_); // GranularityConverterでのみ利用します。
+        void setGranularityConvertInfo(bool is_primary, bool is_active); // GranularityConverterの内部でのみ利用する情報を付与します。
         bool isPrimary() const; // GranularityConverterでのみ利用します。
+        void setIsActive(bool is_active); // GranularityConverterでのみ利用します。
+        bool isActive() const; // GranularityConverterでのみ利用します。
         void reserveChild(size_t reserve_count);
     private:
         std::string name_;
         std::vector<Node> child_nodes_;
         std::unique_ptr<Mesh> mesh_;
         bool is_primary_; // GranularityConverterでのみ利用します。
+
+        /**
+         * ゲームエンジン上でNodeに相当するゲームオブジェクトがアクティブかどうかです。
+         * GranularityConverterでのみ利用します。それ以外の用途では常にtrueになります。
+         */
+        bool is_active_;
     };
 }
