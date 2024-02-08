@@ -476,6 +476,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 
 void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
 #if WITH_EDITOR
+    Phase = ECityModelLoadingPhase::Start;
+
     // アクター生成
     APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
     CreateRootComponent(*ModelActor);
@@ -495,7 +497,9 @@ void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
     Async(EAsyncExecution::Thread,
         [
             ModelActor, GmlPath,
-            GeoReference = GeoReference
+            GeoReference = GeoReference,
+            ImportFinishedDelegate = ImportFinishedDelegate,
+            Phase = &Phase
         ]() mutable {
 
             const auto CityModel = FCityModelLoaderImpl::ParseCityGml(GmlPath);
@@ -518,6 +522,13 @@ void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
             const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
             TAtomic<bool> Canceled = false;
             FPLATEAUMeshLoader(false).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, &Canceled);
+
+            *Phase = ECityModelLoadingPhase::Finished;
+
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [ImportFinishedDelegate] {
+                    ImportFinishedDelegate.Broadcast();
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
 
             return true;
         });
