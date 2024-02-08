@@ -93,12 +93,16 @@ public class PLATEAUEditor : ModuleRules
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
             libPlateauPath += "/windows/plateau_combined.lib";
+            PublicAdditionalLibraries.Add(libPlateauPath);
             PublicAdditionalLibraries.Add("glu32.lib");
             PublicAdditionalLibraries.Add("opengl32.lib");
         }
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            libPlateauPath += "/macos/arm64/libplateau_combined.a";
+            PublicAdditionalLibraries.Add(libPlateauPath + "/macos/arm64/libplateau_combined.a");
+            PublicAdditionalLibraries.Add(libPlateauPath + "/macos/x86_64/libplateau_combined.a");
+            
+            
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/libiconv.tbd");
             PublicAdditionalLibraries.Add("/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/liblzma.tbd");
             // PublicAdditionalLibraries.Add("GLU");
@@ -107,6 +111,7 @@ public class PLATEAUEditor : ModuleRules
         else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
             libPlateauPath += "linux/libplateau.a";
+            PublicAdditionalLibraries.Add(libPlateauPath);
         }
         else
         {
