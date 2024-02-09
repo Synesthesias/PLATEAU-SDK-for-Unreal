@@ -18,8 +18,12 @@ PLATEAU SDK for Unrealは、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都�
 
 PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたアプリケーションの開発や、PLATEAUの豊富なデータを活用したシミュレーションを簡単に行うことができます。
 
-PLATEAU SDK for Unityは利用者アンケートを実施しています。 今後の開発の参考にするため、ユーザーの皆様の忌憚ないご意見をお聞かせください。
+◆PLATEAU SDK for Unityは利用者アンケートを実施しています。 今後の開発の参考にするため、ユーザーの皆様の忌憚ないご意見をお聞かせください。
 [アンケートはこちら](https://docs.google.com/forms/d/e/1FAIpQLSeICxDJd6eQ311_rDbCudc2c8UUZ8A0oE6LXppKoHgT2mwYQQ/viewform)
+
+◆PLATEAU SLackコミュニティはどなたでもご参加いただけます。
+参加希望の方は、[お問い合わせページ](https://www.mlit.go.jp/plateau/contact/)よりお気軽にお問い合わせください。
+
 
 # サンプルプロジェクト
 本SDKを使用して作成されたサンプルプロジェクトを[こちら](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-Samples)で配布しています。
