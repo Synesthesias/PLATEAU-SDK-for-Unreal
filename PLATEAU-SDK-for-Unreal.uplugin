@@ -19,31 +19,31 @@
 		{
 			"Name": "PLATEAURuntime",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUEditorBPLibraries",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAURuntimeBPLibraries",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUTests",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		}
 	]
