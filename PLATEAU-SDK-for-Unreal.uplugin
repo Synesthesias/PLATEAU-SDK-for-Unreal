@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 3,
-	"VersionName": "2.0.1-alpha",
+	"VersionName": "2.2.0",
 	"FriendlyName": "PLATEAU SDK for Unreal",
 	"Description": "",
 	"Category": "Geospatial",
@@ -14,36 +14,36 @@
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
-	"EngineVersion" : ["5.2.0"],
+	"EngineVersion" : ["5.3.2"],
 	"Modules": [
 		{
 			"Name": "PLATEAURuntime",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUEditorBPLibraries",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAURuntimeBPLibraries",
 			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		},
 		{
 			"Name": "PLATEAUTests",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PreDefault",
 			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		}
 	]

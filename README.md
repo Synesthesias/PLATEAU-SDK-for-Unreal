@@ -6,13 +6,24 @@ PLATEAU SDK for Unrealは、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都�
 - CityGMLの直感的なインポート
   - 地図上での範囲選択による3D都市モデルの抽出
   - PLATEAUのサーバーで提供されるCityGMLへのアクセス
+  - 地形への航空写真の付与
+  - テクスチャの自動結合
 - 3D都市モデルに含まれる地物のフィルタリング
 - 3D都市モデルの3Dファイル形式へのエクスポート
 - 3D都市モデルの属性にアクセスするためのBlueprint API
+- 3D都市モデルに含まれる地物の分割・結合
+- 地物型によるマテリアル分割
 
 ![](README_Images/SDK_Outline.png)
 
 PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたアプリケーションの開発や、PLATEAUの豊富なデータを活用したシミュレーションを簡単に行うことができます。
+
+◆PLATEAU SDK for Unityは利用者アンケートを実施しています。 今後の開発の参考にするため、ユーザーの皆様の忌憚ないご意見をお聞かせください。
+[アンケートはこちら](https://docs.google.com/forms/d/e/1FAIpQLSeICxDJd6eQ311_rDbCudc2c8UUZ8A0oE6LXppKoHgT2mwYQQ/viewform)
+
+◆PLATEAU SLackコミュニティはどなたでもご参加いただけます。
+参加希望の方は、[お問い合わせページ](https://www.mlit.go.jp/plateau/contact/)よりお気軽にお問い合わせください。
+
 
 # サンプルプロジェクト
 本SDKを使用して作成されたサンプルプロジェクトを[こちら](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-Samples)で配布しています。
@@ -35,7 +46,6 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 # 利用手順
 - SDKの最新版は[Releaseページ](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal/releases)からダウンロードしてください。
 - 詳しい利用方法については、こちらの [マニュアル](https://Project-PLATEAU.github.io/PLATEAU-SDK-for-Unreal/index.html) をご覧ください。
-- PLATEAU公式ウェブサイトでは当SDKの [チュートリアル記事](https://www.mlit.go.jp/plateau/learning/tpc17-2/) も公開しています。 
 
 # プロジェクトに貢献する
 このプロジェクトでは、バグ報告・プルリクエストなど皆さんの貢献を歓迎しています。

@@ -90,4 +90,18 @@ public:
         static FVector Project(
             UPARAM(ref) FPLATEAUGeoReference& GeoReference,
             const FPLATEAUGeoCoordinate& GeoCoordinate);
+
+    UFUNCTION(
+        BlueprintCallable,
+        Category = "PLATEAU|Geometry")
+    static FPLATEAUExtent UnprojectExtent(
+        UPARAM(ref) FPLATEAUGeoReference& GeoReference,
+        const FBox& Box);
+
+    UFUNCTION(
+        BlueprintCallable,
+        Category = "PLATEAU|Geometry")
+    static FBox ProjectExtent(
+        UPARAM(ref) FPLATEAUGeoReference& GeoReference,
+        const FPLATEAUExtent& Extent);
 };

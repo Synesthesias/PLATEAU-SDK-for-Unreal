@@ -65,7 +65,13 @@ public:
                 ExtractOptions.export_appearance = Settings.bImportTexture;
                 ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
                 ExtractOptions.attach_map_tile = Settings.bAttachMapTile;
+
+                // strcpyは非推奨という警告が出ますが、共通ライブラリを利用するために必要と思われるので警告を抑制します。
+                // なお抑制しないとマーケットプレイスの審査で弾かれる可能性が高いです。
+#pragma warning(push)
+#pragma warning(disable:4996)
                 std::strcpy(ExtractOptions.map_tile_url, TCHAR_TO_UTF8(*Settings.MapTileUrl));
+#pragma warning(pop)
                 ExtractOptions.map_tile_zoom_level = Settings.ZoomLevel;
 
                 switch (Settings.TexturePackingResolution) {
@@ -224,6 +230,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
     CreateRootComponent(*ModelActor);
 
     ModelActor->GeoReference = GeoReference;
+    ModelActor->MeshCodes = MeshCodes;
+    ModelActor->Loader = this;
 
     Async(EAsyncExecution::Thread,
         [
@@ -463,6 +471,67 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                     }, TStatId(), nullptr, ENamedThreads::GameThread);
             });
 
+#endif
+}
+
+void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
+#if WITH_EDITOR
+    Phase = ECityModelLoadingPhase::Start;
+
+    // アクター生成
+    APLATEAUInstancedCityModel* ModelActor = GetWorld()->SpawnActor<APLATEAUInstancedCityModel>();
+    CreateRootComponent(*ModelActor);
+
+    ModelActor->GeoReference = GeoReference;
+
+    // 最初のパスの区切りを探す。
+    TArray<FString> Sections;
+    FString CopiedGmlPath = GmlPath;
+    CopiedGmlPath.ParseIntoArray(Sections, TEXT("\\"), true);
+
+    // 3D都市モデルアクタにデータセット名を登録
+    ModelActor->DatasetName = Sections.Last();
+    ModelActor->SetActorLabel(ModelActor->DatasetName);
+    ModelActor->Loader = this;
+
+    Async(EAsyncExecution::Thread,
+        [
+            ModelActor, GmlPath,
+            GeoReference = GeoReference,
+            ImportFinishedDelegate = ImportFinishedDelegate,
+            Phase = &Phase
+        ]() mutable {
+
+            const auto CityModel = FCityModelLoaderImpl::ParseCityGml(GmlPath);
+            auto ExtractOptions = plateau::polygonMesh::MeshExtractOptions();
+            ExtractOptions.reference_point = GeoReference.GetData().getReferencePoint();
+            ExtractOptions.exclude_city_object_outside_extent = false;
+            ExtractOptions.unit_scale = 0.01;
+            ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
+            ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
+
+            const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
+
+            FLoadInputData InputData;
+            InputData.ExtractOptions = ExtractOptions;
+            InputData.bIncludeAttrInfo = true;
+            InputData.FallbackMaterial = nullptr;
+            // GMLについて親Componentを作成
+            // コンポーネントは拡張子無しgml名に設定
+            const auto GmlRootComponentName = FPaths::GetBaseFilename(GmlPath);
+            const auto GmlRootComponent = FCityModelLoaderImpl::CreateComponentInGameThread(ModelActor, GmlRootComponentName);
+            TAtomic<bool> Canceled = false;
+            FPLATEAUMeshLoader(false).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, &Canceled);
+
+            *Phase = ECityModelLoadingPhase::Finished;
+
+            FFunctionGraphTask::CreateAndDispatchWhenReady(
+                [ImportFinishedDelegate] {
+                    ImportFinishedDelegate.Broadcast();
+                }, TStatId(), nullptr, ENamedThreads::GameThread);
+
+            return true;
+        });
 #endif
 }
 

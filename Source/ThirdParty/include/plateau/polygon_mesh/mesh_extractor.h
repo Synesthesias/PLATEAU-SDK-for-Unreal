@@ -60,5 +60,6 @@ namespace plateau::polygonMesh {
          * そのため橋梁の関数の戻り地は true です。
          */
         static bool shouldContainPrimaryMesh(unsigned lod, const citygml::CityObject& primary_obj);
+        static bool isTypeToSkip(citygml::CityObject::CityObjectsType type);
     };
 }

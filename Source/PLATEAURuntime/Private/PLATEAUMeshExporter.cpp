@@ -109,6 +109,7 @@ bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstan
     }
     plateau::meshWriter::FbxWriteOptions FbxOptions;
     FbxOptions.file_format = Option.bExportAsBinary ? plateau::meshWriter::FbxFileFormat::Binary : plateau::meshWriter::FbxFileFormat::ASCII;
+    FbxOptions.coordinate_system = static_cast<plateau::geometry::CoordinateSystem>(Option.CoordinateSystem);
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
@@ -226,13 +227,26 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
             Vertex = TVec3d(VertexPosition.X, VertexPosition.Y, VertexPosition.Z);
         Vertex = GeoRef.convertAxisToENU(plateau::geometry::CoordinateSystem::ESU, Vertex);
         Vertex = GeoRef.convertAxisFromENUTo(StaticCast<plateau::geometry::CoordinateSystem>(Option.CoordinateSystem), Vertex);
+
+        // glTFの場合はm単位で出力
+        if (Option.FileFormat == EMeshFileFormat::GLTF)
+            Vertex = TVec3d(Vertex.x * 0.01f, Vertex.y * 0.01f, Vertex.z * 0.01f);
+
         Vertices.push_back(Vertex);
     }
 
+    bool invertMesh = (Option.CoordinateSystem == ECoordinateSystem::EUN || Option.CoordinateSystem == ECoordinateSystem::ESU);
     for (int32 TriangleIndex = 0; TriangleIndex < RenderMesh.IndexBuffer.GetNumIndices() / 3; ++TriangleIndex) {
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
-        OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+        if (!invertMesh) {
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+        }
+        else {
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 2));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3 + 1));
+            OutIndices.push_back(RenderMesh.IndexBuffer.GetIndex(TriangleIndex * 3));
+        }
     }
 
     for (int k = 0; k < RenderMesh.Sections.Num(); k++) {

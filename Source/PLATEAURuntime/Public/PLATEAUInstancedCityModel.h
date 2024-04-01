@@ -93,6 +93,12 @@ public:
     UPROPERTY(VisibleDefaultsOnly, Category = "PLATEAU", BlueprintGetter = GetLongitude)
         double Longitude;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        TObjectPtr<class APLATEAUCityModelLoader> Loader;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+        TArray<FString> MeshCodes;
+
     UFUNCTION(BlueprintGetter)
         double GetLatitude();
 

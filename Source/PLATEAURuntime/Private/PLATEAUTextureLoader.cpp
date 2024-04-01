@@ -7,6 +7,9 @@
 #include "RHICommandList.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/SavePackage.h"
+#include "Engine/Texture2D.h"
+#include "Misc/FileHelper.h"
+#include "TextureResource.h"
 #include <filesystem>
 
 #if WITH_EDITOR

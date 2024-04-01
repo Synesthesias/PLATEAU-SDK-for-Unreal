@@ -3,6 +3,7 @@
 #include "Import/PLATEAUImportModelRuntimeAPI.h"
 #include "PLATEAUCityModelLoader.h"
 #include "plateau/dataset/dataset_source.h"
+#include "Engine/World.h"
 
 namespace {
 

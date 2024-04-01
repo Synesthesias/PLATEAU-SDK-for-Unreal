@@ -3,11 +3,9 @@
 #pragma once
 
 #include <plateau/polygon_mesh/mesh_extract_options.h>
-
 #include "CoreMinimal.h"
-
+#include "Materials/MaterialInterface.h"
 #include <plateau/dataset/city_model_package.h>
-
 #include "PLATEAUImportSettings.generated.h"
 
 #define LOCTEXT_NAMESPACE "PLATEAUImportSettings"
@@ -166,7 +164,7 @@ struct FPackageInfoSettings {
         const int InGranularity,
         UMaterialInterface* InFallbackMaterial,
         const bool InbAttachMapTile,
-        const FString InMapTileUrl,
+        const FString& InMapTileUrl,
         const int InZoomLevel)
         : bImport(InbImport)
         , bTextureImport(InbTextureImport)
