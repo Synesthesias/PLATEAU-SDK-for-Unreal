@@ -26,7 +26,13 @@ PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたア�
 
 
 # サンプルプロジェクト
-本SDKを使用して作成されたサンプルプロジェクトを[こちら](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-Samples)で配布しています。
+本SDKを使用して作成されたサンプルプロジェクトを配布しています。
+- [2024年のGISサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GISSample)
+  - 都市の情報を視覚的に表示するサンプルです。
+- [2024年のゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GameSample)
+  - 都市を舞台に遊ぶゲームのサンプルです。
+- [2023年のサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-Samples)
+  - 都市の情報を表示するサンプルと、都市を車で走行するサンプルです。2023年のサンプルなので情報が古い箇所があります。
 
 <img src="README_Images/GISSample.png" width="48%" />&nbsp;
 <img src="README_Images/GameSample.png" width="48%" />&nbsp;
