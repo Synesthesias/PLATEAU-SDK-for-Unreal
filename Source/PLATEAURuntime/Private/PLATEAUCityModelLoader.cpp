@@ -12,6 +12,8 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
+#include <PLATEAUHeightMapCreator.h>
+
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"
 
@@ -425,6 +427,15 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 
                             {
                                 FScopeLock Lock(LoadMeshSection);
+
+                                //Demの場合はLandScape用Texture生成 (Sample)
+                                
+                                if (CityModel->getAllCityObjectsOfType(citygml::CityObject::CityObjectsType::COT_TINRelief).size() != 0) {
+                                    FPLATEAUHeightMapCreator HMap = FPLATEAUHeightMapCreator(bAutomationTest);
+                                    HMap.CreateHeightMap(ModelActor, Model, InputData, CityModel);
+                                }
+                                
+
                                 FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, bCanceledRef);
                             }
 
