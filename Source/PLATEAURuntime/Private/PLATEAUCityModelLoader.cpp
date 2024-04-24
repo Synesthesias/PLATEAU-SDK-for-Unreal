@@ -431,7 +431,12 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                                 //Demの場合はLandScape用Texture生成 (Sample)
                                 
                                 if (CityModel->getAllCityObjectsOfType(citygml::CityObject::CityObjectsType::COT_TINRelief).size() != 0) {
+
                                     FPLATEAUHeightMapCreator HMap = FPLATEAUHeightMapCreator(bAutomationTest);
+
+                                    
+                                    HMap.CalculateExtent(InputData.ExtractOptions, InputData.Extents);
+                                    
                                     HMap.CreateHeightMap(ModelActor, Model, InputData, CityModel);
                                 }
                                 

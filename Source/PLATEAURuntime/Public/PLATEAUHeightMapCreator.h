@@ -14,6 +14,8 @@ public:
     FPLATEAUHeightMapCreator();
     FPLATEAUHeightMapCreator(const bool InbAutomationTest);
 
+    void CalculateExtent(plateau::polygonMesh::MeshExtractOptions options, std::vector<plateau::geometry::Extent> Extents);
+
     void CreateHeightMap(
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model,

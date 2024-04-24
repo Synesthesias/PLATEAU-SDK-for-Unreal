@@ -21,6 +21,22 @@ FPLATEAUHeightMapCreator::FPLATEAUHeightMapCreator(const bool InbAutomationTest)
     bAutomationTest = InbAutomationTest;
 }
 
+void FPLATEAUHeightMapCreator::CalculateExtent(plateau::polygonMesh::MeshExtractOptions options, std::vector<plateau::geometry::Extent> Extents) {
+
+    const auto geo_reference = plateau::geometry::GeoReference(options.coordinate_zone_id, options.reference_point, options.unit_scale, options.mesh_axes);
+    //const auto geo_reference = plateau::geometry::GeoReference(options.coordinate_zone_id, options.reference_point, options.unit_scale, plateau::geometry::CoordinateSystem::ENU);
+
+    for (auto ext : Extents) {
+
+        auto min = geo_reference.project(ext.min);
+        auto max = geo_reference.project(ext.max);
+
+        UE_LOG(LogTemp, Error, TEXT("Meshcode Extent min (%f,%f,%f) max (%f,%f,%f)"), min.x, min.y, min.z, max.x, max.y, max.z);
+
+    }
+}
+
+
 void FPLATEAUHeightMapCreator::CreateHeightMap(
     AActor* ModelActor,
     const std::shared_ptr<plateau::polygonMesh::Model> Model,
@@ -149,7 +165,10 @@ void FPLATEAUHeightMapCreator::CreateHeightMapFromMesh(
 
     plateau::texture::HeightmapGenerator generator;
     TVec3d ExtMin, ExtMax;
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, TextureWidth, TextureHeight, TVec2d(500, 500), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax);
+    //TVec2d Offset(500, 500);
+    TVec2d Offset(0, 0);
+
+    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, TextureWidth, TextureHeight, Offset, plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax);
 
     UE_LOG(LogTemp, Error, TEXT("Ext Min (%f, %f, %f ) Max (%f, %f, %f )"), ExtMin.x, ExtMin.y, ExtMin.z, ExtMax.x, ExtMax.y, ExtMax.z);
 
