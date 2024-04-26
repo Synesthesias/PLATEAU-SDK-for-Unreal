@@ -435,7 +435,7 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                                     FPLATEAUHeightMapCreator HMap = FPLATEAUHeightMapCreator(bAutomationTest);
 
                                     
-                                    HMap.CalculateExtent(InputData.ExtractOptions, InputData.Extents);
+                                    //HMap.CalculateExtent(InputData.ExtractOptions, InputData.Extents);
                                     
                                     HMap.CreateHeightMap(ModelActor, Model, InputData, CityModel);
                                 }

@@ -12,7 +12,8 @@
 
 #include <Landscape.h>
 #include <LandscapeProxy.h>
-
+#include <PLATEAUTextureLoader.h>
+#include "Materials/MaterialInstanceConstant.h"
 
 
 FPLATEAUHeightMapCreator::FPLATEAUHeightMapCreator() {}
@@ -20,7 +21,7 @@ FPLATEAUHeightMapCreator::FPLATEAUHeightMapCreator() {}
 FPLATEAUHeightMapCreator::FPLATEAUHeightMapCreator(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
 }
-
+/*
 void FPLATEAUHeightMapCreator::CalculateExtent(plateau::polygonMesh::MeshExtractOptions options, std::vector<plateau::geometry::Extent> Extents) {
 
     const auto geo_reference = plateau::geometry::GeoReference(options.coordinate_zone_id, options.reference_point, options.unit_scale, options.mesh_axes);
@@ -35,7 +36,7 @@ void FPLATEAUHeightMapCreator::CalculateExtent(plateau::polygonMesh::MeshExtract
 
     }
 }
-
+*/
 
 void FPLATEAUHeightMapCreator::CreateHeightMap(
     AActor* ModelActor,
@@ -98,11 +99,11 @@ void FPLATEAUHeightMapCreator::CreateLandScape(UWorld* World) {
     FString ActorName = FString("DebugLandScape");
 
     CreateLandScape(World, NumSubsections, SubsectionSizeQuads, ComponentCountX, ComponentCountY, SizeX,  SizeY, 
-        TVec3d(-ActualXSize / 2, -ActualYSize / 2, -ActualHeight / 2), TVec3d(ActualXSize / 2, ActualYSize / 2, ActualHeight / 2), HeightData, ActorName);
+        TVec3d(-ActualXSize / 2, -ActualYSize / 2, -ActualHeight / 2), TVec3d(ActualXSize / 2, ActualYSize / 2, ActualHeight / 2), TVec2f(), TVec2f(), FString(), HeightData, ActorName);
 }
 
 void FPLATEAUHeightMapCreator::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,
-    const TVec3d Min, const TVec3d Max, TArray<uint16> HeightData, const FString ActorName ) {
+    const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName ) {
 
     // Weightmap is sized the same as the component
     const int32 WeightmapSize = (SubsectionSizeQuads + 1) * NumSubsections;
@@ -141,12 +142,29 @@ void FPLATEAUHeightMapCreator::CreateLandScape(UWorld* World, const int32 NumSub
     FActorSpawnParameters Param;
     ALandscape* Landscape = World->SpawnActor<ALandscape>(Param);
     Landscape->bCanHaveLayersContent = false;
-    Landscape->LandscapeMaterial = nullptr;
     Landscape->SetActorTransform(LandscapeTransform);
 
     Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1 , SizeY - 1 , NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
 
     Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), (uint32)2);
+
+
+#if WITH_EDITOR
+    //Material
+    if (!TexturePath.IsEmpty()) {
+        const auto& Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
+        const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAULandscapeMaterialInstance");
+        UMaterialInstanceConstant* MatIns = Cast<UMaterialInstanceConstant>(StaticLoadObject(UMaterialInstanceConstant::StaticClass(), nullptr, SourceMaterialPath));
+        MatIns->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(FName("MainTexture")),Texture);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeX")), SizeX);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeY")), SizeY);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), MinUV.x);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinV")), MinUV.y);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxU")), MaxUV.x);
+        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxV")), MaxUV.y);
+        Landscape->LandscapeMaterial = MatIns;
+    }    
+#endif
 
     ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
 
@@ -157,6 +175,7 @@ void FPLATEAUHeightMapCreator::CreateLandScape(UWorld* World, const int32 NumSub
     Landscape->PostEditChangeProperty(MaterialPropertyChangedEvent);
     Landscape->PostEditChange();
     Landscape->SetActorLabel(FString(ActorName));
+
 }
 
 
@@ -167,10 +186,12 @@ void FPLATEAUHeightMapCreator::CreateHeightMapFromMesh(
     TVec3d ExtMin, ExtMax;
     //TVec2d Offset(500, 500);
     TVec2d Offset(0, 0);
+    TVec2f UVMin, UVMax;
 
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, TextureWidth, TextureHeight, Offset, plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax);
+    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, TextureWidth, TextureHeight, Offset, plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
 
     UE_LOG(LogTemp, Error, TEXT("Ext Min (%f, %f, %f ) Max (%f, %f, %f )"), ExtMin.x, ExtMin.y, ExtMin.z, ExtMax.x, ExtMax.y, ExtMax.z);
+    UE_LOG(LogTemp, Error, TEXT("UV Min (%f, %f) Max (%f, %f)"), UVMin.x, UVMin.y,UVMax.x, UVMax.y);
 
     // Debug Image Output 
     FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HeightMap.png");
@@ -181,16 +202,23 @@ void FPLATEAUHeightMapCreator::CreateHeightMapFromMesh(
     UE_LOG(LogTemp, Error, TEXT("Save raw %s"), *RawSavePath);
     plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), TextureWidth, TextureHeight, heightMapData.data());
    
-
     TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
+
+    //Texture
+    FString TexturePath;
+    const auto& subMeshes = InMesh.getSubMeshes();
+    if (subMeshes.size() > 0) {
+       const auto& subMesh = subMeshes.at(0);
+       TexturePath = FString(subMesh.getTexturePath().c_str());
+    }
 
     //LandScape  
     FFunctionGraphTask::CreateAndDispatchWhenReady(
-        [&, ExtMin, ExtMax, HeightData, NodeName] {
+        [&, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName] {
             const int32 NumSubsections = 1; //1 , 2
             const int32 SubsectionSizeQuads = 127;  //7, 15, 31, 63, 127, 255
             const int32 ComponentCountX = 2;
             const int32 ComponentCountY = 2;
-            CreateLandScape(Actor.GetWorld(), NumSubsections, SubsectionSizeQuads, ComponentCountX, ComponentCountY, TextureWidth, TextureHeight, ExtMin, ExtMax, HeightData, NodeName);
+            CreateLandScape(Actor.GetWorld(), NumSubsections, SubsectionSizeQuads, ComponentCountX, ComponentCountY, TextureWidth, TextureHeight, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName);
         }, TStatId(), nullptr, ENamedThreads::GameThread);
 }
