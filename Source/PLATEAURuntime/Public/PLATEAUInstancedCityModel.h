@@ -158,6 +158,10 @@ public:
      */
     UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
+
+    //UE::Tasks::TTask<TArray<AActor*>> CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
+    UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
+
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント

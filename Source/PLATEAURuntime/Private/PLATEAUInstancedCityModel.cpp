@@ -13,6 +13,7 @@
 #include <PLATEAUExportSettings.h>
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <Reconstruct/PLATEAUModelClassification.h>
+#include <Reconstruct/PLATEAULandscape.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -505,4 +506,49 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
         return ResultComponents;
     });
     return ConvertTask;
+}
+
+
+//Landscape
+//UE::Tasks::TTask<TArray<AActor*>> APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
+UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
+
+    UE_LOG(LogTemp, Log, TEXT("CreateLandscape: %d %s"), TargetComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    //TTask<TArray<AActor*>> CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal] {
+    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal] {
+
+        FPLATEAULandscape Landscape(this);
+
+        const auto& TargetCityObjects = Landscape.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+
+        FPLATEAUMeshExportOptions ExtOptions;
+        ExtOptions.bExportHiddenObjects = false;
+        ExtOptions.bExportTexture = true;
+        ExtOptions.TransformType = EMeshTransformType::Local;
+        ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+
+        FPLATEAUMeshExporter MeshExporter;
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
+        /*
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+            //コンポーネント削除
+            for (auto comp : TargetCityObjects) {
+                if (bDestroyOriginal)
+                    comp->DestroyComponent();
+                else
+                    comp->SetVisibility(false);
+            }
+            }, TStatId(), NULL, ENamedThreads::GameThread)
+            ->Wait();
+            */
+
+        Landscape.CreateLandscape(smodel);
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+
+            //終了イベント通知
+            OnReconstructFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+        });
+    return CreateLandscapeTask;
 }

@@ -22,6 +22,11 @@ public:
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel);
 
+    void CreateHeightMap(
+        AActor* ModelActor,
+        const std::shared_ptr<plateau::polygonMesh::Model> Model);
+
+
 
     void CreateLandScape(UWorld* World);
     void CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const int32 ComponentCountX, const int32 ComponentCountY, const int32 SizeX, const int32 SizeY,
