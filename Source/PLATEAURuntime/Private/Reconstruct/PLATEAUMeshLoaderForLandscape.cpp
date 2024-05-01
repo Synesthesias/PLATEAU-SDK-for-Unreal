@@ -52,11 +52,9 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
 
     plateau::texture::HeightmapGenerator generator;
     TVec3d ExtMin, ExtMax;
-    //TVec2d Offset(500, 500);
-    TVec2d Offset(0, 0);
     TVec2f UVMin, UVMax;
 
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, Offset, plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
+    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
 
     UE_LOG(LogTemp, Error, TEXT("Ext Min (%f, %f, %f ) Max (%f, %f, %f )"), ExtMin.x, ExtMin.y, ExtMin.z, ExtMax.x, ExtMax.y, ExtMax.z);
     UE_LOG(LogTemp, Error, TEXT("UV Min (%f, %f) Max (%f, %f)"), UVMin.x, UVMin.y, UVMax.x, UVMax.y);
@@ -119,12 +117,11 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
 
     FTransform LandscapeTransform;
     FVector LandscapeScale = FVector(XScale, YScale, HeightScale);
-    //FVector LandscapePosition = FVector(Min.x, Min.y, Max.z - ActualHeight / 2);
     FVector LandscapePosition = FVector(Min.x, Min.y, Min.z + ActualHeight / 2);
     LandscapeTransform.SetLocation(LandscapePosition);
     LandscapeTransform.SetScale3D(LandscapeScale);      
 
-    UE_LOG(LogTemp, Error, TEXT("SubsectionSizeQuads:%d SizeX:%d SizeY:%d"), SubsectionSizeQuads, SizeX, SizeY);
+    UE_LOG(LogTemp, Error, TEXT("SizeX:%d SizeY:%d SubsectionSizeQuads:%d  NumSubsections:%d ComponentCount(%d,%d)"), SizeX, SizeY, SubsectionSizeQuads, NumSubsections, ComponentCountX, ComponentCountY);
     
     TMap<FGuid, TArray<uint16>> HeightDataPerLayers;
     HeightDataPerLayers.Add(FGuid(), MoveTemp(HeightData)); //ENewLandscapePreviewMode.NewLandscape

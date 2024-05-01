@@ -12,13 +12,30 @@ USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     GENERATED_BODY()
 
+    /*
+    Recommended Landscape Sizes
+    Overall size(vertices)	Quads / section	Sections / Component	Landscape Component size	Total Landscape Components
+    8129 x 8129	127	4 (2x2)	254x254	1024 (32x32)
+    4033 x 4033	63	4 (2x2)	126x126	1024 (32x32)
+    2017 x 2017	63	4 (2x2)	126x126	256 (16x16)
+    1009 x 1009	63	4 (2x2)	126x126	64 (8x8)
+    1009 x 1009	63	1	63x63	256 (16x16)
+    505 x 505	63	4 (2x2)	126x126	16 (4x4)
+    505 x 505	63	1	63x63	64 (8x8)
+    253 x 253	63	4 (2x2)	126x126	4 (2x2)
+    253 x 253	63	1	63x63	16 (4x4)
+    127 x 127	63	4 (2x2)	126x126	1
+    127 x 127	63	1	63x63	4 (2x2)
+    */
+
     FPLATEAULandscapeParam() :
-        TextureWidth(513), //513, 1024
-        TextureHeight(513), 
-        NumSubsections(1), //1 , 2
-        SubsectionSizeQuads(127), //7, 15, 31, 63, 127, 255
-        ComponentCountX(2), 
-        ComponentCountY(2) {}
+        TextureWidth(505), //
+        TextureHeight(505),
+        NumSubsections(2), //1 , 2
+        SubsectionSizeQuads(63), //7, 15, 31, 63, 127, 255
+        ComponentCountX(126),
+        ComponentCountY(126),
+        Offset(0,0) {}
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         int32 TextureWidth;
@@ -32,6 +49,8 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         int32 ComponentCountX;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         int32 ComponentCountY;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        FVector2D Offset;
 };
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
