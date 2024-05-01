@@ -12,7 +12,7 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
-#include <Reconstruct/PLATEAUHeightMapCreator.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
 
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"
@@ -433,11 +433,10 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                                 if (CityModel->getAllCityObjectsOfType(citygml::CityObject::CityObjectsType::COT_TINRelief).size() != 0) {
 
                                     
-                                    FPLATEAUHeightMapCreator HMap = FPLATEAUHeightMapCreator(bAutomationTest);
+                                    FPLATEAULandscapeParam Param;
+                                    FPLATEAUMeshLoaderForLandscape HMap = FPLATEAUMeshLoaderForLandscape(bAutomationTest);
+                                    HMap.CreateHeightMap(ModelActor, Model, Param);
 
-                                    //HMap.CalculateExtent(InputData.ExtractOptions, InputData.Extents);
-                                    
-                                    HMap.CreateHeightMap(ModelActor, Model, InputData, CityModel);
                                 }
                                 
 

@@ -13,7 +13,8 @@
 #include <PLATEAUExportSettings.h>
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <Reconstruct/PLATEAUModelClassification.h>
-#include <Reconstruct/PLATEAULandscape.h>
+#include <Reconstruct/PLATEAUModelLandscape.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -510,14 +511,12 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
 
 
 //Landscape
-//UE::Tasks::TTask<TArray<AActor*>> APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
-UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal) {
+UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {
 
     UE_LOG(LogTemp, Log, TEXT("CreateLandscape: %d %s"), TargetComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
-    //TTask<TArray<AActor*>> CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal] {
-    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal] {
+    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal, Param] {
 
-        FPLATEAULandscape Landscape(this);
+        FPLATEAUModelLandscape Landscape(this);
 
         const auto& TargetCityObjects = Landscape.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
 
@@ -529,20 +528,20 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
 
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-        /*
+        
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
             for (auto comp : TargetCityObjects) {
                 if (bDestroyOriginal)
                     comp->DestroyComponent();
-                else
-                    comp->SetVisibility(false);
+                //else
+                //    comp->SetVisibility(false);
             }
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
-            */
+            
 
-        Landscape.CreateLandscape(smodel);
+        Landscape.CreateLandscape(smodel,Param);
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
 
