@@ -13,6 +13,11 @@ public:
     FPLATEAUModelLandscape();
     FPLATEAUModelLandscape(APLATEAUInstancedCityModel* Actor);
 
+    /**
+     * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してtypeがTINReliefの場合のみリストに追加します
+     */
+    TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) override;
+
     void CreateLandscape(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
 
 protected:

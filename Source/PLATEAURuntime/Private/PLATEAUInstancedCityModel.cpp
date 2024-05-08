@@ -517,7 +517,6 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
     FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal, Param] {
 
         FPLATEAUModelLandscape Landscape(this);
-
         const auto& TargetCityObjects = Landscape.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
 
         FPLATEAUMeshExportOptions ExtOptions;
@@ -525,7 +524,6 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         ExtOptions.bExportTexture = true;
         ExtOptions.TransformType = EMeshTransformType::Local;
         ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
-
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
         
@@ -540,13 +538,12 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
             
-
         Landscape.CreateLandscape(smodel,Param);
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
 
             //終了イベント通知
-            OnReconstructFinished.Broadcast();
+            OnLandscapeCreationFinished.Broadcast();
             }, TStatId(), NULL, ENamedThreads::GameThread);
         });
     return CreateLandscapeTask;

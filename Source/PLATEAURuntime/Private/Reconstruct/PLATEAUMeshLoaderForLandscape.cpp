@@ -60,13 +60,14 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     UE_LOG(LogTemp, Error, TEXT("UV Min (%f, %f) Max (%f, %f)"), UVMin.x, UVMin.y, UVMax.x, UVMax.y);
 
     // Debug Image Output 
-    FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HeightMap.png");
+    FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".png");
     UE_LOG(LogTemp, Error, TEXT("Save png %s"), *SavePath);
     plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*SavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-
-    FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HeightMap.raw");
+    /* 
+    FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".raw");
     UE_LOG(LogTemp, Error, TEXT("Save raw %s"), *RawSavePath);
     plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+    */
 
     TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
 
@@ -138,28 +139,49 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
 
     Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1 , SizeY - 1 , NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
     
+
+    //LandscapeはDynamicを使用するとうまく動作しないのでConstantを使用(Editorのみ動作)
 #if WITH_EDITOR
-    //Material
+
+    const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAULandscapeMaterial");
+    UMaterial* BaseMat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+    UMaterialInstanceConstant* MatIns = NewObject<UMaterialInstanceConstant>();  
+    MatIns->SetParentEditorOnly(BaseMat, true);
+    /*
+    float minU, minV, maxU, maxV;
+    if (MinUV.x == 0.f && MinUV.y == 0.f && MaxUV.x == 0.f && MaxUV.y == 0.f) {
+        maxU = maxV = 1.f;
+    }
+    else {
+        minU = MinUV.x;
+        minV = MinUV.y;
+        maxU = MaxUV.x;
+        maxV = MaxUV.y;
+    }
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), minU);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinV")), minV);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxU")), maxU);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxV")), maxV);
+    */
+    
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeX")), SizeX);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeY")), SizeY);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), MinUV.x);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinV")), MinUV.y);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxU")), MaxUV.x);
+    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxV")), MaxUV.y);
+
     if (!TexturePath.IsEmpty()) {
         const auto& Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
-        const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAULandscapeMaterialInstance");
-        UMaterialInstanceConstant* MatIns = Cast<UMaterialInstanceConstant>(StaticLoadObject(UMaterialInstanceConstant::StaticClass(), nullptr, SourceMaterialPath));
-        MatIns->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(FName("MainTexture")),Texture);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeX")), SizeX);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeY")), SizeY);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), MinUV.x);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinV")), MinUV.y);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxU")), MaxUV.x);
-        MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxV")), MaxUV.y);
-        Landscape->LandscapeMaterial = MatIns;
-    }    
-#endif
-    
+        MatIns->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(FName("MainTexture")), Texture);
+    }
+
+    Landscape->LandscapeMaterial = MatIns;
+#endif   
+
     Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), (uint32)2);
-    //Landscape->StaticLightingLOD = 0;
 
     ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
-
     LandscapeInfo->UpdateLayerInfoMap(Landscape);
     Landscape->RegisterAllComponents();
 
@@ -167,7 +189,10 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     Landscape->PostEditChangeProperty(MaterialPropertyChangedEvent);
     Landscape->PostEditChange();
     Landscape->SetActorLabel(FString(ActorName));
+}
 
+bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
+    return false;
 }
 
 //Debug

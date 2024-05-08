@@ -22,7 +22,7 @@ namespace plateau::texture {
         double getHeightToPercent(double height, double min, double max);
         uint16_t getPercentToGrayScale(double percent);
         TVec3d convertCoordinateFrom(geometry::CoordinateSystem coordinate, TVec3d vertice);
-        void getUVExtent(plateau::polygonMesh::UV uv, TVec2f& outMin, TVec2f& outMax);
+        bool getUVExtent(plateau::polygonMesh::UV uv, TVec2f& outMin, TVec2f& outMax);
     };
 
 } // namespace plateau::texture

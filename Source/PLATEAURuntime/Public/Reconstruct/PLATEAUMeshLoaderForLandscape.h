@@ -80,6 +80,8 @@ protected:
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);
 
+    bool OverwriteTexture() override;
+
 
 private:
 
