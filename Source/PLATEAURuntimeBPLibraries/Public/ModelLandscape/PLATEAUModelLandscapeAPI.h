@@ -16,7 +16,4 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelLandscapeAPI : public UBlueprin
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|CreateLandscape")
     static void CreateLandscape(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param);
 
-    UFUNCTION(BlueprintCallable, meta = (WorldContext = "Context"), Category = "PLATEAU|BPLibraries|CreateLandscapeDummy")
-    static void CreateLandscapeDummy(const UObject* Context);
-
 };

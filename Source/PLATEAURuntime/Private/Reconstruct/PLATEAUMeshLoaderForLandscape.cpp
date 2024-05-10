@@ -10,7 +10,6 @@
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
 
-
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
@@ -53,20 +52,17 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     plateau::texture::HeightmapGenerator generator;
     TVec3d ExtMin, ExtMax;
     TVec2f UVMin, UVMax;
-
     std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
-
-    UE_LOG(LogTemp, Error, TEXT("Ext Min (%f, %f, %f ) Max (%f, %f, %f )"), ExtMin.x, ExtMin.y, ExtMin.z, ExtMax.x, ExtMax.y, ExtMax.z);
-    UE_LOG(LogTemp, Error, TEXT("UV Min (%f, %f) Max (%f, %f)"), UVMin.x, UVMin.y, UVMax.x, UVMax.y);
-
-    // Debug Image Output 
+    
+    /*
+    // Debug Height map Image Output 
     FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".png");
-    UE_LOG(LogTemp, Error, TEXT("Save png %s"), *SavePath);
     plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*SavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-    /* 
-    FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".raw");
-    UE_LOG(LogTemp, Error, TEXT("Save raw %s"), *RawSavePath);
+    UE_LOG(LogTemp, Log, TEXT("Save height map png %s"), *SavePath);
+
+    FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".raw");   
     plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+    UE_LOG(LogTemp, Log, TEXT("Save height map raw %s"), *RawSavePath);
     */
 
     TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
@@ -77,27 +73,17 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     if (subMeshes.size() > 0) {
         const auto& subMesh = subMeshes.at(0);
         TexturePath = FString(subMesh.getTexturePath().c_str());
-
-        UE_LOG(LogTemp, Error, TEXT("TexturePath %s"), *TexturePath);
     }
 
     //LandScape  
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName, Param] {
-            /*
-            const int32 NumSubsections = 1; //1 , 2
-            const int32 SubsectionSizeQuads = 127;  //7, 15, 31, 63, 127, 255
-            const int32 ComponentCountX = 2;
-            const int32 ComponentCountY = 2;
-            */
             CreateLandScape(Actor.GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads, Param.ComponentCountX, Param.ComponentCountY, Param.TextureWidth, Param.TextureHeight, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
 void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,
     const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName ) {
-
-    UE_LOG(LogTemp, Error, TEXT("CreateLandScape %s"), *ActorName);
 
     // Weightmap is sized the same as the component
     const int32 WeightmapSize = (SubsectionSizeQuads + 1) * NumSubsections;
@@ -122,7 +108,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     LandscapeTransform.SetLocation(LandscapePosition);
     LandscapeTransform.SetScale3D(LandscapeScale);      
 
-    UE_LOG(LogTemp, Error, TEXT("SizeX:%d SizeY:%d SubsectionSizeQuads:%d  NumSubsections:%d ComponentCount(%d,%d)"), SizeX, SizeY, SubsectionSizeQuads, NumSubsections, ComponentCountX, ComponentCountY);
+    UE_LOG(LogTemp, Log, TEXT("CreateLandScape SizeX:%d SizeY:%d SubsectionSizeQuads:%d  NumSubsections:%d ComponentCount(%d,%d)"), SizeX, SizeY, SubsectionSizeQuads, NumSubsections, ComponentCountX, ComponentCountY);
     
     TMap<FGuid, TArray<uint16>> HeightDataPerLayers;
     HeightDataPerLayers.Add(FGuid(), MoveTemp(HeightData)); //ENewLandscapePreviewMode.NewLandscape
@@ -139,7 +125,6 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
 
     Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1 , SizeY - 1 , NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
     
-
     //LandscapeはDynamicを使用するとうまく動作しないのでConstantを使用(Editorのみ動作)
 #if WITH_EDITOR
 
@@ -147,23 +132,6 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     UMaterial* BaseMat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
     UMaterialInstanceConstant* MatIns = NewObject<UMaterialInstanceConstant>();  
     MatIns->SetParentEditorOnly(BaseMat, true);
-    /*
-    float minU, minV, maxU, maxV;
-    if (MinUV.x == 0.f && MinUV.y == 0.f && MaxUV.x == 0.f && MaxUV.y == 0.f) {
-        maxU = maxV = 1.f;
-    }
-    else {
-        minU = MinUV.x;
-        minV = MinUV.y;
-        maxU = MaxUV.x;
-        maxV = MaxUV.y;
-    }
-    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), minU);
-    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinV")), minV);
-    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxU")), maxU);
-    MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MaxV")), maxV);
-    */
-    
     MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeX")), SizeX);
     MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeY")), SizeY);
     MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("MinU")), MinUV.x);
@@ -193,36 +161,4 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
 
 bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
     return false;
-}
-
-//Debug
-void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World) {
-
-    const int32 NumSubsections = 1; //1 , 2
-    const int32 SubsectionSizeQuads = 127;  //7, 15, 31, 63, 127, 255
-
-    const int32 ComponentCountX = 2;
-    const int32 ComponentCountY = 2;
-
-    const int32 SizeX = 513;
-    const int32 SizeY = 513;
-
-    //double AltMeter = 17.7; //高さ（メートル）
-    double ActualHeight = 1770; //高さ（cm）
-    double ActualXSize = 26268.1206815294;
-    double ActualYSize = 23869.9836173063;
-
-    //Height map 作成
-    //FString HeightMapPath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HeightMap.png");
-    FString HeightMapRawPath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HeightMap.raw");
-
-    //std::vector <uint16_t> image_data = plateau::texture::HeightmapGenerator::readPngFile(TCHAR_TO_ANSI(*HeightMapPath), SizeX, SizeY);
-    std::vector <uint16_t> image_data = plateau::texture::HeightmapGenerator::readRawFile(TCHAR_TO_ANSI(*HeightMapRawPath), SizeX, SizeY);
-
-    const TArray<uint16> HeightData(image_data.data(), image_data.size());
-
-    FString ActorName = FString("DebugLandScape");
-
-    CreateLandScape(World, NumSubsections, SubsectionSizeQuads, ComponentCountX, ComponentCountY, SizeX, SizeY,
-        TVec3d(-ActualXSize / 2, -ActualYSize / 2, -ActualHeight / 2), TVec3d(ActualXSize / 2, ActualYSize / 2, ActualHeight / 2), TVec2f(), TVec2f(), FString(), HeightData, ActorName);
 }

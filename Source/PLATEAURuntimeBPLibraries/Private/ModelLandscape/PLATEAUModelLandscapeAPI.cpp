@@ -12,10 +12,3 @@ void UPLATEAUModelLandscapeAPI::CreateLandscape(APLATEAUInstancedCityModel* Targ
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif  
 }
-
-
-void UPLATEAUModelLandscapeAPI::CreateLandscapeDummy(const UObject* Context) {
-
-    const auto World = Context->GetWorld();
-    FPLATEAUMeshLoaderForLandscape(false).CreateLandScape(World);
-}

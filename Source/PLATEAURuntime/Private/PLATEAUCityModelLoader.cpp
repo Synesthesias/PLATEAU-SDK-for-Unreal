@@ -427,19 +427,6 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
 
                             {
                                 FScopeLock Lock(LoadMeshSection);
-
-                                //Demの場合はLandScape用Texture生成 (Sample)
-                                /*
-                                if (CityModel->getAllCityObjectsOfType(citygml::CityObject::CityObjectsType::COT_TINRelief).size() != 0) {
-
-                                    
-                                    FPLATEAULandscapeParam Param;
-                                    FPLATEAUMeshLoaderForLandscape HMap = FPLATEAUMeshLoaderForLandscape(bAutomationTest);
-                                    HMap.CreateHeightMap(ModelActor, Model, Param);
-
-                                }
-                                */
-
                                 FPLATEAUMeshLoader(bAutomationTest).LoadModel(ModelActor, GmlRootComponent, Model, InputData, CityModel, bCanceledRef);
                             }
 

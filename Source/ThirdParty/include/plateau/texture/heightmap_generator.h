@@ -4,9 +4,6 @@
 #include "plateau/polygon_mesh/mesh.h"
 
 namespace plateau::texture {
-    /**
-     * 
-     */
 
     class HeightmapGenerator  {
     public:
