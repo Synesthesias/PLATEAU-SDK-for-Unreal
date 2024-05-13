@@ -54,12 +54,12 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     TVec2f UVMin, UVMax;
     std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
     
-    /*
+    
     // Debug Height map Image Output 
     FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".png");
     plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*SavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
     UE_LOG(LogTemp, Log, TEXT("Save height map png %s"), *SavePath);
-
+    /*
     FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".raw");   
     plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
     UE_LOG(LogTemp, Log, TEXT("Save height map raw %s"), *RawSavePath);

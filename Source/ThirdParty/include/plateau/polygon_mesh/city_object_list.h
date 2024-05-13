@@ -116,16 +116,9 @@ namespace plateau::polygonMesh {
 
 
     /**
-     * @brief CityObjectListは、地物インデックスと地物IDの対応関係を保持するために、Modelに含まれる地物のリストを保持する目的で設計されています。
-     *
-     * plateau::polygonMesh::Meshに次のメンバー変数を追加します。
-     * 上記のUVに記録したID ( CityObjectIndex ) と、 gml:id を対応付けるデータ構造  CityObjectListを作成します。
-     * CityObjectListは、 std::map<CityObjectIndex, std::string> city_object_index_to_gml_idから構成されます。
-     * なお、std::map のキーに自作の構造体をとるには、比較演算子< を定義する必要があることに注意してください。
-     * 参考: 逆引き！ C++でMapのキーとして、自分で定義した構造体を利用する
-     * 「https://programming-tips.info/use_struct_as_key_of_map/cpp/index.html」
-     *
-     * mesh_extractor の処理において、上記の city_object_indexが構築されるようにし、ゲームエンジンから読めるようにします。
+     * @brief
+     * 地物インデックスと地物IDの辞書です。
+     * 地物インデックスはUV4と対応するので、この辞書があれば、UV4の値からメッシュの該当箇所がどのGML IDに対応するのかが分かります。
      */
     class LIBPLATEAU_EXPORT CityObjectList {
         using TIdMap = std::map<CityObjectIndex, std::string>;

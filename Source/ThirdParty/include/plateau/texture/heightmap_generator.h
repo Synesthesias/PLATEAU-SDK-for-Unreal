@@ -20,6 +20,7 @@ namespace plateau::texture {
         uint16_t getPercentToGrayScale(double percent);
         TVec3d convertCoordinateFrom(geometry::CoordinateSystem coordinate, TVec3d vertice);
         bool getUVExtent(plateau::polygonMesh::UV uv, TVec2f& outMin, TVec2f& outMax);
+        void applyConvolutionFilter(uint16_t* image, const size_t width, const size_t height);
     };
 
 } // namespace plateau::texture

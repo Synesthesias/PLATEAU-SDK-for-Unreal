@@ -115,6 +115,7 @@ namespace plateau::polygonMesh {
         /// 4番目のUVはCityObjectIndexを格納するために利用します。
         UV uv4_;
         std::vector<SubMesh> sub_meshes_;
+        /// Mesh中のUV4(地物インデックス)と地物IDの対応関係を保持する辞書です。
         CityObjectList city_object_list_;
 
         /// 頂点カラーです。
