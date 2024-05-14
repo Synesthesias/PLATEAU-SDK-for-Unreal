@@ -54,16 +54,17 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     TVec2f UVMin, UVMax;
     std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
     
-    
-    // Debug Height map Image Output 
-    FString SavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".png");
-    plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*SavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-    UE_LOG(LogTemp, Log, TEXT("Save height map png %s"), *SavePath);
-    /*
-    FString RawSavePath = FPaths::ConvertRelativePathToFull(*(FPaths::ProjectContentDir() + FString("PLATEAU/"))) + FString("HM_") + NodeName + FString(".raw");   
-    plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-    UE_LOG(LogTemp, Log, TEXT("Save height map raw %s"), *RawSavePath);
-    */
+    // Debug Heightmap Image Output 
+    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
+        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
+        plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
+    }
+    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::RAW || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
+        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
+        plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
+    }
 
     TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
 
@@ -108,10 +109,10 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     LandscapeTransform.SetLocation(LandscapePosition);
     LandscapeTransform.SetScale3D(LandscapeScale);      
 
-    UE_LOG(LogTemp, Log, TEXT("CreateLandScape SizeX:%d SizeY:%d SubsectionSizeQuads:%d  NumSubsections:%d ComponentCount(%d,%d)"), SizeX, SizeY, SubsectionSizeQuads, NumSubsections, ComponentCountX, ComponentCountY);
+    UE_LOG(LogTemp, Log, TEXT("Create Landscape SizeX:%d SizeY:%d SubsectionSizeQuads:%d  NumSubsections:%d ComponentCount(%d,%d)"), SizeX, SizeY, SubsectionSizeQuads, NumSubsections, ComponentCountX, ComponentCountY);
     
     TMap<FGuid, TArray<uint16>> HeightDataPerLayers;
-    HeightDataPerLayers.Add(FGuid(), MoveTemp(HeightData)); //ENewLandscapePreviewMode.NewLandscape
+    HeightDataPerLayers.Add(FGuid(), MoveTemp(HeightData)); 
 
     TMap<FGuid, TArray<FLandscapeImportLayerInfo>> MaterialLayerDataPerLayers;
     TArray<FLandscapeImportLayerInfo> MaterialImportLayers;

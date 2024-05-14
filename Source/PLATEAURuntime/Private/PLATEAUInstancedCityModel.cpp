@@ -526,21 +526,17 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-        
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
-            //コンポーネント削除
-            for (auto comp : TargetCityObjects) {
-                if (bDestroyOriginal)
-                    comp->DestroyComponent();
-                //else
-                //    comp->SetVisibility(false);
-            }
-            }, TStatId(), NULL, ENamedThreads::GameThread)
-            ->Wait();
-            
+     
         Landscape.CreateLandscape(smodel,Param);
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&,TargetCityObjects, bDestroyOriginal]() {
+
+            //コンポーネント削除
+            if (bDestroyOriginal) {
+                for (auto comp : TargetCityObjects) {
+                    comp->DestroyComponent();
+                }
+            }
 
             //終了イベント通知
             OnLandscapeCreationFinished.Broadcast();

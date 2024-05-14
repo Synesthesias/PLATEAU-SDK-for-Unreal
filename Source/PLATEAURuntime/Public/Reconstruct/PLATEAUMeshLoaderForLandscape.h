@@ -8,6 +8,14 @@
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUMeshLoaderForLandscape.generated.h"
 
+UENUM(BlueprintType)
+enum class EPLATEAULandscapeHeightmapImageOutput : uint8 {
+    None = 0 UMETA(DisplayName = "None"),
+    PNG = 1 UMETA(DisplayName = "PNG"),
+    RAW = 2 UMETA(DisplayName = "RAW"),
+    PNG_RAW = 3 UMETA(DisplayName = "PNG & RAW")
+};
+
 USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     GENERATED_BODY()
@@ -35,7 +43,8 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         SubsectionSizeQuads(63), //7, 15, 31, 63, 127, 255
         ComponentCountX(126),
         ComponentCountY(126),
-        Offset(0,0) {}
+        Offset(0,0),
+        HeightmapImageOutput(EPLATEAULandscapeHeightmapImageOutput::None){}
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         int32 TextureWidth;
@@ -51,6 +60,8 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         int32 ComponentCountY;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         FVector2D Offset;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
