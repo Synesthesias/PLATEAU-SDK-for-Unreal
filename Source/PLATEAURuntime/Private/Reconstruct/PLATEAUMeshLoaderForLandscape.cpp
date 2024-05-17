@@ -9,6 +9,7 @@
 #include <Landscape.h>
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
+#include "UObject/SavePackage.h"
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
@@ -54,7 +55,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     TVec2f UVMin, UVMax;
     std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
     
-    // Debug Heightmap Image Output 
+    // Heightmap Image Output 
     if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
         FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
         plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
@@ -129,9 +130,16 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     //LandscapeはDynamicを使用するとうまく動作しないのでConstantを使用(Editorのみ動作)
 #if WITH_EDITOR
 
+    //Create Package
+    FString PackageName = TEXT("/Game/PLATEAU/Materials/");
+    PackageName += FString::Format(*FString(TEXT("{0}_{1}_{2}")), { ActorName,FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_")), SizeX });
+    UPackage* Package = CreatePackage(*PackageName);
+    Package->FullyLoad();
+
+    //Create Material
     const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAULandscapeMaterial");
     UMaterial* BaseMat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-    UMaterialInstanceConstant* MatIns = NewObject<UMaterialInstanceConstant>();  
+    UMaterialInstanceConstant* MatIns = NewObject<UMaterialInstanceConstant>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
     MatIns->SetParentEditorOnly(BaseMat, true);
     MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeX")), SizeX);
     MatIns->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(FName("SizeY")), SizeY);
@@ -144,6 +152,17 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
         const auto& Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
         MatIns->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(FName("MainTexture")), Texture);
     }
+
+    //Save Material
+    const FString PackageFileName = FPackageName::LongPackageNameToFilename(
+        PackageName, FPackageName::GetAssetPackageExtension());
+    FSavePackageArgs Args;
+    Args.SaveFlags = SAVE_NoError;
+    Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
+    Args.Error = GError;
+    auto result = UPackage::Save(Package, MatIns, *PackageFileName, Args);
+    if(result.Result != ESavePackageResult::Success)
+        UE_LOG(LogTemp, Warning, TEXT("Save Material Failed: %s %s %d"), *PackageName, *PackageFileName, result.Result);
 
     Landscape->LandscapeMaterial = MatIns;
 #endif   
