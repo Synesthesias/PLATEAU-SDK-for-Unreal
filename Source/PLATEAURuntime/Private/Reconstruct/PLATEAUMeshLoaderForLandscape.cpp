@@ -120,6 +120,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     MaterialImportLayers.Reserve(0);
     MaterialLayerDataPerLayers.Add(FGuid(), MoveTemp(MaterialImportLayers));
 
+#if WITH_EDITOR
     FActorSpawnParameters Param;
     ALandscape* Landscape = World->SpawnActor<ALandscape>(Param);
     Landscape->bCanHaveLayersContent = false;
@@ -127,16 +128,13 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
 
     Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1 , SizeY - 1 , NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
     
-    //LandscapeはDynamicを使用するとうまく動作しないのでConstantを使用(Editorのみ動作)
-#if WITH_EDITOR
-
     //Create Package
     FString PackageName = TEXT("/Game/PLATEAU/Materials/");
     PackageName += FString::Format(*FString(TEXT("{0}_{1}_{2}")), { ActorName,FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_")), SizeX });
     UPackage* Package = CreatePackage(*PackageName);
     Package->FullyLoad();
 
-    //Create Material
+    //Create Material (LandscapeはDynamicを使用するとうまく動作しないのでConstantを使用(Editorのみ動作))
     const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAULandscapeMaterial");
     UMaterial* BaseMat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
     UMaterialInstanceConstant* MatIns = NewObject<UMaterialInstanceConstant>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
@@ -165,7 +163,6 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
         UE_LOG(LogTemp, Warning, TEXT("Save Material Failed: %s %s %d"), *PackageName, *PackageFileName, result.Result);
 
     Landscape->LandscapeMaterial = MatIns;
-#endif   
 
     Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), (uint32)2);
 
@@ -177,6 +174,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     Landscape->PostEditChangeProperty(MaterialPropertyChangedEvent);
     Landscape->PostEditChange();
     Landscape->SetActorLabel(FString(ActorName));
+#endif   
 }
 
 bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
