@@ -5,7 +5,7 @@
 
 namespace plateau::texture {
 
-    class HeightmapGenerator  {
+    class LIBPLATEAU_EXPORT HeightmapGenerator  {
     public:
 
         std::vector<uint16_t> generateFromMesh(const plateau::polygonMesh::Mesh& InMesh, size_t TextureWidth, size_t TextureHeight, TVec2d margin, geometry::CoordinateSystem coordinate, TVec3d& outMin, TVec3d& outMax, TVec2f& outUVMin, TVec2f& outUVMax);

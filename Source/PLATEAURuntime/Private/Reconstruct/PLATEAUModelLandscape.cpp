@@ -7,7 +7,7 @@ namespace {
 
     bool HasCityObjectsType(UPLATEAUCityObjectGroup* CityObj, EPLATEAUCityObjectsType Type) {
         const auto& found = CityObj->GetAllRootCityObjects().FindByPredicate([&](FPLATEAUCityObject obj) {
-            return obj.Type == EPLATEAUCityObjectsType::COT_TINRelief;
+            return obj.Type == Type;
             });
         return found != nullptr;
     }
@@ -25,7 +25,7 @@ void FPLATEAUModelLandscape::CreateLandscape(std::shared_ptr<plateau::polygonMes
 }
 
 /**
-* @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してtypeがTINReliefの場合のみリストに追加します
+* @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してtypeがTINRelief || ReliefFeatureの場合のみリストに追加します
 */
 TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelLandscape::GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) {
     TSet<UPLATEAUCityObjectGroup*> UniqueComponents;
@@ -37,7 +37,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelLandscape::GetUPLATEAUCityObjectGr
                 if (child->IsA(UPLATEAUCityObjectGroup::StaticClass()) && child->IsVisible()) {
                     auto childCityObj = StaticCast<UPLATEAUCityObjectGroup*>(child);
                     if (childCityObj->GetStaticMesh() != nullptr ) {
-                       if(HasCityObjectsType(childCityObj, EPLATEAUCityObjectsType::COT_TINRelief))
+                       if(HasCityObjectsType(childCityObj, EPLATEAUCityObjectsType::COT_TINRelief) || HasCityObjectsType(childCityObj, EPLATEAUCityObjectsType::COT_ReliefFeature))
                             UniqueComponents.Add(childCityObj);
                     }
                 }
@@ -45,7 +45,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelLandscape::GetUPLATEAUCityObjectGr
         }
         if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
             const auto& cityObj = StaticCast<UPLATEAUCityObjectGroup*>(comp);
-            if (HasCityObjectsType(cityObj, EPLATEAUCityObjectsType::COT_TINRelief))
+            if (HasCityObjectsType(cityObj, EPLATEAUCityObjectsType::COT_TINRelief) || HasCityObjectsType(cityObj, EPLATEAUCityObjectsType::COT_ReliefFeature))
                 UniqueComponents.Add(StaticCast<UPLATEAUCityObjectGroup*>(comp));
         }        
     }
