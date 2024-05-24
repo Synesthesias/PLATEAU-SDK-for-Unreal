@@ -15,7 +15,9 @@ namespace plateau::texture {
         static std::vector<uint16_t> readRawFile(const std::string& file_path, size_t width, size_t height);
 
     private:
+        size_t getTileDivision(size_t triangleSize);
         double getPositionFromPercent(double percent, double min, double max);
+        TVec2d getPositionFromPercent(TVec2d percent, TVec2d min, TVec2d max);
         double getHeightToPercent(double height, double min, double max);
         uint16_t getPercentToGrayScale(double percent);
         TVec3d convertCoordinateFrom(geometry::CoordinateSystem coordinate, TVec3d vertice);
