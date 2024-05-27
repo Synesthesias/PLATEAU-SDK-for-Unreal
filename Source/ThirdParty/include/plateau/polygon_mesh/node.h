@@ -5,6 +5,7 @@
 #include <vector>
 #include <optional>
 #include "mesh.h"
+#include "transform.h"
 
 namespace plateau::polygonMesh {
     /**
@@ -32,6 +33,13 @@ namespace plateau::polygonMesh {
         void setName(const std::string& name);
         Mesh* getMesh() const;
         void setMesh(std::unique_ptr<Mesh>&& mesh);
+        TVec3d getLocalPosition() const;
+        void setLocalPosition(TVec3d pos);
+        TVec3d getLocalScale() const;
+        void setLocalScale(TVec3d scale);
+        Quaternion getLocalRotation() const;
+        void setLocalRotation(Quaternion rotation);
+        Transform getLocalTransform() const;
 
         /// Meshが存在し、かつそのMeshに頂点が1つ以上あるときにtrueを返します。
         bool hasVertices() const;
@@ -67,6 +75,9 @@ namespace plateau::polygonMesh {
         std::vector<Node> child_nodes_;
         std::unique_ptr<Mesh> mesh_;
         bool is_primary_; // GranularityConverterでのみ利用します。
+
+        /// FBX,GLTFエクスポート時にローカルなトランスフォームとして利用されます。
+        Transform local_transform_;
 
         /**
          * ゲームエンジン上でNodeに相当するゲームオブジェクトがアクティブかどうかです。

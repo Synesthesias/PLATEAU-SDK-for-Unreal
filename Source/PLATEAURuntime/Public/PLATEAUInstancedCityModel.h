@@ -10,6 +10,7 @@
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
 #include "Tasks/Task.h"
+#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
@@ -65,6 +66,12 @@ public:
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnClassifyFinishedDelegate OnClassifyFinished;
+
+    /**
+     * @brief ランドスケープ生成処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnClassifyFinishedDelegate OnLandscapeCreationFinished;
 
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
@@ -157,6 +164,12 @@ public:
      * @param
      */
     UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+    /**
+     * @brief 選択されたComponentからLandscapeを生成します
+     * @param
+     */
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
