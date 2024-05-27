@@ -13,6 +13,8 @@
 #include <PLATEAUExportSettings.h>
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <Reconstruct/PLATEAUModelClassification.h>
+#include <Reconstruct/PLATEAUModelLandscape.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
 
 using namespace UE::Tasks;
 using namespace plateau::granularityConvert;
@@ -505,4 +507,40 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
         return ResultComponents;
     });
     return ConvertTask;
+}
+
+
+//Landscape
+UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {
+
+    UE_LOG(LogTemp, Log, TEXT("CreateLandscape: %d %s"), TargetComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
+    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal, Param] {
+
+        FPLATEAUModelLandscape Landscape(this);
+        const auto& TargetCityObjects = Landscape.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
+
+        FPLATEAUMeshExportOptions ExtOptions;
+        ExtOptions.bExportHiddenObjects = false;
+        ExtOptions.bExportTexture = true;
+        ExtOptions.TransformType = EMeshTransformType::Local;
+        ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+        FPLATEAUMeshExporter MeshExporter;
+        std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
+     
+        Landscape.CreateLandscape(smodel,Param);
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&,TargetCityObjects, bDestroyOriginal]() {
+
+            //コンポーネント削除
+            if (bDestroyOriginal) {
+                for (auto comp : TargetCityObjects) {
+                    comp->DestroyComponent();
+                }
+            }
+
+            //終了イベント通知
+            OnLandscapeCreationFinished.Broadcast();
+            }, TStatId(), NULL, ENamedThreads::GameThread);
+        });
+    return CreateLandscapeTask;
 }
