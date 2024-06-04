@@ -75,3 +75,14 @@ void UPLATEAUModelAdjustmentFilterAPI::FilterModel(APLATEAUInstancedCityModel* T
     }
     ApplyFilter(TargetCityModel, EnablePackage, LodMap, bOnlyMaxLod, EnableCityObject);
 }
+
+TArray<EPLATEAUCityModelPackage> UPLATEAUModelAdjustmentFilterAPI::ConvertCityModelPackagesToEnumArray(const int64 Package) {
+    TSet<EPLATEAUCityModelPackage> EnumSet;
+    for (plateau::dataset::PredefinedCityModelPackage Pkg : UPLATEAUImportSettings::GetAllPackages()) {
+        if (Pkg == plateau::dataset::PredefinedCityModelPackage::None) continue;
+        if (Package & (int64)Pkg) {
+            EnumSet.Add(UPLATEAUImportSettings::GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(Pkg));
+        }
+    }
+    return EnumSet.Array();
+}

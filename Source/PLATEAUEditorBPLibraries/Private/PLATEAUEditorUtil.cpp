@@ -4,6 +4,10 @@
 #include "Interfaces/IMainFrameModule.h"
 #include "DesktopPlatformModule.h"
 #include "PLATEAUImportSettings.h"
+#include "EditorUtilitySubsystem.h"
+#include "EditorUtilityWidget.h"
+
+#define LOCTEXT_NAMESPACE "PLATEAUEditorUtil"
 
 static constexpr TCHAR OpenDirectoryDialogTitle[] = TEXT("フォルダ選択");
 
@@ -40,3 +44,33 @@ bool UPLATEAUEditorUtil::OpenDirectoryDialog(FString& SourcePath) {
     }
     return false;
 }
+
+TMap<UEditorUtilityWidget*, FName> UPLATEAUEditorUtil::RunEditorUtilityWidget(UEditorUtilityWidgetBlueprint* EditorWidget) {
+    auto IDMap = TMap<UEditorUtilityWidget*, FName>();
+    if (EditorWidget) {
+        UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+        FName TabID;
+        UEditorUtilityWidget* Widget = EditorUtilitySubsystem->SpawnAndRegisterTabAndGetID(EditorWidget, TabID);
+        IDMap.Emplace(Widget, TabID);
+    }
+    return IDMap;
+}
+
+bool UPLATEAUEditorUtil::CloseEditorUtilityWidgetTab(UEditorUtilityWidget* Widget) {
+    //EditorUtilitySubsystemのTabID生成と同様
+    FName TabID = FName(*(Widget->GetClass()->GetClassPathName().ToString().LeftChop(2) + LOCTEXT("ActiveTabSuffix", "_ActiveTab").ToString()));
+    return CloseEditorUtilityWidgetTabByID(TabID);
+}
+
+bool UPLATEAUEditorUtil::CloseEditorUtilityWidgetTabByID(FName TabID){
+    UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+    return EditorUtilitySubsystem->CloseTabByID(TabID);
+}
+
+void UPLATEAUEditorUtil::SelectComponent(UActorComponent* Component) {
+    //AActor* Actor = Component->GetOwner()->GetRootComponent()->GetOwner();
+    //GEditor->SelectActor(Actor, true, true);
+    GEditor->SelectComponent(Component, true, true);
+}
+
+#undef LOCTEXT_NAMESPACE

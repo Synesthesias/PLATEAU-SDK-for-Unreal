@@ -24,6 +24,61 @@ namespace {
         }
         return UniqueTypes;
     }
+
+    TSet<FString> GetAllAttrKeysInComponent(USceneComponent* Component) {
+        TSet<FString> UniqueKeys;
+        if (Component->IsA(UPLATEAUCityObjectGroup::StaticClass()) && Component->IsVisible()) {
+            auto CompCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Component);
+            if (CompCityObj->GetStaticMesh() != nullptr) {
+                for (const auto CityObj : CompCityObj->GetAllRootCityObjects()) {
+                    //if (CityObj.Children.Num() == 0) {
+
+                        //UniqueTypes.Add(CityObj.Type);
+                        for (auto& attr : CityObj.Attributes.AttributeMap){
+
+                            UniqueKeys.Emplace(attr.Key);
+                        }
+                        
+                    //}
+
+
+
+                    for (const auto child : CityObj.Children) {
+                        //UniqueTypes.Add(child.Type);
+                        //child.Attributes.AttributeMap.GetKeys(UniqueKeys);
+
+                        /*
+                        if (child.Attributes.AttributeMap.Contains("key")) {
+                            const auto& val = child.Attributes.AttributeMap["key"];
+                            UniqueKeys.Emplace(val.StringValue);
+                        }
+                        */
+
+                        for (auto& attr : child.Attributes.AttributeMap) {
+
+                            UniqueKeys.Emplace(attr.Key);
+                        }
+                    }
+                }
+            }
+        }
+        return UniqueKeys;
+    }
+}
+
+TSet<FString> UPLATEAUModelClassificationAPI::SearchAttributeKeys(const TArray<USceneComponent*> TargetComponents) {
+    TSet<FString> UniqueKeys;
+    for (const auto comp : TargetComponents) {
+        if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
+            UniqueKeys.Append(GetAllAttrKeysInComponent(comp));
+            TArray<USceneComponent*> children;
+            comp->GetChildrenComponents(true, children);
+            for (const auto child : children) {
+                UniqueKeys.Append(GetAllAttrKeysInComponent(child));
+            }
+        }
+    }
+    return UniqueKeys;
 }
 
 TSet<EPLATEAUCityObjectsType> UPLATEAUModelClassificationAPI::SearchTypes(const TArray<USceneComponent*> TargetComponents) {

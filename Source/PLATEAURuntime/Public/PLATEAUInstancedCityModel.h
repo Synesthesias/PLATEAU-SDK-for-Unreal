@@ -119,6 +119,12 @@ public:
         TArray<FPLATEAUCityObject>& GetAllRootCityObjects();
 
     /**
+     * @brief パッケージ種を含むコンポーネントを返します
+     */
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+        TArray<UActorComponent*> GetComponentsByPackage(EPLATEAUCityModelPackage Pkg) const;
+
+    /**
      * @brief 3D都市モデル内に含まれるパッケージ種を返します。
      */
     plateau::dataset::PredefinedCityModelPackage GetCityModelPackages() const;

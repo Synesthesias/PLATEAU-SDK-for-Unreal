@@ -7,6 +7,7 @@
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "PLATEAUComponentInterface.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
 namespace plateau::CityObjectGroup {
@@ -37,7 +38,7 @@ struct FLoadInputData;
 
 
 UCLASS()
-class PLATEAURUNTIME_API UPLATEAUCityObjectGroup : public UStaticMeshComponent {
+class PLATEAURUNTIME_API UPLATEAUCityObjectGroup : public UStaticMeshComponent , public IPLATEAUComponentInterface{
     GENERATED_BODY()
 public:
     /**

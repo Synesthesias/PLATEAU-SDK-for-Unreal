@@ -14,10 +14,12 @@
 #include "StaticMeshAttributes.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "PLATEAUStaticMeshComponent.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
 #endif
+
 
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 
@@ -495,7 +497,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AAc
         PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
         return PLATEAUCityObjectGroup;
     }
-    return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+    //return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+    return NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
 }
 
 UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
@@ -589,8 +592,10 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
                 Comp = PLATEAUCityObjectGroup;
             }
             else {
-                StaticClass = UStaticMeshComponent::StaticClass();
-                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                //StaticClass = UStaticMeshComponent::StaticClass();
+                //Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                StaticClass = UPLATEAUStaticMeshComponent::StaticClass();
+                Comp = NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
             }
 
             const FString NewUniqueName = MakeUniqueGmlObjectName(

@@ -383,6 +383,17 @@ const TArray<TObjectPtr<USceneComponent>>& APLATEAUInstancedCityModel::GetGmlCom
     return GetRootComponent()->GetAttachChildren();
 }
 
+TArray<UActorComponent*> APLATEAUInstancedCityModel::GetComponentsByPackage(EPLATEAUCityModelPackage Pkg) const {
+    TArray<UActorComponent*> ResultComponents;
+    plateau::dataset::PredefinedCityModelPackage Package = UPLATEAUImportSettings::GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(Pkg);
+    for (const auto& GmlComponent : GetGmlComponents()) {
+        if (GetCityModelPackage(GmlComponent) == Package) {
+            ResultComponents.Add(GmlComponent);
+        }
+    }
+    return ResultComponents;
+}
+
 bool APLATEAUInstancedCityModel::HasAttributeInfo() {
     TArray<USceneComponent*> Components;
     GetRootComponent()->GetChildrenComponents(true, Components);

@@ -14,6 +14,9 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelClassificationAPI : public UBlu
 	GENERATED_BODY()
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
+    static TSet<FString> SearchAttributeKeys(const TArray<USceneComponent*> TargetComponents);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
     static TSet<EPLATEAUCityObjectsType> SearchTypes(const TArray<USceneComponent*> TargetComponents);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
