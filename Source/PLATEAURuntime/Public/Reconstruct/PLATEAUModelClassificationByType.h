@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 
-class PLATEAURUNTIME_API FPLATEAUModelClassification : public FPLATEAUModelReconstruct {
+class PLATEAURUNTIME_API FPLATEAUModelClassificationByType : public FPLATEAUModelReconstruct {
 
 public:
-    FPLATEAUModelClassification();
-    FPLATEAUModelClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
+    FPLATEAUModelClassificationByType();
+    FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
 
     std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;    
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;

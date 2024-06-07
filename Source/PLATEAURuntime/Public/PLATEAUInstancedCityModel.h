@@ -172,6 +172,12 @@ public:
     UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
+     * @brief 選択されたComponentのMaterialを属性情報のKeyに紐づく値で分割します
+     * @param
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+    /**
      * @brief 選択されたComponentからLandscapeを生成します
      * @param
      */
