@@ -20,6 +20,9 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelClassificationAPI : public UBlu
     static TSet<FString> SearchAttributeStringValuesFromKey(const TArray<USceneComponent*> TargetComponents, FString Key);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
+    static TArray<FString> SortAttributeStringValues(const TArray<FString> InStrings);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
     static TSet<EPLATEAUCityObjectsType> SearchTypes(const TArray<USceneComponent*> TargetComponents);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")

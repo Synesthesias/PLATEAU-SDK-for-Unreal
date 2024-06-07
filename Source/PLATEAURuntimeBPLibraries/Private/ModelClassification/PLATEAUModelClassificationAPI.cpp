@@ -5,6 +5,9 @@
 #include "CityGML/PLATEAUCityObject.h"
 #include "PLATEAUCityObjectGroup.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
+#include "Algo/Sort.h"
+
+using namespace Algo;
 
 namespace {
 
@@ -118,6 +121,14 @@ TSet<FString> UPLATEAUModelClassificationAPI::SearchAttributeStringValuesFromKey
         }
     }
     return StringValues;
+}
+
+TArray<FString> UPLATEAUModelClassificationAPI::SortAttributeStringValues(const TArray<FString> InStrings) {
+    TArray<FString> OutStrings = TArray<FString>(InStrings);
+    OutStrings.Sort([](const FString& str1, const FString& str2) {
+        return FCString::Atoi(*str1) < FCString::Atoi(*str2);
+        });
+    return OutStrings;
 }
 
 TSet<EPLATEAUCityObjectsType> UPLATEAUModelClassificationAPI::SearchTypes(const TArray<USceneComponent*> TargetComponents) {

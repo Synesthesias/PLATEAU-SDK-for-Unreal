@@ -22,6 +22,8 @@ TMap<int64, FText> UPLATEAUModelAdjustmentFilterAPI::GetFilteringNames() {
  * @return パッケージ情報
  */
 int64 UPLATEAUModelAdjustmentFilterAPI::GetCityModelPackages(const APLATEAUInstancedCityModel* TargetCityModel) {
+    if (TargetCityModel == nullptr)
+        return 0;
     return static_cast<int64>(TargetCityModel->GetCityModelPackages());
 }
 
