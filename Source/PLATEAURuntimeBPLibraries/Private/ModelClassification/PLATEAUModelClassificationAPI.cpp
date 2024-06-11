@@ -45,16 +45,14 @@ namespace {
         TSet<FString> UniqueKeys;
         if (Component->IsA(UPLATEAUCityObjectGroup::StaticClass()) && Component->IsVisible()) {
             auto CompCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Component);
-            if (CompCityObj->GetStaticMesh() != nullptr) {
-                for (const auto CityObj : CompCityObj->GetAllRootCityObjects()) {
-                    for (auto& attr : CityObj.Attributes.AttributeMap){
+            for (const auto CityObj : CompCityObj->GetAllRootCityObjects()) {
+                for (auto& attr : CityObj.Attributes.AttributeMap){
+                    AddAttributeKey(attr.Key, attr.Value, UniqueKeys);
+                }
+                for (const auto child : CityObj.Children) {
+                    for (auto& attr : child.Attributes.AttributeMap) {
                         AddAttributeKey(attr.Key, attr.Value, UniqueKeys);
-                    }
-                    for (const auto child : CityObj.Children) {
-                        for (auto& attr : child.Attributes.AttributeMap) {
-                            AddAttributeKey(attr.Key, attr.Value, UniqueKeys);
-                        }    
-                    }
+                    }    
                 }
             }
         }
@@ -65,18 +63,16 @@ namespace {
         TSet<FString> Values;
         if (Component->IsA(UPLATEAUCityObjectGroup::StaticClass()) && Component->IsVisible()) {
             auto CompCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Component);
-            if (CompCityObj->GetStaticMesh() != nullptr) {
-                for (const auto CityObj : CompCityObj->GetAllRootCityObjects()) {
-                    const auto& Attrs = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(Key, CityObj.Attributes);
-                    for (const auto Attr : Attrs) {
-                        Values.Add(Attr.StringValue);
-                    }
+            for (const auto CityObj : CompCityObj->GetAllRootCityObjects()) {
+                const auto& Attrs = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(Key, CityObj.Attributes);
+                for (const auto Attr : Attrs) {
+                    Values.Add(Attr.StringValue);
+                }
 
-                    for (const auto Child : CityObj.Children) {
-                        const auto& ChildAttrs = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(Key, Child.Attributes);
-                        for (const auto Attr : ChildAttrs) {
-                            Values.Add(Attr.StringValue);
-                        }
+                for (const auto Child : CityObj.Children) {
+                    const auto& ChildAttrs = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(Key, Child.Attributes);
+                    for (const auto Attr : ChildAttrs) {
+                        Values.Add(Attr.StringValue);
                     }
                 }
             }
@@ -89,7 +85,7 @@ namespace {
 TSet<FString> UPLATEAUModelClassificationAPI::SearchAttributeKeys(const TArray<USceneComponent*> TargetComponents) {
     TSet<FString> UniqueKeys;
     for (const auto comp : TargetComponents) {
-        if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
+        if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && comp->IsVisible()) {
             UniqueKeys.Append(GetAllAttrKeysInComponent(comp));
             TArray<USceneComponent*> children;
             comp->GetChildrenComponents(true, children);
@@ -108,7 +104,7 @@ TSet<FString> UPLATEAUModelClassificationAPI::SearchAttributeStringValuesFromKey
 
     TSet<FString> StringValues;
     for (const auto comp : TargetComponents) {
-        if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && StaticCast<UStaticMeshComponent*>(comp)->GetStaticMesh() == nullptr && comp->IsVisible()) {
+        if (comp->IsA(UActorComponent::StaticClass()) || comp->IsA(UStaticMeshComponent::StaticClass()) && comp->IsVisible()) {
             if (comp->IsA(UPLATEAUCityObjectGroup::StaticClass()) && comp->IsVisible()) {
                 StringValues.Append(GetAllAttrStringValuesByKeyInComponent(comp, Key));
             }
