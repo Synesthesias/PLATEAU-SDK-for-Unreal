@@ -9,10 +9,9 @@ using namespace plateau::granularityConvert;
 
 FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType() {}
 
-FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
+FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
 {
     CityModelActor = Actor;
-    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
     ClassificationMaterials = Materials;
     bDivideGrid = false;
 }
@@ -57,6 +56,10 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
     GranularityConverter Converter;
     std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
     return finalConverted;
+}
+
+void FPLATEAUModelClassificationByType::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
+    MeshGranularity = Granularity;
 }
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {

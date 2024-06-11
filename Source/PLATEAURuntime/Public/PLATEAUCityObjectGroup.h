@@ -54,7 +54,7 @@ public:
      * @param InNode シリアライズ対象ノード
      * @param InCityObject CityModelから得られるシティオブジェクト情報
      */
-    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject);
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity);
 
     /**
      * @brief メッシュを持つノードをシリアライズ
@@ -70,7 +70,7 @@ public:
      * @param InNode シリアライズ対象ノード
      * @param InCityObject 結合・分割前に保存したFPLATEAUCityObject
      */
-    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject);
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity);
 
     /** 
      * @brief 結合・分割時のメッシュを持つノードをシリアライズ
@@ -80,6 +80,11 @@ public:
      * @param CityObjMap 結合・分割前に保存したFPLATEAUCityObjectのMap
      */
     void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
+
+    /**
+     * @brief MeshGranularity取得Getter
+     */
+    const plateau::polygonMesh::MeshGranularity GetMeshGranularity();
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);
@@ -107,6 +112,11 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU")
     TArray<FString> OutsideChildren;
+
+    UPROPERTY(EditDefaultsOnly, Category = "PLATEAU")
+    int MeshGranularityIntValue;
+
 private:
     TArray<FPLATEAUCityObject> RootCityObjects;
+    void SetMeshGranularity(plateau::polygonMesh::MeshGranularity Granularity);
 };

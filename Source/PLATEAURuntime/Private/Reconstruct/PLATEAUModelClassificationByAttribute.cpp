@@ -21,10 +21,9 @@ namespace {
 
 FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute() {}
 
-FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const FString AttributeKey, const TMap<FString, UMaterialInterface*> Materials)
+FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString AttributeKey, const TMap<FString, UMaterialInterface*> Materials)
 {
     CityModelActor = Actor;
-    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
     ClassificationAttributeKey = AttributeKey;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
@@ -36,6 +35,11 @@ FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(A
         ID++;
     }
 }
+
+void FPLATEAUModelClassificationByAttribute::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
+    MeshGranularity = Granularity;
+}
+
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 

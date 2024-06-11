@@ -16,6 +16,7 @@
 
 class FPLATEAUCityObject;
 class FPLATEAUModelReconstruct;
+class FPLATEAUModelClassification;
 struct FPLATEAUMinMaxLod {
     int MinLod = 0;
     int MaxLod = 0;
@@ -200,9 +201,14 @@ protected:
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
 
     /**
-     * @brief 結合分離 / マテリアル分け　共通処理
+     * @brief 結合分離　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, bool bDestroyOriginal);
+
+    /**
+     * @brief マテリアル分け　共通処理
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。

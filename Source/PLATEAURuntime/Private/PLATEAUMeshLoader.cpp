@@ -588,7 +588,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
             if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
                 StaticClass = UPLATEAUCityObjectGroup::StaticClass();
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject, LoadInputData.ExtractOptions.mesh_granularity);
                 Comp = PLATEAUCityObjectGroup;
             }
             else {
