@@ -9,7 +9,4 @@ class PLATEAURUNTIME_API FPLATEAUModelClassification : public FPLATEAUModelRecon
 
 public:
     virtual void SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) = 0;
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override = 0;
-    TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override = 0;
-
 };
