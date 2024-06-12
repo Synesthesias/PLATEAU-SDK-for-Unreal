@@ -6,6 +6,11 @@
 #include "PLATEAUImportSettings.h"
 #include "EditorUtilitySubsystem.h"
 #include "EditorUtilityWidget.h"
+#include "Modules/ModuleManager.h"
+#include "ISettingsModule.h"
+#include "ISettingsContainer.h"
+#include "ISettingsCategory.h"
+#include "ISettingsSection.h"
 
 #define LOCTEXT_NAMESPACE "PLATEAUEditorUtil"
 
@@ -69,6 +74,42 @@ bool UPLATEAUEditorUtil::CloseEditorUtilityWidgetTabByID(FName TabID){
 
 void UPLATEAUEditorUtil::SelectComponent(UActorComponent* Component) {
     GEditor->SelectComponent(Component, true, true);
+}
+
+//Editr Preferences内のObjectMixerのSyncSelectionフラグをON/OFFします
+void UPLATEAUEditorUtil::SetObjectMixerSyncSelection(bool bSync) {
+
+    FName CategoryName(TEXT("Plugins"));
+    FName SectionName(TEXT("Object Mixer"));
+    FName PropertyName(TEXT("bSyncSelection"));
+    if (auto SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings")) {
+        if (auto SettingsContainer = SettingsModule->GetContainer("Editor")) {
+            TArray<ISettingsCategoryPtr> Categories;
+            int32 CatNum = SettingsContainer->GetCategories(Categories);
+            if (CatNum > 0) {
+                for(auto Category : Categories){
+                    if (Category->GetName() == CategoryName) {
+                        auto Section = Category->GetSection(SectionName);
+                        if (Section) {
+                            auto Setting = Section->GetSettingsObject();
+                            if (Setting.IsValid()) {
+                                FProperty* Property = Setting->GetClass()->FindPropertyByName(PropertyName);
+                                if (Property) {
+                                    if (FBoolProperty* BoolProperty = CastField<FBoolProperty>(Property)) {
+                                        BoolProperty->SetPropertyValue_InContainer(Setting.Get(), bSync);
+                                    }
+                                }
+
+                                if (Section.IsValid()) {
+                                    Section->Save();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #undef LOCTEXT_NAMESPACE

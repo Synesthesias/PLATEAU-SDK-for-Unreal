@@ -28,4 +28,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|Util")
     static void SelectComponent(UActorComponent* Component);
 
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|Util")
+    static void SetObjectMixerSyncSelection(bool bSync);
+
 };
