@@ -68,8 +68,6 @@ bool UPLATEAUEditorUtil::CloseEditorUtilityWidgetTabByID(FName TabID){
 }
 
 void UPLATEAUEditorUtil::SelectComponent(UActorComponent* Component) {
-    //AActor* Actor = Component->GetOwner()->GetRootComponent()->GetOwner();
-    //GEditor->SelectActor(Actor, true, true);
     GEditor->SelectComponent(Component, true, true);
 }
 
