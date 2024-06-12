@@ -113,7 +113,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "PLATEAU")
     TArray<FString> OutsideChildren;
 
-    UPROPERTY(EditDefaultsOnly, Category = "PLATEAU")
+    UPROPERTY(BlueprintReadOnly, Category = "PLATEAU")
     int MeshGranularityIntValue;
 
 private:
