@@ -559,10 +559,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
         }
         else {
             //デフォルトマテリアル設定
-            const auto SourceMaterialPath =
-                Texture != nullptr
-                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
-                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial");
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
         }
