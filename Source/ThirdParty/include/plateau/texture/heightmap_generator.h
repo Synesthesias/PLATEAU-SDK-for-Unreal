@@ -8,7 +8,7 @@ namespace plateau::texture {
     class LIBPLATEAU_EXPORT HeightmapGenerator  {
     public:
 
-        std::vector<uint16_t> generateFromMesh(const plateau::polygonMesh::Mesh& InMesh, size_t TextureWidth, size_t TextureHeight, TVec2d margin, geometry::CoordinateSystem coordinate, TVec3d& outMin, TVec3d& outMax, TVec2f& outUVMin, TVec2f& outUVMax);
+        std::vector<uint16_t> generateFromMesh(const plateau::polygonMesh::Mesh& InMesh, size_t TextureWidth, size_t TextureHeight, TVec2d margin, geometry::CoordinateSystem coordinate, bool fillEdges, TVec3d& outMin, TVec3d& outMax, TVec2f& outUVMin, TVec2f& outUVMax);
         static void savePngFile(const std::string& file_path, size_t width, size_t height, uint16_t* data);
         static void saveRawFile(const std::string& file_path, size_t width, size_t height, uint16_t* data);
         static std::vector<uint16_t> readPngFile(const std::string& file_path, size_t width, size_t height);
@@ -23,6 +23,7 @@ namespace plateau::texture {
         TVec3d convertCoordinateFrom(geometry::CoordinateSystem coordinate, TVec3d vertice);
         bool getUVExtent(plateau::polygonMesh::UV uv, TVec2f& outMin, TVec2f& outMax);
         void applyConvolutionFilter(uint16_t* image, const size_t width, const size_t height);
+        void fillTransparentEdges(uint16_t* image, const bool* alpha, const size_t width, const size_t height);
     };
 
 } // namespace plateau::texture

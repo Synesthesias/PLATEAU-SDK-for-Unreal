@@ -44,6 +44,7 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         ComponentCountX(126),
         ComponentCountY(126),
         Offset(0,0),
+        FillEdges(true),
         HeightmapImageOutput(EPLATEAULandscapeHeightmapImageOutput::None){}
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
@@ -60,6 +61,8 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         int32 ComponentCountY;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         FVector2D Offset;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool FillEdges;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
