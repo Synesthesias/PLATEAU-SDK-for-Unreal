@@ -390,7 +390,8 @@ TArray<UActorComponent*> APLATEAUInstancedCityModel::GetComponentsByPackage(EPLA
     plateau::dataset::PredefinedCityModelPackage Package = UPLATEAUImportSettings::GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(Pkg);
     for (const auto& GmlComponent : GetGmlComponents()) {
         if (GetCityModelPackage(GmlComponent) == Package) {
-            ResultComponents.Add(GmlComponent);
+            if (!GmlComponent.GetName().Contains("BillboardComponent"))
+                ResultComponents.Add(GmlComponent);
         }
     }
     return ResultComponents;
