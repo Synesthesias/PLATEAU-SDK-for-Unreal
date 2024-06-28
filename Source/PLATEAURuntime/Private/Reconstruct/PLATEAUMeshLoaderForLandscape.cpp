@@ -53,7 +53,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     plateau::texture::HeightmapGenerator generator;
     TVec3d ExtMin, ExtMax;
     TVec2f UVMin, UVMax;
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, ExtMin, ExtMax, UVMin, UVMax);
+    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, ExtMin, ExtMax, UVMin, UVMax);
     
     // Heightmap Image Output 
     if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {

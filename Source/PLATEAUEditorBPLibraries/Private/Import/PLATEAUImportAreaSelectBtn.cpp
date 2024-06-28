@@ -122,7 +122,7 @@ void UPLATEAUImportAreaSelectBtn::GetAvailableZoomLevels(const FString& Url, con
  * @return Default Material
  */
 UMaterialInterface* UPLATEAUImportAreaSelectBtn::GetDefaultMaterial() {
-    const TCHAR* SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+    const TCHAR* SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial");
     UMaterialInterface* result = Cast<UMaterialInterface>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
     return result;
 }
