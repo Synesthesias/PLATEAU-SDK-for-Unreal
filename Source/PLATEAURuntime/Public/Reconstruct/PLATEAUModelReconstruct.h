@@ -10,12 +10,17 @@ class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:
     FPLATEAUModelReconstruct();
-    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType);
+    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const plateau::polygonMesh::MeshGranularity Granularity);
 
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
      */
     virtual TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents);
+
+    /**
+     * @brief 粒度単位でコンポーネントをフィルタリングします
+     */
+    virtual TArray<UPLATEAUCityObjectGroup*> FilterComponentsByMeshGranularity(TArray<UPLATEAUCityObjectGroup*> TargetComponents, const plateau::polygonMesh::MeshGranularity Granularity);
 
     /**
      * @brief 選択されたComponentの結合・分割処理用のModelを生成します
@@ -28,6 +33,11 @@ public:
      * @param
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
+
+    /**
+     * @brief EPLATEAUMeshGranularityをplateau::polygonMesh::MeshGranularityに変換します
+     */
+    static plateau::polygonMesh::MeshGranularity GetMeshGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType);
 
 protected:
     

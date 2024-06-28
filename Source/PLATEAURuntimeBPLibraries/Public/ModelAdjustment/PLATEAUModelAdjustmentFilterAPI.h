@@ -43,4 +43,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentAPI")
     static void FilterModel(APLATEAUInstancedCityModel* TargetCityModel, const TArray<EPLATEAUCityModelPackage> EnablePackages, const TMap<EPLATEAUCityModelPackage, FPLATEAUPackageLod>& PackageToLodRangeMap, const bool bOnlyMaxLod, const TArray<EPLATEAUCityObjectsType> EnableCityObjects);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelAdjustmentAPI")
+    static TArray<EPLATEAUCityModelPackage> ConvertCityModelPackagesToEnumArray(const int64 Package);
 };

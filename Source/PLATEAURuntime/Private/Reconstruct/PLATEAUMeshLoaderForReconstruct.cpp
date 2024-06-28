@@ -69,7 +69,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
             auto cityObjRef = CityObjMap.Find(DesiredName);
             if (cityObjRef != nullptr) {
                 const FPLATEAUCityObject cityObj = *cityObjRef;
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj, Granularity);
             }
 
             const FString NewUniqueName = MakeUniqueGmlObjectName(&Actor, StaticClass, DesiredName);

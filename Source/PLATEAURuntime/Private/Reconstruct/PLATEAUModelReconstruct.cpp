@@ -9,9 +9,10 @@ using namespace plateau::granularityConvert;
 
 FPLATEAUModelReconstruct::FPLATEAUModelReconstruct() {}
 
-FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
+FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const plateau::polygonMesh::MeshGranularity Granularity) {
     CityModelActor = Actor;
-    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
+    //MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
+    MeshGranularity = Granularity;
     bDivideGrid = false;
 }
 
@@ -75,6 +76,13 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::GetUPLATEAUCityObject
     return UniqueComponents.Array();
 }
 
+TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::FilterComponentsByMeshGranularity(TArray<UPLATEAUCityObjectGroup*> TargetComponents, const plateau::polygonMesh::MeshGranularity Granularity){
+    TArray<UPLATEAUCityObjectGroup*> Components = TargetComponents.FilterByPredicate([Granularity](UPLATEAUCityObjectGroup* Component) {
+        return Component->GetMeshGranularity() == Granularity;
+        });
+    return Components;
+}
+
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
@@ -110,4 +118,19 @@ TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), MeshGranularity, CityObjMap, *CityModelActor);
     }
     return MeshLoader.GetLastCreatedComponents();
+}
+
+plateau::polygonMesh::MeshGranularity FPLATEAUModelReconstruct::GetMeshGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType) {
+    switch (ReconstructType) {
+    case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
+        return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
+    case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
+        return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+    case EPLATEAUMeshGranularity::PerCityModelArea:
+        return plateau::polygonMesh::MeshGranularity::PerCityModelArea;
+    case EPLATEAUMeshGranularity::PerMaterialInPrimary:
+        return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+    default:
+        return plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject;
+    }
 }

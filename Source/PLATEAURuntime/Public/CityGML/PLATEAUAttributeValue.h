@@ -67,4 +67,7 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static FPLATEAUAttributeMap GetAttributes(UPARAM(ref) const FPLATEAUAttributeValue& Value);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
+    static TArray<FPLATEAUAttributeValue> GetAttributesByKey(UPARAM(ref) const FString& Key, UPARAM(ref) const FPLATEAUAttributeMap& AttributeMap);
 };

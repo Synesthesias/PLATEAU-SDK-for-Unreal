@@ -29,6 +29,9 @@ public class PLATEAUEditorBPLibraries : ModuleRules {
                 "PLATEAUEditor",
                 "PLATEAURuntime",
                 "UnrealEd",
+                "Blutility",
+                "UMGEditor",
+                "UMG",
             });
 
         DynamicallyLoadedModuleNames.AddRange(
