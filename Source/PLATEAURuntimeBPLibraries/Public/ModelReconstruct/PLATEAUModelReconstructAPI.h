@@ -20,9 +20,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructAPI")
     static TArray<UActorComponent*> GetSelectedComponentsByClass(AActor* Actor, UClass* Class);
 
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|BPLibraries|ReconstructAPI")
-    static EPLATEAUMeshGranularity GetMeshGranularityFromIndex(int index);
-
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ReconstructAPI")
     static void ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 };

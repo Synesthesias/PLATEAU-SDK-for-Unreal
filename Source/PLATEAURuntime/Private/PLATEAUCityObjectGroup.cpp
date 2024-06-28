@@ -277,9 +277,10 @@ void UPLATEAUCityObjectGroup::FindCollisionUV(const FHitResult& HitResult, FVect
     }    
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject) {
-    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
 
+    SetMeshGranularity(Granularity);
+    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
 
@@ -301,9 +302,12 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
 }
 
 void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& InLoadInputData, const std::shared_ptr<const citygml::CityModel> InCityModel) {
+
+    SetMeshGranularity(InLoadInputData.ExtractOptions.mesh_granularity);
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
     JsonRootObject->SetArrayField(plateau::CityObjectGroup::OutsideChildrenFieldName, {});
 
@@ -379,9 +383,10 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
-    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
 
+    SetMeshGranularity(Granularity);
+    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
 
@@ -403,6 +408,8 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
 }
 
 void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
+
+    SetMeshGranularity(Granularity);
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
@@ -583,4 +590,12 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectGroup::GetAllRootCityObjects() {
     }
 
     return RootCityObjects;
+}
+
+const plateau::polygonMesh::MeshGranularity UPLATEAUCityObjectGroup::GetMeshGranularity() {
+    return static_cast<plateau::polygonMesh::MeshGranularity>(MeshGranularityIntValue);
+}
+
+void UPLATEAUCityObjectGroup::SetMeshGranularity(plateau::polygonMesh::MeshGranularity Granularity) {
+    MeshGranularityIntValue = (int)Granularity;
 }

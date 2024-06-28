@@ -1,23 +1,22 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
-#include <Reconstruct/PLATEAUModelClassification.h>
+#include <Reconstruct/PLATEAUModelClassificationByType.h>
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include <PLATEAUCityObjectGroup.h>
 
 using namespace plateau::granularityConvert;
 
-FPLATEAUModelClassification::FPLATEAUModelClassification() {}
+FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType() {}
 
-FPLATEAUModelClassification::FPLATEAUModelClassification(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
+FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
 {
     CityModelActor = Actor;
-    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
     ClassificationMaterials = Materials;
     bDivideGrid = false;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassification::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
     auto OriginalMeshGranularity = MeshGranularity;
@@ -59,8 +58,17 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassification::Conver
     return finalConverted;
 }
 
-TArray<USceneComponent*> FPLATEAUModelClassification::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
+void FPLATEAUModelClassificationByType::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
+    MeshGranularity = Granularity;
+}
 
-    FPLATEAUMeshLoaderForClassification MeshLoader(ClassificationMaterials, false);
+TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
+
+    TMap<int, UMaterialInterface*> NewClassificationMaterials;
+    for (const auto& KV : ClassificationMaterials) {
+        const int MaterialID = static_cast<int>(KV.Key);
+        NewClassificationMaterials.Add(MaterialID, KV.Value);
+    }
+    FPLATEAUMeshLoaderForClassification MeshLoader(NewClassificationMaterials, false);
     return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }

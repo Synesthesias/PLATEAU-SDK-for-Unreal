@@ -24,15 +24,6 @@ TArray<UActorComponent*> UPLATEAUModelReconstructAPI::GetSelectedComponentsByCla
     return arr;
 }
 
-EPLATEAUMeshGranularity UPLATEAUModelReconstructAPI::GetMeshGranularityFromIndex(int index) {
-    switch (index) {
-    case 0: return EPLATEAUMeshGranularity::PerCityModelArea; 
-    case 1: return EPLATEAUMeshGranularity::PerPrimaryFeatureObject;
-    case 2: return EPLATEAUMeshGranularity::PerAtomicFeatureObject;
-    }
-    return EPLATEAUMeshGranularity::PerPrimaryFeatureObject;
-}
-
 void UPLATEAUModelReconstructAPI::ReconstructModel(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal ) {
 #if WITH_EDITOR
     TargetCityModel->ReconstructModel(TargetComponents, ReconstructType, bDestroyOriginal); 
