@@ -40,9 +40,11 @@ namespace plateau::polygonMesh {
         const std::vector<TVec3d>& getVertices() const;
 
         const std::vector<unsigned>& getIndices() const;
+        std::vector<unsigned>& getIndices();
         const UV& getUV1() const;
         UV& getUV1();
         const UV& getUV4() const;
+        UV& getUV4();
         const std::vector<SubMesh>& getSubMeshes() const;
         std::vector<SubMesh>& getSubMeshes();
         const std::vector<TVec3d>& getVertexColors() const;
@@ -99,6 +101,10 @@ namespace plateau::polygonMesh {
         bool hasVertices() const;
 
         void merge(const Mesh& other_mesh, const bool invert_mesh_front_back, const bool include_textures);
+
+        /// 同じSubMeshが複数回登場する場合、例えばSubMeshの配列が A→B→A→B のようになっている場合に、
+        /// SubMeshを結合して A→B とすることで描画負荷を減らします。
+        void combineSameSubMeshes();
 
     private:
         friend class MeshFactory;

@@ -184,6 +184,8 @@ public:
      */
 	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param);
 
+    UE::Tasks::FTask AlignLand(const std::vector<uint16_t> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント

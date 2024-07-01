@@ -16,6 +16,7 @@
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <Reconstruct/PLATEAUModelLandscape.h>
 #include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include <Reconstruct/PLATEAUModelAlignLand.h>
 #include "Tasks/Pipe.h"
 
 using namespace UE::Tasks;
@@ -598,7 +599,15 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
      
-        Landscape.CreateLandscape(smodel,Param);
+        const auto Results = Landscape.CreateLandscape(smodel,Param);
+
+        UE_LOG(LogTemp, Log, TEXT("CreateLandscape Results Num: %d"), Results.Num());
+        for (const auto Result : Results) {
+            UE_LOG(LogTemp, Log, TEXT("CreateLandscape Result : %s %d %d"), *Result.NodeName, Result.Min.x, Result.Max.x);
+
+            auto AlignLandTask = AlignLand(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
+            AddNested(AlignLandTask);
+        }
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&,TargetCityObjects, bDestroyOriginal]() {
 
@@ -615,3 +624,16 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         });
     return CreateLandscapeTask;
 }
+
+UE::Tasks::FTask APLATEAUInstancedCityModel::AlignLand(const std::vector<uint16_t> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param) {
+
+    FTask AlignLandTask = Launch(TEXT("AlignLandTask"), [&, this] {
+
+        FPLATEAUModelAlignLand AlignLand(this);
+        AlignLand.SetHeightData(HeightData, Min, Max, NodeName, Param);
+
+        
+        });
+    return AlignLandTask;
+}
+

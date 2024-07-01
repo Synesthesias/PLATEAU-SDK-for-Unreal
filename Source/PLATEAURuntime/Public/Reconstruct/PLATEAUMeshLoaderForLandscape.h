@@ -67,13 +67,24 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
 
+
+struct  HeightmapCreationResult {
+    FString NodeName;
+    std::vector<uint16_t> Data;
+    TVec3d Min;
+    TVec3d Max;
+    TVec2f MinUV;
+    TVec2f MaxUV;
+};
+
+
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
 
 public:
     FPLATEAUMeshLoaderForLandscape();
     FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest);
 
-    void CreateHeightMap(
+    TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
 
@@ -84,11 +95,11 @@ protected:
 
     void LoadNodeRecursiveForHeightMap(
         const plateau::polygonMesh::Node& InNode,
-        AActor& InActor, FPLATEAULandscapeParam Param);
+        AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
     void LoadNodeForHeightMap(
         const plateau::polygonMesh::Node& Node,
-        AActor& Actor, FPLATEAULandscapeParam Param);
-    void CreateHeightMapFromMesh(
+        AActor& Actor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
+    HeightmapCreationResult CreateHeightMapFromMesh(
         const plateau::polygonMesh::Mesh& InMesh,
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);

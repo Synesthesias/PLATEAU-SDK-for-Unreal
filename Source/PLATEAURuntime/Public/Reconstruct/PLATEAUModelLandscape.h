@@ -18,7 +18,7 @@ public:
      */
     TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents) override;
 
-    void CreateLandscape(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
+    TArray<HeightmapCreationResult> CreateLandscape(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
 
 protected:
 

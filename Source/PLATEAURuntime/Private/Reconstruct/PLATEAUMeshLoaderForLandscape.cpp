@@ -5,7 +5,7 @@
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
-#include <plateau/texture/heightmap_generator.h>
+#include <plateau/height_map_generator/heightmap_generator.h>
 #include <Landscape.h>
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
@@ -17,53 +17,57 @@ FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAut
     bAutomationTest = InbAutomationTest;
 }
 
-void FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
+TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
     AActor* ModelActor,
     const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
+    TArray<HeightmapCreationResult> CreationResults;
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        LoadNodeRecursiveForHeightMap(Model->getRootNodeAt(i), *ModelActor, Param);
+        LoadNodeRecursiveForHeightMap(Model->getRootNodeAt(i), *ModelActor, Param, CreationResults);
     }
+    return CreationResults;
 }
 
 void FPLATEAUMeshLoaderForLandscape::LoadNodeRecursiveForHeightMap(
     const plateau::polygonMesh::Node& InNode,
-    AActor& InActor, FPLATEAULandscapeParam Param) {
-    LoadNodeForHeightMap(InNode, InActor, Param);
+    AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
+    LoadNodeForHeightMap(InNode, InActor, Param, Results);
     const size_t ChildNodeCount = InNode.getChildCount();
     for (int i = 0; i < ChildNodeCount; i++) {
         const auto& TargetNode = InNode.getChildAt(i);
-        LoadNodeRecursiveForHeightMap( TargetNode, InActor, Param);
+        LoadNodeRecursiveForHeightMap( TargetNode, InActor, Param, Results);
     }
 }
 
 void FPLATEAUMeshLoaderForLandscape::LoadNodeForHeightMap(
     const plateau::polygonMesh::Node& InNode,
-    AActor& InActor, FPLATEAULandscapeParam Param) {
+    AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
     if (InNode.getMesh() == nullptr || InNode.getMesh()->getVertices().size() == 0) {
         const FString DesiredName = FString(UTF8_TO_TCHAR(InNode.getName().c_str()));      
     }
     else {
-        CreateHeightMapFromMesh(*InNode.getMesh(), FString(UTF8_TO_TCHAR(InNode.getName().c_str())), InActor, Param);
+        auto Result = CreateHeightMapFromMesh(*InNode.getMesh(), FString(UTF8_TO_TCHAR(InNode.getName().c_str())), InActor, Param);
+        Results.Add(Result);
     }
 }
 
-void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
+HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     const plateau::polygonMesh::Mesh& InMesh, const FString NodeName, AActor& Actor, FPLATEAULandscapeParam Param) {
 
-    plateau::texture::HeightmapGenerator generator;
+    plateau::heightMapGenerator::HeightmapGenerator generator;
     TVec3d ExtMin, ExtMax;
     TVec2f UVMin, UVMax;
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, TVec2d(Param.Offset.X, Param.Offset.Y), plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, ExtMin, ExtMax, UVMin, UVMax);
+    TVec2d Offset(Param.Offset.X, Param.Offset.Y);
+    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, Offset, plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, ExtMin, ExtMax, UVMin, UVMax);
     
     // Heightmap Image Output 
     if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
         FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::texture::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
         UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
     }
     if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::RAW || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
         FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::texture::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
         UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
     }
 
@@ -82,6 +86,9 @@ void FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
         [&, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName, Param] {
             CreateLandScape(Actor.GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads, Param.ComponentCountX, Param.ComponentCountY, Param.TextureWidth, Param.TextureHeight, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+
+    HeightmapCreationResult Result{ NodeName, heightMapData ,ExtMin, ExtMax , UVMin, UVMax };
+    return Result;
 }
 
 void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,

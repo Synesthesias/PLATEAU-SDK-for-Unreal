@@ -19,9 +19,9 @@ FPLATEAUModelLandscape::FPLATEAUModelLandscape(APLATEAUInstancedCityModel* Actor
     CityModelActor = Actor;
 }
 
-void FPLATEAUModelLandscape::CreateLandscape(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
+TArray<HeightmapCreationResult> FPLATEAUModelLandscape::CreateLandscape(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
     FPLATEAUMeshLoaderForLandscape HMap = FPLATEAUMeshLoaderForLandscape(false);
-    HMap.CreateHeightMap(CityModelActor, Model, Param);
+    return HMap.CreateHeightMap(CityModelActor, Model, Param);
 }
 
 /**
