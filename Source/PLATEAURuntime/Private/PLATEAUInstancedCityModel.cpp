@@ -581,7 +581,6 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
     return ConvertTask;
 }
 
-
 //Landscape
 UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {
 
@@ -598,15 +597,35 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-     
-        const auto Results = Landscape.CreateLandscape(smodel,Param);
+
+        const auto Results = Landscape.CreateHeightMap(smodel, Param);
 
         UE_LOG(LogTemp, Log, TEXT("CreateLandscape Results Num: %d"), Results.Num());
         for (const auto Result : Results) {
+
             UE_LOG(LogTemp, Log, TEXT("CreateLandscape Result : %s %d %d"), *Result.NodeName, Result.Min.x, Result.Max.x);
 
-            auto AlignLandTask = AlignLand(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
-            AddNested(AlignLandTask);
+            //Landscape生成
+            if (Param.CreateLandscape) {
+                TArray<uint16> HeightData(Result.Data.data(), Result.Data.size());
+                //LandScape  
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [&, HeightData, Result, Param] {
+                        Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads, 
+                        Param.ComponentCountX, Param.ComponentCountY, 
+                        Param.TextureWidth, Param.TextureHeight, 
+                        Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
+                    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            }
+
+            // 地形に揃える
+            if (Param.AlignLand) {
+
+                //TODO : TargetAlignedLandを取得して↓でDestroy
+                auto AlignLandTask = AlignLand(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
+                AddNested(AlignLandTask);
+                AlignLandTask.Wait();
+            }
         }
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&,TargetCityObjects, bDestroyOriginal]() {
@@ -632,7 +651,6 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::AlignLand(const std::vector<uint16_
         FPLATEAUModelAlignLand AlignLand(this);
         AlignLand.SetHeightData(HeightData, Min, Max, NodeName, Param);
 
-        
         });
     return AlignLandTask;
 }

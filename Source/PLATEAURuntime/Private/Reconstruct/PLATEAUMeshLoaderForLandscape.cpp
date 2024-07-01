@@ -6,10 +6,10 @@
 #include "PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
-#include <Landscape.h>
-#include <PLATEAUTextureLoader.h>
-#include "Materials/MaterialInstanceConstant.h"
-#include "UObject/SavePackage.h"
+//#include <Landscape.h>
+//#include <PLATEAUTextureLoader.h>
+//#include "Materials/MaterialInstanceConstant.h"
+//#include "UObject/SavePackage.h"
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
@@ -71,7 +71,8 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
         UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
     }
 
-    TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
+    
+    //TArray<uint16> HeightData(heightMapData.data(), heightMapData.size());
 
     //Texture
     FString TexturePath;
@@ -80,17 +81,18 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
         const auto& subMesh = subMeshes.at(0);
         TexturePath = FString(subMesh.getTexturePath().c_str());
     }
-
+    /*
     //LandScape  
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [&, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName, Param] {
             CreateLandScape(Actor.GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads, Param.ComponentCountX, Param.ComponentCountY, Param.TextureWidth, Param.TextureHeight, ExtMin, ExtMax, UVMin, UVMax, TexturePath, HeightData, NodeName);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+    */
 
-    HeightmapCreationResult Result{ NodeName, heightMapData ,ExtMin, ExtMax , UVMin, UVMax };
+    HeightmapCreationResult Result{ NodeName, heightMapData ,ExtMin, ExtMax , UVMin, UVMax, TexturePath };
     return Result;
 }
-
+/*
 void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,
     const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName ) {
 
@@ -183,6 +185,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateLandScape(UWorld* World, const int32 
     Landscape->SetActorLabel(FString(ActorName));
 #endif   
 }
+*/
 
 bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
     return false;
