@@ -76,7 +76,7 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
 
 struct  HeightmapCreationResult {
     FString NodeName;
-    std::vector<uint16_t> Data;
+    TSharedPtr<std::vector<uint16_t>> Data;
     TVec3d Min;
     TVec3d Max;
     TVec2f MinUV;

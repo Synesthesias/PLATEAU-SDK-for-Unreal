@@ -7,7 +7,7 @@
 
 void UPLATEAUModelLandscapeAPI::CreateLandscape(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {
 #if WITH_EDITOR
-    TargetCityModel->CreateLandscape(TargetComponents, bDestroyOriginal, Param);
+    TargetCityModel->CreateLandscape(TargetComponents, Param, bDestroyOriginal);
 #else
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif  

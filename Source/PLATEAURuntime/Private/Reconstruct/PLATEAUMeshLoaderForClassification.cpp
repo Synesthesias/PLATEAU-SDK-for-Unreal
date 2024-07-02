@@ -14,7 +14,7 @@ FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(const T
     bAutomationTest = InbAutomationTest;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
     if (SubMeshValue.GameMaterialID > -1 && !ClassificationMaterials.IsEmpty() && ClassificationMaterials.Contains(SubMeshValue.GameMaterialID)) {
         const auto& MatPtr = ClassificationMaterials.Find(SubMeshValue.GameMaterialID);
         if (MatPtr != nullptr) {
@@ -23,7 +23,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForClassification::GetMaterialForSub
                 return UMaterialInstanceDynamic::Create(Mat, Component);
         }    
     }
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 }
 
 

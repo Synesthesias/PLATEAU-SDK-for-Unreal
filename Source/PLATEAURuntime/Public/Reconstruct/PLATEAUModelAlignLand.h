@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
+#include <plateau/height_map_alighner/height_map_aligner.h>
 
 class PLATEAURUNTIME_API FPLATEAUModelAlignLand : public FPLATEAUModelReconstruct {
 
@@ -18,7 +19,9 @@ public:
      */
     TMap<FString, UPLATEAUCityObjectGroup*> CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
-    void SetHeightData(const std::vector<uint16_t> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+    plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+
+    TArray<UPLATEAUCityObjectGroup*> SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames);
 
 protected:
 

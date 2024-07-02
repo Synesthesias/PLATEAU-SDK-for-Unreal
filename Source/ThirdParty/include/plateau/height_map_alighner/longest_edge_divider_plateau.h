@@ -25,7 +25,7 @@ namespace OpenMesh { // BEGIN_NS_OPENMESH
 
             /// PLATEAUデータを格納するためのOpenMeshのプロパティ型を定義します。
             typedef OpenMesh::FPropHandleT<std::optional<int>> GameMaterialIDPropT;
-            typedef OpenMesh::VPropHandleT<std::optional<TVec2f>> UV4PropT;
+            typedef OpenMesh::VPropHandleT<std::optional<TVec2f>> UVPropT;
 //== CLASS DEFINITION =========================================================
 
 
@@ -59,16 +59,18 @@ namespace OpenMesh { // BEGIN_NS_OPENMESH
 
             private:
                 GameMaterialIDPropT game_material_id_prop;
-                UV4PropT uv4_prop;
+                UVPropT uv1_prop;
+                UVPropT uv4_prop;
+
             public:
 
 
-                LongestEdgeDividerPlateau(GameMaterialIDPropT game_mat_prop, UV4PropT uv4_prop) :
-                parent_t(), game_material_id_prop(game_mat_prop), uv4_prop(uv4_prop) {}
+                LongestEdgeDividerPlateau(GameMaterialIDPropT game_mat_prop, UVPropT uv1_prop, UVPropT uv4_prop) :
+                parent_t(), game_material_id_prop(game_mat_prop), uv1_prop(uv1_prop), uv4_prop(uv4_prop) {}
 
 
-                LongestEdgeDividerPlateau(mesh_t& _m, GameMaterialIDPropT game_mat_prop, UV4PropT uv4_prop) :
-                    parent_t(_m), game_material_id_prop(game_mat_prop), uv4_prop(uv4_prop) {}
+                LongestEdgeDividerPlateau(mesh_t& _m, GameMaterialIDPropT game_mat_prop, UVPropT uv1_prop, UVPropT uv4_prop) :
+                    parent_t(_m), game_material_id_prop(game_mat_prop), uv1_prop(uv1_prop), uv4_prop(uv4_prop) {}
 
 
                 ~LongestEdgeDividerPlateau() {}
@@ -158,6 +160,18 @@ namespace OpenMesh { // BEGIN_NS_OPENMESH
                             }
                             if(!uv4.has_value()) uv4 = TVec2f(-999, -999);
 
+                            // 分割前のUV1を記録します
+                            std::optional<TVec2f> uv1;
+                            for(int i=0; i<2; i++) {
+                                auto halfedge = _m.halfedge_handle(a.first, i);
+                                auto vert = _m.from_vertex_handle(halfedge);
+                                auto val = _m.property(uv1_prop, vert);
+                                if(val.has_value()) {
+                                    uv1 = val;
+                                    break;
+                                }
+                            }
+                            if(!uv1.has_value()) uv4 = TVec2f(-999, -999);
 
                             // ここで分割します
                             _m.split(a.first, newVertex);
@@ -176,6 +190,14 @@ namespace OpenMesh { // BEGIN_NS_OPENMESH
                                 auto prop = _m.property(uv4_prop, v_handle);
                                 if (prop.has_value()) break;
                                 _m.property(uv4_prop, v_handle) = uv4;
+                            }
+
+                            // 分割により増えた点について、UV1を埋めます。
+                            for(int i = _m.n_vertices() - 1; i >= 0; --i) {
+                                auto v_handle = _m.vertex_handle(i);
+                                auto prop = _m.property(uv1_prop, v_handle);
+                                if (prop.has_value()) break;
+                                _m.property(uv1_prop, v_handle) = uv1;
                             }
 
 

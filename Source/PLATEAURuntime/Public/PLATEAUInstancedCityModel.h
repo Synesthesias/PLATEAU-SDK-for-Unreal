@@ -86,6 +86,8 @@ public:
      */
     static int ParseLodComponent(const USceneComponent* InLodComponent);
 
+    static void DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy );
+
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 
@@ -182,9 +184,9 @@ public:
      * @brief 選択されたComponentからLandscapeを生成します
      * @param
      */
-	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param);
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
-    UE::Tasks::FTask AlignLand(const std::vector<uint16_t> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。

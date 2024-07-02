@@ -214,7 +214,7 @@ namespace {
                 const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
                 const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
-
+                
                 const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
                 const auto UV4 = FVector2f(InUV4.x, InUV4.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
@@ -415,7 +415,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData] {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, NodeName] {
                 for (const auto& SubMeshValue : SubMeshMaterialSets) {
                     UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
                     if (SharedMatPtr == nullptr) {
@@ -440,7 +440,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             }
                         }
 
-                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 
                         //Textureが存在する場合
                         if (Texture != nullptr)
@@ -501,7 +501,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AAc
     return NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     UMaterialInstanceDynamic* DynMaterial = nullptr;
     if (SubMeshValue.hasMaterial) {

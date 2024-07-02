@@ -73,7 +73,7 @@ protected:
     FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
 
     // SubMesh情報等に応じてMaterialを作成
-    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture);
+    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName);
     // Loaderのタイプに応じて異なるStaticMeshComponentを作成
     virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 

@@ -12,6 +12,7 @@ namespace plateau::heightMapAligner {
     /// plateauのメッシュとOpenMeshのメッシュを相互変換します。
     class OpenMeshConverter {
     public:
+        OpenMeshConverter(float max_edge_length) : max_edge_length(max_edge_length) {}
         MeshType toOpenMesh(const plateau::polygonMesh::Mesh* mesh);
         void subdivide(MeshType& mesh);
 
@@ -21,6 +22,8 @@ namespace plateau::heightMapAligner {
 
     private:
         OpenMesh::Subdivider::Uniform::GameMaterialIDPropT game_material_id_prop;
-        OpenMesh::Subdivider::Uniform::UV4PropT uv4_prop;
+        OpenMesh::Subdivider::Uniform::UVPropT uv1_prop;
+        OpenMesh::Subdivider::Uniform::UVPropT uv4_prop;
+        float max_edge_length;
     };
 }

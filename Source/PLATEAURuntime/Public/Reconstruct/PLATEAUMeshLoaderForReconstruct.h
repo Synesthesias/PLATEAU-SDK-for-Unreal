@@ -20,18 +20,18 @@ public:
 
 protected:
 
-    void ReloadNodeRecursive(
+    virtual void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& InActor);
-    USceneComponent* ReloadNode(
+    virtual USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
         plateau::polygonMesh::MeshGranularity Granularity,
         AActor& Actor);
 
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) override;
+    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
 
     UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
