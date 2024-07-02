@@ -30,7 +30,8 @@ plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignDat
 
     plateau::heightMapAligner::HeightMapFrame frame(*HeightData.Get(),
         (int)Param.TextureWidth, (int)Param.TextureHeight,
-        (float)ENUMin.x, (float)ENUMax.x, (float)ENUMin.y, (float)ENUMax.y, (float)ENUMin.z, (float)ENUMax.z);
+        //(float)ENUMin.x, (float)ENUMax.x, (float)ENUMin.y, (float)ENUMax.y, (float)ENUMin.z, (float)ENUMax.z, plateau::geometry::CoordinateSystem::ESU);
+        (float)Min.x, (float)Max.x, (float)Min.y, (float)Max.y, (float)Min.z, (float)Max.z, plateau::geometry::CoordinateSystem::ESU);
 
     UE_LOG(LogTemp, Error, TEXT("Frame HeightData %d TextureWidth %d TextureHeight %d Min x %f Max x %f Min y %f Max y %f Min H %f Max H %f "), frame.heightmap.size(), frame.map_width, frame.map_height, frame.min_x, frame.max_x, frame.min_y, frame.max_y, frame.min_height, frame.max_height);
 
@@ -40,7 +41,7 @@ plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignDat
 TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames) {
 
     const float HeightOffset = 0.3f;
-    plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset);
+    plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
 
     for (const auto& Frame : Frames) {
         heightmapAligner.addHeightmapFrame(Frame);
@@ -63,7 +64,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::SetAlignData(const TArr
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
     ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = ECoordinateSystem::EUN; //Unity座標系のModel
+    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU; 
     FPLATEAUMeshExporter MeshExporter;
     std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
 

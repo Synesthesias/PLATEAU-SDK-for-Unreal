@@ -6,6 +6,7 @@
 #include "citygml/cityobject.h"
 #include "plateau/polygon_mesh/city_object_list.h"
 #include "plateau/polygon_mesh/quaternion.h"
+#include "plateau/geometry/geo_coordinate.h"
 #include <libplateau_api.h>
 #include <optional>
 
@@ -105,6 +106,9 @@ namespace plateau::polygonMesh {
         /// 同じSubMeshが複数回登場する場合、例えばSubMeshの配列が A→B→A→B のようになっている場合に、
         /// SubMeshを結合して A→B とすることで描画負荷を減らします。
         void combineSameSubMeshes();
+
+        void convertAxisToENUFrom(geometry::CoordinateSystem from_axis);
+        void convertAxisFromENUTo(geometry::CoordinateSystem to_axis);
 
     private:
         friend class MeshFactory;

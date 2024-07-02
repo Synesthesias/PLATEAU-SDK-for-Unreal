@@ -2,6 +2,7 @@
 #include <libplateau_api.h>
 #include "plateau/polygon_mesh/model.h"
 #include "plateau/height_map_generator/heightmap_types.h"
+#include <plateau/geometry/geo_reference.h>
 
 namespace plateau::heightMapAligner {
 
@@ -9,11 +10,23 @@ namespace plateau::heightMapAligner {
     class LIBPLATEAU_EXPORT HeightMapFrame {
     public:
         HeightMapFrame(plateau::heightMapGenerator::HeightMapT heightmap, int map_width, int map_height, float min_x_arg, float max_x_arg,
-                       float min_y_arg, float max_y_arg, float min_height_arg, float max_height_arg) :
+                       float min_y_arg, float max_y_arg, float min_z_arg, float max_z_arg, geometry::CoordinateSystem axis) :
                 heightmap(std::move(heightmap)), map_width(map_width), map_height(map_height),
                 min_x(min_x_arg), max_x(max_x_arg), max_y(max_y_arg), min_y(min_y_arg),
-                min_height(min_height_arg), max_height(max_height_arg)
+                min_height(min_z_arg), max_height(max_z_arg)
         {
+            // 座標軸変換
+            const TVec3d min_v_row = TVec3d(min_x, min_y, min_height);
+            const TVec3d max_v_row = TVec3d(max_x, max_y, max_height);
+            const TVec3d min_v = geometry::GeoReference::convertAxisToENU(axis, min_v_row);
+            const TVec3d max_v = geometry::GeoReference::convertAxisToENU(axis, max_v_row);
+            min_x = (float)min_v.x;
+            min_y = (float)min_v.y;
+            min_height = (float)min_v.z;
+            max_x = (float)max_v.x;
+            max_y = (float)max_v.y;
+            max_height = (float)max_v.z;
+
             if(min_x > max_x) std::swap(min_x, max_x);
             if(min_y > max_y) std::swap(min_y, max_y);
             if(min_height > max_height) std::swap(min_height, max_height);
@@ -45,7 +58,7 @@ namespace plateau::heightMapAligner {
     public:
 
         /// コンストラクタで高さのオフセットを指定します。
-        explicit HeightMapAligner(double height_offset) : height_offset(height_offset) {}
+        HeightMapAligner(double height_offset, geometry::CoordinateSystem axis) : height_offset(height_offset), axis(axis){}
 
         void addHeightmapFrame(const HeightMapFrame& heightmap_frame);
 
@@ -66,5 +79,6 @@ namespace plateau::heightMapAligner {
     private:
         std::vector<HeightMapFrame> height_map_frames;
         const double height_offset;
+        geometry::CoordinateSystem axis;
     };
 }

@@ -15,10 +15,17 @@ namespace plateau::heightMapGenerator {
     class LIBPLATEAU_EXPORT HeightmapGenerator  {
     public:
         /// メイン関数です
-        HeightMapT generateFromMesh(const plateau::polygonMesh::Mesh& InMesh, size_t TextureWidth, size_t TextureHeight, const TVec2d& margin, geometry::CoordinateSystem coordinate, bool fillEdges, TVec3d& outMin, TVec3d& outMax, TVec2f& outUVMin, TVec2f& outUVMax);
+        HeightMapT generateFromMesh(
+                const plateau::polygonMesh::Mesh& InMesh, size_t TextureWidth, size_t TextureHeight,
+                const TVec2d& margin, geometry::CoordinateSystem coordinate,
+                bool fillEdges, bool applyConvolutionFilterForHeightMap,
+                TVec3d& outMin, TVec3d& outMax, TVec2f& outUVMin, TVec2f& outUVMax);
 
         /// extentなどがすでに決まっていることを前提にハイトマップ生成します。
-        HeightMapWithAlpha generateFromMeshAndTriangles(const plateau::polygonMesh::Mesh& in_mesh, size_t texture_width, size_t texture_height, bool fillEdges, TriangleList& triangles, const HeightMapT& initial_height_map);
+        HeightMapWithAlpha generateFromMeshAndTriangles(
+                const plateau::polygonMesh::Mesh& in_mesh, size_t texture_width, size_t texture_height,
+                bool fillEdges, bool applyConvolutionFilterForHeightMap,
+                const TriangleList& triangles, const HeightMapT& initial_height_map);
 
         static void savePngFile(const std::string& file_path, size_t width, size_t height, HeightMapElemT* data);
         static void saveRawFile(const std::string& file_path, size_t width, size_t height, HeightMapElemT* data);
