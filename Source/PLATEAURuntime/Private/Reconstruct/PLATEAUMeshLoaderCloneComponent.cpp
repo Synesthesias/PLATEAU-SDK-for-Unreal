@@ -1,17 +1,26 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 
-#include "Reconstruct/PLATEAUMeshLoaderForAlignLand.h"
+#include "Reconstruct/PLATEAUMeshLoaderCloneComponent.h"
 #include "PLATEAUCityModelLoader.h"
 #include "PLATEAUCityObjectGroup.h"
+#include "PLATEAUInstancedCityModel.h"
 
-FPLATEAUMeshLoaderForAlignLand::FPLATEAUMeshLoaderForAlignLand() {}
+FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent() {}
 
-FPLATEAUMeshLoaderForAlignLand::FPLATEAUMeshLoaderForAlignLand(const bool InbAutomationTest){
+FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
 }
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForAlignLand::GetOriginalComponent(FString Name) {
+TMap<FString, UPLATEAUCityObjectGroup*> FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+    TMap<FString, UPLATEAUCityObjectGroup*> Map;
+    for (auto Comp : TargetCityObjects) {
+        Map.Add(APLATEAUInstancedCityModel::GetOriginalComponentName(Comp), Comp);
+    }
+    return Map;
+}
+
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderCloneComponent::GetOriginalComponent(FString Name) {
     auto Ptr = ComponentsMap.Find(Name);
     if (Ptr) {
         const auto& OriginalComponent = *Ptr;
@@ -20,17 +29,16 @@ UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForAlignLand::GetOriginalComponent(FS
     return nullptr;
 }
 
-void FPLATEAUMeshLoaderForAlignLand::ReloadComponentFromNode(
+void FPLATEAUMeshLoaderCloneComponent::ReloadComponentFromNode(
     const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
     TMap<FString, UPLATEAUCityObjectGroup*> Components,
     AActor& InActor) {
 
     ComponentsMap = Components;
-    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, Granularity, TMap<FString, FPLATEAUCityObject>(), InActor);
+    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoaderForAlignLand::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
     const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
     const std::shared_ptr <const citygml::CityModel> CityModel) {
 
@@ -48,7 +56,7 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForAlignLand::GetStaticMeshComponentForC
     return PLATEAUCityObjectGroup;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForAlignLand::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderCloneComponent::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     // Originalコンポーネントのマテリアルをそのまま利用
     const auto& OriginalComponent = GetOriginalComponent(NodeName);
@@ -59,22 +67,26 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForAlignLand::GetMaterialForSubMesh(
 }
 
 /**
- * @brief Originalコンポーネントと同一階層に配置します。それ以外は処理しません。
+ * @brief Meshとコンポーネントが存在する場合、Originalコンポーネントと同一階層にCloneを配置します。それ以外は処理しません。
+ * ParentComponent, MeshGranularityパラメータは無視してコンポーネントの値を利用
  */
-USceneComponent* FPLATEAUMeshLoaderForAlignLand::ReloadNode(USceneComponent* ParentComponent,
+USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
     plateau::polygonMesh::MeshGranularity Granularity,
     AActor& Actor) {
-
-    UE_LOG(LogTemp, Error, TEXT("FPLATEAUMeshLoaderForAlignLand :: ReloadNode "));
 
     if (Node.getMesh() != nullptr && Node.getMesh()->getVertices().size() > 0) {
 
         const FString CompName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const auto& OriginalComponent = GetOriginalComponent(CompName);
+
         if (OriginalComponent) {
+
+            const auto& OriginalParentComponent = OriginalComponent->GetAttachParent();
+            const auto& OriginalGranularity = StaticCast<plateau::polygonMesh::MeshGranularity>(OriginalComponent->MeshGranularityIntValue);
+
             plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
-            MeshExtractOptions.mesh_granularity = Granularity;
+            MeshExtractOptions.mesh_granularity = OriginalGranularity;
             FLoadInputData LoadInputData
             {
                 MeshExtractOptions,
@@ -83,9 +95,7 @@ USceneComponent* FPLATEAUMeshLoaderForAlignLand::ReloadNode(USceneComponent* Par
                 false,
                 nullptr
             };
-
-            ParentComponent = OriginalComponent->GetAttachParent();
-            return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, nullptr,
+            return CreateStaticMeshComponent(Actor, *OriginalParentComponent, *Node.getMesh(), LoadInputData, nullptr,
                 Node.getName());
         }
     }

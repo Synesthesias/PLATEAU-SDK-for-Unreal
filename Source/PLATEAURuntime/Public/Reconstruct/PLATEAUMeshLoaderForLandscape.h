@@ -45,8 +45,10 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         ComponentCountY(126),
         Offset(0,0),
         CreateLandscape(true),
+        ApplyBlurFilter(true),
         FillEdges(true),
         AlignLand(true),
+        InvertRoadLod3(true),
         HeightmapImageOutput(EPLATEAULandscapeHeightmapImageOutput::None){}
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
@@ -66,9 +68,14 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         bool CreateLandscape;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool ApplyBlurFilter;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         bool FillEdges;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         bool AlignLand;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool InvertRoadLod3;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
@@ -94,10 +101,7 @@ public:
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
-    /*
-    void CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const int32 ComponentCountX, const int32 ComponentCountY, const int32 SizeX, const int32 SizeY,
-        const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName);
-        */
+
 protected:
 
     void LoadNodeRecursiveForHeightMap(

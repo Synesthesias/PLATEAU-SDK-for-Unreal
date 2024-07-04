@@ -37,8 +37,15 @@ public:
         FString ID;
 };
 
+UENUM(BlueprintType)
+enum class EPLATEAULandscapeCreationResult : uint8 {
+    Success = 0,
+    Fail = 1
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClassifyFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLandscapeCreationFinishedDelegate, EPLATEAULandscapeCreationResult, Result);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -72,7 +79,7 @@ public:
      * @brief ランドスケープ生成処理終了イベント
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
-    FOnClassifyFinishedDelegate OnLandscapeCreationFinished;
+    FOnLandscapeCreationFinishedDelegate OnLandscapeCreationFinished;
 
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。

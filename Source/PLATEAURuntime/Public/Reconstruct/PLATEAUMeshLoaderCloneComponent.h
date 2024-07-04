@@ -6,17 +6,27 @@
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
 
-class PLATEAURUNTIME_API FPLATEAUMeshLoaderForAlignLand : public FPLATEAUMeshLoaderForReconstruct {
+/**
+* @brief 元のコンポーネントから属性、マテリアル, 分割をコピーして利用
+* 元のコンポーネントと同一階層にコピーを生成(親階層は既存のものをそのまま利用）
+*/
+class PLATEAURUNTIME_API FPLATEAUMeshLoaderCloneComponent : public FPLATEAUMeshLoaderForReconstruct {
 
 public:
-    FPLATEAUMeshLoaderForAlignLand();
-    FPLATEAUMeshLoaderForAlignLand(const bool InbAutomationTest);
+    FPLATEAUMeshLoaderCloneComponent();
+    FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest);
+
+    /**
+     * @brief 元のComponentを記憶します
+     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+     * @return Key: Component Name(GmlID), Value: Component の Map
+     */
+    static TMap<FString, UPLATEAUCityObjectGroup*> CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
     void ReloadComponentFromNode(
         const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
         TMap<FString, UPLATEAUCityObjectGroup*> Components,
-        AActor& InActor);
+        AActor& InActor);     
 
     USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,

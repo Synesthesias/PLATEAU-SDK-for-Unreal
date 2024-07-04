@@ -604,11 +604,21 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
 
         const auto Results = Landscape.CreateHeightMap(smodel, Param);
 
-        UE_LOG(LogTemp, Log, TEXT("CreateLandscape Results Num: %d"), Results.Num());
+        // 高さを地形に揃える
+        if (Param.AlignLand) {
+            auto AlignLandTask = AlignLand(Results, Param, bDestroyOriginal);
+            AddNested(AlignLandTask);
+            AlignLandTask.Wait();
+            const auto& AlignedComponents = AlignLandTask.GetResult();
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
+                // Align コンポーネント削除
+                DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
+                }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
+        }
+
+        //TODO:  // LOD3道路の場合、HeightMap書き換え
+
         for (const auto Result : Results) {
-
-            UE_LOG(LogTemp, Log, TEXT("CreateLandscape Result : %s %d %d"), *Result.NodeName, Result.Min.x, Result.Max.x);
-
             //Landscape生成
             if (Param.CreateLandscape) {
                 TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
@@ -623,26 +633,15 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
             }
         }
 
-        // 地形に揃える
-        if (Param.AlignLand) {
-            auto AlignLandTask = AlignLand(Results, Param, bDestroyOriginal);
-            AddNested(AlignLandTask);
-            AlignLandTask.Wait();
-            const auto& AlignedComponents = AlignLandTask.GetResult();
-            FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
-                // Align コンポーネント削除
-                DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
-                }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
-        }
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects, bDestroyOriginal]() {
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects, bDestroyOriginal, Results]() {
 
             // Landscape コンポーネント削除
             if (Param.CreateLandscape)
                 DestroyOrHideComponents(TargetCityObjects, bDestroyOriginal);
 
             //終了イベント通知
-            OnLandscapeCreationFinished.Broadcast();
+            EPLATEAULandscapeCreationResult Res = Results.Num() > 0 ? EPLATEAULandscapeCreationResult::Success : EPLATEAULandscapeCreationResult::Fail;
+            OnLandscapeCreationFinished.Broadcast(Res);
         }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
 
     });
@@ -658,7 +657,7 @@ UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> APLATEAUInstancedCityModel::A
             Frames.Add(AlignLand.CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
         }
 
-        const auto TargetCityObjects = AlignLand.SetAlignData(Frames);
+        const auto TargetCityObjects = AlignLand.SetAlignData(Frames, Param);
         return TargetCityObjects;
 
         });

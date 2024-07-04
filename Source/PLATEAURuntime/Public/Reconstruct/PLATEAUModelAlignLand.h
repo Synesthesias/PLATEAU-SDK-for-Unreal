@@ -9,27 +9,17 @@
 class PLATEAURUNTIME_API FPLATEAUModelAlignLand : public FPLATEAUModelReconstruct {
 
 public:
-    FPLATEAUModelAlignLand();
-    FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor);
 
-    /**
-     * @brief 元のComponentを記憶します
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: Component Name(GmlID), Value: Component の Map
-     */
-    TMap<FString, UPLATEAUCityObjectGroup*> CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    //HeightMapAligner Parameters
+    const double HeightOffset = 300;
+    const float MaxEdgeLength = 400.f; // 高さ合わせのためメッシュを細分化するときの、最大の辺の長さ。だいたい4mくらいが良さそう。
+    const int AlphaExpandWidthCartesian = 200; // 逆高さ合わせのアルファの平滑化処理において、不透明部分を広げる幅（直交座標系）
+    const int AlphaAveragingWidthCartesian = 200; // 逆高さ合わせのアルファの平滑化処理において、周りの平均を取る幅（直交座標系）
+    const double InvertedHeightOffset = -200.0; // 逆高さ合わせで、土地を対象と比べてどの高さに合わせるか（直交座標系）
+    const float SkipThresholdOfMapLandDistance = 80.f; // 逆高さ合わせで、土地との距離がこの値以上の箇所は高さ合わせしない（直交座標系）
 
-    plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
-
-    TArray<UPLATEAUCityObjectGroup*> SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames);
-
-protected:
-
-    TMap<FString, UPLATEAUCityObjectGroup*> ComponentsMap;
-
-private:
-
-    TSet<EPLATEAUCityModelPackage> IncludePacakges{ EPLATEAUCityModelPackage::Area,
+    // 地形にAlignするパッケージリスト
+    const TSet<EPLATEAUCityModelPackage> IncludePacakges{ EPLATEAUCityModelPackage::Area,
     EPLATEAUCityModelPackage::Road,
     EPLATEAUCityModelPackage::Square,
     EPLATEAUCityModelPackage::Track,
@@ -39,6 +29,22 @@ private:
     EPLATEAUCityModelPackage::WaterBody,
     EPLATEAUCityModelPackage::UrbanPlanningDecision,
     };
+
+    /**
+     * @brief ComponentリストからLOD3のRoadを探してリストに追加します
+     */
+    static TArray<UPLATEAUCityObjectGroup*> FilterLod3RoadComponents(APLATEAUInstancedCityModel* Actor, TArray<UPLATEAUCityObjectGroup*> TargetComponents);
+
+    FPLATEAUModelAlignLand();
+    FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor);
+
+    plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+
+    TArray<UPLATEAUCityObjectGroup*> SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, FPLATEAULandscapeParam Param);
+
+protected:
+
+private:
 
 };
 

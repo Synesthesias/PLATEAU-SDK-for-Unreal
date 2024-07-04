@@ -12,14 +12,50 @@ FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool In
     bAutomationTest = InbAutomationTest;
 }
 
+/**
+* @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+* @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+* @return Key: GmlID, Value: UPLATEAUCityObject の Map
+*/
+TMap<FString, FPLATEAUCityObject> FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
+    TMap<FString, FPLATEAUCityObject> OutCityObjMap;
+    for (auto Comp : TargetCityObjectGroups) {
+
+        if (Comp->SerializedCityObjects.IsEmpty())
+            continue;
+
+        for (auto CityObj : Comp->GetAllRootCityObjects()) {
+            if (!Comp->OutsideParent.IsEmpty() && !OutCityObjMap.Contains(Comp->OutsideParent)) {
+                // 親を探す
+                TArray<USceneComponent*> Parents;
+                Comp->GetParentComponents(Parents);
+                for (const auto& Parent : Parents) {
+                    if (Parent->GetName().Contains(Comp->OutsideParent)) {
+                        for (auto Pobj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
+                            OutCityObjMap.Add(Pobj.GmlID, Pobj);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            OutCityObjMap.Add(CityObj.GmlID, CityObj);
+            for (auto Child : CityObj.Children) {
+                OutCityObjMap.Add(Child.GmlID, Child);
+            }
+        }
+    }
+    return OutCityObjMap;
+}
+
 void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
     plateau::polygonMesh::MeshGranularity Granularity,
-    TMap<FString, FPLATEAUCityObject> cityObjMap,
+    TMap<FString, FPLATEAUCityObject> CityObj,
     AActor& InActor) {
 
-    CityObjMap = cityObjMap;
+    CityObjMap = CityObj;
     LastCreatedComponents.Empty();
 
     ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);

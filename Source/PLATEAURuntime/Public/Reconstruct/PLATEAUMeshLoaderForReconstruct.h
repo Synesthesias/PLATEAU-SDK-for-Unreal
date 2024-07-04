@@ -11,11 +11,18 @@ public:
     FPLATEAUMeshLoaderForReconstruct();
     FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest);
 
+    /**
+     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
+     */
+    static TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
         plateau::polygonMesh::MeshGranularity Granularity,
-        TMap<FString, FPLATEAUCityObject> cityObjMap,
+        TMap<FString, FPLATEAUCityObject> CityObj,
         AActor& InActor);
 
 protected:
