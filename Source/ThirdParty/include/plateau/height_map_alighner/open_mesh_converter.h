@@ -4,13 +4,14 @@
 #include <OpenMesh/Core/Mesh/Traits.hh>
 #include <plateau/polygon_mesh/mesh.h>
 #include "longest_edge_divider_plateau.h"
+#include <libplateau_api.h>
 
 namespace plateau::heightMapAligner {
 
     typedef OpenMesh::TriMesh_ArrayKernelT<> MeshType;
 
     /// plateauのメッシュとOpenMeshのメッシュを相互変換します。
-    class OpenMeshConverter {
+    class LIBPLATEAU_EXPORT OpenMeshConverter {
     public:
         OpenMeshConverter(float max_edge_length) : max_edge_length(max_edge_length) {}
         MeshType toOpenMesh(const plateau::polygonMesh::Mesh* mesh);
