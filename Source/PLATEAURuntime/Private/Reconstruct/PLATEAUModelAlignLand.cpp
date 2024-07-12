@@ -30,6 +30,28 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::FilterLod3RoadComponent
     return FilterdList;
 }
 
+TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::GetTargetCityObjectsForAlignLand() {
+    TSet<USceneComponent*> AlignComponents;
+    for (const auto Pkg : IncludePacakges) {
+        auto Comps = CityModelActor->GetComponentsByPackage(Pkg);
+        for (const auto Comp : Comps) {
+            if (Comp->IsA<USceneComponent>())
+                AlignComponents.Add((USceneComponent*)Comp);
+        }
+    }
+    return GetUPLATEAUCityObjectGroupsFromSceneComponents(AlignComponents.Array());
+}
+
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelAlignLand::CreateModelFromTargets(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+    FPLATEAUMeshExportOptions ExtOptions;
+    ExtOptions.bExportHiddenObjects = false;
+    ExtOptions.bExportTexture = true;
+    ExtOptions.TransformType = EMeshTransformType::Local;
+    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+    FPLATEAUMeshExporter MeshExporter;
+    return MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+}
+
 plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, 
     const TVec3d Min, const TVec3d Max, 
     const FString NodeName, FPLATEAULandscapeParam Param) {
@@ -41,45 +63,14 @@ plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignDat
     return frame;
 }
 
-TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, FPLATEAULandscapeParam Param) {
+TArray<USceneComponent*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, FPLATEAULandscapeParam Param) {
 
     plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
 
     for (const auto& Frame : Frames) {
         heightmapAligner.addHeightmapFrame(Frame);
     }
-
-    TSet<USceneComponent*> AlignComponents;
-    for (const auto Pkg : IncludePacakges) {
-        auto Comps = CityModelActor->GetComponentsByPackage(Pkg);
-        for (const auto Comp : Comps) {
-            if (Comp->IsA<USceneComponent>())
-                AlignComponents.Add((USceneComponent*)Comp);
-        }
-    }
-
-    auto TargetCityObjects = GetUPLATEAUCityObjectGroupsFromSceneComponents(AlignComponents.Array());
-
-    // LOD3の道路は、道路の高さの正確性を尊重するため、土地のほうを道路に合わせます。
-    /*   
-    TArray<UPLATEAUCityObjectGroup*> InvertedTargetCityObjects;
-    if (Param.InvertRoadLod3) {
-        InvertedTargetCityObjects = FilterLod3RoadComponents(CityModelActor, TargetCityObjects);
-        for (auto Comp : TargetCityObjects) {
-            if (InvertedTargetCityObjects.Contains(Comp)) {
-                TargetCityObjects.Remove(Comp);
-            }
-        }
-    }
-    */
-
-    FPLATEAUMeshExportOptions ExtOptions;
-    ExtOptions.bExportHiddenObjects = false;
-    ExtOptions.bExportTexture = true;
-    ExtOptions.TransformType = EMeshTransformType::Local;
-    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU; 
-    FPLATEAUMeshExporter MeshExporter;
-    std::shared_ptr<plateau::polygonMesh::Model> Model = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(TargetCityObjects);
 
     // 高さ合わせをします。
     heightmapAligner.align(*Model, MaxEdgeLength);
@@ -91,17 +82,32 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::SetAlignData(const TArr
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(Model->getRootNodeAt(i), ComponentsMap, *CityModelActor);
     }
+    return MeshLoader.GetLastCreatedComponents();
+}
 
-    // LOD3道路の処理
-    /*
-    if (InvertedTargetCityObjects.Num() > 0) {
-        std::shared_ptr<plateau::polygonMesh::Model> InvModel = MeshExporter.CreateModelFromComponents(CityModelActor, InvertedTargetCityObjects, ExtOptions);
-        heightmapAligner.alignInvert(*InvModel, AlphaExpandWidthCartesian, AlphaAveragingWidthCartesian, InvertedHeightOffset, SkipThresholdOfMapLandDistance);
+void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreationResult>& Results, TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, FPLATEAULandscapeParam Param) {
+    for (auto Result : Results) {
 
-        // TODO: Landscapeのハイトマップを再生成(別枠で処理）
-    }    
-    TargetCityObjects.Append(InvertedTargetCityObjects);
-    */
+        plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
+        auto Frame = CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
+        heightmapAligner.addHeightmapFrame(Frame);
 
-    return TargetCityObjects;
+        TArray<UPLATEAUCityObjectGroup*> InvertedTargetCityObjects;
+        InvertedTargetCityObjects = FilterLod3RoadComponents(CityModelActor, TargetCityObjects);
+        // LOD3の道路は、TargetCityObjectsから除外
+        for (auto Comp : TargetCityObjects) {
+            if (InvertedTargetCityObjects.Contains(Comp)) {
+                TargetCityObjects.Remove(Comp);
+            }
+        }
+
+        if (InvertedTargetCityObjects.Num() > 0) {
+            std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(InvertedTargetCityObjects);
+            heightmapAligner.alignInvert(*Model, AlphaExpandWidthCartesian, AlphaAveragingWidthCartesian, InvertedHeightOffset, SkipThresholdOfMapLandDistance);
+        }
+        auto HMFrame = heightmapAligner.getHeightMapFrameAt(0);
+        Result.Data = MakeShared<std::vector<uint16_t>>(HMFrame.heightmap);
+        Result.Min = TVec3d(HMFrame.min_x, HMFrame.min_y, HMFrame.min_height);
+        Result.Max = TVec3d(HMFrame.max_x, HMFrame.max_y, HMFrame.max_height);
+    }
 }

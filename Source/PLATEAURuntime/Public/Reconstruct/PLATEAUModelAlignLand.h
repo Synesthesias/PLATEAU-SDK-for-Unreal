@@ -38,9 +38,17 @@ public:
     FPLATEAUModelAlignLand();
     FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor);
 
+    /**
+     * @brief 高さ合わせに対応したコンポーネントをアクターから取得
+     */
+    TArray<UPLATEAUCityObjectGroup*> GetTargetCityObjectsForAlignLand();
+
+    std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromTargets(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+
     plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
 
-    TArray<UPLATEAUCityObjectGroup*> SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, FPLATEAULandscapeParam Param);
+    TArray<USceneComponent*> SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, FPLATEAULandscapeParam Param);
+    void UpdateHeightMapForLod3Road(TArray<HeightmapCreationResult>& Results, TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, FPLATEAULandscapeParam Param);
 
 protected:
 
