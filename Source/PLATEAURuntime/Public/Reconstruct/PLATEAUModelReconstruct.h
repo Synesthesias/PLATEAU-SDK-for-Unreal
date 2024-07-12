@@ -41,13 +41,6 @@ public:
 
 protected:
     
-    /**
-     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
-     */
-    TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
-
     APLATEAUInstancedCityModel* CityModelActor;
     plateau::polygonMesh::MeshGranularity MeshGranularity;
     bool bDivideGrid;

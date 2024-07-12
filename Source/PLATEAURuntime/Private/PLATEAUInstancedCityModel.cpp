@@ -16,6 +16,7 @@
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <Reconstruct/PLATEAUModelLandscape.h>
 #include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include <Reconstruct/PLATEAUModelAlignLand.h>
 #include "Tasks/Pipe.h"
 
 using namespace UE::Tasks;
@@ -106,6 +107,15 @@ int APLATEAUInstancedCityModel::ParseLodComponent(const USceneComponent* const I
     FDefaultValueHelper::ParseInt(LodString, Lod);
 
     return Lod;
+}
+
+void APLATEAUInstancedCityModel::DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy) {
+    for (auto Comp : Components) {
+        if (bDestroy)
+            Comp->DestroyComponent();
+        else
+            Comp->SetVisibility(false);
+    }
 }
 
 // Sets default values
@@ -565,12 +575,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
         std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
         FFunctionGraphTask::CreateAndDispatchWhenReady([&]() {
             //コンポーネント削除
-            for (auto comp : TargetCityObjects) {
-                if (bDestroyOriginal)
-                    comp->DestroyComponent();
-                else
-                    comp->SetVisibility(false);
-            }
+            DestroyOrHideComponents(TargetCityObjects, bDestroyOriginal);
             }, TStatId(), NULL, ENamedThreads::GameThread)
             ->Wait();
 
@@ -580,12 +585,11 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
     return ConvertTask;
 }
 
-
 //Landscape
-UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {
+UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
 
     UE_LOG(LogTemp, Log, TEXT("CreateLandscape: %d %s"), TargetComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
-    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [this, TargetComponents, bDestroyOriginal, Param] {
+    FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [&, TargetComponents, Param, bDestroyOriginal] {
 
         FPLATEAUModelLandscape Landscape(this);
         const auto& TargetCityObjects = Landscape.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
@@ -597,21 +601,66 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
-     
-        Landscape.CreateLandscape(smodel,Param);
 
-        FFunctionGraphTask::CreateAndDispatchWhenReady([&,TargetCityObjects, bDestroyOriginal]() {
+        const auto Results = Landscape.CreateHeightMap(smodel, Param);
 
-            //コンポーネント削除
-            if (bDestroyOriginal) {
-                for (auto comp : TargetCityObjects) {
-                    comp->DestroyComponent();
-                }
+        // 高さを地形に揃える
+        if (Param.AlignLand) {
+            auto AlignLandTask = AlignLand(Results, Param, bDestroyOriginal);
+            AddNested(AlignLandTask);
+            AlignLandTask.Wait();
+            const auto& AlignedComponents = AlignLandTask.GetResult();
+            FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
+                // Align コンポーネント削除
+                DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
+                }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
+        }
+
+        //TODO:  // LOD3道路の場合、HeightMap書き換え
+
+        for (const auto Result : Results) {
+            //Landscape生成
+            if (Param.CreateLandscape) {
+                TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
+                //LandScape  
+                FFunctionGraphTask::CreateAndDispatchWhenReady(
+                    [&, HeightData, Result, Param] {
+                        Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
+                        Param.ComponentCountX, Param.ComponentCountY,
+                        Param.TextureWidth, Param.TextureHeight,
+                        Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
+                    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
             }
+        }
+
+        FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects, bDestroyOriginal, Results]() {
+
+            // Landscape コンポーネント削除
+            if (Param.CreateLandscape)
+                DestroyOrHideComponents(TargetCityObjects, bDestroyOriginal);
 
             //終了イベント通知
-            OnLandscapeCreationFinished.Broadcast();
-            }, TStatId(), NULL, ENamedThreads::GameThread);
-        });
+            EPLATEAULandscapeCreationResult Res = Results.Num() > 0 ? EPLATEAULandscapeCreationResult::Success : EPLATEAULandscapeCreationResult::Fail;
+            OnLandscapeCreationFinished.Broadcast(Res);
+        }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
+
+    });
     return CreateLandscapeTask;
 }
+
+UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> APLATEAUInstancedCityModel::AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
+
+    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLandTask = Launch(TEXT("AlignLandTask"), [&, this, Results, Param, bDestroyOriginal] {
+        FPLATEAUModelAlignLand AlignLand(this);
+        TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
+        for (const auto Result : Results) {
+            Frames.Add(AlignLand.CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
+        }
+
+        const auto TargetCityObjects = AlignLand.SetAlignData(Frames, Param);
+        return TargetCityObjects;
+
+        });
+    return AlignLandTask;
+}
+

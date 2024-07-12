@@ -12,7 +12,7 @@ public:
     FPLATEAUMeshLoaderForClassification(const TMap<int, UMaterialInterface*> Materials, const bool InbAutomationTest);
 
 protected:
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) override;
+    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
 private:
 
     //Material分け時のマテリアルリスト

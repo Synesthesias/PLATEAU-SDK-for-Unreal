@@ -37,8 +37,15 @@ public:
         FString ID;
 };
 
+UENUM(BlueprintType)
+enum class EPLATEAULandscapeCreationResult : uint8 {
+    Success = 0,
+    Fail = 1
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClassifyFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLandscapeCreationFinishedDelegate, EPLATEAULandscapeCreationResult, Result);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -72,7 +79,7 @@ public:
      * @brief ランドスケープ生成処理終了イベント
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
-    FOnClassifyFinishedDelegate OnLandscapeCreationFinished;
+    FOnLandscapeCreationFinishedDelegate OnLandscapeCreationFinished;
 
     /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
@@ -85,6 +92,8 @@ public:
      * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
      */
     static int ParseLodComponent(const USceneComponent* InLodComponent);
+
+    static void DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy );
 
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
@@ -182,7 +191,9 @@ public:
      * @brief 選択されたComponentからLandscapeを生成します
      * @param
      */
-	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param);
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+
+    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。

@@ -11,45 +11,8 @@ FPLATEAUModelReconstruct::FPLATEAUModelReconstruct() {}
 
 FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const plateau::polygonMesh::MeshGranularity Granularity) {
     CityModelActor = Actor;
-    //MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
     MeshGranularity = Granularity;
     bDivideGrid = false;
-}
-
-/**
-* @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-* @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-* @return Key: GmlID, Value: UPLATEAUCityObject の Map
-*/
-TMap<FString, FPLATEAUCityObject> FPLATEAUModelReconstruct::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
-    TMap<FString, FPLATEAUCityObject> cityObjMap;
-    for (auto comp : TargetCityObjectGroups) {
-
-        if (comp->SerializedCityObjects.IsEmpty())
-            continue;
-
-        for (auto cityObj : comp->GetAllRootCityObjects()) {
-            if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
-                // 親を探す
-                TArray<USceneComponent*> Parents;
-                comp->GetParentComponents(Parents);
-                for (const auto& Parent : Parents) {
-                    if (Parent->GetName().Contains(comp->OutsideParent)) {
-                        for (auto pObj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
-                            cityObjMap.Add(pObj.GmlID, pObj);
-                        }
-                        break;
-                    }
-                }
-            }
-
-            cityObjMap.Add(cityObj.GmlID, cityObj);
-            for (auto child : cityObj.Children) {
-                cityObjMap.Add(child.GmlID, child);
-            }
-        }
-    }
-    return cityObjMap;
 }
 
 /**
@@ -97,7 +60,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     GranularityConverter Converter;
 
     //属性情報を覚えておきます。
-    CityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
+    CityObjMap = FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(TargetCityObjects);
 
     check(CityModelActor != nullptr);
 
