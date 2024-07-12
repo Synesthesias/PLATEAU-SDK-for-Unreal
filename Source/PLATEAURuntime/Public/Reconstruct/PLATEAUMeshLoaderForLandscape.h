@@ -44,7 +44,11 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         ComponentCountX(126),
         ComponentCountY(126),
         Offset(0,0),
+        CreateLandscape(true),
+        ApplyBlurFilter(true),
         FillEdges(true),
+        AlignLand(true),
+        InvertRoadLod3(true),
         HeightmapImageOutput(EPLATEAULandscapeHeightmapImageOutput::None){}
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
@@ -62,10 +66,31 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         FVector2D Offset;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool CreateLandscape;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool ApplyBlurFilter;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         bool FillEdges;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool AlignLand;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool InvertRoadLod3;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
+
+
+struct  HeightmapCreationResult {
+    FString NodeName;
+    TSharedPtr<std::vector<uint16_t>> Data;
+    TVec3d Min;
+    TVec3d Max;
+    TVec2f MinUV;
+    TVec2f MaxUV;
+    FString TexturePath;
+};
+
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
 
@@ -73,22 +98,19 @@ public:
     FPLATEAUMeshLoaderForLandscape();
     FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest);
 
-    void CreateHeightMap(
+    TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
-
-    void CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const int32 ComponentCountX, const int32 ComponentCountY, const int32 SizeX, const int32 SizeY,
-        const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName);
 
 protected:
 
     void LoadNodeRecursiveForHeightMap(
         const plateau::polygonMesh::Node& InNode,
-        AActor& InActor, FPLATEAULandscapeParam Param);
+        AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
     void LoadNodeForHeightMap(
         const plateau::polygonMesh::Node& Node,
-        AActor& Actor, FPLATEAULandscapeParam Param);
-    void CreateHeightMapFromMesh(
+        AActor& Actor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
+    HeightmapCreationResult CreateHeightMapFromMesh(
         const plateau::polygonMesh::Mesh& InMesh,
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);

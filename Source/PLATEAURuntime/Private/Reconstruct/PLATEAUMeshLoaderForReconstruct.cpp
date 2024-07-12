@@ -12,14 +12,50 @@ FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool In
     bAutomationTest = InbAutomationTest;
 }
 
+/**
+* @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+* @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+* @return Key: GmlID, Value: UPLATEAUCityObject の Map
+*/
+TMap<FString, FPLATEAUCityObject> FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
+    TMap<FString, FPLATEAUCityObject> OutCityObjMap;
+    for (auto Comp : TargetCityObjectGroups) {
+
+        if (Comp->SerializedCityObjects.IsEmpty())
+            continue;
+
+        for (auto CityObj : Comp->GetAllRootCityObjects()) {
+            if (!Comp->OutsideParent.IsEmpty() && !OutCityObjMap.Contains(Comp->OutsideParent)) {
+                // 親を探す
+                TArray<USceneComponent*> Parents;
+                Comp->GetParentComponents(Parents);
+                for (const auto& Parent : Parents) {
+                    if (Parent->GetName().Contains(Comp->OutsideParent)) {
+                        for (auto Pobj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
+                            OutCityObjMap.Add(Pobj.GmlID, Pobj);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            OutCityObjMap.Add(CityObj.GmlID, CityObj);
+            for (auto Child : CityObj.Children) {
+                OutCityObjMap.Add(Child.GmlID, Child);
+            }
+        }
+    }
+    return OutCityObjMap;
+}
+
 void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
     plateau::polygonMesh::MeshGranularity Granularity,
-    TMap<FString, FPLATEAUCityObject> cityObjMap,
+    TMap<FString, FPLATEAUCityObject> CityObj,
     AActor& InActor) {
 
-    CityObjMap = cityObjMap;
+    CityObjMap = CityObj;
     LastCreatedComponents.Empty();
 
     ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);
@@ -105,7 +141,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
         Node.getName());
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     FString TexturePath = SubMeshValue.TexturePath;
     //分割・結合時のFallback Material取得
@@ -120,7 +156,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMes
             return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
         }
     }
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
