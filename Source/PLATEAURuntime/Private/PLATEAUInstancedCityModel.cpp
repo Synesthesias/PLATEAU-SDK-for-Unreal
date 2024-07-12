@@ -608,8 +608,6 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         if (Param.AlignLand || Param.InvertRoadLod3) {
             const auto& AlignedComponents = AlignLand(Results, Param, bDestroyOriginal);
             FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
-
-                UE_LOG(LogTemp, Error, TEXT("TargetCityObjects3: %d %s"), AlignedComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
                 // Align コンポーネント削除
                 DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
                 }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
@@ -650,6 +648,15 @@ TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<He
     FPLATEAUModelAlignLand AlignLand(this);
     TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = AlignLand.GetTargetCityObjectsForAlignLand();
 
+    UE_LOG(LogTemp, Error, TEXT("TargetCityObjects1: %d"), TargetCityObjects.Num());
+
+    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え(TargetCityObjectsからLod3Road除外)
+    if (Param.InvertRoadLod3) {
+        AlignLand.UpdateHeightMapForLod3Road(Results, TargetCityObjects, Param);
+    }
+
+    UE_LOG(LogTemp, Error, TEXT("TargetCityObjects2: %d"), TargetCityObjects.Num());
+
     if (Param.AlignLand) {
         TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
         for (const auto Result : Results) {
@@ -658,9 +665,5 @@ TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<He
         AlignLand.SetAlignData(Frames, TargetCityObjects, Param );
     }
 
-    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え(TargetCityObjectsからLod3Road除外)
-    if (Param.InvertRoadLod3) {
-        AlignLand.UpdateHeightMapForLod3Road(Results, TargetCityObjects, Param);
-    }
     return TargetCityObjects;
 }
