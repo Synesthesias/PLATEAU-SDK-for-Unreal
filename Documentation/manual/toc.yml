@@ -6,12 +6,10 @@
     href: Installation.md
   - name: 3D都市モデルのインポート
     href: ImportCityModels.md
-  - name: 3D都市モデルのフィルタリング
-    href: FilterCityModels.md
-  - name: 3D都市モデルの結合・分離
-    href: ReconstructModel.md
-  - name: 3D都市モデルのマテリアル分け
-    href: ClassifyModel.md    
+  - name: 3D都市モデルの修正
+    href: ModelAdjust.md   
+  - name: 3D都市モデルの地形変換
+    href: Landscape.md   
   - name: 3D都市モデルのエクスポート
     href: ExportCityModels.md
   - name: 属性情報へのアクセス
