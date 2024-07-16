@@ -86,6 +86,14 @@ TArray<USceneComponent*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plate
     return MeshLoader.GetLastCreatedComponents();
 }
 
+TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<HeightmapCreationResult> Results, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, FPLATEAULandscapeParam Param) {
+    TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
+    for (const auto Result : Results) {
+        Frames.Add(CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
+    }
+    return SetAlignData(Frames, TargetCityObjects, Param);
+}
+
 void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreationResult>& Results, TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, FPLATEAULandscapeParam Param) {
     
     TArray<UPLATEAUCityObjectGroup*> InvertedTargetCityObjects;
@@ -94,13 +102,16 @@ void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreation
         return;
 
     // LOD3の道路は、TargetCityObjectsから除外
-    for (auto Comp : TargetCityObjects) {
-        if (InvertedTargetCityObjects.Contains(Comp)) {
-            TargetCityObjects.Remove(Comp);
-        }
+    TArray<UPLATEAUCityObjectGroup*> NewTargetCityObjects;
+    for (auto& Comp : TargetCityObjects) {
+        if (!InvertedTargetCityObjects.Contains(Comp)) 
+            NewTargetCityObjects.Add(Comp);
     }
+    TargetCityObjects = NewTargetCityObjects;
+
     std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(InvertedTargetCityObjects);
     // ResultsのHeightmap書き換え
+    TArray<HeightmapCreationResult> NewResults;
     for (auto& Result : Results) {
             plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
             auto Frame = CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
@@ -111,5 +122,7 @@ void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreation
             Result.Data = MakeShared<std::vector<uint16_t>>(HMFrame.heightmap);
             Result.Min = TVec3d(HMFrame.min_x, HMFrame.min_y, HMFrame.min_height);
             Result.Max = TVec3d(HMFrame.max_x, HMFrame.max_y, HMFrame.max_height);
+            NewResults.Add(Result);
     }
+    Results = NewResults;
 }

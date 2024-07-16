@@ -648,17 +648,9 @@ TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<He
     FPLATEAUModelAlignLand AlignLand(this);
     TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = AlignLand.GetTargetCityObjectsForAlignLand();
     //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え(TargetCityObjectsからLod3Road除外)
-    if (Param.InvertRoadLod3) {
+    if (Param.InvertRoadLod3) 
         AlignLand.UpdateHeightMapForLod3Road(Results, TargetCityObjects, Param);
-    }
-
-    if (Param.AlignLand) {
-        TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
-        for (const auto Result : Results) {
-            Frames.Add(AlignLand.CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
-        }
-        AlignLand.SetAlignData(Frames, TargetCityObjects, Param );
-    }
-
+    if (Param.AlignLand) 
+        AlignLand.Align(Results, TargetCityObjects, Param);
     return TargetCityObjects;
 }
