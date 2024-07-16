@@ -18,9 +18,6 @@ public:
     const double InvertedHeightOffset = -20.0; // 逆高さ合わせで、土地を対象と比べてどの高さに合わせるか（直交座標系）
     const float SkipThresholdOfMapLandDistance = 80.f; // 逆高さ合わせで、土地との距離がこの値以上の箇所は高さ合わせしない（直交座標系）
 
-    //const double InvertedHeightOffset = -200.0; // 逆高さ合わせで、土地を対象と比べてどの高さに合わせるか（直交座標系）
-    //const float SkipThresholdOfMapLandDistance = 800.f; // 逆高さ合わせで、土地との距離がこの値以上の箇所は高さ合わせしない（直交座標系）
-
     // 地形にAlignするパッケージリスト
     const TSet<EPLATEAUCityModelPackage> IncludePacakges{ EPLATEAUCityModelPackage::Area,
     EPLATEAUCityModelPackage::Road,

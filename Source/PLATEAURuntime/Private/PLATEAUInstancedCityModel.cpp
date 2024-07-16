@@ -647,15 +647,10 @@ TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<He
 
     FPLATEAUModelAlignLand AlignLand(this);
     TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = AlignLand.GetTargetCityObjectsForAlignLand();
-
-    UE_LOG(LogTemp, Error, TEXT("TargetCityObjects1: %d"), TargetCityObjects.Num());
-
     //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え(TargetCityObjectsからLod3Road除外)
     if (Param.InvertRoadLod3) {
         AlignLand.UpdateHeightMapForLod3Road(Results, TargetCityObjects, Param);
     }
-
-    UE_LOG(LogTemp, Error, TEXT("TargetCityObjects2: %d"), TargetCityObjects.Num());
 
     if (Param.AlignLand) {
         TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
