@@ -7,6 +7,11 @@
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
 
+#include "MeshDescription.h"
+#include "StaticMeshOperations.h"
+#include "heightmap_mesh_generator.h"
+
+
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
@@ -86,6 +91,111 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     return Result;
 }
 
+void FPLATEAUMeshLoaderForLandscape::CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, uint16_t* HeightRawData, const FString NodeName) {
+    double ActualHeight = abs(Max.z - Min.z);
+    float HeightScale = ActualHeight;
+    plateau::heightMapMeshGenerator::HeightmapMeshGenerator gen;
+    auto mesh = gen.generateMeshFromHeightmap(SizeX, SizeY, HeightScale, HeightRawData,
+        plateau::geometry::CoordinateSystem::ESU, Min, Max, MinUV, MaxUV);
+
+    UE_LOG(LogTemp, Error, TEXT("Created Mesh : %d %d"), mesh.getVertices().size(), mesh.getIndices().size());
+
+    auto ParentComponent = Actor.GetRootComponent();
+    const auto BaseComponents = FindComponentsByName(&Actor, NodeName);
+    if (BaseComponents.Num() > 0) {
+        const auto BaseComponent = BaseComponents[0];
+        if (BaseComponent->IsA<UStaticMeshComponent>()) {
+
+            const auto BaseStaticMeshComponent = (UStaticMeshComponent*)BaseComponent;
+            if (BaseStaticMeshComponent->GetMaterial(0)->IsA<UMaterialInstanceDynamic>())
+                ReplaceMaterial = (UMaterialInstanceDynamic*)BaseStaticMeshComponent->GetMaterial(0);
+        }
+
+        TArray<USceneComponent*> Parents;
+        BaseComponent->GetParentComponents(Parents);
+        if (Parents.Num() > 0)
+            ParentComponent = Parents[0];
+    }
+
+    plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
+    FLoadInputData LoadInputData
+    {
+        MeshExtractOptions,
+        std::vector<plateau::geometry::Extent>{},
+        FString(),
+        false,
+        nullptr
+    };
+
+    FString ComponentName = FString::Format(*FString(TEXT("Mesh_{0}")), { NodeName });
+    UStaticMeshComponent* Component = CreateStaticMeshComponent(Actor, *ParentComponent, mesh, LoadInputData, nullptr, TCHAR_TO_UTF8(*ComponentName));
+
+    Component->Mobility = EComponentMobility::Movable;
+    Actor.AddInstanceComponent(Component);
+    Component->RegisterComponent();
+    Component->AttachToComponent(ParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+
+    // メッシュをワールド内にビルド
+    const auto CopiedStaticMeshes = StaticMeshes;
+
+    FFunctionGraphTask::CreateAndDispatchWhenReady(
+        [CopiedStaticMeshes]() {
+            UStaticMesh::BatchBuild(CopiedStaticMeshes, true, [](UStaticMesh* mesh) {
+                return true;
+                });
+        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+        StaticMeshes.Reset();
+}
+
 bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
     return false;
+}
+
+
+bool FPLATEAUMeshLoaderForLandscape::InvertMeshNormal() {
+    return false;
+}
+
+bool FPLATEAUMeshLoaderForLandscape::MergeTriangles() {
+    return true;
+}
+
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForLandscape::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
+
+    if (ReplaceMaterial)
+        return ReplaceMaterial;
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
+}
+
+TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(AActor* ModelActor, FString Name) {
+
+    UE_LOG(LogTemp, Warning, TEXT("FindComponentsByName: %s"), *Name);
+
+    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
+    TArray<USceneComponent*> Result;
+    const auto Components = ModelActor->GetComponents();
+    for (auto Component : Components) {
+        if (Component->IsA<USceneComponent>()) {
+            FRegexMatcher matcher(pattern, Component->GetName());
+            if (matcher.FindNext()) {
+                Result.Add((USceneComponent*)Component);
+                UE_LOG(LogTemp, Warning, TEXT("Found Component Name: %s"), *Component->GetName());
+            }
+        }
+    }
+    return Result;
+}
+
+void FPLATEAUMeshLoaderForLandscape::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+
+    FStaticMeshOperations::DetermineEdgeHardnessesFromVertexInstanceNormals(MeshDescription);
+
+    TEdgeAttributesRef<bool> EdgeHardness =
+        MeshDescription.EdgeAttributes().GetAttributesRef<bool>(MeshAttribute::Edge::IsHard);
+    for (FEdgeID EdgeID : MeshDescription.Edges().GetElementIDs()) {
+        EdgeHardness.Set(EdgeID, 0, false);
+    }
+
+    FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
+    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
 }

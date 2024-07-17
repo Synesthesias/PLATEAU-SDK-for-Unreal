@@ -126,7 +126,7 @@ namespace {
     }
 
     bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal) {
+        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -202,7 +202,7 @@ namespace {
                 auto VertexID = InIndices[InIndexIndex];
 
                 // 頂点が使用済みの場合は複製
-                if (UsedVertexIDs.Contains(VertexID)) {
+                if (UsedVertexIDs.Contains(VertexID) && !MergeTriangles) {
                     const auto NewVertexID = OutMeshDescription.CreateVertex();
                     VertexPositions[NewVertexID] = VertexPositions[VertexID];
                     VertexID = NewVertexID;
@@ -218,6 +218,15 @@ namespace {
                 const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
                 const auto UV4 = FVector2f(InUV4.x, InUV4.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
+
+                //Debug
+                if (InIndices.size() < InIndexIndex) {
+                    UE_LOG(LogTemp, Error, TEXT("Indice size : %d %d  "), InIndices.size(), InIndexIndex);
+                }
+                else if (InMesh.getUV1().size() < InIndices[InIndexIndex]) {
+                    UE_LOG(LogTemp, Error, TEXT("UV1 size : v:%d i:%d "), InMesh.getUV1().size(), InIndices[InIndexIndex]);
+                }
+
 
                 UsedVertexIDs.Add(VertexID);
             }
@@ -376,7 +385,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal());
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal(), MergeTriangles());
+    ModifyMeshDescription(*MeshDescription);
 
 #if WITH_EDITOR
     FFunctionGraphTask::CreateAndDispatchWhenReady(
@@ -625,6 +635,9 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
         Node.getName());
 }
 
+void FPLATEAUMeshLoader::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+}
+
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
 }
@@ -635,6 +648,10 @@ bool FPLATEAUMeshLoader::UseCachedMaterial() {
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {
     return true;
+}
+
+bool FPLATEAUMeshLoader::MergeTriangles() {
+    return false;
 }
 
 bool FPLATEAUMeshLoader::OverwriteTexture() {
