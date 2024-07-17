@@ -6,9 +6,8 @@
 #include <PLATEAUExportSettings.h>
 #include <plateau/height_map_generator/heightmap_generator.h>
 
-FPLATEAUModelAlignLand::FPLATEAUModelAlignLand() {}
-
-FPLATEAUModelAlignLand::FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor) {
+FPLATEAUModelAlignLand::FPLATEAUModelAlignLand():heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU) {}
+FPLATEAUModelAlignLand::FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor) :heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU) {
     CityModelActor = Actor;
 }
 
@@ -60,17 +59,20 @@ plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignDat
     plateau::heightMapAligner::HeightMapFrame frame(*HeightData.Get(),
         (int)Param.TextureWidth, (int)Param.TextureHeight,
         (float)Min.x, (float)Max.x, (float)Min.y, (float)Max.y, (float)Min.z, (float)Max.z, plateau::geometry::CoordinateSystem::ESU);
-
     return frame;
 }
 
-TArray<USceneComponent*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plateau::heightMapAligner::HeightMapFrame> Frames, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, FPLATEAULandscapeParam Param) {
-
-    plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
-
-    for (const auto& Frame : Frames) {
+void FPLATEAUModelAlignLand::SetResults(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param) {
+    HeightmapCreationResults = Results;
+    LandscapeParam = Param;
+    for (auto& Result : Results) {
+        auto Frame = CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
         heightmapAligner.addHeightmapFrame(Frame);
     }
+}
+
+TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+
     std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(TargetCityObjects);
 
     // 高さ合わせをします。
@@ -86,20 +88,12 @@ TArray<USceneComponent*> FPLATEAUModelAlignLand::SetAlignData(const TArray<plate
     return MeshLoader.GetLastCreatedComponents();
 }
 
-TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<HeightmapCreationResult> Results, TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, FPLATEAULandscapeParam Param) {
-    TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
-    for (const auto Result : Results) {
-        Frames.Add(CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
-    }
-    return SetAlignData(Frames, TargetCityObjects, Param);
-}
+TArray<HeightmapCreationResult> FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
 
-void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreationResult>& Results, TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, FPLATEAULandscapeParam Param) {
-    
     TArray<UPLATEAUCityObjectGroup*> InvertedTargetCityObjects;
     InvertedTargetCityObjects = FilterLod3RoadComponents(CityModelActor, TargetCityObjects);
     if (InvertedTargetCityObjects.Num() <= 0)
-        return;
+        return HeightmapCreationResults;
 
     // LOD3の道路は、TargetCityObjectsから除外
     TArray<UPLATEAUCityObjectGroup*> NewTargetCityObjects;
@@ -110,19 +104,26 @@ void FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<HeightmapCreation
     TargetCityObjects = NewTargetCityObjects;
 
     std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(InvertedTargetCityObjects);
-    // ResultsのHeightmap書き換え
+    heightmapAligner.alignInvert(*Model, AlphaExpandWidthCartesian, AlphaAveragingWidthCartesian, InvertedHeightOffset, SkipThresholdOfMapLandDistance);
     TArray<HeightmapCreationResult> NewResults;
-    for (auto& Result : Results) {
-            plateau::heightMapAligner::HeightMapAligner heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU);
-            auto Frame = CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param);
-            heightmapAligner.addHeightmapFrame(Frame);
 
-            heightmapAligner.alignInvert(*Model, AlphaExpandWidthCartesian, AlphaAveragingWidthCartesian, InvertedHeightOffset, SkipThresholdOfMapLandDistance);
-            auto HMFrame = heightmapAligner.getHeightMapFrameAt(0);
-            Result.Data = MakeShared<std::vector<uint16_t>>(HMFrame.heightmap);
-            Result.Min = TVec3d(HMFrame.min_x, HMFrame.min_y, HMFrame.min_height);
-            Result.Max = TVec3d(HMFrame.max_x, HMFrame.max_y, HMFrame.max_height);
-            NewResults.Add(Result);
+    check(heightmapAligner.heightmapCount() == HeightmapCreationResults.Num())
+
+    // ResultsのHeightmap書き換え(ResultをSetした順番でindex取得)
+    int32 index = 0;
+    for (auto& Result : HeightmapCreationResults) {   
+        HeightmapCreationResult NewResult = Result;
+        auto HMFrame = heightmapAligner.getHeightMapFrameAt(index++);
+        NewResult.Data = MakeShared<std::vector<uint16_t>>(HMFrame.heightmap);
+        NewResult.Min = TVec3d(HMFrame.min_x, HMFrame.min_y, HMFrame.min_height);
+        NewResult.Max = TVec3d(HMFrame.max_x, HMFrame.max_y, HMFrame.max_height);
+        NewResults.Add(NewResult);
+
+        // Heightmap Image Output 
+        FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(LandscapeParam.HeightmapImageOutput, 
+            "HM_ALN_" + NewResult.NodeName , 
+            LandscapeParam.TextureWidth, LandscapeParam.TextureHeight, NewResult.Data->data());
     }
-    Results = NewResults;
+    HeightmapCreationResults = NewResults;
+    return HeightmapCreationResults;
 }

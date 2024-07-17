@@ -98,6 +98,8 @@ public:
     FPLATEAUMeshLoaderForLandscape();
     FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest);
 
+    static void SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, size_t Width, size_t Height, uint16_t* Data);
+
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);

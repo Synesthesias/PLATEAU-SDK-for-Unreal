@@ -645,12 +645,13 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
 
 TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
 
-    FPLATEAUModelAlignLand AlignLand(this);
-    TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = AlignLand.GetTargetCityObjectsForAlignLand();
-    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え(TargetCityObjectsからLod3Road除外)
+    FPLATEAUModelAlignLand ModelAlign(this);
+    ModelAlign.SetResults(Results, Param);
+    TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = ModelAlign.GetTargetCityObjectsForAlignLand();
+    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え&TargetCityObjectsからLod3Road除外
     if (Param.InvertRoadLod3) 
-        AlignLand.UpdateHeightMapForLod3Road(Results, TargetCityObjects, Param);
+        Results = ModelAlign.UpdateHeightMapForLod3Road(TargetCityObjects);
     if (Param.AlignLand) 
-        AlignLand.Align(Results, TargetCityObjects, Param);
+        ModelAlign.Align(TargetCityObjects);
     return TargetCityObjects;
 }
