@@ -13,7 +13,7 @@ FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAut
     bAutomationTest = InbAutomationTest;
 }
 
-void FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, size_t Width, size_t Height, uint16_t* Data ) {
+void FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, int32 Width, int32 Height, uint16_t* Data ) {
     // Heightmap Image Output 
     if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
         FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(), FileName, Width, Height });
@@ -72,18 +72,6 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     
     // Heightmap Image Output 
     SaveHeightmapImage(Param.HeightmapImageOutput, "HM_" + NodeName , Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-    /*
-    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
-    }
-    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::RAW || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
-    }
-    */
 
     //Texture
     FString TexturePath;

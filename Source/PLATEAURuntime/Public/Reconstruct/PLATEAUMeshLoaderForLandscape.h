@@ -98,7 +98,7 @@ public:
     FPLATEAUMeshLoaderForLandscape();
     FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest);
 
-    static void SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, size_t Width, size_t Height, uint16_t* Data);
+    static void SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, int32 Width, int32 Height, uint16_t* Data);
 
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
