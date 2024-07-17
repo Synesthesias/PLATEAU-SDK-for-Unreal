@@ -42,7 +42,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::GetTargetCityObjectsFor
     return GetUPLATEAUCityObjectGroupsFromSceneComponents(AlignComponents.Array());
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelAlignLand::CreateModelFromTargets(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelAlignLand::CreateModelFromTargets(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
     FPLATEAUMeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
     ExtOptions.bExportTexture = true;
@@ -54,7 +54,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelAlignLand::CreateModel
 
 plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, 
     const TVec3d Min, const TVec3d Max, 
-    const FString NodeName, FPLATEAULandscapeParam Param) {
+    const FString NodeName, const FPLATEAULandscapeParam Param) {
 
     plateau::heightMapAligner::HeightMapFrame frame(*HeightData.Get(),
         (int)Param.TextureWidth, (int)Param.TextureHeight,
@@ -62,7 +62,7 @@ plateau::heightMapAligner::HeightMapFrame FPLATEAUModelAlignLand::CreateAlignDat
     return frame;
 }
 
-void FPLATEAUModelAlignLand::SetResults(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param) {
+void FPLATEAUModelAlignLand::SetResults(const TArray<HeightmapCreationResult> Results, const FPLATEAULandscapeParam Param) {
     HeightmapCreationResults = Results;
     LandscapeParam = Param;
     for (auto& Result : Results) {
@@ -71,7 +71,7 @@ void FPLATEAUModelAlignLand::SetResults(const TArray<HeightmapCreationResult> Re
     }
 }
 
-TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     std::shared_ptr<plateau::polygonMesh::Model> Model = CreateModelFromTargets(TargetCityObjects);
 

@@ -43,13 +43,13 @@ public:
      */
     TArray<UPLATEAUCityObjectGroup*> GetTargetCityObjectsForAlignLand();
 
-    void SetResults(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param);
-    TArray<USceneComponent*> Align(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    void SetResults(const TArray<HeightmapCreationResult> Results, const FPLATEAULandscapeParam Param);
+    TArray<USceneComponent*> Align(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
     TArray<HeightmapCreationResult> UpdateHeightMapForLod3Road(TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects);
 
 protected:
     std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromTargets(TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
-    plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, FPLATEAULandscapeParam Param);
+    plateau::heightMapAligner::HeightMapFrame CreateAlignData(const TSharedPtr<std::vector<uint16_t>> HeightData, const TVec3d Min, const TVec3d Max, const FString NodeName, const FPLATEAULandscapeParam Param);
 
 private:
     plateau::heightMapAligner::HeightMapAligner heightmapAligner;
