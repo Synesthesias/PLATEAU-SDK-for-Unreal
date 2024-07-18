@@ -13,7 +13,7 @@
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
 #include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
-#include <PLATEAUSceneComponent.h>
+#include <Component/PLATEAUSceneComponent.h>
 
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"

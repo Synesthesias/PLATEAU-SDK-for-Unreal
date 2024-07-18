@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 #include "CityGML/PLATEAUAttributeValue.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 
 namespace {
     constexpr TCHAR EPLATEAUAttributeTypePath[] = TEXT("/Script/PLATEAURuntime.EPLATEAUAttributeType");

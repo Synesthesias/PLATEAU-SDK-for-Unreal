@@ -3,7 +3,7 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderCloneComponent.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent() {}

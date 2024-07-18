@@ -15,7 +15,7 @@
 #include <Reconstruct/PLATEAUModelClassificationByType.h>
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <Reconstruct/PLATEAUModelLandscape.h>
-#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h>
 #include <Reconstruct/PLATEAUModelAlignLand.h>
 #include "Tasks/Pipe.h"
 
@@ -618,7 +618,7 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
             if (Param.CreateLandscape) {
 
                 if (Param.ConvertToMesh) {
-                    FPLATEAUMeshLoaderForLandscape MeshLoader;
+                    FPLATEAUMeshLoaderForLandscapeMesh MeshLoader;
                     MeshLoader.CreateMeshFromHeightMap(*this, Param.TextureWidth, Param.TextureHeight, Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.Data->data(), Result.NodeName);
                 }
                 else {

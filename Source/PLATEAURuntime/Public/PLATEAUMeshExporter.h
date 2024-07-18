@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/fbx_writer.h"
 

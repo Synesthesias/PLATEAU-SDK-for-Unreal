@@ -1,7 +1,7 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
@@ -15,37 +15,13 @@
 
 
 
-FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh() {}
 
-FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
 }
 
-void FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, int32 Width, int32 Height, uint16_t* Data ) {
-    // Heightmap Image Output 
-    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(), FileName, Width, Height });
-        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Width, Height, Data);
-        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
-    }
-    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::RAW || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(), FileName, Width, Height });
-        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Width, Height, Data);
-        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
-    }
-}
-
-TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
-    AActor* ModelActor,
-    const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
-    TArray<HeightmapCreationResult> CreationResults;
-    for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        LoadNodeRecursiveForHeightMap(Model->getRootNodeAt(i), *ModelActor, Param, CreationResults);
-    }
-    return CreationResults;
-}
-
-void FPLATEAUMeshLoaderForLandscape::LoadNodeRecursiveForHeightMap(
+void FPLATEAUMeshLoaderForLandscapeMesh::LoadNodeRecursiveForHeightMap(
     const plateau::polygonMesh::Node& InNode,
     AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
     LoadNodeForHeightMap(InNode, InActor, Param, Results);
@@ -56,7 +32,7 @@ void FPLATEAUMeshLoaderForLandscape::LoadNodeRecursiveForHeightMap(
     }
 }
 
-void FPLATEAUMeshLoaderForLandscape::LoadNodeForHeightMap(
+void FPLATEAUMeshLoaderForLandscapeMesh::LoadNodeForHeightMap(
     const plateau::polygonMesh::Node& InNode,
     AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
     if (InNode.getMesh() == nullptr || InNode.getMesh()->getVertices().size() == 0) {
@@ -68,7 +44,7 @@ void FPLATEAUMeshLoaderForLandscape::LoadNodeForHeightMap(
     }
 }
 
-HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
+HeightmapCreationResult FPLATEAUMeshLoaderForLandscapeMesh::CreateHeightMapFromMesh(
     const plateau::polygonMesh::Mesh& InMesh, const FString NodeName, AActor& Actor, FPLATEAULandscapeParam Param) {
 
     plateau::heightMapGenerator::HeightmapGenerator generator;
@@ -93,8 +69,8 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     HeightmapCreationResult Result{ NodeName, sharedData ,ExtMin, ExtMax , UVMin, UVMax, TexturePath };
     return Result;
 }
-/*
-void FPLATEAUMeshLoaderForLandscape::CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, uint16_t* HeightRawData, const FString NodeName) {
+
+void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, uint16_t* HeightRawData, const FString NodeName) {
     double ActualHeight = abs(Max.z - Min.z);
     float HeightScale = ActualHeight;
     plateau::heightMapMeshGenerator::HeightmapMeshGenerator gen;
@@ -150,20 +126,20 @@ void FPLATEAUMeshLoaderForLandscape::CreateMeshFromHeightMap(AActor& Actor, cons
         StaticMeshes.Reset();
 }
 
-bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
+bool FPLATEAUMeshLoaderForLandscapeMesh::OverwriteTexture() {
     return false;
 }
 
 
-bool FPLATEAUMeshLoaderForLandscape::InvertMeshNormal() {
+bool FPLATEAUMeshLoaderForLandscapeMesh::InvertMeshNormal() {
     return false;
 }
 
-bool FPLATEAUMeshLoaderForLandscape::MergeTriangles() {
+bool FPLATEAUMeshLoaderForLandscapeMesh::MergeTriangles() {
     return true;
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoaderForLandscape::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
     const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
     const std::shared_ptr <const citygml::CityModel> CityModel) {
 
@@ -181,14 +157,14 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForLandscape::GetStaticMeshComponentForC
     return PLATEAUCityObjectGroup;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForLandscape::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForLandscapeMesh::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     if (ReplaceMaterial)
         return ReplaceMaterial;
     return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 }
 
-TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(AActor* ModelActor, FString Name) {
+TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscapeMesh::FindComponentsByName(AActor* ModelActor, FString Name) {
 
     UE_LOG(LogTemp, Warning, TEXT("FindComponentsByName: %s"), *Name);
 
@@ -211,7 +187,7 @@ TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(AA
     return Result;
 }
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscape::GetOriginalComponent(AActor& Actor, FString Name) {
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscapeMesh::GetOriginalComponent(AActor& Actor, FString Name) {
 
     UE_LOG(LogTemp, Warning, TEXT("GetOriginalComponent: %s"), *Name);
 
@@ -230,7 +206,7 @@ UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscape::GetOriginalComponent(AA
     return nullptr;
 }
 
-void FPLATEAUMeshLoaderForLandscape::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription& MeshDescription) {
 
     FStaticMeshOperations::DetermineEdgeHardnessesFromVertexInstanceNormals(MeshDescription);
 
@@ -243,4 +219,3 @@ void FPLATEAUMeshLoaderForLandscape::ModifyMeshDescription(FMeshDescription& Mes
     FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
     FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
 }
-*/

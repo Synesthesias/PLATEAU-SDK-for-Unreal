@@ -41,7 +41,6 @@ protected:
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 
     UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
-
     UPLATEAUCityObjectGroup* GetOriginalComponent(FString Name);
 
 private:

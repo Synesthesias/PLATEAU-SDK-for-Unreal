@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include <plateau/polygon_mesh/model.h>
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>

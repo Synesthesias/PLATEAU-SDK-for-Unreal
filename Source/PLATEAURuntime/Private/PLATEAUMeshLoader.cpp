@@ -9,12 +9,12 @@
 #include "StaticMeshResources.h"
 #include "MeshElementRemappings.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "PLATEAUStaticMeshComponent.h"
+#include "Component/PLATEAUStaticMeshComponent.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
