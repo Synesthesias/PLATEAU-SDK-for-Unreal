@@ -21,18 +21,6 @@ public:
         const FString NodeName);
 
 protected:
-
-    void LoadNodeRecursiveForHeightMap(
-        const plateau::polygonMesh::Node& InNode,
-        AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
-    void LoadNodeForHeightMap(
-        const plateau::polygonMesh::Node& Node,
-        AActor& Actor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results);
-    HeightmapCreationResult CreateHeightMapFromMesh(
-        const plateau::polygonMesh::Mesh& InMesh,
-        const FString NodeName,
-        AActor& Actor, FPLATEAULandscapeParam Param);
-
     UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
@@ -42,9 +30,6 @@ protected:
     bool InvertMeshNormal() override;
     bool MergeTriangles() override;
     void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
-
-    TArray<USceneComponent*> FindComponentsByName(AActor* ModelActor, FString Name);
-    UPLATEAUCityObjectGroup* GetOriginalComponent(AActor& Actor, FString Name);
 
 private:
     UMaterialInstanceDynamic* ReplaceMaterial;

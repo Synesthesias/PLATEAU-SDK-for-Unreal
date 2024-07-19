@@ -21,63 +21,15 @@ FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const boo
     bAutomationTest = InbAutomationTest;
 }
 
-void FPLATEAUMeshLoaderForLandscapeMesh::LoadNodeRecursiveForHeightMap(
-    const plateau::polygonMesh::Node& InNode,
-    AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
-    LoadNodeForHeightMap(InNode, InActor, Param, Results);
-    const size_t ChildNodeCount = InNode.getChildCount();
-    for (int i = 0; i < ChildNodeCount; i++) {
-        const auto& TargetNode = InNode.getChildAt(i);
-        LoadNodeRecursiveForHeightMap( TargetNode, InActor, Param, Results);
-    }
-}
-
-void FPLATEAUMeshLoaderForLandscapeMesh::LoadNodeForHeightMap(
-    const plateau::polygonMesh::Node& InNode,
-    AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
-    if (InNode.getMesh() == nullptr || InNode.getMesh()->getVertices().size() == 0) {
-        const FString DesiredName = FString(UTF8_TO_TCHAR(InNode.getName().c_str()));      
-    }
-    else {
-        auto Result = CreateHeightMapFromMesh(*InNode.getMesh(), FString(UTF8_TO_TCHAR(InNode.getName().c_str())), InActor, Param);
-        Results.Add(Result);
-    }
-}
-
-HeightmapCreationResult FPLATEAUMeshLoaderForLandscapeMesh::CreateHeightMapFromMesh(
-    const plateau::polygonMesh::Mesh& InMesh, const FString NodeName, AActor& Actor, FPLATEAULandscapeParam Param) {
-
-    plateau::heightMapGenerator::HeightmapGenerator generator;
-    TVec3d ExtMin, ExtMax;
-    TVec2f UVMin, UVMax;
-    TVec2d Offset(Param.Offset.X, Param.Offset.Y);
-    std::vector<uint16_t> heightMapData = generator.generateFromMesh(InMesh, Param.TextureWidth, Param.TextureHeight, Offset, 
-        plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, Param.ApplyBlurFilter, ExtMin, ExtMax, UVMin, UVMax);
-    
-    // Heightmap Image Output 
-    SaveHeightmapImage(Param.HeightmapImageOutput, "HM_" + NodeName , Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-
-    //Texture
-    FString TexturePath;
-    const auto& subMeshes = InMesh.getSubMeshes();
-    if (subMeshes.size() > 0) {
-        const auto& subMesh = subMeshes.at(0);
-        TexturePath = FString(subMesh.getTexturePath().c_str());
-    }
-
-    TSharedPtr<std::vector<uint16_t>> sharedData = MakeShared<std::vector<uint16_t>>(heightMapData);
-    HeightmapCreationResult Result{ NodeName, sharedData ,ExtMin, ExtMax , UVMin, UVMax, TexturePath };
-    return Result;
-}
-
-void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, uint16_t* HeightRawData, const FString NodeName) {
+void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, 
+    const TVec3d Min, const TVec3d Max, 
+    const TVec2f MinUV, const TVec2f MaxUV, 
+    uint16_t* HeightRawData, const FString NodeName) {
     double ActualHeight = abs(Max.z - Min.z);
     float HeightScale = ActualHeight;
     plateau::heightMapMeshGenerator::HeightmapMeshGenerator gen;
     auto mesh = gen.generateMeshFromHeightmap(SizeX, SizeY, HeightScale, HeightRawData,
         plateau::geometry::CoordinateSystem::ESU, Min, Max, MinUV, MaxUV);
-
-    UE_LOG(LogTemp, Error, TEXT("Created Mesh : %d %d"), mesh.getVertices().size(), mesh.getIndices().size());
 
     auto ParentComponent = Actor.GetRootComponent();
     const auto BaseComponents = FindComponentsByName(&Actor, NodeName);
@@ -130,7 +82,6 @@ bool FPLATEAUMeshLoaderForLandscapeMesh::OverwriteTexture() {
     return false;
 }
 
-
 bool FPLATEAUMeshLoaderForLandscapeMesh::InvertMeshNormal() {
     return false;
 }
@@ -147,7 +98,8 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponent
     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
 
     // Originalコンポーネントの属性をそのまま利用
-    const auto& OriginalComponent = GetOriginalComponent(Actor, NodeName);
+    const FString ReplacedName = NodeName.Replace(*FString("Mesh_"), *FString());
+    const auto& OriginalComponent = GetOriginalComponent(&Actor, ReplacedName);
     if (OriginalComponent) {
         PLATEAUCityObjectGroup->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
         PLATEAUCityObjectGroup->OutsideChildren = OriginalComponent->OutsideChildren;
@@ -162,48 +114,6 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForLandscapeMesh::GetMaterialForSubM
     if (ReplaceMaterial)
         return ReplaceMaterial;
     return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
-}
-
-TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscapeMesh::FindComponentsByName(AActor* ModelActor, FString Name) {
-
-    UE_LOG(LogTemp, Warning, TEXT("FindComponentsByName: %s"), *Name);
-
-    const FString ReplacedName = Name.Replace(*FString("Mesh_"), *FString());
-
-    UE_LOG(LogTemp, Warning, TEXT("FindComponentsByName NEW : %s"), *ReplacedName);
-
-    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { ReplacedName }));
-    TArray<USceneComponent*> Result;
-    const auto Components = ModelActor->GetComponents();
-    for (auto Component : Components) {
-        if (Component->IsA<USceneComponent>()) {
-            FRegexMatcher matcher(pattern, Component->GetName());
-            if (matcher.FindNext()) {
-                Result.Add((USceneComponent*)Component);
-                UE_LOG(LogTemp, Warning, TEXT("Found Component Name: %s"), *Component->GetName());
-            }
-        }
-    }
-    return Result;
-}
-
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscapeMesh::GetOriginalComponent(AActor& Actor, FString Name) {
-
-    UE_LOG(LogTemp, Warning, TEXT("GetOriginalComponent: %s"), *Name);
-
-    const auto BaseComponents = FindComponentsByName(&Actor, Name);
-    if (BaseComponents.Num() > 0) {
-        
-        UPLATEAUCityObjectGroup* FoundItem;
-        int32 ItemIndex;
-        if (BaseComponents.FindItemByClass<UPLATEAUCityObjectGroup>(&FoundItem, &ItemIndex)) {
-            UE_LOG(LogTemp, Warning, TEXT("GetOriginalComponent: Found %s "), *Name);
-            return FoundItem;
-        }
-    }
-
-    UE_LOG(LogTemp, Error, TEXT("GetOriginalComponent: Not Found %s "), *Name);
-    return nullptr;
 }
 
 void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription& MeshDescription) {

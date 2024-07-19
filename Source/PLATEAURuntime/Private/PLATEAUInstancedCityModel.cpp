@@ -625,11 +625,12 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
                     TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
                     //LandScape  
                     FFunctionGraphTask::CreateAndDispatchWhenReady(
-                        [&, HeightData, Result, Param] {
-                            Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
+                        [&, HeightData, Result, Param ] {
+                            auto LandActor = Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
                             Param.ComponentCountX, Param.ComponentCountY,
                             Param.TextureWidth, Param.TextureHeight,
                             Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
+                            Landscape.CreateLandScapeReference(LandActor, this, Result.NodeName);
                         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
                 }
             }

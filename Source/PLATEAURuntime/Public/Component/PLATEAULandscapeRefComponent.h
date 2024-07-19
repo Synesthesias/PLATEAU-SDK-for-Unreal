@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUComponentInterface.h"
+#include <Landscape.h>
 #include "PLATEAULandscapeRefComponent.generated.h"
+
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -16,6 +18,9 @@ class PLATEAURUNTIME_API UPLATEAULandscapeRefComponent : public UPLATEAUCityObje
 public:	
 	// Sets default values for this component's properties
     UPLATEAULandscapeRefComponent();
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
+    TObjectPtr<ALandscape> LandscapeReference;
 
 protected:
 	// Called when the game starts

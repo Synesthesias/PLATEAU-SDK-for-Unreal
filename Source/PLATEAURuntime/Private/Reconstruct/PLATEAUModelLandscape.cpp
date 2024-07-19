@@ -2,7 +2,6 @@
 
 #include <Reconstruct/PLATEAUModelLandscape.h>
 #include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
-#include <Landscape.h>
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
 #include "UObject/SavePackage.h"
@@ -57,7 +56,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelLandscape::GetUPLATEAUCityObjectGr
 }
 
 
-void FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,
+ALandscape* FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const  int32 ComponentCountX, const int32 ComponentCountY, const  int32 SizeX, const int32 SizeY,
     const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName) {
 
     // Weightmap is sized the same as the component
@@ -65,7 +64,7 @@ void FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 NumSubse
     // Should be power of two
     if (!FMath::IsPowerOfTwo(WeightmapSize)) {
         UE_LOG(LogTemp, Error, TEXT("WeightmapSize not POT:%d"), WeightmapSize);
-        return;
+        return nullptr;
     }
 
     double ActualHeight = abs(Max.z - Min.z);
@@ -147,5 +146,12 @@ void FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 NumSubse
     Landscape->PostEditChangeProperty(MaterialPropertyChangedEvent);
     Landscape->PostEditChange();
     Landscape->SetActorLabel(FString(ActorName));
+
+    return Landscape;
 #endif   
+}
+
+void FPLATEAUModelLandscape::CreateLandScapeReference(ALandscape* Landscape, AActor* Actor, const FString ActorName) {
+    FPLATEAUMeshLoaderForLandscape MeshLoader = FPLATEAUMeshLoaderForLandscape(false);
+    MeshLoader.CreateReference(Landscape, Actor, ActorName);
 }

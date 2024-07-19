@@ -1,17 +1,16 @@
 
 #include "heightmap_mesh_generator.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
-#include "libpng/png.h"
+//#include "libpng/png.h"
 
-//#include <plateau/texture/heightmap_generator2.h>
 #include <plateau/geometry/geo_reference.h>
-#include <iostream>
-#include <fstream>
-#include <filesystem>
+//#include <iostream>
+//#include <fstream>
+//#include <filesystem>
 
 #include "hmm/base.h"
 #include "hmm/heightmap.h"
-#include "hmm/stl.h"
+//#include "hmm/stl.h"
 #include "hmm/triangulator.h"
 
 
@@ -49,7 +48,7 @@ namespace plateau::heightMapMeshGenerator {
         const float shadeAz = 0;
         // =========================
 
-        const std::string outFile = "E:\\outfile.stl";
+        //const std::string outFile = "E:\\outfile.stl";
 
         //const int width = 513;
         //const int height = 513;
@@ -80,7 +79,7 @@ namespace plateau::heightMapMeshGenerator {
         }
 
         //Export STL Debug
-        SaveBinarySTL(outFile, points, triangles);
+        //SaveBinarySTL(outFile, points, triangles);
  
         //mesh 
         

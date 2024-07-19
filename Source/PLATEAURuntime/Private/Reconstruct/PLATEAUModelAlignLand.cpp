@@ -82,6 +82,7 @@ TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<UPLATEAUCity
     const auto& ComponentsMap = FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(TargetCityObjects);
 
     FPLATEAUMeshLoaderCloneComponent MeshLoader(false);
+    MeshLoader.SetSmoothing(true);
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(Model->getRootNodeAt(i), ComponentsMap, *CityModelActor);
     }
