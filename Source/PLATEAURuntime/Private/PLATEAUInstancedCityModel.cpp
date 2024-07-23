@@ -602,21 +602,16 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
 
-        const auto Results = Landscape.CreateHeightMap(smodel, Param);
+        auto Results = Landscape.CreateHeightMap(smodel, Param);
 
-        // 高さを地形に揃える
-        if (Param.AlignLand) {
-            auto AlignLandTask = AlignLand(Results, Param, bDestroyOriginal);
-            AddNested(AlignLandTask);
-            AlignLandTask.Wait();
-            const auto& AlignedComponents = AlignLandTask.GetResult();
+        // 高さを地形に揃える (LOD3Roadの場合は、ResultのHeightmap書き換え)
+        if (Param.AlignLand || Param.InvertRoadLod3) {
+            const auto& AlignedComponents = AlignLand(Results, Param, bDestroyOriginal);
             FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
                 // Align コンポーネント削除
                 DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
                 }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
         }
-
-        //TODO:  // LOD3道路の場合、HeightMap書き換え
 
         for (const auto Result : Results) {
             //Landscape生成
@@ -648,19 +643,15 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
     return CreateLandscapeTask;
 }
 
-UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> APLATEAUInstancedCityModel::AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
+TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
 
-    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLandTask = Launch(TEXT("AlignLandTask"), [&, this, Results, Param, bDestroyOriginal] {
-        FPLATEAUModelAlignLand AlignLand(this);
-        TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
-        for (const auto Result : Results) {
-            Frames.Add(AlignLand.CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
-        }
-
-        const auto TargetCityObjects = AlignLand.SetAlignData(Frames, Param);
-        return TargetCityObjects;
-
-        });
-    return AlignLandTask;
+    FPLATEAUModelAlignLand ModelAlign(this);
+    ModelAlign.SetResults(Results, Param);
+    TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = ModelAlign.GetTargetCityObjectsForAlignLand();
+    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え&TargetCityObjectsからLod3Road除外
+    if (Param.InvertRoadLod3) 
+        Results = ModelAlign.UpdateHeightMapForLod3Road(TargetCityObjects);
+    if (Param.AlignLand) 
+        ModelAlign.Align(TargetCityObjects);
+    return TargetCityObjects;
 }
-

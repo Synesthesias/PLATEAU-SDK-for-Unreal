@@ -193,8 +193,6 @@ public:
      */
 	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
-    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
-
     /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
@@ -220,6 +218,11 @@ protected:
      * @brief マテリアル分け　共通処理
      */
     UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+    /**
+     * @brief 特定パッケージを地形に合わせて高さ合わせ
+     */
+    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。
