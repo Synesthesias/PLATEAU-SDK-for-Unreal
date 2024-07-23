@@ -2,6 +2,7 @@
 
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <plateau/granularity_convert/granularity_converter.h>
+#include <plateau/material_adjust/material_adjuster_by_attr.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include "CityGML/PLATEAUAttributeValue.h"
 #include <PLATEAUCityObjectGroup.h>
@@ -36,44 +37,65 @@ FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(A
     }
 }
 
-void FPLATEAUModelClassificationByAttribute::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
-    MeshGranularity = Granularity;
+void FPLATEAUModelClassificationByAttribute::SetConvertGranularity(const ConvertGranularity Granularity) {
+    ConvGranularity = Granularity;
 }
 
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
-    auto OriginalMeshGranularity = MeshGranularity;
-    MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
-    std::shared_ptr<plateau::polygonMesh::Model> converted = FPLATEAUModelReconstruct::ConvertModelForReconstruct(TargetCityObjects);
+    std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
 
-    //指定された属性のSubMeshにGameMaterialIDを追加
+    plateau::materialAdjust::MaterialAdjusterByAttr Adjuster;
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
         for (auto& cityobj : cityObjList) {
-            const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(cityobj.second.c_str()));
+
+            const auto GmlId = cityobj.second;
+            const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
             if (AttrInfoPtr != nullptr) {
                 TArray<FPLATEAUAttributeValue> AttributeValues = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(ClassificationAttributeKey, AttrInfoPtr->Attributes);
                 TSet<FString> AttributeStringValues = ConvertAttributeValuesToUniqueStringValues(AttributeValues);
+                
                 for (const auto& Value : AttributeStringValues) {
                     if (MaterialIDMap.Contains(Value)) {
                         int MaterialID = MaterialIDMap[Value];
+
+                        //submesh
+                        /*
                         auto subMeshes = mesh->getSubMeshes();
                         for (auto& subMesh : subMeshes) {
                             subMesh.setGameMaterialID(MaterialID);
                         }
                         mesh->setSubMeshes(subMeshes);
+                        */
+
+                        bool battr =  Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
+                        bool bmat = Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
+
+                        UE_LOG(LogTemp, Error, TEXT("Register Attr : %s : %s  %s %s"), *Value, *FString(GmlId.c_str()), battr ? TEXT("True") : TEXT("False"), bmat ? TEXT("True") : TEXT("False"));
+                        //UE_LOG(LogTemp, Error, TEXT("Register Result: %s : %s"));
+
+                        const auto AttrInfo = *AttrInfoPtr;
+                        for (auto child : AttrInfo.Children) {
+                             bool bchattr = Adjuster.registerAttribute(TCHAR_TO_UTF8(*child.GmlID), TCHAR_TO_UTF8(*Value));
+                             UE_LOG(LogTemp, Error, TEXT("Register : %s : %s"), *child.GmlID, bchattr ? TEXT("True") : TEXT("False"));
+                        }
                     }
                 }
             }
         }
     }
+    Adjuster.exec(*converted);
+
 
     //地物単位に応じたModelを再生成
-    MeshGranularity = OriginalMeshGranularity;
-    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+    //ConvGranularity = OriginalConvGranularity;
+
+    GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
+
     GranularityConverter Converter;
     std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
     return finalConverted;

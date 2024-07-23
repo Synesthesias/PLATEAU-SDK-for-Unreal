@@ -383,9 +383,19 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const std::string& InNodeName,
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::granularityConvert::ConvertGranularity& Granularity) {
+    SetConvertGranularity(Granularity);
+    SerializeCityObject(InNode, InCityObject);
+}
 
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
     SetMeshGranularity(Granularity);
+    SerializeCityObject(InNode, InCityObject);
+}
+
+void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
+
+    
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
@@ -407,9 +417,21 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
     FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
-void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
-
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, 
+    const plateau::granularityConvert::ConvertGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
+    SetConvertGranularity(Granularity);
+    const plateau::polygonMesh::MeshGranularity MeshGranularity = (const plateau::polygonMesh::MeshGranularity)Granularity;
+    SerializeCityObjectInner(InNodeName, InMesh, MeshGranularity, CityObjMap);
+}
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh,
+    const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
     SetMeshGranularity(Granularity);
+    SerializeCityObjectInner(InNodeName, InMesh, Granularity, CityObjMap);
+}
+
+void UPLATEAUCityObjectGroup::SerializeCityObjectInner(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh,
+    const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
+
     const auto& CityObjectList = InMesh.getCityObjectList();
     const std::vector<plateau::polygonMesh::CityObjectIndex> CityObjectIndices = *CityObjectList.getAllKeys();
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
@@ -592,10 +614,21 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectGroup::GetAllRootCityObjects() {
     return RootCityObjects;
 }
 
+const plateau::granularityConvert::ConvertGranularity UPLATEAUCityObjectGroup::GetConvertGranularity() {
+    return static_cast<plateau::granularityConvert::ConvertGranularity>(MeshGranularityIntValue);
+}
+/*
 const plateau::polygonMesh::MeshGranularity UPLATEAUCityObjectGroup::GetMeshGranularity() {
+    if (MeshGranularityIntValue >= 4)
+        return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
     return static_cast<plateau::polygonMesh::MeshGranularity>(MeshGranularityIntValue);
 }
+*/
 
-void UPLATEAUCityObjectGroup::SetMeshGranularity(plateau::polygonMesh::MeshGranularity Granularity) {
+void UPLATEAUCityObjectGroup::SetConvertGranularity(const plateau::granularityConvert::ConvertGranularity Granularity) {
+    MeshGranularityIntValue = (int)Granularity;
+}
+
+void UPLATEAUCityObjectGroup::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
     MeshGranularityIntValue = (int)Granularity;
 }

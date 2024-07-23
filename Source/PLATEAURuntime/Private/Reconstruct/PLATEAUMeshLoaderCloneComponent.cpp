@@ -35,7 +35,7 @@ void FPLATEAUMeshLoaderCloneComponent::ReloadComponentFromNode(
     AActor& InActor) {
 
     ComponentsMap = Components;
-    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
+    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, ConvertGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
@@ -72,7 +72,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderCloneComponent::GetMaterialForSubMes
  */
 USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    plateau::granularityConvert::ConvertGranularity Granularity,
     AActor& Actor) {
 
     if (Node.getMesh() != nullptr && Node.getMesh()->getVertices().size() > 0) {

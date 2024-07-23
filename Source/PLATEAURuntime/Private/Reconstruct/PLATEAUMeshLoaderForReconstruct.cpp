@@ -12,6 +12,12 @@ FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool In
     bAutomationTest = InbAutomationTest;
 }
 
+plateau::polygonMesh::MeshGranularity FPLATEAUMeshLoaderForReconstruct::ConvertGranularityToMeshGranularity(const ConvertGranularity ConvertGranularity) {
+    if (ConvertGranularity == plateau::granularityConvert::ConvertGranularity::MaterialInPrimary)
+        return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
+    return (plateau::polygonMesh::MeshGranularity)ConvertGranularity;
+}
+
 /**
 * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
 * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
@@ -51,11 +57,12 @@ TMap<FString, FPLATEAUCityObject> FPLATEAUMeshLoaderForReconstruct::CreateMapFro
 void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     TMap<FString, FPLATEAUCityObject> CityObj,
     AActor& InActor) {
 
     CityObjMap = CityObj;
+    ConvGranularity = Granularity;
     LastCreatedComponents.Empty();
 
     ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);
@@ -72,7 +79,7 @@ void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
 void FPLATEAUMeshLoaderForReconstruct::ReloadNodeRecursive(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     AActor& InActor) {
     const auto Component = ReloadNode(InParentComponent, InNode, Granularity, InActor);
     const size_t ChildNodeCount = InNode.getChildCount();
@@ -84,7 +91,7 @@ void FPLATEAUMeshLoaderForReconstruct::ReloadNodeRecursive(
 
 USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     AActor& Actor) {
     if (Node.getMesh() == nullptr || Node.getMesh()->getVertices().size() == 0) {
         USceneComponent* Comp = nullptr;
@@ -128,7 +135,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
     }
 
     plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
-    MeshExtractOptions.mesh_granularity = Granularity;
+    MeshExtractOptions.mesh_granularity = ConvertGranularityToMeshGranularity(Granularity);
     FLoadInputData LoadInputData
     {
         MeshExtractOptions,
@@ -166,7 +173,7 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentFo
     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
+    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, ConvGranularity, CityObjMap);
     return PLATEAUCityObjectGroup;
 }
 

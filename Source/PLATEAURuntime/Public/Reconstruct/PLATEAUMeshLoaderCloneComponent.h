@@ -31,7 +31,7 @@ public:
     USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
-        plateau::polygonMesh::MeshGranularity Granularity,
+        ConvertGranularity Granularity,
         AActor& Actor) override;
 
 protected:

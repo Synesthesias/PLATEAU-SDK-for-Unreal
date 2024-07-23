@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
 
+using ConvertGranularity = plateau::granularityConvert::ConvertGranularity;
+
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForReconstruct : public FPLATEAUMeshLoader {
 
 public:
@@ -18,10 +20,15 @@ public:
      */
     static TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
+    /**
+     * @brief EPLATEAUMeshGranularityをplateau::polygonMesh::MeshGranularityに変換します
+     */
+    static plateau::polygonMesh::MeshGranularity ConvertGranularityToMeshGranularity(const ConvertGranularity ConvertGranularity);
+
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
+        ConvertGranularity Granularity,
         TMap<FString, FPLATEAUCityObject> CityObj,
         AActor& InActor);
 
@@ -30,12 +37,12 @@ protected:
     virtual void ReloadNodeRecursive(
         USceneComponent* InParentComponent,
         const plateau::polygonMesh::Node& InNode,
-        plateau::polygonMesh::MeshGranularity Granularity,
+        ConvertGranularity Granularity,
         AActor& InActor);
     virtual USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
-        plateau::polygonMesh::MeshGranularity Granularity,
+        ConvertGranularity Granularity,
         AActor& Actor);
 
     UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
@@ -49,6 +56,8 @@ protected:
 
     //分割・結合時に属性情報を保持　
     TMap<FString, FPLATEAUCityObject> CityObjMap;
+
+    ConvertGranularity ConvGranularity;
 
 private:
 };
