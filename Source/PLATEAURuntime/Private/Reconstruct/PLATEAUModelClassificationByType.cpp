@@ -37,29 +37,18 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
         for (auto& cityobj : cityObjList) {
 
             const auto GmlId = cityobj.second;
-
             const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
-            if (AttrInfoPtr != nullptr) {
+            if (AttrInfoPtr) {
                 const auto Type = AttrInfoPtr->Type;
                 if (ClassificationTypes.Contains(Type)) {
                     const int MaterialID = static_cast<int>(Type);
-                    //auto subMeshes = mesh->getSubMeshes();
-                    //for (auto& subMesh : subMeshes) {
-                    //    subMesh.setGameMaterialID(MaterialID);
-                    //}
-                    //mesh->setSubMeshes(subMeshes);
-
-                    
                     citygml::CityObject::CityObjectsType PlateauType = (citygml::CityObject::CityObjectsType)UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Type);
-                    bool btype = Adjuster.registerType(GmlId, PlateauType);
-                    bool bmat = Adjuster.registerMaterialPattern(PlateauType, MaterialID);
-
-                    UE_LOG(LogTemp, Error, TEXT("Register Result: %s : %s"), btype ? TEXT("True") : TEXT("False"), bmat ? TEXT("True") : TEXT("False"));
+                    Adjuster.registerType(GmlId, PlateauType);
+                    Adjuster.registerMaterialPattern(PlateauType, MaterialID);
 
                     const auto AttrInfo = *AttrInfoPtr;
                     for (auto child : AttrInfo.Children) {
-                        bool bchtype = Adjuster.registerType(TCHAR_TO_UTF8(*child.GmlID), PlateauType);
-                        UE_LOG(LogTemp, Error, TEXT("Register : %s : %s"), *child.GmlID, bchtype ? TEXT("True") : TEXT("False"));
+                        Adjuster.registerType(TCHAR_TO_UTF8(*child.GmlID), PlateauType);
                     }
                 }
             }

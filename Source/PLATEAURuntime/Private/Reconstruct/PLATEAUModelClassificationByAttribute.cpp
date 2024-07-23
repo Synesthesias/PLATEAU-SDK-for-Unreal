@@ -55,7 +55,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
 
             const auto GmlId = cityobj.second;
             const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
-            if (AttrInfoPtr != nullptr) {
+            if (AttrInfoPtr) {
                 TArray<FPLATEAUAttributeValue> AttributeValues = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(ClassificationAttributeKey, AttrInfoPtr->Attributes);
                 TSet<FString> AttributeStringValues = ConvertAttributeValuesToUniqueStringValues(AttributeValues);
                 
@@ -63,25 +63,12 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                     if (MaterialIDMap.Contains(Value)) {
                         int MaterialID = MaterialIDMap[Value];
 
-                        //submesh
-                        /*
-                        auto subMeshes = mesh->getSubMeshes();
-                        for (auto& subMesh : subMeshes) {
-                            subMesh.setGameMaterialID(MaterialID);
-                        }
-                        mesh->setSubMeshes(subMeshes);
-                        */
-
-                        bool battr =  Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
-                        bool bmat = Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
-
-                        UE_LOG(LogTemp, Error, TEXT("Register Attr : %s : %s  %s %s"), *Value, *FString(GmlId.c_str()), battr ? TEXT("True") : TEXT("False"), bmat ? TEXT("True") : TEXT("False"));
-                        //UE_LOG(LogTemp, Error, TEXT("Register Result: %s : %s"));
+                        Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
+                        Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
 
                         const auto AttrInfo = *AttrInfoPtr;
                         for (auto child : AttrInfo.Children) {
-                             bool bchattr = Adjuster.registerAttribute(TCHAR_TO_UTF8(*child.GmlID), TCHAR_TO_UTF8(*Value));
-                             UE_LOG(LogTemp, Error, TEXT("Register : %s : %s"), *child.GmlID, bchattr ? TEXT("True") : TEXT("False"));
+                             Adjuster.registerAttribute(TCHAR_TO_UTF8(*child.GmlID), TCHAR_TO_UTF8(*Value));
                         }
                     }
                 }
@@ -90,12 +77,8 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
     }
     Adjuster.exec(*converted);
 
-
     //地物単位に応じたModelを再生成
-    //ConvGranularity = OriginalConvGranularity;
-
     GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
-
     GranularityConverter Converter;
     std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
     return finalConverted;
