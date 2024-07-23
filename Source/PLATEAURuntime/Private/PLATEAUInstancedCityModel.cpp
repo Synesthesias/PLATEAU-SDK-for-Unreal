@@ -549,7 +549,6 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
             };
 
             for (const auto& Granularity : GranularityList) {
-                //const auto& Targets = ModelClassification.FilterComponentsByMeshGranularity(TargetCityObjects, Granularity);
                 const auto& Targets = ModelClassification.FilterComponentsByConvertGranularity(TargetCityObjects, Granularity);
                 if (Targets.Num() > 0) {
                     ModelClassification.SetConvertGranularity(Granularity);
