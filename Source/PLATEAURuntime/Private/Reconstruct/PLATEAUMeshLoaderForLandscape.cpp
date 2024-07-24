@@ -3,9 +3,16 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
+#include "plateau/height_map_generator/heightmap_mesh_generator.h"
+#include "MeshDescription.h"
+#include "StaticMeshOperations.h"
+#include "StaticMeshAttributes.h"
+#include "Component/PLATEAULandscapeRefComponent.h"
+#include "Landscape.h"
+
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
@@ -86,6 +93,60 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     return Result;
 }
 
-bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
-    return false;
+
+void FPLATEAUMeshLoaderForLandscape::CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName) {
+    const FString ReplacedNodeName = NodeName.Replace(*FString("Mesh_"), *FString()); //Mesh Prefix ����
+    auto OriginalComponent = GetOriginalComponent(Actor, ReplacedNodeName);
+    if (OriginalComponent) {
+        const auto& OriginalParentComponent = OriginalComponent->GetAttachParent();
+        auto RefComponent = (UPLATEAULandscapeRefComponent*)Actor->AddComponentByClass(UPLATEAULandscapeRefComponent::StaticClass(), false, FTransform(), false);
+
+        // Original�R���|�[�l���g�̑�������̂܂ܗ��p
+        if (OriginalComponent) {
+            RefComponent->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
+            RefComponent->OutsideChildren = OriginalComponent->OutsideChildren;
+            RefComponent->OutsideParent = OriginalComponent->OutsideParent;
+            RefComponent->MeshGranularityIntValue = OriginalComponent->MeshGranularityIntValue;  
+        }
+
+        RefComponent->LandscapeReference = Landscape;
+        RefComponent->SetMobility(EComponentMobility::Type::Static);
+
+        auto NewName = "Ref_" + NodeName;
+        RefComponent->Rename(*NewName, nullptr, REN_DontCreateRedirectors);      
+        Actor->AddInstanceComponent(RefComponent);
+        RefComponent->RegisterComponent();
+        RefComponent->AttachToComponent(OriginalParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+
+#if WITH_EDITOR
+        RefComponent->PostEditChange();
+#endif
+    }
+}
+
+TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(const AActor* ModelActor, const FString Name) {
+    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
+    TArray<USceneComponent*> Result;
+    const auto Components = ModelActor->GetComponents();
+    for (auto Component : Components) {
+        if (Component->IsA<USceneComponent>()) {
+            FRegexMatcher matcher(pattern, Component->GetName());
+            if (matcher.FindNext()) {
+                Result.Add((USceneComponent*)Component);
+            }
+        }
+    }
+    return Result;
+}
+
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscape::GetOriginalComponent(const AActor* ModelActor, const FString Name) {
+    const auto BaseComponents = FindComponentsByName(ModelActor, Name);
+    if (BaseComponents.Num() > 0) {
+        UPLATEAUCityObjectGroup* FoundItem;
+        int32 ItemIndex;
+        if (BaseComponents.FindItemByClass<UPLATEAUCityObjectGroup>(&FoundItem, &ItemIndex)) {
+            return FoundItem;
+        }
+    }
+    return nullptr;
 }

@@ -1,6 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 #include "PLATEAUCityObjectGroupDetails.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "SlateOptMacros.h"
 #include "DetailLayoutBuilder.h"
 #include "Widgets/Input/SNumericEntryBox.h"

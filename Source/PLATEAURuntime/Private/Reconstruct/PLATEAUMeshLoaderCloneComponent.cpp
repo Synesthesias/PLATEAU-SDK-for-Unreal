@@ -3,13 +3,20 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderCloneComponent.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "MeshDescription.h"
+#include "StaticMeshOperations.h"
+#include "StaticMeshAttributes.h"
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent() {}
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
+}
+
+void FPLATEAUMeshLoaderCloneComponent::SetSmoothing(bool bSmooth) {
+    IsSmooth = bSmooth;
 }
 
 TMap<FString, UPLATEAUCityObjectGroup*> FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
@@ -102,3 +109,22 @@ USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* P
     return nullptr;
 }
 
+bool FPLATEAUMeshLoaderCloneComponent::MergeTriangles() {
+    return IsSmooth;
+}
+
+void FPLATEAUMeshLoaderCloneComponent::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+
+    if (!IsSmooth) return;
+
+    FStaticMeshOperations::DetermineEdgeHardnessesFromVertexInstanceNormals(MeshDescription);
+
+    TEdgeAttributesRef<bool> EdgeHardness =
+        MeshDescription.EdgeAttributes().GetAttributesRef<bool>(MeshAttribute::Edge::IsHard);
+    for (FEdgeID EdgeID : MeshDescription.Edges().GetElementIDs()) {
+        EdgeHardness.Set(EdgeID, 0, false);
+    }
+
+    FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
+    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
+}

@@ -4,7 +4,7 @@
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <plateau/material_adjust/material_adjuster_by_type.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
-#include <PLATEAUCityObjectGroup.h>
+#include <Component/PLATEAUCityObjectGroup.h>
 
 using namespace plateau::granularityConvert;
 

@@ -34,6 +34,8 @@ public:
         ConvertGranularity Granularity,
         AActor& Actor) override;
 
+    void SetSmoothing(bool bSmooth);
+
 protected:
 
     UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
@@ -44,10 +46,14 @@ protected:
 
     UPLATEAUCityObjectGroup* GetOriginalComponent(FString Name);
 
+    bool MergeTriangles() override;
+    void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
+
 private:
 
     //元のコンポーネント情報を保持　
     TMap<FString, UPLATEAUCityObjectGroup*> ComponentsMap;
 
+    bool IsSmooth = false;
 };
 

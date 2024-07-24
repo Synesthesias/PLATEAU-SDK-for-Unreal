@@ -87,7 +87,6 @@ public:
     /**
      * @brief MeshGranularity取得Getter
      */
-    //const plateau::polygonMesh::MeshGranularity GetMeshGranularity();
     const plateau::granularityConvert::ConvertGranularity GetConvertGranularity();
     void SetConvertGranularity(const plateau::granularityConvert::ConvertGranularity Granularity);
 

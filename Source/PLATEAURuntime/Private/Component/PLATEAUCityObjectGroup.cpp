@@ -1,5 +1,5 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUMeshExporter.h"
 #include "PLATEAUCityModelLoader.h"
 #include "CityGML/PLATEAUCityObject.h"

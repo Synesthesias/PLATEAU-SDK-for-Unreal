@@ -2,7 +2,7 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 
 FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct() {
     bAutomationTest = false;

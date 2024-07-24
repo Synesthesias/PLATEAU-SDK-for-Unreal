@@ -15,7 +15,7 @@
 #include <Reconstruct/PLATEAUModelClassificationByType.h>
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <Reconstruct/PLATEAUModelLandscape.h>
-#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h>
 #include <Reconstruct/PLATEAUModelAlignLand.h>
 #include "Tasks/Pipe.h"
 
@@ -617,24 +617,33 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         }
 
         for (const auto Result : Results) {
-            //Landscape生成
-            if (Param.CreateLandscape) {
-                TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
-                //LandScape  
-                FFunctionGraphTask::CreateAndDispatchWhenReady(
-                    [&, HeightData, Result, Param] {
-                        Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
-                        Param.ComponentCountX, Param.ComponentCountY,
-                        Param.TextureWidth, Param.TextureHeight,
-                        Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
-                    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            //　平滑化Mesh / Landscape生成
+            if (Param.ConvertTerrain) {
+                if (!Param.ConvertToLandscape) {
+                    //平滑化Mesh生成
+                    FPLATEAUMeshLoaderForLandscapeMesh MeshLoader;
+                    MeshLoader.CreateMeshFromHeightMap(*this, Param.TextureWidth, Param.TextureHeight, Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.Data->data(), Result.NodeName);
+                }
+                else {
+                    //Landscape生成
+                    TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
+                    //LandScape  
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [&, HeightData, Result, Param ] {
+                            auto LandActor = Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
+                            Param.ComponentCountX, Param.ComponentCountY,
+                            Param.TextureWidth, Param.TextureHeight,
+                            Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
+                            Landscape.CreateLandScapeReference(LandActor, this, Result.NodeName);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+                }
             }
         }
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects, bDestroyOriginal, Results]() {
 
             // Landscape コンポーネント削除
-            if (Param.CreateLandscape)
+            if (Param.ConvertTerrain)
                 DestroyOrHideComponents(TargetCityObjects, bDestroyOriginal);
 
             //終了イベント通知
