@@ -4,14 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Component/PLATEAUCityObjectGroup.h"
-#include "PLATEAUComponentInterface.h"
 #include <Landscape.h>
 #include "PLATEAULandscapeRefComponent.generated.h"
 
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class PLATEAURUNTIME_API UPLATEAULandscapeRefComponent : public UPLATEAUCityObjectGroup, public IPLATEAUComponentInterface
+class PLATEAURUNTIME_API UPLATEAULandscapeRefComponent : public UPLATEAUCityObjectGroup
 {
 	GENERATED_BODY()
 

@@ -14,7 +14,7 @@
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
-class FPLATEAUCityObject;
+struct FPLATEAUCityObject;
 class FPLATEAUModelReconstruct;
 class FPLATEAUModelClassification;
 struct FPLATEAUMinMaxLod {

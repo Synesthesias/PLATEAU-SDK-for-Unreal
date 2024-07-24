@@ -149,6 +149,7 @@ ALandscape* FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 N
 
     return Landscape;
 #endif   
+    return nullptr;
 }
 
 void FPLATEAUModelLandscape::CreateLandScapeReference(ALandscape* Landscape, AActor* Actor, const FString ActorName) {
