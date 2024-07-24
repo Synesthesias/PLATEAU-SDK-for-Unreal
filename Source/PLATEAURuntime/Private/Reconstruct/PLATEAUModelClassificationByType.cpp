@@ -47,15 +47,17 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
                     Adjuster.registerMaterialPattern(PlateauType, MaterialID);
 
                     const auto AttrInfo = *AttrInfoPtr;
-                    for (auto child : AttrInfo.Children) {
-                        Adjuster.registerType(TCHAR_TO_UTF8(*child.GmlID), PlateauType);
+                    TSet<FString> Children;
+                    GetChildrenGmlIds(AttrInfo, Children);
+                    for (auto ChildId : Children) {
+                        Adjuster.registerType(TCHAR_TO_UTF8(*ChildId), PlateauType);
                     }
                 }
             }
         }
     }
     Adjuster.exec(*converted);
-    
+
     //地物単位に応じたModelを再生成
     GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
     GranularityConverter Converter;

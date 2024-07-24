@@ -52,6 +52,9 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity) {
 
+    auto OriginalGranularity = ConvGranularity;
+    ConvGranularity = Granularity;
+
     GranularityConvertOption ConvOption(Granularity, bDivideGrid ? 1 : 0);
 
     FPLATEAUMeshExportOptions ExtOptions;
@@ -71,6 +74,8 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
 
     std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
+
+    ConvGranularity = OriginalGranularity;
 
     return converted;
 }
@@ -99,5 +104,12 @@ ConvertGranularity FPLATEAUModelReconstruct::GetConvertGranularityFromReconstruc
         return ConvertGranularity::MaterialInPrimary;
     default:
         return ConvertGranularity::PerPrimaryFeatureObject;
+    }
+}
+
+void FPLATEAUModelReconstruct::GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList) {
+    for (auto child : CityObj.Children) {
+        IdList.Add(child.GmlID);
+        GetChildrenGmlIds(child, IdList);
     }
 }

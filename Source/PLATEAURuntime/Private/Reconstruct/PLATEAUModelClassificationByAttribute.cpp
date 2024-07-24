@@ -41,7 +41,6 @@ void FPLATEAUModelClassificationByAttribute::SetConvertGranularity(const Convert
     ConvGranularity = Granularity;
 }
 
-
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
@@ -67,8 +66,10 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                         Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
 
                         const auto AttrInfo = *AttrInfoPtr;
-                        for (auto child : AttrInfo.Children) {
-                             Adjuster.registerAttribute(TCHAR_TO_UTF8(*child.GmlID), TCHAR_TO_UTF8(*Value));
+                        TSet<FString> Children;
+                        GetChildrenGmlIds(AttrInfo, Children);
+                        for (auto ChildId : Children) {
+                            Adjuster.registerAttribute(TCHAR_TO_UTF8(*ChildId), TCHAR_TO_UTF8(*Value));
                         }
                     }
                 }

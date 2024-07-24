@@ -50,6 +50,12 @@ protected:
     TMap<FString, FPLATEAUCityObject> CityObjMap;
 
     /**
+     * @brief CityObjectのChildrenのidリストを返します
+     * @param
+     */
+    void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
+
+    /**
      * @brief 指定したMeshLoaderで、生成されたModelからStaticMeshコンポーネントを再生成します
      * @param
      */

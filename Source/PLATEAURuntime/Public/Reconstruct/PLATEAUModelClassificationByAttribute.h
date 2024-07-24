@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Reconstruct/PLATEAUModelClassification.h"
+#include <plateau/material_adjust/material_adjuster_by_attr.h>
 
 class PLATEAURUNTIME_API FPLATEAUModelClassificationByAttribute : public FPLATEAUModelClassification {
 
@@ -20,5 +21,5 @@ protected:
     FString ClassificationAttributeKey;
     TMap<FString, UMaterialInterface*> ClassificationMaterials;
     TMap<FString, int> MaterialIDMap;
-
 };
+
