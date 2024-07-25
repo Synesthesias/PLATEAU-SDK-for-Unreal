@@ -62,15 +62,26 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                     if (MaterialIDMap.Contains(Value)) {
                         int MaterialID = MaterialIDMap[Value];
 
-                        Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
+                        bool bRes = Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
                         Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
+
+                        UE_LOG(LogTemp, Error, TEXT("Register: %s %s"), *FString(GmlId.c_str()), bRes ? TEXT("True") : TEXT("False"));
 
                         const auto AttrInfo = *AttrInfoPtr;
                         TSet<FString> Children;
                         GetChildrenGmlIds(AttrInfo, Children);
                         for (auto ChildId : Children) {
-                            Adjuster.registerAttribute(TCHAR_TO_UTF8(*ChildId), TCHAR_TO_UTF8(*Value));
+                            bool bResC = Adjuster.registerAttribute(TCHAR_TO_UTF8(*ChildId), TCHAR_TO_UTF8(*Value));
+
+                            UE_LOG(LogTemp, Error, TEXT("Register C: %s %s"), *ChildId, bResC ? TEXT("True") : TEXT("False"));
                         }
+
+                        //debug Sub Meshに直接
+                        auto subMeshes = mesh->getSubMeshes();
+                        for (auto& subMesh : subMeshes) {
+                            subMesh.setGameMaterialID(MaterialID);
+                        }
+                        mesh->setSubMeshes(subMeshes);
                     }
                 }
             }
