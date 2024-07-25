@@ -10,9 +10,9 @@ class PLATEAURUNTIME_API FPLATEAUModelClassificationByType : public FPLATEAUMode
 public:
     FPLATEAUModelClassificationByType();
     FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
-    void SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) override;
+    void SetConvertGranularity(const ConvertGranularity Granularity) override;
 
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;    
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;
 
 protected:

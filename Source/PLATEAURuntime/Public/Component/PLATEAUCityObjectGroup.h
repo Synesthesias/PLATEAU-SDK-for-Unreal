@@ -2,6 +2,7 @@
 #pragma once
 #include <memory>
 #include <plateau/polygon_mesh/node.h>
+#include <plateau/granularity_convert/granularity_converter.h>
 #include "Components/StaticMeshComponent.h"
 #include "CityGML/PLATEAUCityObject.h"
 #include "Serialization/JsonWriter.h"
@@ -70,7 +71,9 @@ public:
      * @param InNode シリアライズ対象ノード
      * @param InCityObject 結合・分割前に保存したFPLATEAUCityObject
      */
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::granularityConvert::ConvertGranularity& Granularity);
     void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity);
+    void SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject);
 
     /** 
      * @brief 結合・分割時のメッシュを持つノードをシリアライズ
@@ -79,12 +82,13 @@ public:
      * @param InLoadInputData メッシュの結合単位を確認するために用いる
      * @param CityObjMap 結合・分割前に保存したFPLATEAUCityObjectのMap
      */
+    void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::granularityConvert::ConvertGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
     void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
-
     /**
      * @brief MeshGranularity取得Getter
      */
-    const plateau::polygonMesh::MeshGranularity GetMeshGranularity();
+    const plateau::granularityConvert::ConvertGranularity GetConvertGranularity();
+    void SetConvertGranularity(const plateau::granularityConvert::ConvertGranularity Granularity);
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
     FPLATEAUCityObject GetPrimaryCityObjectByRaycast(const FHitResult& HitResult);
@@ -118,5 +122,6 @@ public:
 
 private:
     TArray<FPLATEAUCityObject> RootCityObjects;
-    void SetMeshGranularity(plateau::polygonMesh::MeshGranularity Granularity);
+    void SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity);
+    void SerializeCityObjectInner(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
 };

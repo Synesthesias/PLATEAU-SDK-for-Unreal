@@ -2,7 +2,7 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForClassification.h"
 #include "PLATEAUMeshLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 
 FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(const TMap<int, UMaterialInterface*> Materials) {
     ClassificationMaterials = Materials;

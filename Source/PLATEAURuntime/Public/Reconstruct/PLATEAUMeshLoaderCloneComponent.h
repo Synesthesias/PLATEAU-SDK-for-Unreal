@@ -31,8 +31,10 @@ public:
     USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
-        plateau::polygonMesh::MeshGranularity Granularity,
+        ConvertGranularity Granularity,
         AActor& Actor) override;
+
+    void SetSmoothing(bool bSmooth);
 
 protected:
 
@@ -44,10 +46,14 @@ protected:
 
     UPLATEAUCityObjectGroup* GetOriginalComponent(FString Name);
 
+    bool MergeTriangles() override;
+    void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
+
 private:
 
     //元のコンポーネント情報を保持　
     TMap<FString, UPLATEAUCityObjectGroup*> ComponentsMap;
 
+    bool IsSmooth = false;
 };
 

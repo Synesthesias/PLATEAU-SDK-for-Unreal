@@ -52,6 +52,7 @@ namespace plateau::polygonMesh {
         void setVertexColors(std::vector<TVec3d>& vertex_colors);
 
         void setSubMeshes(std::vector<SubMesh>& sub_mesh_list);
+        void setSubMeshes(std::vector<SubMesh>&& sub_mesh_list);
 
         void reserve(long long vertex_count);
 

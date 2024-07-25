@@ -1,7 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "AttrInfo/PLATEAUAttrInfoDrawGizmo.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "MeshDescription.h"
 #include "Components/LineBatchComponent.h"
 #include "Kismet/KismetMathLibrary.h"
