@@ -3,13 +3,20 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderCloneComponent.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "MeshDescription.h"
+#include "StaticMeshOperations.h"
+#include "StaticMeshAttributes.h"
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent() {}
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
+}
+
+void FPLATEAUMeshLoaderCloneComponent::SetSmoothing(bool bSmooth) {
+    IsSmooth = bSmooth;
 }
 
 TMap<FString, UPLATEAUCityObjectGroup*> FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
@@ -35,7 +42,7 @@ void FPLATEAUMeshLoaderCloneComponent::ReloadComponentFromNode(
     AActor& InActor) {
 
     ComponentsMap = Components;
-    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
+    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, plateau::granularityConvert::ConvertGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
@@ -72,7 +79,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderCloneComponent::GetMaterialForSubMes
  */
 USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     AActor& Actor) {
 
     if (Node.getMesh() != nullptr && Node.getMesh()->getVertices().size() > 0) {
@@ -102,3 +109,22 @@ USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* P
     return nullptr;
 }
 
+bool FPLATEAUMeshLoaderCloneComponent::MergeTriangles() {
+    return IsSmooth;
+}
+
+void FPLATEAUMeshLoaderCloneComponent::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+
+    if (!IsSmooth) return;
+
+    FStaticMeshOperations::DetermineEdgeHardnessesFromVertexInstanceNormals(MeshDescription);
+
+    TEdgeAttributesRef<bool> EdgeHardness =
+        MeshDescription.EdgeAttributes().GetAttributesRef<bool>(MeshAttribute::Edge::IsHard);
+    for (FEdgeID EdgeID : MeshDescription.Edges().GetElementIDs()) {
+        EdgeHardness.Set(EdgeID, 0, false);
+    }
+
+    FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
+    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
+}

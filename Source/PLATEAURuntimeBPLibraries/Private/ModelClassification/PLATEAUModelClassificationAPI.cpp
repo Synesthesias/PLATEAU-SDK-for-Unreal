@@ -3,7 +3,7 @@
 
 #include "ModelClassification/PLATEAUModelClassificationAPI.h"
 #include "CityGML/PLATEAUCityObject.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 #include "Algo/Sort.h"
 

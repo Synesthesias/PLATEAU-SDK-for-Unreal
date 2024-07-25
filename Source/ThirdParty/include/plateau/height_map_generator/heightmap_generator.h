@@ -10,8 +10,6 @@
 
 namespace plateau::heightMapGenerator {
 
-
-
     class LIBPLATEAU_EXPORT HeightmapGenerator  {
     public:
         /// メイン関数です
@@ -34,12 +32,10 @@ namespace plateau::heightMapGenerator {
 
     private:
         size_t getTileDivision(size_t triangleSize);
-        double getPositionFromPercent(double percent, double min, double max);
-        TVec2d getPositionFromPercent(const TVec2d& percent, const TVec2d& min, const TVec2d& max);
         double getHeightToPercent(double height, double min, double max);
         HeightMapElemT getPercentToGrayScale(double percent);
         TVec3d convertCoordinateFrom(geometry::CoordinateSystem coordinate, TVec3d vertice);
         bool getUVExtent(plateau::polygonMesh::UV uv, TVec2f& outMin, TVec2f& outMax);
     };
 
-} // namespace plateau::texture
+} // namespace plateau::heightMapGenerator

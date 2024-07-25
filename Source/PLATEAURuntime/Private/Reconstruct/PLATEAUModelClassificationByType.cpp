@@ -2,8 +2,9 @@
 
 #include <Reconstruct/PLATEAUModelClassificationByType.h>
 #include <plateau/granularity_convert/granularity_converter.h>
+#include <plateau/material_adjust/material_adjuster_by_type.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
-#include <PLATEAUCityObjectGroup.h>
+#include <Component/PLATEAUCityObjectGroup.h>
 
 using namespace plateau::granularityConvert;
 
@@ -19,9 +20,7 @@ FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUIns
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
-    auto OriginalMeshGranularity = MeshGranularity;
-    MeshGranularity = plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
-    std::shared_ptr<plateau::polygonMesh::Model> converted = FPLATEAUModelReconstruct::ConvertModelForReconstruct(TargetCityObjects);
+    std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
 
     TArray<EPLATEAUCityObjectsType>  ClassificationTypes;
     for (auto kv : ClassificationMaterials) {
@@ -31,35 +30,43 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
     }
 
     //指定されたタイプのModelのSubMeshにGameMaterialIDを追加
+    plateau::materialAdjust::MaterialAdjusterByType Adjuster;
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
         for (auto& cityobj : cityObjList) {
-            const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(cityobj.second.c_str()));
-            if (AttrInfoPtr != nullptr) {
+
+            const auto GmlId = cityobj.second;
+            const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
+            if (AttrInfoPtr) {
                 const auto Type = AttrInfoPtr->Type;
                 if (ClassificationTypes.Contains(Type)) {
                     const int MaterialID = static_cast<int>(Type);
-                    auto subMeshes = mesh->getSubMeshes();
-                    for (auto& subMesh : subMeshes) {
-                        subMesh.setGameMaterialID(MaterialID);
+                    citygml::CityObject::CityObjectsType PlateauType = (citygml::CityObject::CityObjectsType)UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Type);
+                    Adjuster.registerType(GmlId, PlateauType);
+                    Adjuster.registerMaterialPattern(PlateauType, MaterialID);
+
+                    const auto AttrInfo = *AttrInfoPtr;
+                    TSet<FString> Children;
+                    GetChildrenGmlIds(AttrInfo, Children);
+                    for (auto ChildId : Children) {
+                        Adjuster.registerType(TCHAR_TO_UTF8(*ChildId), PlateauType);
                     }
-                    mesh->setSubMeshes(subMeshes);
                 }
             }
         }
     }
+    Adjuster.exec(*converted);
 
     //地物単位に応じたModelを再生成
-    MeshGranularity = OriginalMeshGranularity;
-    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+    GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
     GranularityConverter Converter;
     std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
     return finalConverted;
 }
 
-void FPLATEAUModelClassificationByType::SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) {
-    MeshGranularity = Granularity;
+void FPLATEAUModelClassificationByType::SetConvertGranularity(const ConvertGranularity Granularity) {
+    ConvGranularity = Granularity;
 }
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {

@@ -3,14 +3,35 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
+#include "plateau/height_map_generator/heightmap_mesh_generator.h"
+#include "MeshDescription.h"
+#include "StaticMeshOperations.h"
+#include "StaticMeshAttributes.h"
+#include "Component/PLATEAULandscapeRefComponent.h"
+#include "Landscape.h"
+
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
+}
+
+void FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, int32 Width, int32 Height, uint16_t* Data ) {
+    // Heightmap Image Output 
+    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
+        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(), FileName, Width, Height });
+        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Width, Height, Data);
+        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
+    }
+    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::RAW || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
+        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(), FileName, Width, Height });
+        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Width, Height, Data);
+        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
+    }
 }
 
 TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
@@ -57,16 +78,7 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
         plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, Param.ApplyBlurFilter, ExtMin, ExtMax, UVMin, UVMax);
     
     // Heightmap Image Output 
-    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
-    }
-    if (Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::RAW || Param.HeightmapImageOutput == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/HM_{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(),NodeName,Param.TextureWidth, Param.TextureHeight });
-        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Param.TextureWidth, Param.TextureHeight, heightMapData.data());
-        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
-    }
+    SaveHeightmapImage(Param.HeightmapImageOutput, "HM_" + NodeName , Param.TextureWidth, Param.TextureHeight, heightMapData.data());
 
     //Texture
     FString TexturePath;
@@ -81,6 +93,60 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
     return Result;
 }
 
-bool FPLATEAUMeshLoaderForLandscape::OverwriteTexture() {
-    return false;
+
+void FPLATEAUMeshLoaderForLandscape::CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName) {
+    const FString ReplacedNodeName = NodeName.Replace(*FString("Mesh_"), *FString()); //Mesh Prefix ����
+    auto OriginalComponent = GetOriginalComponent(Actor, ReplacedNodeName);
+    if (OriginalComponent) {
+        const auto& OriginalParentComponent = OriginalComponent->GetAttachParent();
+        auto RefComponent = (UPLATEAULandscapeRefComponent*)Actor->AddComponentByClass(UPLATEAULandscapeRefComponent::StaticClass(), false, FTransform(), false);
+
+        // Original�R���|�[�l���g�̑�������̂܂ܗ��p
+        if (OriginalComponent) {
+            RefComponent->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
+            RefComponent->OutsideChildren = OriginalComponent->OutsideChildren;
+            RefComponent->OutsideParent = OriginalComponent->OutsideParent;
+            RefComponent->MeshGranularityIntValue = OriginalComponent->MeshGranularityIntValue;  
+        }
+
+        RefComponent->LandscapeReference = Landscape;
+        RefComponent->SetMobility(EComponentMobility::Type::Static);
+
+        auto NewName = "Ref_" + NodeName;
+        RefComponent->Rename(*NewName, nullptr, REN_DontCreateRedirectors);      
+        Actor->AddInstanceComponent(RefComponent);
+        RefComponent->RegisterComponent();
+        RefComponent->AttachToComponent(OriginalParentComponent, FAttachmentTransformRules::KeepWorldTransform);
+
+#if WITH_EDITOR
+        RefComponent->PostEditChange();
+#endif
+    }
+}
+
+TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(const AActor* ModelActor, const FString Name) {
+    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
+    TArray<USceneComponent*> Result;
+    const auto Components = ModelActor->GetComponents();
+    for (auto Component : Components) {
+        if (Component->IsA<USceneComponent>()) {
+            FRegexMatcher matcher(pattern, Component->GetName());
+            if (matcher.FindNext()) {
+                Result.Add((USceneComponent*)Component);
+            }
+        }
+    }
+    return Result;
+}
+
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscape::GetOriginalComponent(const AActor* ModelActor, const FString Name) {
+    const auto BaseComponents = FindComponentsByName(ModelActor, Name);
+    if (BaseComponents.Num() > 0) {
+        UPLATEAUCityObjectGroup* FoundItem;
+        int32 ItemIndex;
+        if (BaseComponents.FindItemByClass<UPLATEAUCityObjectGroup>(&FoundItem, &ItemIndex)) {
+            return FoundItem;
+        }
+    }
+    return nullptr;
 }

@@ -70,6 +70,9 @@ namespace plateau::polygonMesh {
         void setIsActive(bool is_active); // GranularityConverterでのみ利用します。
         bool isActive() const; // GranularityConverterでのみ利用します。
         void reserveChild(size_t reserve_count);
+
+        /// 子なしで自身のコピーを作成します。
+        Node copyWithoutChildren() const;
     private:
         std::string name_;
         std::vector<Node> child_nodes_;

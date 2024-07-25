@@ -52,6 +52,11 @@ namespace plateau::polygonMesh {
         /// ルートノードから再帰的に探索することで、Modelに含まれるすべてのMeshを取得します。
         std::vector<Mesh*> getAllMeshes() const;
         void reserveRootNodes(size_t reserve_count);
+
+        /// 幅優先探索の順番でNodeのvectorを返します。
+        /// 実行後にノードの構成を変えてしまうと、戻り値のポインタが無効になることに注意してください。
+        std::vector<Node*> bfsNodes();
+
     private:
         std::vector<Node> root_nodes_;
     };

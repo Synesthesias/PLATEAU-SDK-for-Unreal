@@ -8,5 +8,5 @@
 class PLATEAURUNTIME_API FPLATEAUModelClassification : public FPLATEAUModelReconstruct {
 
 public:
-    virtual void SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity) = 0;
+    virtual void SetConvertGranularity(const ConvertGranularity Granularity) = 0;
 };

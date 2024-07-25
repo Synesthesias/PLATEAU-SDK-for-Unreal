@@ -70,6 +70,10 @@ namespace plateau::polygonMesh {
             return primary_index == other.primary_index && atomic_index == other.atomic_index;
         };
 
+        bool operator!=(const CityObjectIndex& other) const {
+            return !(*this == other);
+        };
+
         std::string toString() const {
             return std::to_string(primary_index) + "," + std::to_string(atomic_index);
         };

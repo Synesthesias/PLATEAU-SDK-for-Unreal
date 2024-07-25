@@ -15,7 +15,7 @@
 #include <Reconstruct/PLATEAUModelClassificationByType.h>
 #include <Reconstruct/PLATEAUModelClassificationByAttribute.h>
 #include <Reconstruct/PLATEAUModelLandscape.h>
-#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include <Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h>
 #include <Reconstruct/PLATEAUModelAlignLand.h>
 #include "Tasks/Pipe.h"
 
@@ -476,7 +476,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
 
     UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     TTask<TArray<USceneComponent*>> ReconstructModelTask = Launch(TEXT("ReconstructModelTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {       
-        FPLATEAUModelReconstruct ModelReconstruct(this, FPLATEAUModelReconstruct::GetMeshGranularityFromReconstructType(ReconstructType));
+        FPLATEAUModelReconstruct ModelReconstruct(this, FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(ReconstructType));
         const auto& TargetCityObjects = ModelReconstruct.GetUPLATEAUCityObjectGroupsFromSceneComponents(TargetComponents);
         auto Task = ReconstructTask(ModelReconstruct, TargetCityObjects, bDestroyOriginal);
         AddNested(Task);
@@ -541,14 +541,17 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
 
             //粒度ごとにターゲットを取得して実行
             TArray<USceneComponent*> JoinedResults;
-            TArray<plateau::polygonMesh::MeshGranularity> GranularityList{  plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject, 
-                                                                            plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject ,
-                                                                            plateau::polygonMesh::MeshGranularity::PerCityModelArea };
+            TArray<ConvertGranularity> GranularityList{ 
+                ConvertGranularity::PerAtomicFeatureObject,
+                ConvertGranularity::PerPrimaryFeatureObject,
+                ConvertGranularity::PerCityModelArea,
+                ConvertGranularity::MaterialInPrimary
+            };
 
             for (const auto& Granularity : GranularityList) {
-                const auto& Targets = ModelClassification.FilterComponentsByMeshGranularity(TargetCityObjects, Granularity);
+                const auto& Targets = ModelClassification.FilterComponentsByConvertGranularity(TargetCityObjects, Granularity);
                 if (Targets.Num() > 0) {
-                    ModelClassification.SetMeshGranularity(Granularity);
+                    ModelClassification.SetConvertGranularity(Granularity);
                     auto GranularityTask = ReconstructTask(ModelClassification, Targets, bDestroyOriginal);
                     AddNested(GranularityTask);
                     GranularityTask.Wait();
@@ -558,8 +561,8 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
             return JoinedResults;
         }
         else {
-            const auto& MeshGranularity = FPLATEAUModelReconstruct::GetMeshGranularityFromReconstructType(ReconstructType);
-            ModelClassification.SetMeshGranularity(MeshGranularity);
+            const auto& ConvertGranularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(ReconstructType);
+            ModelClassification.SetConvertGranularity(ConvertGranularity);
             auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
             return Task.GetResult();
         }
@@ -602,41 +605,45 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
         FPLATEAUMeshExporter MeshExporter;
         std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(this, TargetCityObjects, ExtOptions);
 
-        const auto Results = Landscape.CreateHeightMap(smodel, Param);
+        auto Results = Landscape.CreateHeightMap(smodel, Param);
 
-        // 高さを地形に揃える
-        if (Param.AlignLand) {
-            auto AlignLandTask = AlignLand(Results, Param, bDestroyOriginal);
-            AddNested(AlignLandTask);
-            AlignLandTask.Wait();
-            const auto& AlignedComponents = AlignLandTask.GetResult();
+        // 高さを地形に揃える (LOD3Roadの場合は、ResultのHeightmap書き換え)
+        if (Param.AlignLand || Param.InvertRoadLod3) {
+            const auto& AlignedComponents = AlignLand(Results, Param, bDestroyOriginal);
             FFunctionGraphTask::CreateAndDispatchWhenReady([&, AlignedComponents, bDestroyOriginal]() {
                 // Align コンポーネント削除
                 DestroyOrHideComponents(AlignedComponents, bDestroyOriginal);
                 }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
         }
 
-        //TODO:  // LOD3道路の場合、HeightMap書き換え
-
         for (const auto Result : Results) {
-            //Landscape生成
-            if (Param.CreateLandscape) {
-                TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
-                //LandScape  
-                FFunctionGraphTask::CreateAndDispatchWhenReady(
-                    [&, HeightData, Result, Param] {
-                        Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
-                        Param.ComponentCountX, Param.ComponentCountY,
-                        Param.TextureWidth, Param.TextureHeight,
-                        Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
-                    }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+            //　平滑化Mesh / Landscape生成
+            if (Param.ConvertTerrain) {
+                if (!Param.ConvertToLandscape) {
+                    //平滑化Mesh生成
+                    FPLATEAUMeshLoaderForLandscapeMesh MeshLoader;
+                    MeshLoader.CreateMeshFromHeightMap(*this, Param.TextureWidth, Param.TextureHeight, Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.Data->data(), Result.NodeName);
+                }
+                else {
+                    //Landscape生成
+                    TArray<uint16> HeightData(Result.Data->data(), Result.Data->size());
+                    //LandScape  
+                    FFunctionGraphTask::CreateAndDispatchWhenReady(
+                        [&, HeightData, Result, Param ] {
+                            auto LandActor = Landscape.CreateLandScape(GetWorld(), Param.NumSubsections, Param.SubsectionSizeQuads,
+                            Param.ComponentCountX, Param.ComponentCountY,
+                            Param.TextureWidth, Param.TextureHeight,
+                            Result.Min, Result.Max, Result.MinUV, Result.MaxUV, Result.TexturePath, HeightData, Result.NodeName);
+                            Landscape.CreateLandScapeReference(LandActor, this, Result.NodeName);
+                        }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
+                }
             }
         }
 
         FFunctionGraphTask::CreateAndDispatchWhenReady([&, TargetCityObjects, bDestroyOriginal, Results]() {
 
             // Landscape コンポーネント削除
-            if (Param.CreateLandscape)
+            if (Param.ConvertTerrain)
                 DestroyOrHideComponents(TargetCityObjects, bDestroyOriginal);
 
             //終了イベント通知
@@ -648,19 +655,15 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
     return CreateLandscapeTask;
 }
 
-UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> APLATEAUInstancedCityModel::AlignLand(const TArray<HeightmapCreationResult> Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
+TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
 
-    UE::Tasks::TTask<TArray<UPLATEAUCityObjectGroup*>> AlignLandTask = Launch(TEXT("AlignLandTask"), [&, this, Results, Param, bDestroyOriginal] {
-        FPLATEAUModelAlignLand AlignLand(this);
-        TArray<plateau::heightMapAligner::HeightMapFrame> Frames;
-        for (const auto Result : Results) {
-            Frames.Add(AlignLand.CreateAlignData(Result.Data, Result.Min, Result.Max, Result.NodeName, Param));
-        }
-
-        const auto TargetCityObjects = AlignLand.SetAlignData(Frames, Param);
-        return TargetCityObjects;
-
-        });
-    return AlignLandTask;
+    FPLATEAUModelAlignLand ModelAlign(this);
+    ModelAlign.SetResults(Results, Param);
+    TArray<UPLATEAUCityObjectGroup*> TargetCityObjects = ModelAlign.GetTargetCityObjectsForAlignLand();
+    //Lod3Roadの場合はLandscape生成前にResultのHeightmap情報書き換え&TargetCityObjectsからLod3Road除外
+    if (Param.InvertRoadLod3) 
+        Results = ModelAlign.UpdateHeightMapForLod3Road(TargetCityObjects);
+    if (Param.AlignLand) 
+        ModelAlign.Align(TargetCityObjects);
+    return TargetCityObjects;
 }
-
