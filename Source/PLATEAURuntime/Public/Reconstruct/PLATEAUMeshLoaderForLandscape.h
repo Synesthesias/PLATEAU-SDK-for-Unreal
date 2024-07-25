@@ -6,6 +6,7 @@
 #include "PLATEAUMeshLoader.h"
 #include "PLATEAUGeometry.h"
 #include "PLATEAUCityModelLoader.h"
+#include "Landscape.h"
 #include "PLATEAUMeshLoaderForLandscape.generated.h"
 
 UENUM(BlueprintType)
@@ -44,7 +45,8 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         ComponentCountX(126),
         ComponentCountY(126),
         Offset(0,0),
-        CreateLandscape(true),
+        ConvertTerrain(true),
+        ConvertToLandscape(false),
         ApplyBlurFilter(true),
         FillEdges(true),
         AlignLand(true),
@@ -66,7 +68,9 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         FVector2D Offset;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
-        bool CreateLandscape;
+        bool ConvertTerrain;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
+        bool ConvertToLandscape;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
         bool ApplyBlurFilter;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|BPLibraries|Landscape")
@@ -104,6 +108,8 @@ public:
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
 
+    void CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName);
+
 protected:
 
     void LoadNodeRecursiveForHeightMap(
@@ -117,8 +123,8 @@ protected:
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);
 
-    bool OverwriteTexture() override;
-
+    TArray<USceneComponent*> FindComponentsByName(const AActor* ModelActor, const FString Name);
+    UPLATEAUCityObjectGroup* GetOriginalComponent(const AActor* ModelActor, const FString Name);
 
 private:
 

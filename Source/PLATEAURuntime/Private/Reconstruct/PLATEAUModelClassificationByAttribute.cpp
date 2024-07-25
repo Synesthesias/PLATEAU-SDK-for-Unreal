@@ -5,7 +5,7 @@
 #include <plateau/material_adjust/material_adjuster_by_attr.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include "CityGML/PLATEAUAttributeValue.h"
-#include <PLATEAUCityObjectGroup.h>
+#include "Component/PLATEAUCityObjectGroup.h"
 
 using namespace plateau::granularityConvert;
 

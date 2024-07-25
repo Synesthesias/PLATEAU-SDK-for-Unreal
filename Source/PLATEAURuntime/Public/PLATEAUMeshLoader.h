@@ -81,6 +81,7 @@ protected:
 
     virtual bool UseCachedMaterial();
     virtual bool InvertMeshNormal();
+    virtual bool MergeTriangles();
 
 protected:
     bool bAutomationTest;
@@ -113,5 +114,6 @@ protected:
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
 
+    virtual void ModifyMeshDescription(FMeshDescription& MeshDescription);
     virtual bool OverwriteTexture();
 };

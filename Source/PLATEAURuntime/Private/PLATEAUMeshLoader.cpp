@@ -9,12 +9,12 @@
 #include "StaticMeshResources.h"
 #include "MeshElementRemappings.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "PLATEAUStaticMeshComponent.h"
+#include "Component/PLATEAUStaticMeshComponent.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
@@ -126,7 +126,7 @@ namespace {
     }
 
     bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal) {
+        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -202,7 +202,7 @@ namespace {
                 auto VertexID = InIndices[InIndexIndex];
 
                 // 頂点が使用済みの場合は複製
-                if (UsedVertexIDs.Contains(VertexID)) {
+                if (UsedVertexIDs.Contains(VertexID) && !MergeTriangles) {
                     const auto NewVertexID = OutMeshDescription.CreateVertex();
                     VertexPositions[NewVertexID] = VertexPositions[VertexID];
                     VertexID = NewVertexID;
@@ -376,7 +376,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal());
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal(), MergeTriangles());
+    ModifyMeshDescription(*MeshDescription);
 
 #if WITH_EDITOR
     FFunctionGraphTask::CreateAndDispatchWhenReady(
@@ -625,6 +626,9 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
         Node.getName());
 }
 
+void FPLATEAUMeshLoader::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+}
+
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
 }
@@ -635,6 +639,10 @@ bool FPLATEAUMeshLoader::UseCachedMaterial() {
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {
     return true;
+}
+
+bool FPLATEAUMeshLoader::MergeTriangles() {
+    return false;
 }
 
 bool FPLATEAUMeshLoader::OverwriteTexture() {
