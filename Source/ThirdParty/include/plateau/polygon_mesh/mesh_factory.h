@@ -24,6 +24,9 @@ namespace plateau::polygonMesh {
             return std::move(mesh_);
         }
 
+        /// メッシュができたあとの仕上げ処理として軽量化します。
+        void optimizeMesh();
+
         /**
          * citygml::Polygon の情報を Mesh 向けに変換し、 引数の mesh に書き加えます。
          * 引数で与えられたポリゴンのうち、次の情報を追加します。

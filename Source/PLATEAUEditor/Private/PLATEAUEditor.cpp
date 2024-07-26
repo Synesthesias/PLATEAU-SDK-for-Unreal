@@ -2,7 +2,7 @@
 
 #include "PLATEAUEditor.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUCityObjectGroupDetails.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUEditorStyle.h"

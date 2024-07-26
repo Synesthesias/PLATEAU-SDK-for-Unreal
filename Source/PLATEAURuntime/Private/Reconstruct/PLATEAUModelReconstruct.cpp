@@ -9,46 +9,10 @@ using namespace plateau::granularityConvert;
 
 FPLATEAUModelReconstruct::FPLATEAUModelReconstruct() {}
 
-FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType) {
+FPLATEAUModelReconstruct::FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const ConvertGranularity Granularity) {
     CityModelActor = Actor;
-    MeshGranularity = static_cast<plateau::polygonMesh::MeshGranularity>(ReconstructType);
+    ConvGranularity = Granularity;
     bDivideGrid = false;
-}
-
-/**
-* @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-* @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-* @return Key: GmlID, Value: UPLATEAUCityObject の Map
-*/
-TMap<FString, FPLATEAUCityObject> FPLATEAUModelReconstruct::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
-    TMap<FString, FPLATEAUCityObject> cityObjMap;
-    for (auto comp : TargetCityObjectGroups) {
-
-        if (comp->SerializedCityObjects.IsEmpty())
-            continue;
-
-        for (auto cityObj : comp->GetAllRootCityObjects()) {
-            if (!comp->OutsideParent.IsEmpty() && !cityObjMap.Contains(comp->OutsideParent)) {
-                // 親を探す
-                TArray<USceneComponent*> Parents;
-                comp->GetParentComponents(Parents);
-                for (const auto& Parent : Parents) {
-                    if (Parent->GetName().Contains(comp->OutsideParent)) {
-                        for (auto pObj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
-                            cityObjMap.Add(pObj.GmlID, pObj);
-                        }
-                        break;
-                    }
-                }
-            }
-
-            cityObjMap.Add(cityObj.GmlID, cityObj);
-            for (auto child : cityObj.Children) {
-                cityObjMap.Add(child.GmlID, child);
-            }
-        }
-    }
-    return cityObjMap;
 }
 
 /**
@@ -75,9 +39,23 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::GetUPLATEAUCityObject
     return UniqueComponents.Array();
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::FilterComponentsByConvertGranularity(TArray<UPLATEAUCityObjectGroup*> TargetComponents, const ConvertGranularity Granularity) {
+    TArray<UPLATEAUCityObjectGroup*> Components = TargetComponents.FilterByPredicate([Granularity](UPLATEAUCityObjectGroup* Component) {
+        return Component->GetConvertGranularity() == Granularity;
+        });
+    return Components;
+}
 
-    GranularityConvertOption ConvOption(MeshGranularity, bDivideGrid ? 1 : 0);
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+    return ConvertModelWithGranularity(TargetCityObjects, ConvGranularity);
+}
+
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity) {
+
+    auto OriginalGranularity = ConvGranularity;
+    ConvGranularity = Granularity;
+
+    GranularityConvertOption ConvOption(Granularity, bDivideGrid ? 1 : 0);
 
     FPLATEAUMeshExportOptions ExtOptions;
     ExtOptions.bExportHiddenObjects = false;
@@ -89,13 +67,15 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     GranularityConverter Converter;
 
     //属性情報を覚えておきます。
-    CityObjMap = CreateMapFromCityObjectGroups(TargetCityObjects);
+    CityObjMap = FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(TargetCityObjects);
 
     check(CityModelActor != nullptr);
 
     std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
 
     std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
+
+    ConvGranularity = OriginalGranularity;
 
     return converted;
 }
@@ -107,7 +87,29 @@ TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel
 
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), MeshGranularity, CityObjMap, *CityModelActor);
+        MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), ConvGranularity, CityObjMap, *CityModelActor);
     }
     return MeshLoader.GetLastCreatedComponents();
+}
+
+ConvertGranularity FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType) {
+    switch (ReconstructType) {
+    case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
+        return ConvertGranularity::PerAtomicFeatureObject;
+    case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
+        return ConvertGranularity::PerPrimaryFeatureObject;
+    case EPLATEAUMeshGranularity::PerCityModelArea:
+        return ConvertGranularity::PerCityModelArea;
+    case EPLATEAUMeshGranularity::PerMaterialInPrimary:
+        return ConvertGranularity::MaterialInPrimary;
+    default:
+        return ConvertGranularity::PerPrimaryFeatureObject;
+    }
+}
+
+void FPLATEAUModelReconstruct::GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList) {
+    for (auto child : CityObj.Children) {
+        IdList.Add(child.GmlID);
+        GetChildrenGmlIds(child, IdList);
+    }
 }

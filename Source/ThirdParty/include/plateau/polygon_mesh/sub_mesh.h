@@ -6,6 +6,15 @@
 #include "citygml/material.h"
 
 namespace plateau::polygonMesh {
+
+    /// SubMeshを同士を比較するクラスで、mapやsetでの比較用テンプレート引数に利用できます。
+    /// startIndex, endIndexは考慮せず、見た目情報で比較します。
+    class SubMesh;
+    class SubMeshCompareByAppearance {
+    public:
+        bool operator()(const SubMesh& lhs, const SubMesh& rhs) const;
+    };
+
     /**
      * SubMesh は Mesh によって所有されます。
      * Mesh の一部 (Indices リストの中のとある範囲)がとあるテクスチャであることを表現します。
@@ -48,6 +57,9 @@ namespace plateau::polygonMesh {
         bool isSameAs(const SubMesh& other) const;
 
         bool operator==(const SubMesh& other) const;
+
+        /// startIndexとendIndexは無視して、見た目の情報が同じならtrueを返します
+        bool isAppearanceEqual(const SubMesh& other) const;
 
         /// SubMesh の情報を stringstream に書き込みます。
         void debugString(std::stringstream& ss, int indent) const;

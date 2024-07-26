@@ -9,15 +9,17 @@
 #include "StaticMeshResources.h"
 #include "MeshElementRemappings.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Component/PLATEAUStaticMeshComponent.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
 #endif
+
 
 DECLARE_STATS_GROUP(TEXT("PLATEAUMeshLoader"), STATGROUP_PLATEAUMeshLoader, STATCAT_Advanced);
 
@@ -124,7 +126,7 @@ namespace {
     }
 
     bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal) {
+        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles) {
         FStaticMeshAttributes Attributes(OutMeshDescription);
 
         // UVチャンネル数を3に設定
@@ -200,7 +202,7 @@ namespace {
                 auto VertexID = InIndices[InIndexIndex];
 
                 // 頂点が使用済みの場合は複製
-                if (UsedVertexIDs.Contains(VertexID)) {
+                if (UsedVertexIDs.Contains(VertexID) && !MergeTriangles) {
                     const auto NewVertexID = OutMeshDescription.CreateVertex();
                     VertexPositions[NewVertexID] = VertexPositions[VertexID];
                     VertexID = NewVertexID;
@@ -212,7 +214,7 @@ namespace {
                 const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
                 const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
-
+                
                 const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
                 const auto UV4 = FVector2f(InUV4.x, InUV4.y);
                 VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
@@ -374,7 +376,8 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
     }
 
-    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal());
+    ConvertMesh(InMesh, *MeshDescription, SubMeshMaterialSets, InvertMeshNormal(), MergeTriangles());
+    ModifyMeshDescription(*MeshDescription);
 
 #if WITH_EDITOR
     FFunctionGraphTask::CreateAndDispatchWhenReady(
@@ -413,7 +416,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData] {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, NodeName] {
                 for (const auto& SubMeshValue : SubMeshMaterialSets) {
                     UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
                     if (SharedMatPtr == nullptr) {
@@ -438,7 +441,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                             }
                         }
 
-                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 
                         //Textureが存在する場合
                         if (Texture != nullptr)
@@ -495,10 +498,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AAc
         PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
         return PLATEAUCityObjectGroup;
     }
-    return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+    //return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+    return NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     UMaterialInstanceDynamic* DynMaterial = nullptr;
     if (SubMeshValue.hasMaterial) {
@@ -559,10 +563,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMe
         }
         else {
             //デフォルトマテリアル設定
-            const auto SourceMaterialPath =
-                Texture != nullptr
-                ? TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial")
-                : TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial_No_Texture");
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial");
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
             DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
         }
@@ -585,12 +586,14 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
             if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
                 StaticClass = UPLATEAUCityObjectGroup::StaticClass();
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject, LoadInputData.ExtractOptions.mesh_granularity);
                 Comp = PLATEAUCityObjectGroup;
             }
             else {
-                StaticClass = UStaticMeshComponent::StaticClass();
-                Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                //StaticClass = UStaticMeshComponent::StaticClass();
+                //Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+                StaticClass = UPLATEAUStaticMeshComponent::StaticClass();
+                Comp = NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
             }
 
             const FString NewUniqueName = MakeUniqueGmlObjectName(
@@ -623,6 +626,9 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
         Node.getName());
 }
 
+void FPLATEAUMeshLoader::ModifyMeshDescription(FMeshDescription& MeshDescription) {
+}
+
 TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
     return LastCreatedComponents;
 }
@@ -633,6 +639,10 @@ bool FPLATEAUMeshLoader::UseCachedMaterial() {
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {
     return true;
+}
+
+bool FPLATEAUMeshLoader::MergeTriangles() {
+    return false;
 }
 
 bool FPLATEAUMeshLoader::OverwriteTexture() {

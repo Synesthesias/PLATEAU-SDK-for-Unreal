@@ -5,6 +5,8 @@
 #include "mesh_extract_options.h"
 #include "citygml/cityobject.h"
 #include "plateau/polygon_mesh/city_object_list.h"
+#include "plateau/polygon_mesh/quaternion.h"
+#include "plateau/geometry/geo_coordinate.h"
 #include <libplateau_api.h>
 #include <optional>
 
@@ -39,13 +41,18 @@ namespace plateau::polygonMesh {
         const std::vector<TVec3d>& getVertices() const;
 
         const std::vector<unsigned>& getIndices() const;
+        std::vector<unsigned>& getIndices();
         const UV& getUV1() const;
         UV& getUV1();
         const UV& getUV4() const;
+        UV& getUV4();
         const std::vector<SubMesh>& getSubMeshes() const;
         std::vector<SubMesh>& getSubMeshes();
+        const std::vector<TVec3d>& getVertexColors() const;
+        void setVertexColors(std::vector<TVec3d>& vertex_colors);
 
         void setSubMeshes(std::vector<SubMesh>& sub_mesh_list);
+        void setSubMeshes(std::vector<SubMesh>&& sub_mesh_list);
 
         void reserve(long long vertex_count);
 
@@ -71,7 +78,7 @@ namespace plateau::polygonMesh {
          * 利用すべき状況 : 形状(Indices)を追加したので、追加分を新しいテクスチャに設定したいという状況で利用できます。
          * テクスチャがない時は テクスチャパスが空文字である SubMesh になります。
          *
-         * ただし、直前の SubMesh のテクスチャとパスが同じであれば、
+         * ただし、直前の SubMesh のテクスチャと同じであれば、
          * 代わりに extendLastSubMesh を実行します。
          * なぜなら、同じテクスチャであればサブメッシュを分けるのは無意味で描画負荷を増やすだけと思われるためです。
          */
@@ -97,14 +104,35 @@ namespace plateau::polygonMesh {
 
         void merge(const Mesh& other_mesh, const bool invert_mesh_front_back, const bool include_textures);
 
+        /// 同じSubMeshが複数回登場する場合、例えばSubMeshの配列が A→B→A→B のようになっている場合に、
+        /// SubMeshを結合して A→B とすることで描画負荷を減らします。
+        void combineSameSubMeshes();
+
+        void convertAxisToENUFrom(geometry::CoordinateSystem from_axis);
+        void convertAxisFromENUTo(geometry::CoordinateSystem to_axis);
+
     private:
         friend class MeshFactory;
+
+        /// 頂点座標のリストです。
         std::vector<TVec3d> vertices_;
+
+        /// 頂点番号をリスト上で並べて面を表現したものです。
         std::vector<unsigned> indices_;
+
+        /// (u,v)のリストです。
         UV uv1_;
+
+        /// 4番目のUVはCityObjectIndexを格納するために利用します。
         UV uv4_;
         std::vector<SubMesh> sub_meshes_;
+        /// Mesh中のUV4(地物インデックス)と地物IDの対応関係を保持する辞書です。
         CityObjectList city_object_list_;
+
+        /// 頂点カラーです。
+        /// CityGMLには頂点カラーはないのでインポート時は使いませんが、
+        /// UnityでRenderingToolkitを利用すると頂点カラーを使うのでそれのエクスポート時に利用します。
+        std::vector<TVec3d> vertex_colors_;
     };
 }
 

@@ -38,6 +38,8 @@ namespace plateau::dataset {
          * しかし、今後のあらゆるデータで大丈夫であるという保証はなく、今後に調整が必要になるかもしれません。
          */
         static constexpr std::streamsize max_gml_read_size_from_first_lod_found = 10 /*メガバイト*/*1000000;
+        static constexpr std::streamsize max_gml_read_size_from_second_lod_found = 60/*メガバイト*/*1000000; // LOD1→2を検索するときは多めに検索しないと見逃す
+        static constexpr std::streamsize max_gml_read_size_from_third_lod_found =  120/*メガバイト*/*1000000; // LOD3→4を検索するときはさらに多めに検索しないと見逃す
 //        static constexpr std::streamsize max_gml_read_size_from_first_lod_found = LONG_MAX;
     };
 }

@@ -12,6 +12,9 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
+#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Component/PLATEAUSceneComponent.h"
+
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"
 
@@ -151,7 +154,8 @@ public:
         USceneComponent* Component;
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady(
             [&Component, &Actor, &Name] {
-                Component = NewObject<USceneComponent>(Actor, NAME_None);
+                //Component = NewObject<USceneComponent>(Actor, NAME_None);
+                Component = NewObject<UPLATEAUSceneComponent>(Actor, NAME_None);
                 // コンポーネント名設定(拡張子無しgml名)
                 FString NewUniqueName = Name;
                 if (!Component->Rename(*NewUniqueName, nullptr, REN_Test)) {
@@ -199,7 +203,8 @@ namespace {
 
     void CreateRootComponent(AActor& Actor) {
 #if WITH_EDITOR
-        USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
+        //USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
+        USceneComponent* ActorRootComponent = NewObject<UPLATEAUSceneComponent>(&Actor,
             USceneComponent::GetDefaultSceneRootVariableName());
 
         check(ActorRootComponent != nullptr);

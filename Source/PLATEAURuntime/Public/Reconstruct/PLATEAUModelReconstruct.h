@@ -6,16 +6,23 @@
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
 
+using ConvertGranularity = plateau::granularityConvert::ConvertGranularity;
+
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:
     FPLATEAUModelReconstruct();
-    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const EPLATEAUMeshGranularity ReconstructType);
+    FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const ConvertGranularity Granularity);
 
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
      */
     virtual TArray<UPLATEAUCityObjectGroup*> GetUPLATEAUCityObjectGroupsFromSceneComponents(TArray<USceneComponent*> TargetComponents);
+
+    /**
+     * @brief 粒度単位でコンポーネントをフィルタリングします
+     */
+    virtual TArray<UPLATEAUCityObjectGroup*> FilterComponentsByConvertGranularity(TArray<UPLATEAUCityObjectGroup*> TargetComponents, const ConvertGranularity Granularity);
 
     /**
      * @brief 選択されたComponentの結合・分割処理用のModelを生成します
@@ -29,25 +36,31 @@ public:
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
+    /**
+     * @brief EPLATEAUMeshGranularityをplateau::granularityConvert::ConvertGranularityに変換します
+     */
+    static ConvertGranularity GetConvertGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType);
+
 protected:
     
-    /**
-     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
-     */
-    TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
-
     APLATEAUInstancedCityModel* CityModelActor;
-    plateau::polygonMesh::MeshGranularity MeshGranularity;
+    ConvertGranularity ConvGranularity;
     bool bDivideGrid;
 
     TMap<FString, FPLATEAUCityObject> CityObjMap;
+
+    /**
+     * @brief CityObjectのChildrenのidリストを返します
+     * @param
+     */
+    void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
 
     /**
      * @brief 指定したMeshLoaderで、生成されたModelからStaticMeshコンポーネントを再生成します
      * @param
      */
     TArray<USceneComponent*> ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
+
+    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity);
 
 };

@@ -22,6 +22,8 @@ TMap<int64, FText> UPLATEAUModelAdjustmentFilterAPI::GetFilteringNames() {
  * @return パッケージ情報
  */
 int64 UPLATEAUModelAdjustmentFilterAPI::GetCityModelPackages(const APLATEAUInstancedCityModel* TargetCityModel) {
+    if (TargetCityModel == nullptr)
+        return 0;
     return static_cast<int64>(TargetCityModel->GetCityModelPackages());
 }
 
@@ -74,4 +76,15 @@ void UPLATEAUModelAdjustmentFilterAPI::FilterModel(APLATEAUInstancedCityModel* T
         LodMap.Add(static_cast<int64>(UPLATEAUImportSettings::GetPredefinedCityModelPackageFromPLATEAUCityModelPackage(kv.Key)), kv.Value);
     }
     ApplyFilter(TargetCityModel, EnablePackage, LodMap, bOnlyMaxLod, EnableCityObject);
+}
+
+TArray<EPLATEAUCityModelPackage> UPLATEAUModelAdjustmentFilterAPI::ConvertCityModelPackagesToEnumArray(const int64 Package) {
+    TSet<EPLATEAUCityModelPackage> EnumSet;
+    for (plateau::dataset::PredefinedCityModelPackage Pkg : UPLATEAUImportSettings::GetAllPackages()) {
+        if (Pkg == plateau::dataset::PredefinedCityModelPackage::None) continue;
+        if (Package & (int64)Pkg) {
+            EnumSet.Add(UPLATEAUImportSettings::GetPLATEAUCityModelPackageFromPredefinedCityModelPackage(Pkg));
+        }
+    }
+    return EnumSet.Array();
 }

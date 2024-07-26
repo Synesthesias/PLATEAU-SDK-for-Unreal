@@ -1,7 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 #include "CityGML/PLATEAUAttributeValue.h"
-#include "PLATEAUCityObjectGroup.h"
-
+#include "Component/PLATEAUCityObjectGroup.h"
 
 namespace {
     constexpr TCHAR EPLATEAUAttributeTypePath[] = TEXT("/Script/PLATEAURuntime.EPLATEAUAttributeType");
@@ -89,4 +88,24 @@ FString UPLATEAUAttributeValueBlueprintLibrary::GetString(const FPLATEAUAttribut
 
 FPLATEAUAttributeMap UPLATEAUAttributeValueBlueprintLibrary::GetAttributes(const FPLATEAUAttributeValue& Value) {
     return Value.Attributes->AttributeMap;
+}
+
+TArray<FPLATEAUAttributeValue> UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(UPARAM(ref) const FString& Key, UPARAM(ref) const FPLATEAUAttributeMap& AttributeMap) {
+    TArray<FString> Keys;
+    int32 Length = Key.ParseIntoArray(Keys, TEXT("/"), false);
+    FString FirstKey = Length > 0 ? Keys[0] : "";
+    TArray<FPLATEAUAttributeValue> Values;
+    if (AttributeMap.AttributeMap.Contains(FirstKey)) {
+        const auto& attr = AttributeMap.AttributeMap[FirstKey];
+        if (attr.Type != EPLATEAUAttributeType::AttributeSets) {
+            Values.Add(attr);
+        }
+        else {
+            Keys.RemoveSingle(FirstKey);
+            FString NewKey = FString::Join<TArray<FString>>(Keys, TEXT("/"));
+            const auto& ChildAttr = attr.Attributes.Get();
+            return GetAttributesByKey(NewKey, *ChildAttr);
+        }
+    }
+    return Values;
 }

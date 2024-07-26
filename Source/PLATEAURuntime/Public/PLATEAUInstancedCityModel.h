@@ -5,16 +5,18 @@
 #include "CoreMinimal.h"
 #include "PLATEAUGeometry.h"
 #include "GameFramework/Actor.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include <plateau/polygon_mesh/model.h>
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
 #include "Tasks/Task.h"
+#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
-class FPLATEAUCityObject;
+struct FPLATEAUCityObject;
 class FPLATEAUModelReconstruct;
+class FPLATEAUModelClassification;
 struct FPLATEAUMinMaxLod {
     int MinLod = 0;
     int MaxLod = 0;
@@ -35,8 +37,15 @@ public:
         FString ID;
 };
 
+UENUM(BlueprintType)
+enum class EPLATEAULandscapeCreationResult : uint8 {
+    Success = 0,
+    Fail = 1
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReconstructFinishedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnClassifyFinishedDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLandscapeCreationFinishedDelegate, EPLATEAULandscapeCreationResult, Result);
 
 /**
  * @brief インポートされた3D都市モデルを表します。
@@ -67,6 +76,12 @@ public:
     FOnClassifyFinishedDelegate OnClassifyFinished;
 
     /**
+     * @brief ランドスケープ生成処理終了イベント
+     */
+    UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
+    FOnLandscapeCreationFinishedDelegate OnLandscapeCreationFinished;
+
+    /**
      * @brief Componentのユニーク化されていない元の名前を取得します。
      * コンポーネント名の末尾に"__{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"__"以降を削除します。
      * 元の名前に"__{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
@@ -77,6 +92,8 @@ public:
      * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
      */
     static int ParseLodComponent(const USceneComponent* InLodComponent);
+
+    static void DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy );
 
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
@@ -110,6 +127,12 @@ public:
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
         TArray<FPLATEAUCityObject>& GetAllRootCityObjects();
+
+    /**
+     * @brief パッケージ種を含むコンポーネントを返します
+     */
+    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|CityGML"))
+        TArray<UActorComponent*> GetComponentsByPackage(EPLATEAUCityModelPackage Pkg) const;
 
     /**
      * @brief 3D都市モデル内に含まれるパッケージ種を返します。
@@ -159,6 +182,18 @@ public:
     UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
+     * @brief 選択されたComponentのMaterialを属性情報のKeyに紐づく値で分割します
+     * @param
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+    /**
+     * @brief 選択されたComponentからLandscapeを生成します
+     * @param
+     */
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+
+    /**
      * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
      * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
      * @param MinLod 可視化される最小のLOD
@@ -175,9 +210,19 @@ protected:
     const TArray<TObjectPtr<USceneComponent>>& GetGmlComponents() const;
 
     /**
-     * @brief 結合分離 / マテリアル分け　共通処理
+     * @brief 結合分離　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, bool bDestroyOriginal);
+
+    /**
+     * @brief マテリアル分け　共通処理
+     */
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+
+    /**
+     * @brief 特定パッケージを地形に合わせて高さ合わせ
+     */
+    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。

@@ -2,7 +2,7 @@
 
 #include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
 #include "PLATEAUCityModelLoader.h"
-#include "PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 
 FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct() {
     bAutomationTest = false;
@@ -12,14 +12,57 @@ FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool In
     bAutomationTest = InbAutomationTest;
 }
 
+plateau::polygonMesh::MeshGranularity FPLATEAUMeshLoaderForReconstruct::ConvertGranularityToMeshGranularity(const ConvertGranularity ConvertGranularity) {
+    if (ConvertGranularity == plateau::granularityConvert::ConvertGranularity::MaterialInPrimary)
+        return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
+    return (plateau::polygonMesh::MeshGranularity)ConvertGranularity;
+}
+
+/**
+* @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
+* @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
+* @return Key: GmlID, Value: UPLATEAUCityObject の Map
+*/
+TMap<FString, FPLATEAUCityObject> FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
+    TMap<FString, FPLATEAUCityObject> OutCityObjMap;
+    for (auto Comp : TargetCityObjectGroups) {
+
+        if (Comp->SerializedCityObjects.IsEmpty())
+            continue;
+
+        for (auto CityObj : Comp->GetAllRootCityObjects()) {
+            if (!Comp->OutsideParent.IsEmpty() && !OutCityObjMap.Contains(Comp->OutsideParent)) {
+                // 親を探す
+                TArray<USceneComponent*> Parents;
+                Comp->GetParentComponents(Parents);
+                for (const auto& Parent : Parents) {
+                    if (Parent->GetName().Contains(Comp->OutsideParent)) {
+                        for (auto Pobj : Cast<UPLATEAUCityObjectGroup>(Parent)->GetAllRootCityObjects()) {
+                            OutCityObjMap.Add(Pobj.GmlID, Pobj);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            OutCityObjMap.Add(CityObj.GmlID, CityObj);
+            for (auto Child : CityObj.Children) {
+                OutCityObjMap.Add(Child.GmlID, Child);
+            }
+        }
+    }
+    return OutCityObjMap;
+}
+
 void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
-    TMap<FString, FPLATEAUCityObject> cityObjMap,
+    ConvertGranularity Granularity,
+    TMap<FString, FPLATEAUCityObject> CityObj,
     AActor& InActor) {
 
-    CityObjMap = cityObjMap;
+    CityObjMap = CityObj;
+    ConvGranularity = Granularity;
     LastCreatedComponents.Empty();
 
     ReloadNodeRecursive(InParentComponent, InNode, Granularity, InActor);
@@ -36,7 +79,7 @@ void FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(
 void FPLATEAUMeshLoaderForReconstruct::ReloadNodeRecursive(
     USceneComponent* InParentComponent,
     const plateau::polygonMesh::Node& InNode,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     AActor& InActor) {
     const auto Component = ReloadNode(InParentComponent, InNode, Granularity, InActor);
     const size_t ChildNodeCount = InNode.getChildCount();
@@ -48,7 +91,7 @@ void FPLATEAUMeshLoaderForReconstruct::ReloadNodeRecursive(
 
 USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* ParentComponent,
     const plateau::polygonMesh::Node& Node,
-    plateau::polygonMesh::MeshGranularity Granularity,
+    ConvertGranularity Granularity,
     AActor& Actor) {
     if (Node.getMesh() == nullptr || Node.getMesh()->getVertices().size() == 0) {
         USceneComponent* Comp = nullptr;
@@ -69,7 +112,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
             auto cityObjRef = CityObjMap.Find(DesiredName);
             if (cityObjRef != nullptr) {
                 const FPLATEAUCityObject cityObj = *cityObjRef;
-                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj);
+                PLATEAUCityObjectGroup->SerializeCityObject(Node, cityObj, Granularity);
             }
 
             const FString NewUniqueName = MakeUniqueGmlObjectName(&Actor, StaticClass, DesiredName);
@@ -92,7 +135,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
     }
 
     plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
-    MeshExtractOptions.mesh_granularity = Granularity;
+    MeshExtractOptions.mesh_granularity = ConvertGranularityToMeshGranularity(Granularity);
     FLoadInputData LoadInputData
     {
         MeshExtractOptions,
@@ -105,7 +148,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
         Node.getName());
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture) {
+UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
 
     FString TexturePath = SubMeshValue.TexturePath;
     //分割・結合時のFallback Material取得
@@ -120,7 +163,7 @@ UMaterialInstanceDynamic* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMes
             return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
         }
     }
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
@@ -130,7 +173,7 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentFo
     //　分割・結合時は、処理前に保存したCityObjMapからFPLATEAUCityObjectを取得して利用する
     const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, LoadInputData.ExtractOptions.mesh_granularity, CityObjMap);
+    PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, ConvGranularity, CityObjMap);
     return PLATEAUCityObjectGroup;
 }
 
