@@ -5,9 +5,9 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>3D&#37117;&#24066;&#12514;&#12487;&#12523;&#12398;&#20462;&#27491; | PLATEAU SDK for Unreal </title>
+    <title>3D&#37117;&#24066;&#12514;&#12487;&#12523;&#12398;&#35519;&#25972; | PLATEAU SDK for Unreal </title>
     <meta name="viewport" content="width=device-width">
-    <meta name="title" content="3D&#37117;&#24066;&#12514;&#12487;&#12523;&#12398;&#20462;&#27491; | PLATEAU SDK for Unreal ">
+    <meta name="title" content="3D&#37117;&#24066;&#12514;&#12487;&#12523;&#12398;&#35519;&#25972; | PLATEAU SDK for Unreal ">
     <meta name="generator" content="docfx 2.59.4.0">
     
     <link rel="shortcut icon" href="../favicon.ico">
@@ -77,10 +77,10 @@
         <div class="article row grid-right">
           <div class="col-md-10">
             <article class="content wrap" id="_content" data-uid="">
-<h1 id="3d都市モデルの修正">3D都市モデルの修正</h1>
+<h1 id="3d都市モデルの調整">3D都市モデルの調整</h1>
 
 <h2 id="概要">概要</h2>
-<p>PLATEAUウィンドウの<code>モデル修正</code>では、インポートした都市モデルを編集できます。<br>次の機能があります。</p>
+<p>PLATEAUウィンドウの<code>モデル調整</code>では、インポートした都市モデルを編集できます。<br>次の機能があります。</p>
 <ul>
 <li>コンポーネントON/OFF<ul>
 <li>条件指定で一括でアクティブ化・非アクティブ化します。</li>
@@ -95,6 +95,11 @@
 </ul>
 </li>
 </ul>
+<div class="NOTE"><h5>Note</h5><ul>
+<li>地物とは・・建物、道路、地形など、地図上に表示されるもの。物理的なものとは限らず、都市計画区域、土砂災害警戒区域などの目には見えない領域を示すものも地物の一種として扱います。</li>
+<li>地形とは・・地表の起伏です。</li>
+</ul>
+</div>
 <h3 id="操作画面の開き方">操作画面の開き方</h3>
 <ul>
 <li>Unrealのメニューバーから <code>PLATEAU</code> → <code>PLATEAU SDK</code> を選択します。</li>
@@ -135,7 +140,7 @@
 <p><img src="../resources/manual/modelAdjust/materialByAttr.png" alt=""></p>
 <h3 id="操作方法">操作方法</h3>
 <ul>
-<li><p>PLATEAU Windowの「モデル修正」タブ → 「分割/結合/マテリアル分け」タブを開きます。</p>
+<li><p>PLATEAU Windowの「モデル調整」タブ → 「分割/結合/マテリアル分け」タブを開きます。</p>
 <p><img src="../resources/manual/modelAdjust/materialAdjustWindow.png" alt=""></p>
 </li>
 </ul>
@@ -166,6 +171,7 @@
 </li>
 <li><code>粒度を変更する</code>にチェックが入っていない状態でマテリアル分けした場合、現在と同じ粒度にします。</li>
 <li>後述の<code>マテリアルを条件指定で変更する</code>にチェックが入っていない状態で実行ボタンを押した場合、マテリアルを変えずに粒度を変更します。</li>
+<li><code>主要地物内の同一マテリアル単位</code>で分割結合した場合は出力されたコンポーネントの名前は&quot;Material-(マテリアルID)&quot;となり、それ以外の場合はコンポーネントが対応する地物のgml:idと同じ文字列で設定されます。</li>
 </ul>
 <h4 id="マテリアル分け">マテリアル分け</h4>
 <p>条件に応じてマテリアル分けをします。<br>また分割/結合で粒度が指定されている場合、その粒度に変換します。</p>
@@ -211,6 +217,8 @@
 <div class="NOTE"><h5>Note</h5><p>高さ合わせ対象となる都市モデルは次のパッケージタイプです。
 「道路、災害リスク、土地利用、都市計画決定情報、徒歩道、広場、水部、交通(航路)」</p>
 </div>
+<div class="NOTE"><h5>Note</h5><p>テレインのメリットは、例えば芸術的な目的で高さを変える、テクスチャペイントするなどの操作ができることにあります。<br>高さ合わせは、急傾斜の地形では誤差が出ることがあります。</p>
+</div>
 <h3 id="使い方">使い方</h3>
 <ul>
 <li><code>変換対象</code>には、起伏モデルを含む都市モデルを選択します。</li>
@@ -220,14 +228,18 @@
 </ul>
 </li>
 <li><code>詳細設定</code>から詳細な設定が行えます。</li>
-<li><code>実行</code>ボタンを押すと地形の平滑化が行われ、道路、災害リスク、土地利用等対象の都市モデルが変換した地形に重なるよう自動的に調整されます。</li>
+<li><p><code>実行</code>ボタンを押すと地形の平滑化が行われ、道路、災害リスク、土地利用等対象の都市モデルが変換した地形に重なるよう自動的に調整されます。</p>
+</li>
+<li><p>地形変換/高さ合わせ処理の出力結果について、ランドスケープは名前の先頭に&quot;TERRAIN_&quot;が付与されます。高さ合わせした地物については、前と同じ名前のコンポーネントが生成されます。</p>
+</li>
 </ul>
 <h3 id="詳細設定">詳細設定</h3>
 <p><img src="../resources/manual/landscape/advancedSettings.png" alt=""></p>
 <h4 id="地形変換">地形変換</h4>
 <ul>
 <li><code>地形変換</code>にチェックを入れると地形の変換（平滑化・テレインへの変換）が有効になり、詳細なオプションが表示されます。<ul>
-<li><code>解像度</code>プルダウンから変換時にハイトマップとして利用する画像解像度を選択できます。</li>
+<li><code>解像度</code>プルダウンから変換時にハイトマップとして利用する画像解像度を選択できます。  </li>
+<li><code>地形変換</code>では、地形の起伏を滑らかに変更する処理が入ります。そのため、測量の高さを厳密に使いたいケース、特に測量からの誤差の少なさが重要となる状況ではこの処理はそぐわない場合があります。</li>
 <li><code>ハイトマップ平滑化</code>にチェックを入れるとハイトマップにぼかしフィルターを適用し、よりスムーズな地形になります。</li>
 <li><code>余白を端の高さに合わせる</code>にチェックを入れるとハイトマップの余白を一番端のピクセルで埋めます。チェックが外れていると余白部分の高さは0になります。</li>
 </ul>
@@ -236,8 +248,9 @@
 <h4 id="高さ合わせ機能">高さ合わせ機能</h4>
 <ul>
 <li><code>高さ合わせ</code>にチェックを入れると高さ合わせが有効になり、詳細なオプションが表示されます。<ul>
-<li><code>交通・区域モデルの高さを地形に合わせる</code>にチェックをいれると道路、災害リスク、土地利用等の都市モデルを変換した地形に重なるよう調整します。</li>
-<li><code>土地をLOD3道路モデルに合わせる</code>にチェックをいれると地形モデルの形状がLOD3道路モデルに合わせて変形されます。</li>
+<li><code>交通・区域モデルの高さを地形に合わせる</code>にチェックをいれると道路、災害リスク、土地利用等の都市モデルを変換した地形に重なるよう調整します。　</li>
+<li><code>土地をLOD3道路モデルに合わせる</code>にチェックをいれると地形モデルの形状がLOD3道路モデルに合わせて変形されます。  </li>
+<li>インスペクターで非表示にしていなくても、シーン上で非表示にしたものについては高さ合わせの対象外となります。</li>
 </ul>
 </li>
 </ul>
@@ -251,7 +264,7 @@
               <div class="contribution">
                 <ul class="nav">
                   <li>
-                    <a href="https://github.com/Synesthesias/PLATEAU-SDK-for-Unreal/blob/dev/v2/Documentation/manual/ModelAdjust.md/#L1" class="contribution-link">Improve this Doc</a>
+                    <a href="https://github.com/Synesthesias/PLATEAU-SDK-for-Unreal/blob/main/Documentation/manual/ModelAdjust.md/#L1" class="contribution-link">Improve this Doc</a>
                   </li>
                 </ul>
               </div>
