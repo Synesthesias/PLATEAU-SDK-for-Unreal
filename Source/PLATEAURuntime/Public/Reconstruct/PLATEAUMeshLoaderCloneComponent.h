@@ -46,6 +46,7 @@ protected:
 
     UPLATEAUCityObjectGroup* GetOriginalComponent(FString Name);
 
+    bool UseCachedMaterial() override;
     bool MergeTriangles() override;
     void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
 
