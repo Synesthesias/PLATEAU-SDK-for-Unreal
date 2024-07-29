@@ -6,7 +6,7 @@
     href: Installation.md
   - name: 3D都市モデルのインポート
     href: ImportCityModels.md
-  - name: 3D都市モデルの編集
+  - name: 3D都市モデルの調整
     href: ModelAdjust.md   
   - name: 3D都市モデルのエクスポート
     href: ExportCityModels.md
