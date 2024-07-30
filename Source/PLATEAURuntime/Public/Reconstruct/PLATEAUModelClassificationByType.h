@@ -11,11 +11,12 @@ public:
     FPLATEAUModelClassificationByType();
     FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
     void SetConvertGranularity(const ConvertGranularity Granularity) override;
+    void SetShouldConvertGranularity(const bool shouldConv) override;
 
     std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;
 
 protected:
-
+    bool shouldConvertGranularity = true;
     TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials;
 };
