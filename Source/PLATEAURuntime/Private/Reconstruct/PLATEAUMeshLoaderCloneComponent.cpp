@@ -109,6 +109,10 @@ USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* P
     return nullptr;
 }
 
+bool FPLATEAUMeshLoaderCloneComponent::UseCachedMaterial() {
+    return false;
+}
+
 bool FPLATEAUMeshLoaderCloneComponent::MergeTriangles() {
     return IsSmooth;
 }
