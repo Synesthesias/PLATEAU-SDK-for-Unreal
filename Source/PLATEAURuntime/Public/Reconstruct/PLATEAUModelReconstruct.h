@@ -36,6 +36,8 @@ public:
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
+    virtual void  SetMeshGranularity(const EPLATEAUMeshGranularity Granularity);
+
     /**
      * @brief EPLATEAUMeshGranularityをplateau::granularityConvert::ConvertGranularityに変換します
      */
@@ -45,6 +47,7 @@ protected:
     
     APLATEAUInstancedCityModel* CityModelActor;
     ConvertGranularity ConvGranularity;
+    bool bChangeGranularity;
     bool bDivideGrid;
 
     TMap<FString, FPLATEAUCityObject> CityObjMap;
@@ -62,5 +65,6 @@ protected:
     TArray<USceneComponent*> ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
 
     virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity);
+    virtual std::shared_ptr<plateau::polygonMesh::Model> CreateModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
 
 };

@@ -80,6 +80,20 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     return converted;
 }
 
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::CreateModel(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+
+    FPLATEAUMeshExportOptions ExtOptions;
+    ExtOptions.bExportHiddenObjects = false;
+    ExtOptions.bExportTexture = true;
+    ExtOptions.TransformType = EMeshTransformType::Local;
+    ExtOptions.CoordinateSystem = ECoordinateSystem::ESU;
+
+    FPLATEAUMeshExporter MeshExporter;
+    check(CityModelActor != nullptr);
+    std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+    return smodel;
+}
+
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
     FPLATEAUMeshLoaderForReconstruct MeshLoader(false);
     return ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
@@ -105,6 +119,11 @@ ConvertGranularity FPLATEAUModelReconstruct::GetConvertGranularityFromReconstruc
     default:
         return ConvertGranularity::PerPrimaryFeatureObject;
     }
+}
+
+void FPLATEAUModelReconstruct::SetMeshGranularity(const EPLATEAUMeshGranularity Granularity) {
+    ConvGranularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(Granularity);
+    bChangeGranularity = Granularity != EPLATEAUMeshGranularity::DoNotChange;
 }
 
 void FPLATEAUModelReconstruct::GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList) {

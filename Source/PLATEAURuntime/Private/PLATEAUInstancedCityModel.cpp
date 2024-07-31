@@ -538,7 +538,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
     TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassifyTask"), [&, TargetCityObjects, ReconstructType, bDestroyOriginal] {
 
         if (ReconstructType == EPLATEAUMeshGranularity::DoNotChange) {
-
+            /*
             //粒度ごとにターゲットを取得して実行
             TArray<USceneComponent*> JoinedResults;
             TArray<ConvertGranularity> GranularityList{ 
@@ -559,13 +559,23 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
                 }
             }
             return JoinedResults;
+            */
+
+            //TODO : 粒度変更なし
+            //auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
+            //return Task.GetResult();
         }
         else {
-            const auto& ConvertGranularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(ReconstructType);
-            ModelClassification.SetConvertGranularity(ConvertGranularity);
-            auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
-            return Task.GetResult();
+           // const auto& ConvertGranularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(ReconstructType);
+            //ModelClassification.SetConvertGranularity(ConvertGranularity);
+            //auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
+            //return Task.GetResult();
         }
+
+        //ModelClassification.SetConvertGranularity(ConvertGranularity);
+        ModelClassification.SetMeshGranularity(ReconstructType);
+        auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
+        return Task.GetResult();
 
         });
     return ClassifyTask;

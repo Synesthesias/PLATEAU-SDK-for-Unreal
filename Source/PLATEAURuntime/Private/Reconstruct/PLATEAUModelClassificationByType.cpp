@@ -20,7 +20,9 @@ FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUIns
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
-    std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
+    //std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
+
+    std::shared_ptr<plateau::polygonMesh::Model> converted = bChangeGranularity ? ConvertModelWithGranularity(TargetCityObjects, ConvGranularity):CreateModel(TargetCityObjects);
 
     TArray<EPLATEAUCityObjectsType>  ClassificationTypes;
     for (auto kv : ClassificationMaterials) {
@@ -58,16 +60,23 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
     }
     Adjuster.exec(*converted);
 
-    //地物単位に応じたModelを再生成
-    GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
-    GranularityConverter Converter;
-    std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
-    return finalConverted;
+    if (bChangeGranularity) {
+
+        //地物単位に応じたModelを再生成
+        GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
+        GranularityConverter Converter;
+        std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
+        return finalConverted;
+
+    }
+
+    return converted;
 }
 
+/*
 void FPLATEAUModelClassificationByType::SetConvertGranularity(const ConvertGranularity Granularity) {
     ConvGranularity = Granularity;
-}
+}*/
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
 
