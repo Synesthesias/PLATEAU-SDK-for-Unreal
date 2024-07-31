@@ -9,5 +9,4 @@ class PLATEAURUNTIME_API FPLATEAUModelClassification : public FPLATEAUModelRecon
 
 public:
     virtual void SetConvertGranularity(const ConvertGranularity Granularity) = 0;
-    virtual void SetShouldConvertGranularity(const bool shouldConv) = 0;
 };

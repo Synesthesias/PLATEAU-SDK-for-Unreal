@@ -548,8 +548,6 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
                 ConvertGranularity::MaterialInPrimary
             };
 
-            ModelClassification.SetShouldConvertGranularity(false);
-
             for (const auto& Granularity : GranularityList) {
                 const auto& Targets = ModelClassification.FilterComponentsByConvertGranularity(TargetCityObjects, Granularity);
                 if (Targets.Num() > 0) {
@@ -565,7 +563,6 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
         else {
             const auto& ConvertGranularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(ReconstructType);
             ModelClassification.SetConvertGranularity(ConvertGranularity);
-            ModelClassification.SetShouldConvertGranularity(true);
             auto Task = ReconstructTask(ModelClassification, TargetCityObjects, bDestroyOriginal);
             return Task.GetResult();
         }

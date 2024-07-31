@@ -6,8 +6,6 @@
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include "CityGML/PLATEAUAttributeValue.h"
 #include "Component/PLATEAUCityObjectGroup.h"
-#include <PLATEAUMeshExporter.h>
-#include <PLATEAUExportSettings.h>
 
 using namespace plateau::granularityConvert;
 
@@ -43,20 +41,13 @@ void FPLATEAUModelClassificationByAttribute::SetConvertGranularity(const Convert
     ConvGranularity = Granularity;
 }
 
-void FPLATEAUModelClassificationByAttribute::SetShouldConvertGranularity(const bool shouldConv)
-{
-    shouldConvertGranularity = true;
-}
-
-
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
-    
-    FPLATEAUMeshExportOptions ExtOptions;
-    ExtOptions.bExportHiddenObjects = true;
-    std::shared_ptr<plateau::polygonMesh::Model> smodel = FPLATEAUMeshExporter().CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+
+    //最小地物単位のModelを生成
+    std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
 
     plateau::materialAdjust::MaterialAdjusterByAttr Adjuster;
-    auto meshes = smodel.get()->getAllMeshes();
+    auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
         for (auto& cityobj : cityObjList) {
@@ -85,20 +76,13 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
             }
         }
     }
-    Adjuster.exec(*smodel);
-    
-    if(shouldConvertGranularity)
-    {
-        //地物単位に応じたModelを再生成
-        GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
-        GranularityConverter Converter;
-        std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));   
-        return finalConverted;
-    } else
-    {
-        return smodel;
-    }
-    
+    Adjuster.exec(*converted);
+
+    //地物単位に応じたModelを再生成
+    GranularityConvertOption ConvOption(ConvGranularity, bDivideGrid ? 1 : 0);
+    GranularityConverter Converter;
+    std::shared_ptr<plateau::polygonMesh::Model> finalConverted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*converted, ConvOption));   
+    return finalConverted;
 }
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByAttribute::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
