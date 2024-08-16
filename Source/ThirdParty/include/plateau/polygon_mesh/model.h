@@ -41,6 +41,9 @@ namespace plateau::polygonMesh {
         Node& getRootNodeAt(size_t index);
         const Node& getRootNodeAt(size_t index) const;
 
+        /// 各ノードのペアレント、ルートを設定します。
+        void assignNodeHierarchy();
+
         /// 子もメッシュもないノードを削除します。
         void eraseEmptyNodes();
 
