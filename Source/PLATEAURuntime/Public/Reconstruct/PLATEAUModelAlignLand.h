@@ -30,11 +30,6 @@ public:
     EPLATEAUCityModelPackage::UrbanPlanningDecision,
     };
 
-    /**
-     * @brief ComponentリストからLOD3のRoadを探してリストに追加します
-     */
-    static TArray<UPLATEAUCityObjectGroup*> FilterLod3RoadComponents(APLATEAUInstancedCityModel* Actor, TArray<UPLATEAUCityObjectGroup*> TargetComponents);
-
     FPLATEAUModelAlignLand();
     FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor);
 

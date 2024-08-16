@@ -21,10 +21,10 @@ public:
         const FString NodeName);
 
 protected:
-    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
+    UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
 
     bool OverwriteTexture() override;
     bool InvertMeshNormal() override;
@@ -32,7 +32,7 @@ protected:
     void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
 
 private:
-    UMaterialInstanceDynamic* ReplaceMaterial;
+    UMaterialInterface* ReplaceMaterial;
 
 };
 

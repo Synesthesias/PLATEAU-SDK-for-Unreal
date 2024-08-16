@@ -203,7 +203,6 @@ namespace {
 
     void CreateRootComponent(AActor& Actor) {
 #if WITH_EDITOR
-        //USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
         USceneComponent* ActorRootComponent = NewObject<UPLATEAUSceneComponent>(&Actor,
             USceneComponent::GetDefaultSceneRootVariableName());
 

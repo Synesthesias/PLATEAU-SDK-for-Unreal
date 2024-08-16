@@ -229,6 +229,17 @@ namespace {
 
         return CityJsonObject;
     }
+
+    TSharedRef<FJsonObject> GetCityJsonObjectWithChildren(const FPLATEAUCityObject& InCityObject) {
+        TSharedRef<FJsonObject> CityJsonObject = GetCityJsonObject(InCityObject);
+        TArray<TSharedPtr<FJsonValue>> CityJsonObjectChildren;
+
+        for(const auto& Child: InCityObject.Children)
+            CityJsonObjectChildren.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObject(Child)));
+
+        CityJsonObject->SetArrayField(plateau::CityObjectGroup::ChildrenFieldName, CityJsonObjectChildren);
+        return CityJsonObject;
+    }
 }
 
 void UPLATEAUCityObjectGroup::FindCollisionUV(const FHitResult& HitResult, FVector2D& UV, const int32 UVChannel) {
@@ -275,6 +286,28 @@ void UPLATEAUCityObjectGroup::FindCollisionUV(const FHitResult& HitResult, FVect
         // Use to blend UVs
         UV = BaryCoords.X * UV0 + BaryCoords.Y * UV1 + BaryCoords.Z * UV2;
     }    
+}
+
+void UPLATEAUCityObjectGroup::SerializeCityObject(const FPLATEAUCityObject& InCityObject, const FString InOutsideParent, const TArray<FString> InOutsideChildren) {
+    const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
+
+    JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, InOutsideParent);
+
+    // 子コンポーネント名取得
+    TArray<TSharedPtr<FJsonValue>> OutsideChildrenJsonArray;
+    for (const auto& OutsideChild : InOutsideChildren) {
+        OutsideChildrenJsonArray.Emplace(MakeShared<FJsonValueString>(OutsideChild));
+    }
+    JsonRootObject->SetArrayField(plateau::CityObjectGroup::OutsideChildrenFieldName, OutsideChildrenJsonArray);
+    
+    // CityObjects取得
+    TArray<TSharedPtr<FJsonValue>> CityObjectsJsonArray;
+    CityObjectsJsonArray.Emplace(MakeShared<FJsonValueObject>(GetCityJsonObjectWithChildren(InCityObject)));
+    JsonRootObject->SetArrayField(plateau::CityObjectGroup::CityObjectsFieldName, CityObjectsJsonArray);
+
+    // Json書き出し
+    const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SerializedCityObjects);
+    FJsonSerializer::Serialize(JsonRootObject.ToSharedRef(), Writer);
 }
 
 void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
@@ -395,12 +428,12 @@ void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::No
 
 void UPLATEAUCityObjectGroup::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
 
-    
+
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
 
-    // 子コンポーネント名取得
+    // Outside子コンポーネント名取得
     TArray<TSharedPtr<FJsonValue>> OutsideChildrenJsonArray;
     for (int i = 0; i < InNode.getChildCount(); i++) {
         OutsideChildrenJsonArray.Emplace(MakeShared<FJsonValueString>(UTF8_TO_TCHAR(InNode.getChildAt(i).getName().c_str())));
@@ -617,13 +650,6 @@ TArray<FPLATEAUCityObject> UPLATEAUCityObjectGroup::GetAllRootCityObjects() {
 const plateau::granularityConvert::ConvertGranularity UPLATEAUCityObjectGroup::GetConvertGranularity() {
     return static_cast<plateau::granularityConvert::ConvertGranularity>(MeshGranularityIntValue);
 }
-/*
-const plateau::polygonMesh::MeshGranularity UPLATEAUCityObjectGroup::GetMeshGranularity() {
-    if (MeshGranularityIntValue >= 4)
-        return plateau::polygonMesh::MeshGranularity::PerAtomicFeatureObject;
-    return static_cast<plateau::polygonMesh::MeshGranularity>(MeshGranularityIntValue);
-}
-*/
 
 void UPLATEAUCityObjectGroup::SetConvertGranularity(const plateau::granularityConvert::ConvertGranularity Granularity) {
     MeshGranularityIntValue = (int)Granularity;

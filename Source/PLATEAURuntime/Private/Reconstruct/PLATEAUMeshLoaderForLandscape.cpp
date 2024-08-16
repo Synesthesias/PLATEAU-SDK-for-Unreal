@@ -12,26 +12,13 @@
 #include "StaticMeshAttributes.h"
 #include "Component/PLATEAULandscapeRefComponent.h"
 #include "Landscape.h"
+#include "Util/PLATEAUReconstructUtil.h"
 
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
 
 FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
-}
-
-void FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(EPLATEAULandscapeHeightmapImageOutput OutputParam, FString FileName, int32 Width, int32 Height, uint16_t* Data ) {
-    // Heightmap Image Output 
-    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString PngSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.png")), { FPaths::ProjectContentDir(), FileName, Width, Height });
-        plateau::heightMapGenerator::HeightmapGenerator::savePngFile(TCHAR_TO_ANSI(*PngSavePath), Width, Height, Data);
-        UE_LOG(LogTemp, Log, TEXT("height map png saved: %s"), *PngSavePath);
-    }
-    if (OutputParam == EPLATEAULandscapeHeightmapImageOutput::RAW || OutputParam == EPLATEAULandscapeHeightmapImageOutput::PNG_RAW) {
-        FString RawSavePath = FString::Format(*FString(TEXT("{0}PLATEAU/{1}_{2}_{3}.raw")), { FPaths::ProjectContentDir(), FileName, Width, Height });
-        plateau::heightMapGenerator::HeightmapGenerator::saveRawFile(TCHAR_TO_ANSI(*RawSavePath), Width, Height, Data);
-        UE_LOG(LogTemp, Log, TEXT("height map raw saved: %s"), *RawSavePath);
-    }
 }
 
 TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
@@ -78,7 +65,7 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
         plateau::geometry::CoordinateSystem::ESU, Param.FillEdges, Param.ApplyBlurFilter, ExtMin, ExtMax, UVMin, UVMax);
     
     // Heightmap Image Output 
-    SaveHeightmapImage(Param.HeightmapImageOutput, "HM_" + NodeName , Param.TextureWidth, Param.TextureHeight, heightMapData.data());
+    FPLATEAUReconstructUtil::SaveHeightmapImage(Param.HeightmapImageOutput, "HM_" + NodeName , Param.TextureWidth, Param.TextureHeight, heightMapData.data());
 
     //Texture
     FString TexturePath;
@@ -101,7 +88,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateReference(ALandscape* Landscape, AAct
         const auto& OriginalParentComponent = OriginalComponent->GetAttachParent();
         auto RefComponent = (UPLATEAULandscapeRefComponent*)Actor->AddComponentByClass(UPLATEAULandscapeRefComponent::StaticClass(), false, FTransform(), false);
 
-        // Original�R���|�[�l���g�̑�������̂܂ܗ��p
+        // Originalコンポーネントの属性をそのまま利用
         if (OriginalComponent) {
             RefComponent->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
             RefComponent->OutsideChildren = OriginalComponent->OutsideChildren;

@@ -81,20 +81,6 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnLandscapeCreationFinishedDelegate OnLandscapeCreationFinished;
 
-    /**
-     * @brief Componentのユニーク化されていない元の名前を取得します。
-     * コンポーネント名の末尾に"__{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"__"以降を削除します。
-     * 元の名前に"__{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
-     */
-    static FString GetOriginalComponentName(const USceneComponent* InComponent);
-
-    /**
-     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
-     */
-    static int ParseLodComponent(const USceneComponent* InLodComponent);
-
-    static void DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy );
-
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
 
@@ -193,13 +179,6 @@ public:
      */
 	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
-    /**
-     * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
-     * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
-     * @param MinLod 可視化される最小のLOD
-     * @param MaxLod 可視化される最大のLOD
-     */
-    static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -236,6 +215,4 @@ public:
 private:
     TAtomic<bool> bIsFiltering;
     TArray<FPLATEAUCityObject> RootCityObjects;
-
-    void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
 };

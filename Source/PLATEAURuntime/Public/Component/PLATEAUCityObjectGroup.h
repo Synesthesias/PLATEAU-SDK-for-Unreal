@@ -84,6 +84,12 @@ public:
      */
     void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::granularityConvert::ConvertGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
     void SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh, const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap);
+
+    /**
+     * @brief UnitTestでのFPLATEAUCityObjectのシンプルなシリアライズ
+     * @param InCityObject 結合・分割前に保存したFPLATEAUCityObject
+     */
+    void SerializeCityObject(const FPLATEAUCityObject& InCityObject, const FString InOutsideParent = "", const TArray<FString> InOutsideChildren = {});
     /**
      * @brief MeshGranularity取得Getter
      */

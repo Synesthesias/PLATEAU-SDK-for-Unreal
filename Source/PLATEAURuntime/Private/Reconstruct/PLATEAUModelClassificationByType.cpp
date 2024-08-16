@@ -5,6 +5,7 @@
 #include <plateau/material_adjust/material_adjuster_by_type.h>
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include <Component/PLATEAUCityObjectGroup.h>
+#include <Util/PLATEAUGmlUtil.h>
 
 using namespace plateau::granularityConvert;
 
@@ -47,8 +48,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
                     Adjuster.registerMaterialPattern(PlateauType, MaterialID);
 
                     const auto AttrInfo = *AttrInfoPtr;
-                    TSet<FString> Children;
-                    GetChildrenGmlIds(AttrInfo, Children);
+                    TSet<FString> Children = FPLATEAUGmlUtil::GetChildrenGmlIds(AttrInfo);
                     for (auto ChildId : Children) {
                         Adjuster.registerType(TCHAR_TO_UTF8(*ChildId), PlateauType);
                     }

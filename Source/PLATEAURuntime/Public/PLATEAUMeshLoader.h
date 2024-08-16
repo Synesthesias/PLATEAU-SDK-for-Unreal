@@ -42,10 +42,22 @@ public:
 private:
 };
 
+struct FNodeHierarchy {
+public:
+    FString NodeName;
+    FString NodePath;
+    FString RootNodeName;
+    FNodeHierarchy();
+    FNodeHierarchy(FString Name);
+    FNodeHierarchy(const plateau::polygonMesh::Node& InNode);
+    std::string GetNameAsStandardString();
+};
+
 FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value);
 
 struct FLoadInputData;
 class UPLATEAUCityObjectGroup;
+class FStaticMeshAttributes;
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
     using FPathToTexture = TMap<FString, UTexture2D*>;
@@ -69,13 +81,10 @@ public:
     TArray<USceneComponent*> GetLastCreatedComponents();
 
 protected:
-    USceneComponent* FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName);
-    FString MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName);
-
     // SubMesh情報等に応じてMaterialを作成
-    virtual UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName);
+    virtual UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier);
     // Loaderのタイプに応じて異なるStaticMeshComponentを作成
-    virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+    virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
         const std::shared_ptr <const citygml::CityModel> CityModel);
 
@@ -86,7 +95,7 @@ protected:
 protected:
     bool bAutomationTest;
     TArray<UStaticMesh*> StaticMeshes;
-    TMap<FSubMeshMaterialSet, UMaterialInstanceDynamic*> CachedMaterials;
+    TMap<FSubMeshMaterialSet, UMaterialInterface*> CachedMaterials;
 
     /// 何度も同じテクスチャをロードすると重いので使い回せるように覚えておきます
      FPathToTexture PathToTexture;
@@ -100,7 +109,7 @@ protected:
         const plateau::polygonMesh::Mesh& InMesh,
         const FLoadInputData& LoadInputData,
         const std::shared_ptr<const citygml::CityModel> CityModel,
-        const std::string& InNodeName);
+        FNodeHierarchy NodeHier);
     USceneComponent* LoadNode(
         USceneComponent* ParentComponent,
         const plateau::polygonMesh::Node& Node,
@@ -116,4 +125,9 @@ protected:
 
     virtual void ModifyMeshDescription(FMeshDescription& MeshDescription);
     virtual bool OverwriteTexture();
+
+    virtual void ComputeNormals(FStaticMeshAttributes& Attributes, bool InvertNormal);
+    virtual bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
+        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles);
+    virtual UStaticMesh* CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name);
 };

@@ -19,41 +19,50 @@ void FPLATEAUMeshLoaderCloneComponent::SetSmoothing(bool bSmooth) {
     IsSmooth = bSmooth;
 }
 
-TMap<FString, UPLATEAUCityObjectGroup*> FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
-    TMap<FString, UPLATEAUCityObjectGroup*> Map;
-    for (auto Comp : TargetCityObjects) {
-        Map.Add(APLATEAUInstancedCityModel::GetOriginalComponentName(Comp), Comp);
-    }
-    return Map;
-}
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderCloneComponent::GetOriginalComponent(FString NodePathString) {
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderCloneComponent::GetOriginalComponent(FString Name) {
-    auto Ptr = ComponentsMap.Find(Name);
+    auto Ptr = ComponentsMap.Find(NodePathString);
     if (Ptr) {
         const auto& OriginalComponent = *Ptr;
         return OriginalComponent;
     }
+
+    UE_LOG(LogTemp, Error, TEXT("Node not found : %s"), *NodePathString);
     return nullptr;
+}
+
+void FPLATEAUMeshLoaderCloneComponent::ReloadComponentFromModel(
+    std::shared_ptr<plateau::polygonMesh::Model> Model,
+    TMap<FString, UPLATEAUCityObjectGroup*> Components,
+    AActor& InActor) {
+
+    //Model->assignNodeHierarchy();
+
+    ComponentsMap = Components;
+    for (int i = 0; i < Model->getRootNodeCount(); i++) {
+        FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, Model->getRootNodeAt(i), 
+            plateau::granularityConvert::ConvertGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
+    }  
 }
 
 void FPLATEAUMeshLoaderCloneComponent::ReloadComponentFromNode(
     const plateau::polygonMesh::Node& InNode,
     TMap<FString, UPLATEAUCityObjectGroup*> Components,
     AActor& InActor) {
-
     ComponentsMap = Components;
-    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode, plateau::granularityConvert::ConvertGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
+    FPLATEAUMeshLoaderForReconstruct::ReloadComponentFromNode(nullptr, InNode,
+        plateau::granularityConvert::ConvertGranularity::PerPrimaryFeatureObject, TMap<FString, FPLATEAUCityObject>(), InActor);
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
     const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
     const std::shared_ptr <const citygml::CityModel> CityModel) {
 
-    const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
+    const FString NodeName = NodeHier.NodeName;
     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
 
     // Originalコンポーネントの属性をそのまま利用
-    const auto& OriginalComponent = GetOriginalComponent(NodeName);
+    const auto& OriginalComponent = GetOriginalComponent(NodeHier.NodePath);
     if (OriginalComponent) {
         PLATEAUCityObjectGroup->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
         PLATEAUCityObjectGroup->OutsideChildren = OriginalComponent->OutsideChildren;
@@ -63,14 +72,15 @@ UStaticMeshComponent* FPLATEAUMeshLoaderCloneComponent::GetStaticMeshComponentFo
     return PLATEAUCityObjectGroup;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderCloneComponent::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
+UMaterialInterface* FPLATEAUMeshLoaderCloneComponent::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, 
+    const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) {
 
     // Originalコンポーネントのマテリアルをそのまま利用
-    const auto& OriginalComponent = GetOriginalComponent(NodeName);
+    const auto& OriginalComponent = GetOriginalComponent(NodeHier.NodePath);
     if (OriginalComponent)
-        return (UMaterialInstanceDynamic*)OriginalComponent->GetMaterial(0);
+        return OriginalComponent->GetMaterial(0);
 
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
 }
 
 /**
@@ -84,8 +94,8 @@ USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* P
 
     if (Node.getMesh() != nullptr && Node.getMesh()->getVertices().size() > 0) {
 
-        const FString CompName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
-        const auto& OriginalComponent = GetOriginalComponent(CompName);
+        FNodeHierarchy NodeHier(Node);
+        const auto& OriginalComponent = GetOriginalComponent(NodeHier.NodePath);
 
         if (OriginalComponent) {
 
@@ -103,7 +113,7 @@ USceneComponent* FPLATEAUMeshLoaderCloneComponent::ReloadNode(USceneComponent* P
                 nullptr
             };
             return CreateStaticMeshComponent(Actor, *OriginalParentComponent, *Node.getMesh(), LoadInputData, nullptr,
-                Node.getName());
+                NodeHier);
         }
     }
     return nullptr;
@@ -126,5 +136,6 @@ void FPLATEAUMeshLoaderCloneComponent::ModifyMeshDescription(FMeshDescription& M
     }
 
     FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
-    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
+    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, 
+        EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
 }
