@@ -17,7 +17,8 @@ public class PLATEAUTests : ModuleRules {
 				"CoreUObject",
 				"Engine",
 				"InputCore",
-			}
+                "Landscape",
+            }
 		);
 
 		PrivateDependencyModuleNames.AddRange(
@@ -27,7 +28,9 @@ public class PLATEAUTests : ModuleRules {
 				"PLATEAUEditorBPLibraries",
                 "PLATEAURuntimeBPLibraries",
                 "UnrealEd",
-			});
+                "MeshDescription",
+                "StaticMeshDescription",
+            });
 
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[] {

@@ -13,10 +13,14 @@
 #include "PLATEAUEditor/Public/PLATEAUEditor.h"
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include <plateau/dataset/dataset_source.h>
-
+#include <PLATEAURuntime.h>
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
     FString MyTestName;
+
+    static FString GetTestDataPath() {
+        return FPLATEAURuntimeModule::GetContentDir().Append("/TestData/data");
+    }
 
     bool WriteToFile(const FString& Path, const FString& Text) const {
         const FString& DirectoryPath = FPaths::GetPath(Path);
@@ -89,6 +93,11 @@ protected:
         const FString TemplateMap = FPaths::EngineContentDir().Append("Maps/Templates/Template_Default.umap");
         return FEditorFileUtils::LoadMap(TemplateMap, true, true);
     }
+
+    bool OpenMap(FString MapName) const {
+        const FString Map = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/umap/").Append(MapName).Append(".umap");
+        return FEditorFileUtils::LoadMap(Map, false, true);
+    }
     
     APLATEAUCityModelLoader* GetInstancedCityLoader(const UWorld& World) {
         TArray<AActor*> FoundActors;
@@ -99,7 +108,7 @@ protected:
             constexpr int ZoneId = 9;
             const FVector ReferencePoint = FVector(-472281.96875, 5131018, 0);
             constexpr int64 PackageMask = static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building);
-            const FString SourcePath = UKismetSystemLibrary::GetProjectContentDirectory().Append("data");
+            const FString SourcePath = GetTestDataPath();
             const auto defaultMat = UPLATEAUImportAreaSelectBtn::GetDefaultFallbackMaterial(static_cast<int64>(plateau::dataset::PredefinedCityModelPackage::Building));
             const FPackageInfoSettings PackageInfoSettings(true, true, true, true, EPLATEAUTexturePackingResolution::H4096W4096, 0, 4, 1, defaultMat, false, "", 7);
             TMap<int64, FPackageInfoSettings> PackageInfoSettingsData;
