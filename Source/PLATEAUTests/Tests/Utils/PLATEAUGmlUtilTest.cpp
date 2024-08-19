@@ -17,83 +17,67 @@ bool FPLATEAUTest_Util_Gml_Util::RunTest(const FString& Parameters) {
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
+    //Array
+    TArray<FString> Path{ "Test0000_op","Lod3","Test_Parent_0000_1", "Test_Object_0000_1" };
+    FString NodePathArray = FPLATEAUGmlUtil::GetNodePathString(Path);
+    TestEqual("NodePath Array", NodePathArray, "Test0000_op/Lod3/Test_Parent_0000_1/Test_Object_0000_1");
 
-        //Array
-        TArray<FString> Path{ "Test0000_op","Lod3","Test_Parent_0000_1", "Test_Object_0000_1" };
-        FString NodePathArray = FPLATEAUGmlUtil::GetNodePathString(Path);
-        TestEqual("NodePath Array", NodePathArray, "Test0000_op/Lod3/Test_Parent_0000_1/Test_Object_0000_1");
-        return true;
-        }));
+    //Node
+    auto Model = plateau::polygonMesh::Model::createModel();
+    auto& NodeOp = Model->addEmptyNode(TCHAR_TO_UTF8(*FString("Test1111_op")));
+    auto& NodeLod = NodeOp.addEmptyChildNode(TCHAR_TO_UTF8(*FString("Lod1")));
+    auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*FString("Test_Object1111")));
+    Model->assignNodeHierarchy();
+    auto& NodeOp_ = Model->getRootNodeAt(0);
+    auto& NodeLod_ = NodeOp_.getChildAt(0);
+    auto& NodeObj_ = NodeLod_.getChildAt(0);
+    FString NodePathNode = FPLATEAUGmlUtil::GetNodePathString(NodeObj_);
+    TestEqual("NodePath Node", NodePathNode, "Test1111_op/Lod1/Test_Object1111");
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
+    //Component
+    FActorSpawnParameters SpawnParam;
+    const auto& Actor = GetWorld()->SpawnActor<AActor>(SpawnParam);
 
-        //Node
-        auto Model = plateau::polygonMesh::Model::createModel();
-        auto& NodeOp = Model->addEmptyNode(TCHAR_TO_UTF8(*FString("Test1111_op")));
-        auto& NodeLod = NodeOp.addEmptyChildNode(TCHAR_TO_UTF8(*FString("Lod1")));
-        auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*FString("Test_Object1111")));
-        Model->assignNodeHierarchy();
-        auto& NodeOp_ = Model->getRootNodeAt(0);
-        auto& NodeLod_ = NodeOp_.getChildAt(0);
-        auto& NodeObj_ = NodeLod_.getChildAt(0);
-        FString NodePathNode = FPLATEAUGmlUtil::GetNodePathString(NodeObj_);
-        TestEqual("NodePath Node", NodePathNode, "Test1111_op/Lod1/Test_Object1111");
-        return true;
-        }));
+    const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+        USceneComponent::GetDefaultSceneRootVariableName());
+    const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+        FName(TEXT("Test22222_op")));
+    const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
+        FName(TEXT("Lod2")));
+    const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
+        FName(TEXT("Test_Object2222")));
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
+    Actor->AddInstanceComponent(SceneRoot);
+    Actor->SetRootComponent(SceneRoot);
+    SceneRoot->RegisterComponent();
 
-        //Component
-        FActorSpawnParameters SpawnParam;
-        const auto& Actor = GetWorld()->SpawnActor<AActor>(SpawnParam);
+    Actor->AddInstanceComponent(CompRoot);
+    CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
+    CompRoot->RegisterComponent();
 
-        const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            USceneComponent::GetDefaultSceneRootVariableName());
-        const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEXT("Test22222_op")));
-        const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEXT("Lod2")));
-        const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEXT("Test_Object2222")));
-
-        Actor->AddInstanceComponent(SceneRoot);
-        Actor->SetRootComponent(SceneRoot);
-        SceneRoot->RegisterComponent();
-
-        Actor->AddInstanceComponent(CompRoot);
-        CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
-        CompRoot->RegisterComponent();
-
-        CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompLod);
-        CompLod->RegisterComponent();
+    CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
+    Actor->AddInstanceComponent(CompLod);
+    CompLod->RegisterComponent();
     
-        CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObj);
-        CompObj->RegisterComponent();
+    CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
+    Actor->AddInstanceComponent(CompObj);
+    CompObj->RegisterComponent();
 
-        GEngine->BroadcastLevelActorListChanged();
+    GEngine->BroadcastLevelActorListChanged();
 
-        FString NodePathComp = FPLATEAUGmlUtil::GetNodePathString(CompObj);
-        TestEqual("NodePath Comp", NodePathComp, "Test22222_op/Lod2/Test_Object2222");
-        return true;
-        }));
+    FString NodePathComp = FPLATEAUGmlUtil::GetNodePathString(CompObj);
+    TestEqual("NodePath Comp", NodePathComp, "Test22222_op/Lod2/Test_Object2222");
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
-
-        //Childeren GML ID
-        FPLATEAUCityObject CityObj;
-        CityObj.Children = { FPLATEAUCityObject{ "item1" } , FPLATEAUCityObject{ "item2" } ,FPLATEAUCityObject{ "item3" } };
-        CityObj.Children[0].Children = { FPLATEAUCityObject{ "item1_1" } ,FPLATEAUCityObject{ "item1_2" } };
-        CityObj.Children[1].Children = { FPLATEAUCityObject{ "item2_1" } ,FPLATEAUCityObject{ "item2_2" } };
-        TSet<FString> ChildrenIds = FPLATEAUGmlUtil::GetChildrenGmlIds(CityObj);
-        TestTrue("Children contains item1", ChildrenIds.Contains("item1"));
-        TestTrue("Children contains item2", ChildrenIds.Contains("item1"));
-        TestTrue("Children contains item1_1", ChildrenIds.Contains("item1_1"));
-        TestTrue("Children contains item2_2", ChildrenIds.Contains("item2_2"));
-        return true;
-        }));
+    //Childeren GML ID
+    FPLATEAUCityObject CityObj;
+    CityObj.Children = { FPLATEAUCityObject{ "item1" } , FPLATEAUCityObject{ "item2" } ,FPLATEAUCityObject{ "item3" } };
+    CityObj.Children[0].Children = { FPLATEAUCityObject{ "item1_1" } ,FPLATEAUCityObject{ "item1_2" } };
+    CityObj.Children[1].Children = { FPLATEAUCityObject{ "item2_1" } ,FPLATEAUCityObject{ "item2_2" } };
+    TSet<FString> ChildrenIds = FPLATEAUGmlUtil::GetChildrenGmlIds(CityObj);
+    TestTrue("Children contains item1", ChildrenIds.Contains("item1"));
+    TestTrue("Children contains item2", ChildrenIds.Contains("item1"));
+    TestTrue("Children contains item1_1", ChildrenIds.Contains("item1_1"));
+    TestTrue("Children contains item2_2", ChildrenIds.Contains("item2_2"));
 
     return true;
 }

@@ -16,8 +16,7 @@ bool FPLATEAUTest_Util_Component_Util::RunTest(const FString& Parameters) {
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
     
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
-
+    {
         FActorSpawnParameters SpawnParam;
         const auto& Actor = GetWorld()->SpawnActor<AActor>(SpawnParam);
 
@@ -36,13 +35,9 @@ bool FPLATEAUTest_Util_Component_Util::RunTest(const FString& Parameters) {
 
         FString OrigName = FPLATEAUComponentUtil::GetOriginalComponentName(Comp);
         TestEqual("Original Name", OrigName, "Test");
+    }
 
-        return true;
-        }));
-
-
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
-
+    {
         FActorSpawnParameters SpawnParam;
         const auto& Actor = GetWorld()->SpawnActor<AActor>(SpawnParam);
 
@@ -61,12 +56,7 @@ bool FPLATEAUTest_Util_Component_Util::RunTest(const FString& Parameters) {
 
         int Lod = FPLATEAUComponentUtil::ParseLodComponent(Comp);
         TestEqual("Parse Lod", Lod, 3);
-
-        return true;
-        }));
-
-
-
+    }
 
     return true;
 }

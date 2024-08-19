@@ -16,9 +16,9 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByType_Local {
     TMap<EPLATEAUCityObjectsType, UMaterialInterface*> CreateMaterialMap() {
         TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials;
         FString SourcePath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/Fallback/PlateauDefaultDisasterMaterialInstance");
-        UMaterialInstance* Materail = Cast<UMaterialInstance>(
+        UMaterialInstance* Material = Cast<UMaterialInstance>(
             StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-        Materials.Add(EPLATEAUCityObjectsType::COT_Building, Materail);
+        Materials.Add(EPLATEAUCityObjectsType::COT_Building, Material);
         return Materials;
     }
 
@@ -26,12 +26,14 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByType_Local {
 
 /// <summary>
 /// タイプによるマテリアル分け Test
+/// FPLATEAUModelClassificationByType　単体テスト
+/// 各Component生成によるTest
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByType, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ClassificationByType", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByType, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Model.ClassificationByType", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_Reconstruct_ModelClassificationByType::RunTest(const FString& Parameters) {
-    InitializeTest("ClassificationByType");
+    InitializeTest("Model.ClassificationByType");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 

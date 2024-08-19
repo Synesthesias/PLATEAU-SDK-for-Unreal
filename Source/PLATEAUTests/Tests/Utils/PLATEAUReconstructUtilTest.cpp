@@ -14,48 +14,35 @@ IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Util_Reconstruct_Util, FPLA
 
 bool FPLATEAUTest_Util_Reconstruct_Util::RunTest(const FString& Parameters) {
     InitializeTest("ReconstructUtil");
-    
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
-        
-        //plateau::granularityConvert::ConvertGranularity -> plateau::polygonMesh::MeshGranularity
-        LibMeshGranularity MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerAtomicFeatureObject);
-        TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerAtomicFeatureObject);
+    //plateau::granularityConvert::ConvertGranularity -> plateau::polygonMesh::MeshGranularity
+    LibMeshGranularity MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerAtomicFeatureObject);
+    TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerAtomicFeatureObject);
 
-        MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerCityModelArea);
-        TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerCityModelArea);
+    MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerCityModelArea);
+    TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerCityModelArea);
 
-        MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerPrimaryFeatureObject);
-        TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerPrimaryFeatureObject);
+    MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::PerPrimaryFeatureObject);
+    TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerPrimaryFeatureObject);
 
-        MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::MaterialInPrimary);
-        TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerAtomicFeatureObject);
+    MeshGr = FPLATEAUReconstructUtil::ConvertGranularityToMeshGranularity(ConvertGranularity::MaterialInPrimary);
+    TestEqual("ConvGr to Mesh Gr", MeshGr, LibMeshGranularity::PerAtomicFeatureObject);
 
-        return true;
-        }));
+    //plateau::polygonMesh::EPLATEAUMeshGranularity -> plateau::granularityConvert::ConvertGranularity
+    ConvertGranularity ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
+    TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerAtomicFeatureObject);
 
+    ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerCityModelArea);
+    TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerCityModelArea);
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this] {
+    ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerPrimaryFeatureObject);
+    TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerPrimaryFeatureObject);
 
-        //plateau::polygonMesh::EPLATEAUMeshGranularity -> plateau::granularityConvert::ConvertGranularity
-        ConvertGranularity ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
-        TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerAtomicFeatureObject);
+    ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerMaterialInPrimary);
+    TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::MaterialInPrimary);
 
-        ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerCityModelArea);
-        TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerCityModelArea);
-
-        ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerPrimaryFeatureObject);
-        TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerPrimaryFeatureObject);
-
-        ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerMaterialInPrimary);
-        TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::MaterialInPrimary);
-
-        ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::DoNotChange);
-        TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerPrimaryFeatureObject);
-
-        return true;
-        }));
-
+    ConvGr = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::DoNotChange);
+    TestEqual("EMeshGr to ConvGr", ConvGr, ConvertGranularity::PerPrimaryFeatureObject);
 
     return true;
 }

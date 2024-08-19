@@ -20,9 +20,9 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
     TMap<FString, UMaterialInterface*> CreateMaterialMap() {
         TMap<FString, UMaterialInterface*> Materials;
         FString SourcePath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/Fallback/PlateauDefaultDisasterMaterialInstance");
-        UMaterialInstance* Materail = Cast<UMaterialInstance>(
+        UMaterialInstance* Material = Cast<UMaterialInstance>(
             StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-        Materials.Add("TestAttrValue", Materail);
+        Materials.Add("TestAttrValue", Material);
         return Materials;
     }
 
@@ -56,12 +56,14 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
 
 /// <summary>
 /// 属性によるマテリアル分け Test
+/// FPLATEAUModelClassificationByAttribute　単体テスト
+/// 各Component生成によるTest
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ClassificationByAttr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Model.ClassificationByAttr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& Parameters) {
-    InitializeTest("ClassificationByAttr");
+    InitializeTest("Model.ClassificationByAttr");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 

@@ -18,7 +18,7 @@ using namespace UE::Tasks;
 /// <summary>
 /// 地形平滑化テスト
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelLandscapeAlign, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ModelLandscapeAlign", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelLandscapeAlign, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Terrain.ModelLandscapeAlign", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parameters) {
     InitializeTest("ModelLandscapeAlign");
