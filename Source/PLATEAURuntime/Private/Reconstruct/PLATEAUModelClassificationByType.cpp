@@ -16,19 +16,27 @@ FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUIns
     CityModelActor = Actor;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
+
+    //マテリアルごとにMaterial ID生成
+    TMap<UMaterialInterface*, int> Material_MaterialIDMap;
+    int ID = 0;
+    for (const auto& KV : ClassificationMaterials) { //同一Materialを共通Material IDに
+        if (!Material_MaterialIDMap.Contains(KV.Value)) {
+            Material_MaterialIDMap.Add(KV.Value, ID);
+            ID++;
+        }
+    }
+
+    //属性の値ごとにMaterial IDをセット
+    for (const auto& KV : ClassificationMaterials) {
+        MaterialIDMap.Add(KV.Key, Material_MaterialIDMap[KV.Value]);
+    }
 }
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
 
     //最小地物単位のModelを生成
     std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
-
-    TArray<EPLATEAUCityObjectsType>  ClassificationTypes;
-    for (auto kv : ClassificationMaterials) {
-        if (kv.Value != nullptr) {
-            ClassificationTypes.Add(kv.Key);
-        }
-    }
 
     //指定されたタイプのModelのSubMeshにGameMaterialIDを追加
     plateau::materialAdjust::MaterialAdjusterByType Adjuster;
@@ -41,8 +49,8 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
             const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
             if (AttrInfoPtr) {
                 const auto Type = AttrInfoPtr->Type;
-                if (ClassificationTypes.Contains(Type)) {
-                    const int MaterialID = static_cast<int>(Type);
+                if (MaterialIDMap.Contains(Type)) {
+                    const int MaterialID = MaterialIDMap[Type];
                     citygml::CityObject::CityObjectsType PlateauType = (citygml::CityObject::CityObjectsType)UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Type);
                     Adjuster.registerType(GmlId, PlateauType);
                     Adjuster.registerMaterialPattern(PlateauType, MaterialID);
@@ -73,8 +81,9 @@ TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConve
 
     TMap<int, UMaterialInterface*> NewClassificationMaterials;
     for (const auto& KV : ClassificationMaterials) {
-        const int MaterialID = static_cast<int>(KV.Key);
-        NewClassificationMaterials.Add(MaterialID, KV.Value);
+        const int* MaterialID = MaterialIDMap.Find(KV.Key);
+        if (MaterialID != nullptr && KV.Value != nullptr)
+            NewClassificationMaterials.Add(*MaterialID, KV.Value);
     }
     FPLATEAUMeshLoaderForClassification MeshLoader(NewClassificationMaterials, false);
     return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);

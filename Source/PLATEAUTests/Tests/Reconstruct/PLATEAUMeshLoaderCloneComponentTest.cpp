@@ -17,26 +17,12 @@
 /// </summary>
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_CloneComponent, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.CloneComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-
-void FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(FPLATEAUAutomationTestBase* Test, UPLATEAUCityObjectGroup* Comp, UPLATEAUCityObjectGroup* OriginalItem, int32 NumIndices) {
-
-    Test->TestNotNull("Component StaticMesh is not null ", Comp->GetStaticMesh().Get());
-    Test->TestEqual("Vertex sizes are the same as Models", Comp->GetStaticMesh()->GetNumVertices(0), NumIndices);
-    Test->TestEqual("Material is same as original", Comp->GetMaterial(0), OriginalItem->GetMaterial(0));
-
-    UPLATEAUCityObjectGroup* CompAsCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Comp);
-    Test->TestEqual("Json is same as original", CompAsCityObj->SerializedCityObjects, OriginalItem->SerializedCityObjects);
-    Test->TestEqual("Granularity is same as LoadInputData", CompAsCityObj->GetConvertGranularity(), ConvertGranularity::PerPrimaryFeatureObject);
-    Test->AddInfo(FString::Format(TEXT("MeshGranularity: {0}"), { CompAsCityObj->MeshGranularityIntValue }));
-    Test->AddInfo("StaticMesh Test Finished.");
-}
-
 /// <summary>
 /// FPLATEAUMeshLoaderCloneComponentの単体テスト
 /// 主に階層生成テスト
 /// </summary>
 bool FPLATEAUTest_MeshLoader_CloneComponent::RunTest(const FString& Parameters) {
-    InitializeTest("CloneComponent");
+    InitializeTest("MeshLoader.CloneComponent");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
@@ -87,23 +73,22 @@ bool FPLATEAUTest_MeshLoader_CloneComponent::RunTest(const FString& Parameters) 
         if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::TEST_OBJ_NAME + "__2") {
             const int32 NumIndices = (int32)Mesh.getIndices().size();
 
-            if (!CityObjGrp->GetStaticMesh()) {
-                    //StaticMesh生成を待機
-                bool OnGetStaticMeshFinish = false;
-                CityObjGrp->OnStaticMeshChanged().AddLambda([&, this, NumIndices, OriginalItem](UStaticMeshComponent* Comp) {
-                    UPLATEAUCityObjectGroup* CompAsCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Comp);
-                    FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CompAsCityObj, OriginalItem, NumIndices);
-                    OnGetStaticMeshFinish = true;
-                    });
+            //StaticMesh 生成まで待機
+            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, CityObjGrp, OriginalItem, NumIndices] {
+                if (!CityObjGrp->GetStaticMesh())
+                    return false;
+                
+                TestNotNull("Component StaticMesh is not null ", CityObjGrp->GetStaticMesh().Get());
+                TestEqual("Vertex sizes are the same as Models", CityObjGrp->GetStaticMesh()->GetNumVertices(0), NumIndices);
+                TestEqual("Material is same as original", CityObjGrp->GetMaterial(0), OriginalItem->GetMaterial(0));
 
-                //Test終了まで待機
-                ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&] {
-                    return OnGetStaticMeshFinish;
-                    }));
-            }
-            else {
-                FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CityObjGrp, OriginalItem, NumIndices);
-            }
+                TestEqual("Json is same as original", CityObjGrp->SerializedCityObjects, OriginalItem->SerializedCityObjects);
+                TestEqual("Granularity is same as LoadInputData", CityObjGrp->GetConvertGranularity(), ConvertGranularity::PerPrimaryFeatureObject);
+                AddInfo(FString::Format(TEXT("MeshGranularity: {0}"), { CityObjGrp->MeshGranularityIntValue }));
+                AddInfo("StaticMesh Test Finished.");
+
+                return true;
+                }));
         }
     }
 

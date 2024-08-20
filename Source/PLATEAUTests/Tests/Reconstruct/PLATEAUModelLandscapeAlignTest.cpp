@@ -54,6 +54,8 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
         ModelActor->OnLandscapeCreationFinished.Add(Delegate);
 
         ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
+
+
         GEngine->BroadcastLevelActorListChanged();
 
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {

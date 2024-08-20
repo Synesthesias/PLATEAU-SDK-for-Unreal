@@ -30,11 +30,18 @@ FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(A
     ClassificationMaterials = Materials;
     bDivideGrid = false;
 
-    //属性の値ごとにMaterial ID生成
+    //マテリアルごとにMaterial ID生成
+    TMap<UMaterialInterface*, int> Material_MaterialIDMap;
     int ID = 0;
+    for (const auto& KV : ClassificationMaterials) { //同一Materialを共通Material IDに
+        if (!Material_MaterialIDMap.Contains(KV.Value)) {
+            Material_MaterialIDMap.Add(KV.Value, ID);
+            ID++;
+        }
+    }
+    //属性の値ごとにMaterial IDをセット
     for (const auto& KV : ClassificationMaterials) {
-        MaterialIDMap.Add(KV.Key, ID);
-        ID++;
+        MaterialIDMap.Add(KV.Key, Material_MaterialIDMap[KV.Value]);
     }
 }
 
