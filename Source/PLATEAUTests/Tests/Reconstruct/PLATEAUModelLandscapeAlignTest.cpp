@@ -53,17 +53,15 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
         Delegate.BindUFunction(Listener, FName(TEXT("OnLandscapeLoaded")));
         ModelActor->OnLandscapeCreationFinished.Add(Delegate);
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, Listener] {
-            return Listener->OnCalled;
-            }));
-        AddInfo("Listener->OnCalled");
-
         ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
         GEngine->BroadcastLevelActorListChanged();
 
-        //Assertions
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+            if (!Listener->OnCalled)
+                return false;
+            AddInfo("Listener->OnCalled");
 
+            //Assertions
             const auto& FldComponents = ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "FldComponent");
             const auto& LsldComponents = ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "LsldComponent");
             const auto& TranComponents = ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TranComponent");
@@ -82,9 +80,8 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
             TestEqual("New Fld Component Created", Found.Num(), 2);
 
             AddInfo("Finish Test");
-            return true;
+            return true;;
             }));
-
         return true;
     }));
 

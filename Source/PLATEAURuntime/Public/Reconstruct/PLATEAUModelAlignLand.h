@@ -6,6 +6,7 @@
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <plateau/height_map_alighner/height_map_aligner.h>
 
+//高さ合わせ処理
 class PLATEAURUNTIME_API FPLATEAUModelAlignLand : public FPLATEAUModelReconstruct {
 
 public:

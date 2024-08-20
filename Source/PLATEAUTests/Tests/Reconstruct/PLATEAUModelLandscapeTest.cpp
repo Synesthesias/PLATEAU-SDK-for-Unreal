@@ -48,21 +48,17 @@ bool FPLATEAUTest_Reconstruct_ModelLandscape::RunTest(const FString& Parameters)
         auto Task = ModelActor->CreateLandscape({ DemComponent }, Param, false);
 
         AddInfo("CreateLandscape");
-        //ModelActor->OnLandscapeCreationFinished.AddDynamic(Listener, &ULandscapeLoadEventListener::OnLandscapeLoaded);
         FScriptDelegate Delegate;
         Delegate.BindUFunction(Listener, FName(TEXT("OnLandscapeLoaded")));
         ModelActor->OnLandscapeCreationFinished.Add(Delegate);
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, Listener] {
-            return Listener->OnCalled;
-            }));
-        AddInfo("Listener->OnCalled");
-
         ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
 
-        //Assertions
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+            if (!Listener->OnCalled)
+                return false;
 
+            //Assertions
             TArray<AActor*> FoundLandscapes;
             UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALandscape::StaticClass(), FoundLandscapes);
             TestEqual("Landscape Created ", FoundLandscapes.Num(), 1);
@@ -78,9 +74,10 @@ bool FPLATEAUTest_Reconstruct_ModelLandscape::RunTest(const FString& Parameters)
             TestEqual("Ref Component Name", Parent->GetChildComponent(1)->GetName(), "Ref_" + FPLATEAUComponentUtil::GetOriginalComponentName(DemComponent));
 
             AddInfo("Finish Test");
+
             return true;
             }));
-
+        AddInfo("Listener->OnCalled");
         return true;
     }));
 

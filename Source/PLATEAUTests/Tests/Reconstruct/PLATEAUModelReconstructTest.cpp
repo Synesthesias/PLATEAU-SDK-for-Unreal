@@ -15,7 +15,7 @@
 using namespace UE::Tasks;
 
 /// <summary>
-/// 結合分離テスト
+/// 結合分離テスト (umap読込）
 /// Primary => Atomic 変換
 /// </summary>
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ModelReconstruct.PrimaryAtomic", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -25,7 +25,6 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic::RunTest(const FStr
     if (!OpenMap("SampleBldg"))
         AddError("Failed to OpenMap");
 
-    //ADD_LATENT_AUTOMATION_COMMAND(FWaitForMapToLoadCommand());
     ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f)); //Map読込待機
 
     TArray<AActor*> FoundActors;
@@ -76,7 +75,7 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic::RunTest(const FStr
 }
 
 /// <summary>
-/// 結合分離テスト
+/// 結合分離テスト (umap読込）
 /// Primary => Area 変換
 /// </summary>
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryArea, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ModelReconstruct.PrimaryArea", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -130,7 +129,7 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryArea::RunTest(const FStrin
 }
 
 /// <summary>
-/// 結合分離テスト
+/// 結合分離テスト (umap読込）
 /// Atomic => Primary 変換
 /// </summary>
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelReconstruct_AtomicPrimary, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.ModelReconstruct.AtomicPrimary", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

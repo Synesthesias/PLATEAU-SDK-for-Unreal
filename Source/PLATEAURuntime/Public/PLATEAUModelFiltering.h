@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include <PLATEAUInstancedCityModel.h>
 
+//モデル ON/OFF処理
 class PLATEAURUNTIME_API FPLATEAUModelFiltering {
 
 public:

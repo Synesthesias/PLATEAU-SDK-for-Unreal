@@ -88,9 +88,9 @@ protected:
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
         const std::shared_ptr <const citygml::CityModel> CityModel);
 
-    virtual bool UseCachedMaterial();
-    virtual bool InvertMeshNormal();
-    virtual bool MergeTriangles();
+    virtual bool UseCachedMaterial(); //マテリアルキャッシュ有効・無効
+    virtual bool InvertMeshNormal(); //Mesh反転有無
+    virtual bool MergeTriangles(); //Triangle生成時にVertexIDを結合・分割
 
 protected:
     bool bAutomationTest;
@@ -123,7 +123,9 @@ protected:
         const std::shared_ptr<const citygml::CityModel> InCityModel,
         AActor& InActor);
 
+    //MeshDescriptionの上書き
     virtual void ModifyMeshDescription(FMeshDescription& MeshDescription);
+    //既存のTextureを上書きするか
     virtual bool OverwriteTexture();
 
     virtual void ComputeNormals(FStaticMeshAttributes& Attributes, bool InvertNormal);

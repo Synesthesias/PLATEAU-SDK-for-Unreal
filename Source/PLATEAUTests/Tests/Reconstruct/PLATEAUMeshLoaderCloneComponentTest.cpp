@@ -40,72 +40,72 @@ bool FPLATEAUTest_MeshLoader_CloneComponent::RunTest(const FString& Parameters) 
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
+    plateau::polygonMesh::Mesh Mesh;
+    plateau::polygonMesh::CityObjectList CityObjectList;
+    PLATEAUAutomationTestUtil::CreateCityObjectList(CityObjectList);
+    PLATEAUAutomationTestUtil::CreateMesh(Mesh, CityObjectList);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::CreateModel(Mesh);
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&,this] {
-
-        plateau::polygonMesh::Mesh Mesh;
-        plateau::polygonMesh::CityObjectList CityObjectList;
-        PLATEAUAutomationTestUtil::CreateCityObjectList(CityObjectList);
-        PLATEAUAutomationTestUtil::CreateMesh(Mesh, CityObjectList);
-        std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::CreateModel(Mesh);
-
-        const auto& Actor = PLATEAUAutomationTestUtil::CreateActor(*GetWorld());
-        const auto LoadData = PLATEAUAutomationTestUtil::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
-        const ConvertGranularity ConvGranularity = ConvertGranularity::PerPrimaryFeatureObject;
-        TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::CreateCityObjectMap();
+    const auto& Actor = PLATEAUAutomationTestUtil::CreateActor(*GetWorld());
+    const auto LoadData = PLATEAUAutomationTestUtil::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
+    const ConvertGranularity ConvGranularity = ConvertGranularity::PerPrimaryFeatureObject;
+    TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::CreateCityObjectMap();
         
-        //CityObjectGroup Item
-        auto OriginalItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
-        OriginalItem->SerializeCityObject(PLATEAUAutomationTestUtil::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::TEST_OBJ_NAME], ConvertGranularity::PerPrimaryFeatureObject);
-        TMap<FString, UPLATEAUCityObjectGroup*> CompMap = FPLATEAUComponentUtil::CreateComponentsMapWithNodePath(TArray<UPLATEAUCityObjectGroup*>{OriginalItem});
-        OriginalItem->SetStaticMesh(PLATEAUAutomationTestUtil::CreateStaticMesh(Actor, FName(TEXT("TestStaticMesh"))));
-        PLATEAUAutomationTestUtil::SetMaterial(OriginalItem);
+    //CityObjectGroup Item
+    auto OriginalItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
+    OriginalItem->SerializeCityObject(PLATEAUAutomationTestUtil::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::TEST_OBJ_NAME], ConvertGranularity::PerPrimaryFeatureObject);
+    TMap<FString, UPLATEAUCityObjectGroup*> CompMap = FPLATEAUComponentUtil::CreateComponentsMapWithNodePath(TArray<UPLATEAUCityObjectGroup*>{OriginalItem});
+    OriginalItem->SetStaticMesh(PLATEAUAutomationTestUtil::CreateStaticMesh(Actor, FName(TEXT("TestStaticMesh"))));
+    PLATEAUAutomationTestUtil::SetMaterial(OriginalItem);
 
-        TAtomic<bool> bCanceled;
-        bCanceled.Store(false);
-        FPLATEAUMeshLoaderCloneComponent MeshLoader;
+    TAtomic<bool> bCanceled;
+    bCanceled.Store(false);
+    FPLATEAUMeshLoaderCloneComponent MeshLoader;
 
-        MeshLoader.ReloadComponentFromModel(Model, CompMap, *Actor);
+    MeshLoader.ReloadComponentFromModel(Model, CompMap, *Actor);
 
-        AddInfo(FString(Model->debugString().c_str()));
+    AddInfo(FString(Model->debugString().c_str()));
 
-        GEngine->BroadcastLevelActorListChanged();
+    GEngine->BroadcastLevelActorListChanged();
 
-        //Assertions
-        const auto DefaultSceneRootComp = Actor->GetRootComponent();
-        const auto RootComp = DefaultSceneRootComp->GetAttachChildren()[0];
-        const auto LodComp = RootComp->GetAttachChildren()[0];
-        const auto ObjComps = LodComp->GetAttachChildren();
+    //Assertions
+    const auto DefaultSceneRootComp = Actor->GetRootComponent();
+    const auto RootComp = DefaultSceneRootComp->GetAttachChildren()[0];
+    const auto LodComp = RootComp->GetAttachChildren()[0];
+    const auto ObjComps = LodComp->GetAttachChildren();
 
-        ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
+    ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
 
-        TestEqual("Obj should be 2", ObjComps.Num() , 2 );
-        for (auto Obj : ObjComps) {
-            TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+    TestEqual("Obj should be 2", ObjComps.Num() , 2 );
+    for (auto Obj : ObjComps) {
+        TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
 
-            UPLATEAUCityObjectGroup* CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(Obj);
-            TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+        UPLATEAUCityObjectGroup* CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(Obj);
+        TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
 
-            //新規に生成されたComponent
-            if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::TEST_OBJ_NAME + "__2") {
-                const int32 NumIndices = (int32)Mesh.getIndices().size();
+        //新規に生成されたComponent
+        if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::TEST_OBJ_NAME + "__2") {
+            const int32 NumIndices = (int32)Mesh.getIndices().size();
 
-                if (!CityObjGrp->GetStaticMesh()) {
-                        //StaticMesh生成を待機
-                        CityObjGrp->OnStaticMeshChanged().AddLambda([&, this, NumIndices, OriginalItem](UStaticMeshComponent* Comp) {
-                            UPLATEAUCityObjectGroup* CompAsCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Comp);
-                            FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CompAsCityObj, OriginalItem, NumIndices);
-                            });
+            if (!CityObjGrp->GetStaticMesh()) {
+                    //StaticMesh生成を待機
+                bool OnGetStaticMeshFinish = false;
+                CityObjGrp->OnStaticMeshChanged().AddLambda([&, this, NumIndices, OriginalItem](UStaticMeshComponent* Comp) {
+                    UPLATEAUCityObjectGroup* CompAsCityObj = StaticCast<UPLATEAUCityObjectGroup*>(Comp);
+                    FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CompAsCityObj, OriginalItem, NumIndices);
+                    OnGetStaticMeshFinish = true;
+                    });
 
-                        ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
-                }
-                else {
-                    FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CityObjGrp, OriginalItem, NumIndices);
-                }
-
+                //Test終了まで待機
+                ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&] {
+                    return OnGetStaticMeshFinish;
+                    }));
+            }
+            else {
+                FPLATEAUTest_MeshLoader_CloneComponent_TestStaticMesh(this, CityObjGrp, OriginalItem, NumIndices);
             }
         }
-        return true;
-    }));
+    }
+
     return true;
 }

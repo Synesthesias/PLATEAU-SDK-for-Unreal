@@ -6,6 +6,7 @@
 #include "PLATEAUMeshLoader.h"
 #include "Util/PLATEAUReconstructUtil.h"
 
+//結合分離処理用MeshLoader
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForReconstruct : public FPLATEAUMeshLoader {
 
 public:

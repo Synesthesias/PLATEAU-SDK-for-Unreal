@@ -8,6 +8,7 @@
 #include <PLATEAUExportSettings.h>
 #include <PLATEAUMeshExporter.h>
 
+//ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
 
     const FString TEST_ACTOR_NAME = "TestActor";
@@ -118,16 +119,24 @@ namespace PLATEAUAutomationTestUtil {
         return Map;
     }
 
+    //CityObject (Building)
+    void CreateCityObjectBuilding(FPLATEAUCityObject& InCityObj) {
+        InCityObj.SetGmlID(TEST_OBJ_NAME);
+        InCityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
+        InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+    }
+
+    //CityObject Children (Wall/Roof)
     void CreateCityObjectBuildingChildren(FPLATEAUCityObject& ParentCityObj) {
         FPLATEAUCityObject Wall;
         Wall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
         Wall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        Wall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 1));
+        Wall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
         ParentCityObj.Children.Add(Wall);
         FPLATEAUCityObject Roof;
         Roof.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
         Roof.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        Roof.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 2));
+        Roof.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
         ParentCityObj.Children.Add(Roof);
     }
 
@@ -148,7 +157,7 @@ namespace PLATEAUAutomationTestUtil {
     }
 
     /// <summary>
-    /// 属性情報を持つNodeの取得用
+    /// 属性情報を持つNodeの取得用 (root/lod/bldg)各単体の場合
     /// </summary>
     const plateau::polygonMesh::Node& GetObjNode(std::shared_ptr<plateau::polygonMesh::Model> Model) {
         const auto& root = Model->getRootNodeAt(0);
@@ -249,7 +258,7 @@ namespace PLATEAUAutomationTestUtil {
     }
 
     /// <summary>
-    /// StaticMeshにマテリアルを設定
+    /// StaticMeshに色付きマテリアルを設定
     /// </summary>
     void SetMaterial(UStaticMesh* mesh, FVector3f Color = FVector3f::Zero()) {
         const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
@@ -260,7 +269,7 @@ namespace PLATEAUAutomationTestUtil {
     }
 
     /// <summary>
-    /// Componentにマテリアルを設定
+    /// Componentに色付きマテリアルを設定
     /// </summary>
     void SetMaterial(UPLATEAUCityObjectGroup* Comp, FVector3f Color = FVector3f::Zero()) {
         const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
@@ -357,11 +366,11 @@ namespace PLATEAUAutomationTestUtil {
         FPLATEAUCityObject CityObjWall;
         CityObjWall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
         CityObjWall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 1));
+        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
         FPLATEAUCityObject CityObjRoof;
         CityObjWall.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
         CityObjWall.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 2));
+        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
         Map.Add(TEST_OBJ_NAME, CityObj);
         return Map;
     }
@@ -370,13 +379,13 @@ namespace PLATEAUAutomationTestUtil {
     void CreateCityObjectWall(FPLATEAUCityObject& CityObj) {
         CityObj.SetGmlID(TEST_CITYOBJ_WALL_NAME);
         CityObj.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 1));
+        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
     }
     //Roof CityObject
     void CreateCityObjectRoof(FPLATEAUCityObject& CityObj) {
         CityObj.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
         CityObj.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 2));
+        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
     }
 
     //Building OutsideChildren

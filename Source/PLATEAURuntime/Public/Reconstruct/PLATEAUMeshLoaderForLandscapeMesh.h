@@ -2,12 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "PLATEAUMeshLoader.h"
-#include "PLATEAUGeometry.h"
-#include "PLATEAUCityModelLoader.h"
 #include "PLATEAUMeshLoaderForLandscape.h"
 
+//地形を平滑化されたMeshに変換します
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscapeMesh : public FPLATEAUMeshLoaderForLandscape {
 
 public:

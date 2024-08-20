@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
+#include "PLATEAUMeshLoaderForReconstruct.h"
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassification : public FPLATEAUMeshLoaderForReconstruct {
 

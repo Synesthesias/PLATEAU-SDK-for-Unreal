@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Reconstruct/PLATEAUModelClassification.h"
 
+//マテリアル分け（タイプ）
 class PLATEAURUNTIME_API FPLATEAUModelClassificationByType : public FPLATEAUModelClassification {
 
 public:

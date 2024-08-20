@@ -7,6 +7,7 @@
 #include "PLATEAUMeshLoaderForReconstruct.h"
 #include "Util/PLATEAUReconstructUtil.h"
 
+//結合分離処理
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:

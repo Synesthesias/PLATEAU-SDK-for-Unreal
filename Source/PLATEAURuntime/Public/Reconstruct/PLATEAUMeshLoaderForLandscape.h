@@ -17,6 +17,7 @@ enum class EPLATEAULandscapeHeightmapImageOutput : uint8 {
     PNG_RAW = 3 UMETA(DisplayName = "PNG & RAW")
 };
 
+//地形平滑化入力パラメータ
 USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
     GENERATED_BODY()
@@ -84,7 +85,7 @@ struct PLATEAURUNTIME_API FPLATEAULandscapeParam {
         EPLATEAULandscapeHeightmapImageOutput HeightmapImageOutput;
 };
 
-
+//ハイトマップ生成Resultデータ
 struct  HeightmapCreationResult {
     FString NodeName;
     TSharedPtr<std::vector<uint16_t>> Data;
@@ -94,7 +95,6 @@ struct  HeightmapCreationResult {
     TVec2f MaxUV;
     FString TexturePath;
 };
-
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
 
@@ -106,6 +106,7 @@ public:
         AActor* ModelActor,
         const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param);
 
+    //LandscapeのReference Componentを元のDemの階層に生成します
     void CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName);
 
 protected:

@@ -49,21 +49,18 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeMesh::RunTest(const FString& Paramet
         ModelActor->CreateLandscape({ DemComponent }, Param, false);
 
         AddInfo("CreateLandscape");
-        //ModelActor->OnLandscapeCreationFinished.AddDynamic(Listener, &ULandscapeLoadEventListener::OnLandscapeLoaded);
         FScriptDelegate Delegate;
         Delegate.BindUFunction(Listener, FName(TEXT("OnLandscapeLoaded")));
         ModelActor->OnLandscapeCreationFinished.Add(Delegate);
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, Listener] {
-            return Listener->OnCalled;
-            }));
-        AddInfo("Listener->OnCalled");
-
         ADD_LATENT_AUTOMATION_COMMAND(FEngineWaitLatentCommand(1.0f));
 
-        //Assertions
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+            if (!Listener->OnCalled)
+                return false;
+            AddInfo("Listener->OnCalled");
 
+            //Assertions
             const auto& Parent = DemComponent->GetAttachParent();
             TestEqual("Dem Component Created ", Parent->GetNumChildrenComponents(), 2);
             TestEqual("Dem Component Name", FPLATEAUComponentUtil::GetOriginalComponentName(Parent->GetChildComponent(1)), "Mesh_" + FPLATEAUComponentUtil::GetOriginalComponentName(DemComponent));
@@ -71,7 +68,6 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeMesh::RunTest(const FString& Paramet
             AddInfo("Finish Test");
             return true;
             }));
-
         return true;
     }));
 

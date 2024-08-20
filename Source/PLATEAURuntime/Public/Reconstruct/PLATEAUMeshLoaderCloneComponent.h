@@ -32,6 +32,7 @@ public:
         ConvertGranularity Granularity,
         AActor& Actor) override;
 
+    //Meshを結合しSmoothnessを有効にします
     void SetSmoothing(bool bSmooth);
 
 protected:

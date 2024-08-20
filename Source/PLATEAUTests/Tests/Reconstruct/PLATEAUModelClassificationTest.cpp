@@ -57,10 +57,10 @@ namespace FPLATEAUTest_Reconstruct_ModelClassification_Local {
 /// マテリアル分けテスト(Type)
 /// umap使用
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Type, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Type", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Type, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.Type", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Type");
+    InitializeTest("Classification.Static.Type");
     if (!OpenMap("SampleBldg"))
         AddError("Failed to OpenMap");
 
@@ -140,10 +140,10 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
 /// マテリアル分けテスト(Attr)
 /// umap使用
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Attr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Attr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Attr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.Attr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Attr");
+    InitializeTest("Classification.Static.Attr");
     if (!OpenMap("SampleBldg"))
         AddError("Failed to OpenMap");
 
@@ -204,8 +204,6 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& P
                 AddInfo("Primary => Atomic  Reconstruct Task Finish");
                 return true;
                 }));
-
-            //AddInfo("Primary => Atomic  Reconstruct Task Finish");
             });
 
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ClassifyTask] {
