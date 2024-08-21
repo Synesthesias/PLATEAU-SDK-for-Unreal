@@ -126,3 +126,30 @@ TArray<USceneComponent*> FPLATEAUComponentUtil::ConvertArrayToSceneComponentArra
         OutComponents.Add(StaticCast<USceneComponent*>(Component));
     return OutComponents;
 }
+
+TArray<USceneComponent*> FPLATEAUComponentUtil::FindComponentsByName(const AActor* ModelActor, const FString Name) {
+    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
+    TArray<USceneComponent*> Result;
+    const auto Components = ModelActor->GetComponents();
+    for (auto Component : Components) {
+        if (Component->IsA<USceneComponent>()) {
+            FRegexMatcher matcher(pattern, Component->GetName());
+            if (matcher.FindNext()) {
+                Result.Add((USceneComponent*)Component);
+            }
+        }
+    }
+    return Result;
+}
+
+UPLATEAUCityObjectGroup* FPLATEAUComponentUtil::GetCityObjectGroupByName(const AActor* ModelActor, const FString Name) {
+    const auto BaseComponents = FindComponentsByName(ModelActor, Name);
+    if (BaseComponents.Num() > 0) {
+        UPLATEAUCityObjectGroup* FoundItem;
+        int32 ItemIndex;
+        if (BaseComponents.FindItemByClass<UPLATEAUCityObjectGroup>(&FoundItem, &ItemIndex)) {
+            return FoundItem;
+        }
+    }
+    return nullptr;
+}

@@ -4,6 +4,7 @@
 #include "Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "Util/PLATEAUComponentUtil.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
 #include "MeshDescription.h"
@@ -29,7 +30,7 @@ void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, 
         plateau::geometry::CoordinateSystem::ESU, Min, Max, MinUV, MaxUV, false);
 
     auto ParentComponent = Actor.GetRootComponent();
-    const auto BaseComponents = FindComponentsByName(&Actor, NodeName);
+    const auto BaseComponents = FPLATEAUComponentUtil::FindComponentsByName(&Actor, NodeName);
     if (BaseComponents.Num() > 0) {
         const auto BaseComponent = BaseComponents[0];
         if (BaseComponent->IsA<UStaticMeshComponent>()) {
@@ -95,7 +96,7 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponent
 
     // Originalコンポーネントの属性をそのまま利用
     const FString ReplacedName = NodeName.Replace(*FString("Mesh_"), *FString());
-    const auto& OriginalComponent = GetOriginalComponent(&Actor, ReplacedName);
+    const auto& OriginalComponent = FPLATEAUComponentUtil::GetCityObjectGroupByName(&Actor, ReplacedName);
     if (OriginalComponent) {
         PLATEAUCityObjectGroup->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
         PLATEAUCityObjectGroup->OutsideChildren = OriginalComponent->OutsideChildren;

@@ -38,7 +38,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeMesh::RunTest(const FString& Paramet
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
     UPLATEAUCityObjectGroup* DemComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("DemComponent");
-    FPLATEAULandscapeParam Param = PLATEAUAutomationTestUtil::CreateLandscapeParam();
+    FPLATEAULandscapeParam Param = PLATEAUAutomationTestLandscapeUtil::CreateLandscapeParam();
     Param.ConvertToLandscape = false; //Mesh 生成
     ULandscapeLoadEventListener* Listener = NewObject<ULandscapeLoadEventListener>();
     Listener->AddToRoot();

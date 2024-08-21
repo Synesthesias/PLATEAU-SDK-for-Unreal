@@ -38,7 +38,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
     UPLATEAUCityObjectGroup* DemComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("DemComponent");
-    FPLATEAULandscapeParam Param = PLATEAUAutomationTestUtil::CreateLandscapeParam();
+    FPLATEAULandscapeParam Param = PLATEAUAutomationTestLandscapeUtil::CreateLandscapeParam();
     ULandscapeLoadEventListener* Listener = NewObject<ULandscapeLoadEventListener>();
     Listener->AddToRoot();
     Listener->TestBase = this;

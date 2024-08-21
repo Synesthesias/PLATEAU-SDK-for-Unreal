@@ -7,6 +7,7 @@
 #include "Util/PLATEAUReconstructUtil.h"
 #include <PLATEAUExportSettings.h>
 #include <PLATEAUMeshExporter.h>
+#include <ImageUtils.h>
 
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
@@ -405,26 +406,6 @@ namespace PLATEAUAutomationTestUtil {
     }
 
     /// <summary>
-    /// Landscape用Param生成
-    /// </summary>
-    FPLATEAULandscapeParam CreateLandscapeParam() {
-        FPLATEAULandscapeParam Param;
-        Param.TextureWidth = 505;
-        Param.TextureHeight = 505;
-        Param.NumSubsections = 2;
-        Param.SubsectionSizeQuads = 63;
-        Param.ComponentCountX = 126;
-        Param.ComponentCountY = 126;
-        Param.ConvertTerrain = true;
-        Param.ConvertToLandscape = true;
-        Param.FillEdges = true;
-        Param.ApplyBlurFilter = true;
-        Param.AlignLand = true;
-        Param.InvertRoadLod3 = true;
-        return Param;
-    }
-
-    /// <summary>
     /// FPLATEAUModelReconstruct::ConvertModelWithGranularityの内部処理の再現Test
     /// </summary>
     void TestConvertModel(FPLATEAUAutomationTestBase* Test, APLATEAUInstancedCityModel* Actor, UPLATEAUCityObjectGroup* Comp, ConvertGranularity ConvGranularity) {
@@ -448,6 +429,133 @@ namespace PLATEAUAutomationTestUtil {
 
         Test->TestEqual("Model Root Node Name is the same", BaseModel->getRootNodeAt(0).getName(), Converted->getRootNodeAt(0).getName());
         Test->TestEqual("Model Lod Node Name is the same", BaseModel->getRootNodeAt(0).getChildAt(0).getName(), Converted->getRootNodeAt(0).getChildAt(0).getName());
+    }
+
+};
+
+//Landscape/Heightmap用　ダイナミック生成等のテスト用共通処理
+namespace PLATEAUAutomationTestLandscapeUtil {
+
+    const FString TEST_DEM_OP_NAME = "000000_dem_0000_op";
+    const FString TEST_DEM_OBJ_NAME = "dem_00000000-0000-0000-0000-000000000000";
+    const FString TEST_DEM_CITYOBJ_TYPE = "TINRelief";
+
+    /// <summary>
+    /// Landscape用Param生成
+    /// </summary>
+    FPLATEAULandscapeParam CreateLandscapeParam() {
+        FPLATEAULandscapeParam Param;
+        Param.TextureWidth = 505;
+        Param.TextureHeight = 505;
+        Param.NumSubsections = 2;
+        Param.SubsectionSizeQuads = 63;
+        Param.ComponentCountX = 126;
+        Param.ComponentCountY = 126;
+        Param.ConvertTerrain = true;
+        Param.ConvertToLandscape = true;
+        Param.FillEdges = true;
+        Param.ApplyBlurFilter = true;
+        Param.AlignLand = true;
+        Param.InvertRoadLod3 = true;
+        return Param;
+    }
+
+    /// <summary>
+    /// DemのCityObjectIndexのList生成
+    /// </summary>
+    void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
+        CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
+    }
+
+    /// <summary>
+    /// Dem Model / 各Node 生成
+    /// </summary>
+    std::shared_ptr<plateau::polygonMesh::Model> CreateModel(plateau::polygonMesh::Mesh& Mesh) {
+        std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
+        auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_DEM_OP_NAME));
+        auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*PLATEAUAutomationTestUtil::TEST_LOD_NAME));
+        auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
+        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+        NodeObj.setMesh(std::move(MeshPtr));
+        Model->assignNodeHierarchy();
+        Model->optimizeMeshes();
+        return Model;
+    }
+
+    /// <summary>
+    /// Actor と DEM Compoenent生成
+    /// </summary>
+    APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
+        APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
+        const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+            USceneComponent::GetDefaultSceneRootVariableName());
+        const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+            FName(TEST_DEM_OP_NAME));
+        const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
+            FName(PLATEAUAutomationTestUtil::TEST_LOD_NAME + "__1"));
+        const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
+            FName(TEST_DEM_OBJ_NAME + "__1"));
+
+        Actor->SetActorLabel(PLATEAUAutomationTestUtil::TEST_ACTOR_NAME);
+        Actor->AddInstanceComponent(SceneRoot);
+        Actor->SetRootComponent(SceneRoot);
+        SceneRoot->RegisterComponent();
+
+        Actor->AddInstanceComponent(CompRoot);
+        CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
+        CompRoot->RegisterComponent();
+        CompRoot->SetMobility(EComponentMobility::Static);
+
+        CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
+        Actor->AddInstanceComponent(CompLod);
+        CompLod->RegisterComponent();
+        CompLod->SetMobility(EComponentMobility::Static);
+
+        CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
+        Actor->AddInstanceComponent(CompObj);
+        CompObj->RegisterComponent();
+        CompObj->SetMobility(EComponentMobility::Static);
+        CompObj->ComponentTags.Add(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
+
+        GEngine->BroadcastLevelActorListChanged();
+        return Actor;
+    }
+
+    /// <summary>
+    /// Dem CityObject
+    /// </summary>
+    void CreateCityObjectDem(FPLATEAUCityObject& InCityObj) {
+        InCityObj.SetGmlID(TEST_DEM_OBJ_NAME);
+        InCityObj.SetCityObjectsType(TEST_DEM_CITYOBJ_TYPE);
+        InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+    }
+
+    //画像ロード
+    UTexture2D* LoadImage(FString TextureName) {
+        FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
+        UTexture2D* texture = FImageUtils::ImportFileAsTexture2D(Path);
+        return texture;
+    }
+
+    //Texture2d => Uint16 Array 変換
+    TArray<uint16> ConvertTexture2dToUint16Array(UTexture2D* Texture) {
+
+        if (Texture->GetPlatformData()->PixelFormat != PF_G16R16 &&
+            Texture->GetPlatformData()->PixelFormat != PF_R16_UINT &&
+            Texture->GetPlatformData()->PixelFormat != PF_R16F &&
+            Texture->GetPlatformData()->PixelFormat != PF_G16) {
+            UE_LOG(LogTemp, Warning, TEXT("Unsupported Pixel Format! "));
+        }
+
+        TArray<uint16> PixelDataArray;
+        FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+        int32 TextureWidth = Mip.SizeX;
+        int32 TextureHeight = Mip.SizeY;
+        PixelDataArray.SetNum(TextureWidth * TextureHeight);
+        void* Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
+        FMemory::Memcpy(PixelDataArray.GetData(), Data, TextureWidth * TextureHeight * sizeof(uint16));
+        Mip.BulkData.Unlock();
+        return PixelDataArray;
     }
 
 };

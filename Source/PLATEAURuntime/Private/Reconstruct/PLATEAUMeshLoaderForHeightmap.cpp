@@ -13,6 +13,7 @@
 #include "Component/PLATEAULandscapeRefComponent.h"
 #include "Landscape.h"
 #include "Util/PLATEAUReconstructUtil.h"
+#include "Util/PLATEAUComponentUtil.h"
 
 
 FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() {}
@@ -83,7 +84,7 @@ HeightmapCreationResult FPLATEAUMeshLoaderForHeightmap::CreateHeightMapFromMesh(
 
 void FPLATEAUMeshLoaderForHeightmap::CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName) {
     const FString ReplacedNodeName = NodeName.Replace(*FString("Mesh_"), *FString()); //Mesh Prefix ����
-    auto OriginalComponent = GetOriginalComponent(Actor, ReplacedNodeName);
+    auto OriginalComponent = FPLATEAUComponentUtil::GetCityObjectGroupByName(Actor, ReplacedNodeName);
     if (OriginalComponent) {
         const auto& OriginalParentComponent = OriginalComponent->GetAttachParent();
         auto RefComponent = (UPLATEAULandscapeRefComponent*)Actor->AddComponentByClass(UPLATEAULandscapeRefComponent::StaticClass(), false, FTransform(), false);
@@ -109,31 +110,4 @@ void FPLATEAUMeshLoaderForHeightmap::CreateReference(ALandscape* Landscape, AAct
         RefComponent->PostEditChange();
 #endif
     }
-}
-
-TArray<USceneComponent*> FPLATEAUMeshLoaderForHeightmap::FindComponentsByName(const AActor* ModelActor, const FString Name) {
-    const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
-    TArray<USceneComponent*> Result;
-    const auto Components = ModelActor->GetComponents();
-    for (auto Component : Components) {
-        if (Component->IsA<USceneComponent>()) {
-            FRegexMatcher matcher(pattern, Component->GetName());
-            if (matcher.FindNext()) {
-                Result.Add((USceneComponent*)Component);
-            }
-        }
-    }
-    return Result;
-}
-
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForHeightmap::GetOriginalComponent(const AActor* ModelActor, const FString Name) {
-    const auto BaseComponents = FindComponentsByName(ModelActor, Name);
-    if (BaseComponents.Num() > 0) {
-        UPLATEAUCityObjectGroup* FoundItem;
-        int32 ItemIndex;
-        if (BaseComponents.FindItemByClass<UPLATEAUCityObjectGroup>(&FoundItem, &ItemIndex)) {
-            return FoundItem;
-        }
-    }
-    return nullptr;
 }

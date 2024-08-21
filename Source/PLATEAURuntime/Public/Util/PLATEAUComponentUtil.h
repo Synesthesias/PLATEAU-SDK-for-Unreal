@@ -65,4 +65,20 @@ public:
      */
     static TArray<USceneComponent*> ConvertArrayToSceneComponentArray(TArray<UActorComponent*> InComponents);
 
+    /**
+     * @brief Actorから同名のコンポーネントを探します
+     * @param ModelActor Actor
+     * @param Name Component名
+     * @return 同名のコンポーネント
+     */
+    static TArray<USceneComponent*> FindComponentsByName(const AActor* ModelActor, const FString Name);
+
+    /**
+     * @brief Actorから同名のコンポーネントを探しUPLATEAUCityObjectGroupを１つ返します
+     * @param ModelActor Actor
+     * @param Name Component名
+     * @return 同名のUPLATEAUCityObjectGroupコンポーネント
+     */
+    static UPLATEAUCityObjectGroup* GetCityObjectGroupByName(const AActor* ModelActor, const FString Name);
+
 };

@@ -122,9 +122,6 @@ protected:
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);
 
-    TArray<USceneComponent*> FindComponentsByName(const AActor* ModelActor, const FString Name);
-    UPLATEAUCityObjectGroup* GetOriginalComponent(const AActor* ModelActor, const FString Name);
-
 private:
 
 };
