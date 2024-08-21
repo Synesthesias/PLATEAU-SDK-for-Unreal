@@ -43,7 +43,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscape::RunTest(const FString& Parameters)
     Listener->AddToRoot();
     Listener->TestBase = this;
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
 
         auto Task = ModelActor->CreateLandscape({ DemComponent }, Param, false);
 
@@ -78,7 +78,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscape::RunTest(const FString& Parameters)
             return true;
             }));
         AddInfo("Listener->OnCalled");
-        return true;
+
     }));
 
     return true;

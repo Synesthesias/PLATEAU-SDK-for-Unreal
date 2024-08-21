@@ -43,7 +43,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
     Listener->AddToRoot();
     Listener->TestBase = this;
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
 
         ModelActor->CreateLandscape({ DemComponent }, Param, false);
 
@@ -84,7 +84,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeAlign::RunTest(const FString& Parame
             AddInfo("Finish Test");
             return true;;
             }));
-        return true;
+
     }));
 
     return true;

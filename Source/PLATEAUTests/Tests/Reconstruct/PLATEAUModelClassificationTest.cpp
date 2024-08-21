@@ -76,7 +76,7 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
     
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ModelActor] {      
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
         FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, ModelActor] {
 
@@ -129,7 +129,6 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
             return ClassifyTask.IsCompleted();
             }));
 
-        return true;
         }));
 
     return true;
@@ -158,7 +157,7 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& P
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ModelActor] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
         FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, ModelActor] {
 
@@ -208,7 +207,7 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& P
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ClassifyTask] {
             return ClassifyTask.IsCompleted();
             }));
-        return true;
+
         }));
 
     return true;

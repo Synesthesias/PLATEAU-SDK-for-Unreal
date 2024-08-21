@@ -37,10 +37,10 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic::RunTest(const FStr
     
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ModelActor] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
         //Primary => Atomic 変換
-        FTask ReconstructTask = Launch(TEXT("ReconstructTask"), [&, this, ModelActor] {
+        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, this, ModelActor] {
 
             const auto& TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("TargetComponent");
 
@@ -66,10 +66,9 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic::RunTest(const FStr
             AddInfo("Primary => Atomic  Reconstruct Task Finish"); 
             });
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTask] {
-            return ReconstructTask.IsCompleted();
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
+            return ReconstructTestTask.IsCompleted();
             }));
-        return true;
         }));
     return true;
 }
@@ -97,10 +96,10 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryArea::RunTest(const FStrin
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ModelActor] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
    
         //Primary => Area 変換
-        FTask ReconstructTask = Launch(TEXT("ReconstructTask"), [&, ModelActor] {
+        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, ModelActor] {
 
             const auto& TargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(
                 ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TargetComponent2"));
@@ -120,10 +119,9 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryArea::RunTest(const FStrin
             AddInfo("Primary => Area Reconstruct Task Finish");
             });
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTask] {
-            return ReconstructTask.IsCompleted();
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
+            return ReconstructTestTask.IsCompleted();
             }));
-        return true;
         }));
     return true;
 }
@@ -151,13 +149,13 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_AtomicPrimary::RunTest(const FStr
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ModelActor] {
+    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
         //Atomic => Primary 変換
         const auto& AtomicTargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(
             ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "AtomicTarget"));
 
-        FTask ReconstructTask = Launch(TEXT("ReconstructTask"), [&, AtomicTargetComponents] {
+        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, AtomicTargetComponents] {
 
             auto Task = ModelActor->ReconstructModel(AtomicTargetComponents, EPLATEAUMeshGranularity::PerPrimaryFeatureObject, false);
             AddNested(Task);
@@ -177,11 +175,10 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_AtomicPrimary::RunTest(const FStr
             AddInfo("Atomic => Primary Reconstruct Task Finish");
             });
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTask] {
-            return ReconstructTask.IsCompleted();
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
+            return ReconstructTestTask.IsCompleted();
             }));
 
-        return true;
         }));
     return true;
 }
