@@ -12,7 +12,7 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "Component/PLATEAUSceneComponent.h"
 
 

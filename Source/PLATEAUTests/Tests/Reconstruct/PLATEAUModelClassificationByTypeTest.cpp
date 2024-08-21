@@ -29,11 +29,11 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByType_Local {
 /// 各Componentのダイナミック生成によるTest
 /// 
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByType, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.Type", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByType, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.ModelClassificationByType", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_Reconstruct_ModelClassificationByType::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Dynamic.Type");
+    InitializeTest("Classification.Dynamic.ModelClassificationByType");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 

@@ -10,7 +10,7 @@
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
 #include "Tasks/Task.h"
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
 

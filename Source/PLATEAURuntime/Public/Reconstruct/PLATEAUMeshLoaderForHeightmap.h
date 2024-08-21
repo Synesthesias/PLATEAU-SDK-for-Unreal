@@ -7,7 +7,7 @@
 #include "PLATEAUGeometry.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Landscape.h"
-#include "PLATEAUMeshLoaderForLandscape.generated.h"
+#include "PLATEAUMeshLoaderForHeightmap.generated.h"
 
 UENUM(BlueprintType)
 enum class EPLATEAULandscapeHeightmapImageOutput : uint8 {
@@ -96,11 +96,11 @@ struct  HeightmapCreationResult {
     FString TexturePath;
 };
 
-class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscape : public FPLATEAUMeshLoader {
+class PLATEAURUNTIME_API FPLATEAUMeshLoaderForHeightmap : public FPLATEAUMeshLoader {
 
 public:
-    FPLATEAUMeshLoaderForLandscape();
-    FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest);
+    FPLATEAUMeshLoaderForHeightmap();
+    FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest);
 
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,

@@ -1,7 +1,7 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
@@ -15,13 +15,13 @@
 #include "Util/PLATEAUReconstructUtil.h"
 
 
-FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape() {}
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() {}
 
-FPLATEAUMeshLoaderForLandscape::FPLATEAUMeshLoaderForLandscape(const bool InbAutomationTest){
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest){
     bAutomationTest = InbAutomationTest;
 }
 
-TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
+TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForHeightmap::CreateHeightMap(
     AActor* ModelActor,
     const std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
     TArray<HeightmapCreationResult> CreationResults;
@@ -31,7 +31,7 @@ TArray<HeightmapCreationResult> FPLATEAUMeshLoaderForLandscape::CreateHeightMap(
     return CreationResults;
 }
 
-void FPLATEAUMeshLoaderForLandscape::LoadNodeRecursiveForHeightMap(
+void FPLATEAUMeshLoaderForHeightmap::LoadNodeRecursiveForHeightMap(
     const plateau::polygonMesh::Node& InNode,
     AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
     LoadNodeForHeightMap(InNode, InActor, Param, Results);
@@ -42,7 +42,7 @@ void FPLATEAUMeshLoaderForLandscape::LoadNodeRecursiveForHeightMap(
     }
 }
 
-void FPLATEAUMeshLoaderForLandscape::LoadNodeForHeightMap(
+void FPLATEAUMeshLoaderForHeightmap::LoadNodeForHeightMap(
     const plateau::polygonMesh::Node& InNode,
     AActor& InActor, FPLATEAULandscapeParam Param, TArray<HeightmapCreationResult> &Results) {
     if (InNode.getMesh() == nullptr || InNode.getMesh()->getVertices().size() == 0) {
@@ -54,7 +54,7 @@ void FPLATEAUMeshLoaderForLandscape::LoadNodeForHeightMap(
     }
 }
 
-HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
+HeightmapCreationResult FPLATEAUMeshLoaderForHeightmap::CreateHeightMapFromMesh(
     const plateau::polygonMesh::Mesh& InMesh, const FString NodeName, AActor& Actor, FPLATEAULandscapeParam Param) {
 
     plateau::heightMapGenerator::HeightmapGenerator generator;
@@ -81,7 +81,7 @@ HeightmapCreationResult FPLATEAUMeshLoaderForLandscape::CreateHeightMapFromMesh(
 }
 
 
-void FPLATEAUMeshLoaderForLandscape::CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName) {
+void FPLATEAUMeshLoaderForHeightmap::CreateReference(ALandscape* Landscape, AActor* Actor, const FString NodeName) {
     const FString ReplacedNodeName = NodeName.Replace(*FString("Mesh_"), *FString()); //Mesh Prefix ����
     auto OriginalComponent = GetOriginalComponent(Actor, ReplacedNodeName);
     if (OriginalComponent) {
@@ -111,7 +111,7 @@ void FPLATEAUMeshLoaderForLandscape::CreateReference(ALandscape* Landscape, AAct
     }
 }
 
-TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(const AActor* ModelActor, const FString Name) {
+TArray<USceneComponent*> FPLATEAUMeshLoaderForHeightmap::FindComponentsByName(const AActor* ModelActor, const FString Name) {
     const FRegexPattern pattern = FRegexPattern(FString::Format(*FString(TEXT("^{0}__([0-9]+)")), { Name }));
     TArray<USceneComponent*> Result;
     const auto Components = ModelActor->GetComponents();
@@ -126,7 +126,7 @@ TArray<USceneComponent*> FPLATEAUMeshLoaderForLandscape::FindComponentsByName(co
     return Result;
 }
 
-UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForLandscape::GetOriginalComponent(const AActor* ModelActor, const FString Name) {
+UPLATEAUCityObjectGroup* FPLATEAUMeshLoaderForHeightmap::GetOriginalComponent(const AActor* ModelActor, const FString Name) {
     const auto BaseComponents = FindComponentsByName(ModelActor, Name);
     if (BaseComponents.Num() > 0) {
         UPLATEAUCityObjectGroup* FoundItem;

@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include "PLATEAUMeshLoaderForLandscape.h"
+#include "PLATEAUMeshLoaderForHeightmap.h"
 
 //地形を平滑化されたMeshに変換します
-class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscapeMesh : public FPLATEAUMeshLoaderForLandscape {
+class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscapeMesh : public FPLATEAUMeshLoaderForHeightmap {
 
 public:
     FPLATEAUMeshLoaderForLandscapeMesh();

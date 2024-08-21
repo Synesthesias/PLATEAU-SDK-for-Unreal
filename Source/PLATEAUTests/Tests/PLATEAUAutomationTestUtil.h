@@ -26,8 +26,6 @@ namespace PLATEAUAutomationTestUtil {
     /// Actor と Compoenent生成
     /// </summary>
     APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
-        //FActorSpawnParameters SpawnParam;
-        //const auto& Actor = World.SpawnActor<AActor>(SpawnParam);
         APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
         const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
             USceneComponent::GetDefaultSceneRootVariableName());

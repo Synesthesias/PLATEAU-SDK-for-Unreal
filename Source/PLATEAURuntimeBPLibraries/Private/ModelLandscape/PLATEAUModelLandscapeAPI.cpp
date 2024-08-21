@@ -2,7 +2,7 @@
 
 #include "ModelLandscape/PLATEAUModelLandscapeAPI.h"
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
-#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 
 
 void UPLATEAUModelLandscapeAPI::CreateLandscape(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, bool bDestroyOriginal, FPLATEAULandscapeParam Param) {

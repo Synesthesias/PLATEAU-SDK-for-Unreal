@@ -62,11 +62,11 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
 /// FPLATEAUModelClassificationByAttribute　単体テスト
 /// 各Componentのダイナミック生成によるTest
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.Attr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.ModelClassificationByAttr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Dynamic.Attr");
+    InitializeTest("Classification.Dynamic.ModelClassificationByAttr");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
