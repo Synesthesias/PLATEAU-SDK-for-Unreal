@@ -72,7 +72,7 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
     OriginalItem->SetStaticMesh(StaticMesh);
     PLATEAUAutomationTestUtil::SetMaterial(StaticMesh, FVector3f(0, 1, 0));
 
-    FTask CreateMeshTask = Launch(TEXT("CreateMeshTask"), [this, &Actor, OriginalItem] {
+    FTask CreateLandMeshTestTask = Launch(TEXT("CreateLandMeshTestTask"), [this, &Actor, OriginalItem] {
 
         // Load Heightmap Texture
         UTexture2D* Texture = PLATEAUAutomationTestLandscapeUtil::LoadImage("HM_dem_test_505_505.png");
@@ -90,7 +90,7 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
         FPLATEAUMeshLoaderForLandscapeMesh MeshLoader;
         MeshLoader.CreateMeshFromHeightMap(*Actor, 505, 505, TVec3d(), TVec3d(1000, 1000, 100), TVec2f(), TVec2f(1, 1), RawData, PLATEAUAutomationTestLandscapeUtil::TEST_DEM_OBJ_NAME);
         });
-        CreateMeshTask.Wait();
+        CreateLandMeshTestTask.Wait();
 
         // Assertions
         const auto& Parent = OriginalItem->GetAttachParent();
@@ -109,10 +109,6 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
 
         TestEqual("Attr are the same ", MeshComponent->SerializedCityObjects, OriginalItem->SerializedCityObjects);
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([CreateMeshTask] {
-            return CreateMeshTask.IsCompleted();
-            }));
-
         // Static Mesh　生成まで待機
         ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, MeshComponent, OriginalItem] {
             if (!MeshComponent->GetStaticMesh())
@@ -125,10 +121,10 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
             }));
 
         // Task 終了まで待機
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([CreateMeshTask] {
-            return CreateMeshTask.IsCompleted();
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([CreateLandMeshTestTask] {
+            return CreateLandMeshTestTask.IsCompleted();
             }));
 
-    
+
     return true;
 }
