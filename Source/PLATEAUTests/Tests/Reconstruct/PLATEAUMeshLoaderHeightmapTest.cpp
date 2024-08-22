@@ -14,11 +14,11 @@
 /// <summary>
 /// Landscape/Heightmap 用 MeshLoader (PLATEAUMeshLoaderForHeightmap) Test
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Heightmap, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.Heightmap", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Heightmap, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.PLATEAUMeshLoaderForHeightmap", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_MeshLoader_Heightmap::RunTest(const FString& Parameters) {
-    InitializeTest("MeshLoader.Heightmap");
+    InitializeTest("MeshLoader.PLATEAUMeshLoaderForHeightmap");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
@@ -26,20 +26,20 @@ bool FPLATEAUTest_MeshLoader_Heightmap::RunTest(const FString& Parameters) {
 
     plateau::polygonMesh::Mesh Mesh;
     plateau::polygonMesh::CityObjectList CityObjectList;
-    PLATEAUAutomationTestLandscapeUtil::CreateCityObjectList(CityObjectList);
-    PLATEAUAutomationTestUtil::CreateMesh(Mesh, CityObjectList);
-    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestLandscapeUtil::CreateModel(Mesh);
+    PLATEAUAutomationTestUtil::LandscapeFixtures::CreateCityObjectList(CityObjectList);
+    PLATEAUAutomationTestUtil::Fixtures::CreateMesh(Mesh, CityObjectList);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::LandscapeFixtures::CreateModel(Mesh);
 
-    const auto& Actor = PLATEAUAutomationTestLandscapeUtil::CreateActor(*GetWorld());
-    const auto LoadData = PLATEAUAutomationTestLandscapeUtil::CreateLandscapeParam(); //505 x 505
+    const auto& Actor = PLATEAUAutomationTestUtil::LandscapeFixtures::CreateActor(*GetWorld());
+    const auto LoadData = PLATEAUAutomationTestUtil::LandscapeFixtures::CreateLandscapeParam(); //505 x 505
 
     //CityObjectGroup Item
-    auto OriginalItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
+    auto OriginalItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_TAG);
     FPLATEAUCityObject CityObj;
-    PLATEAUAutomationTestLandscapeUtil::CreateCityObjectDem(CityObj);
-    OriginalItem->SerializeCityObject(PLATEAUAutomationTestUtil::GetObjNode(Model), CityObj, ConvertGranularity::PerPrimaryFeatureObject);
-    OriginalItem->SetStaticMesh(PLATEAUAutomationTestUtil::CreateStaticMesh(Actor, FName(TEXT("TestDemStaticMesh"))));
-    PLATEAUAutomationTestUtil::SetMaterial(OriginalItem, FVector3f(1,0,0));
+    PLATEAUAutomationTestUtil::LandscapeFixtures::CreateCityObjectDem(CityObj);
+    OriginalItem->SerializeCityObject(PLATEAUAutomationTestUtil::Fixtures::GetObjNode(Model), CityObj, ConvertGranularity::PerPrimaryFeatureObject);
+    OriginalItem->SetStaticMesh(PLATEAUAutomationTestUtil::Fixtures::CreateStaticMesh(Actor, FName(TEXT("TestDemStaticMesh"))));
+    PLATEAUAutomationTestUtil::Fixtures::SetMaterial(OriginalItem, FVector3f(1,0,0));
 
     GEngine->BroadcastLevelActorListChanged();
 
@@ -56,7 +56,7 @@ bool FPLATEAUTest_MeshLoader_Heightmap::RunTest(const FString& Parameters) {
 
     const HeightmapCreationResult& Result = Results[0];  
     TestEqual("Heightmap size", Result.Data.Get()->size() , 505 * 505 );
-    TestEqual("Result NodeName", Result.NodeName, PLATEAUAutomationTestLandscapeUtil::TEST_DEM_OBJ_NAME);
+    TestEqual("Result NodeName", Result.NodeName, PLATEAUAutomationTestUtil::LandscapeFixtures::TEST_DEM_OBJ_NAME);
     
     return true;
 }

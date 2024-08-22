@@ -15,27 +15,27 @@
 /// 分割・結合 用 MeshLoader (FPLATEAUMeshLoaderForReconstruct) Test
 /// 主に階層生成テスト
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Reconstruct_Model, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.ReconstructModel", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Reconstruct_Model, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.PLATEAUMeshLoaderForReconstruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_MeshLoader_Reconstruct_Model::RunTest(const FString& Parameters) {
-    InitializeTest("MeshLoader.ReconstructModel");
+    InitializeTest("MeshLoader.PLATEAUMeshLoaderForReconstruct");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
     plateau::polygonMesh::Mesh Mesh;
     plateau::polygonMesh::CityObjectList CityObjectList;
-    PLATEAUAutomationTestUtil::CreateCityObjectList(CityObjectList);
-    PLATEAUAutomationTestUtil::CreateMesh(Mesh, CityObjectList);
-    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::CreateModel(Mesh);
+    PLATEAUAutomationTestUtil::Fixtures::CreateCityObjectList(CityObjectList);
+    PLATEAUAutomationTestUtil::Fixtures::CreateMesh(Mesh, CityObjectList);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::Fixtures::CreateModel(Mesh);
 
-    const auto& Actor = PLATEAUAutomationTestUtil::CreateActor(*GetWorld());
-    const auto LoadData = PLATEAUAutomationTestUtil::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
+    const auto& Actor = PLATEAUAutomationTestUtil::Fixtures::CreateActor(*GetWorld());
+    const auto LoadData = PLATEAUAutomationTestUtil::Fixtures::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
     const ConvertGranularity ConvGranularity = ConvertGranularity::PerPrimaryFeatureObject;
-    TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::CreateCityObjectMap();
+    TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::Fixtures::CreateCityObjectMap();
 
-    auto FoundItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
-    FoundItem->SerializeCityObject(PLATEAUAutomationTestUtil::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::TEST_OBJ_NAME]);
+    auto FoundItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_TAG);
+    FoundItem->SerializeCityObject(PLATEAUAutomationTestUtil::Fixtures::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME]);
 
     TAtomic<bool> bCanceled;
     bCanceled.Store(false);
@@ -55,13 +55,13 @@ bool FPLATEAUTest_MeshLoader_Reconstruct_Model::RunTest(const FString& Parameter
 
     TestEqual("Obj should be 2", ObjComps.Num() , 2 );
     for (auto Obj : ObjComps) {
-        TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+        TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
         UPLATEAUCityObjectGroup* CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(Obj);
-        TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+        TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
         //分割・結合で新規に生成されたComponent
-        if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::TEST_OBJ_NAME + "__2") {
+        if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME + "__2") {
             const int32 NumIndices = (int32)Mesh.getIndices().size();
 
             //StaticMesh生成を待機

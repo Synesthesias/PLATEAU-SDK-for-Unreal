@@ -12,397 +12,400 @@
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
 
-    const FString TEST_ACTOR_NAME = "TestActor";
-    const FString TEST_OP_NAME = "00000000_bldg_0000_op";
-    const FString TEST_LOD_NAME = "LOD1";
-    const FString TEST_OBJ_NAME = "bldg_00000000-aaaa-0000-0000-000000000000";
-    const FString TEST_CITYOBJ_TYPE = "Building";
-    const FName TEST_OBJ_TAG = "test";
-    const FString TEST_CITYOBJ_WALL_NAME = "surface-00000000-0000-0000-0000-000000000000";
-    const FString TEST_CITYOBJ_ROOF_NAME = "surface-00000000-1111-0000-0000-000000111111";
-    const FString TEST_CITYOBJ_WALL_TYPE = "WallSurface";
-    const FString TEST_CITYOBJ_ROOF_TYPE = "RoofSurface";
+    namespace Fixtures {
 
-    /// <summary>
-    /// Actor と Compoenent生成
-    /// </summary>
-    APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
-        APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
-        const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            USceneComponent::GetDefaultSceneRootVariableName());
-        const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEST_OP_NAME));
-        const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEST_LOD_NAME + "__1"));
-        const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEST_OBJ_NAME + "__1"));
+        const FString TEST_ACTOR_NAME = "TestActor";
+        const FString TEST_OP_NAME = "00000000_bldg_0000_op";
+        const FString TEST_LOD_NAME = "LOD1";
+        const FString TEST_OBJ_NAME = "bldg_00000000-aaaa-0000-0000-000000000000";
+        const FString TEST_CITYOBJ_TYPE = "Building";
+        const FName TEST_OBJ_TAG = "test";
+        const FString TEST_CITYOBJ_WALL_NAME = "surface-00000000-0000-0000-0000-000000000000";
+        const FString TEST_CITYOBJ_ROOF_NAME = "surface-00000000-1111-0000-0000-000000111111";
+        const FString TEST_CITYOBJ_WALL_TYPE = "WallSurface";
+        const FString TEST_CITYOBJ_ROOF_TYPE = "RoofSurface";
 
-        Actor->SetActorLabel(TEST_ACTOR_NAME);
-        Actor->AddInstanceComponent(SceneRoot);
-        Actor->SetRootComponent(SceneRoot);
-        SceneRoot->RegisterComponent();
+        /// <summary>
+        /// Actor と Compoenent生成
+        /// </summary>
+        APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
+            APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
+            const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                USceneComponent::GetDefaultSceneRootVariableName());
+            const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(TEST_OP_NAME));
+            const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(TEST_LOD_NAME + "__1"));
+            const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
+                FName(TEST_OBJ_NAME + "__1"));
 
-        Actor->AddInstanceComponent(CompRoot);
-        CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
-        CompRoot->RegisterComponent();
-        CompRoot->SetMobility(EComponentMobility::Static);
+            Actor->SetActorLabel(TEST_ACTOR_NAME);
+            Actor->AddInstanceComponent(SceneRoot);
+            Actor->SetRootComponent(SceneRoot);
+            SceneRoot->RegisterComponent();
 
-        CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompLod);
-        CompLod->RegisterComponent();
-        CompLod->SetMobility(EComponentMobility::Static);
+            Actor->AddInstanceComponent(CompRoot);
+            CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
+            CompRoot->RegisterComponent();
+            CompRoot->SetMobility(EComponentMobility::Static);
 
-        CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObj);
-        CompObj->RegisterComponent();
-        CompObj->SetMobility(EComponentMobility::Static);
-        CompObj->ComponentTags.Add(TEST_OBJ_TAG);
+            CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompLod);
+            CompLod->RegisterComponent();
+            CompLod->SetMobility(EComponentMobility::Static);
 
-        GEngine->BroadcastLevelActorListChanged();
-        return Actor;
-    }
+            CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompObj);
+            CompObj->RegisterComponent();
+            CompObj->SetMobility(EComponentMobility::Static);
+            CompObj->ComponentTags.Add(TEST_OBJ_TAG);
 
-    /// <summary>
-    /// Mesh用のCityObjectIndexのList生成
-    /// </summary>
-    void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
-        CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_OBJ_NAME));
-        CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 1), TCHAR_TO_UTF8(*TEST_CITYOBJ_WALL_NAME));
-        CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 2), TCHAR_TO_UTF8(*TEST_CITYOBJ_ROOF_NAME));
-    }
-
-    /// <summary>
-    /// Mesh生成
-    /// </summary>
-    void CreateMesh(plateau::polygonMesh::Mesh& Mesh, const plateau::polygonMesh::CityObjectList CityObj) {
-        std::vector<unsigned int> indices{ 0, 1, 2, 3, 2, 0 };
-        std::vector<TVec3d> vertices{ TVec3d(0,0,0),TVec3d(0, 100, 10),TVec3d(100, 100, 30),TVec3d(100, 0, 10) };
-        plateau::polygonMesh::UV uv1;
-
-        for (auto v : vertices) {
-            uv1.push_back(TVec2f(0, 0));
+            GEngine->BroadcastLevelActorListChanged();
+            return Actor;
         }
-        Mesh.addIndicesList(indices, 0, false);
-        Mesh.addVerticesList(vertices);
-        Mesh.addSubMesh("", nullptr, 0, indices.size() - 1, 0);
-        Mesh.addUV1(uv1, vertices.size());
-        Mesh.addUV4WithSameVal(TVec2f(0, 1), vertices.size());
-        Mesh.setCityObjectList(CityObj);
-    }
 
-    /// <summary>
-    /// Model / 各Node 生成
-    /// </summary>
-    std::shared_ptr<plateau::polygonMesh::Model> CreateModel(plateau::polygonMesh::Mesh& Mesh) {
-        std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
-        auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_OP_NAME));
-        auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_LOD_NAME));
-        auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_OBJ_NAME));
-        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-        NodeObj.setMesh(std::move(MeshPtr));
-        Model->assignNodeHierarchy();
-        Model->optimizeMeshes();
-        return Model;
-    }
+        /// <summary>
+        /// Mesh用のCityObjectIndexのList生成
+        /// </summary>
+        void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
+            CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_OBJ_NAME));
+            CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 1), TCHAR_TO_UTF8(*TEST_CITYOBJ_WALL_NAME));
+            CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 2), TCHAR_TO_UTF8(*TEST_CITYOBJ_ROOF_NAME));
+        }
 
-    /// <summary>
-    /// FPLATEAUCityObject & GMLID : FPLATEAUCityObject のMap 生成
-    /// </summary>
-    TMap<FString, FPLATEAUCityObject> CreateCityObjectMap() {
-        TMap<FString, FPLATEAUCityObject> Map;
-        FPLATEAUCityObject CityObj;
-        CityObj.SetGmlID(TEST_OBJ_NAME);
-        CityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
-        Map.Add(TEST_OBJ_NAME, CityObj);
-        return Map;
-    }
+        /// <summary>
+        /// Mesh生成
+        /// </summary>
+        void CreateMesh(plateau::polygonMesh::Mesh& Mesh, const plateau::polygonMesh::CityObjectList CityObj) {
+            std::vector<unsigned int> indices{ 0, 1, 2, 3, 2, 0 };
+            std::vector<TVec3d> vertices{ TVec3d(0,0,0),TVec3d(0, 100, 10),TVec3d(100, 100, 30),TVec3d(100, 0, 10) };
+            plateau::polygonMesh::UV uv1;
 
-    //CityObject (Building)
-    void CreateCityObjectBuilding(FPLATEAUCityObject& InCityObj) {
-        InCityObj.SetGmlID(TEST_OBJ_NAME);
-        InCityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
-        InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
-    }
+            for (auto v : vertices) {
+                uv1.push_back(TVec2f(0, 0));
+            }
+            Mesh.addIndicesList(indices, 0, false);
+            Mesh.addVerticesList(vertices);
+            Mesh.addSubMesh("", nullptr, 0, indices.size() - 1, 0);
+            Mesh.addUV1(uv1, vertices.size());
+            Mesh.addUV4WithSameVal(TVec2f(0, 1), vertices.size());
+            Mesh.setCityObjectList(CityObj);
+        }
 
-    //CityObject Children (Wall/Roof)
-    void CreateCityObjectBuildingChildren(FPLATEAUCityObject& ParentCityObj) {
-        FPLATEAUCityObject Wall;
-        Wall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
-        Wall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        Wall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-        ParentCityObj.Children.Add(Wall);
-        FPLATEAUCityObject Roof;
-        Roof.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
-        Roof.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        Roof.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-        ParentCityObj.Children.Add(Roof);
-    }
+        /// <summary>
+        /// Model / 各Node 生成
+        /// </summary>
+        std::shared_ptr<plateau::polygonMesh::Model> CreateModel(plateau::polygonMesh::Mesh& Mesh) {
+            std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
+            auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_OP_NAME));
+            auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_LOD_NAME));
+            auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_OBJ_NAME));
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            NodeObj.setMesh(std::move(MeshPtr));
+            Model->assignNodeHierarchy();
+            Model->optimizeMeshes();
+            return Model;
+        }
 
-    /// <summary>
-    /// Load用データ生成
-    /// </summary>
-    FLoadInputData CreateLoadInputData(plateau::polygonMesh::MeshGranularity MeshGranularity) {
-        plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
-        MeshExtractOptions.mesh_granularity = MeshGranularity;
-        return FLoadInputData
-        {
-            MeshExtractOptions,
-            std::vector<plateau::geometry::Extent>{},
-            FString(),
-            false,
-            nullptr
-        };
-    }
+        /// <summary>
+        /// CreateModelで生成したModelから属性情報を持つNodeの取得用  (root/lod/bldg)各単体の場合
+        /// </summary>
+        const plateau::polygonMesh::Node& GetObjNode(std::shared_ptr<plateau::polygonMesh::Model> Model) {
+            const auto& root = Model->getRootNodeAt(0);
+            const auto& lod = root.getChildAt(0);
+            return lod.getChildAt(0); //bldg_00000000-aaaa-0000-0000-000000000000
+        }
 
-    /// <summary>
-    /// 属性情報を持つNodeの取得用 (root/lod/bldg)各単体の場合
-    /// </summary>
-    const plateau::polygonMesh::Node& GetObjNode(std::shared_ptr<plateau::polygonMesh::Model> Model) {
-        const auto& root = Model->getRootNodeAt(0);
-        const auto& lod = root.getChildAt(0);
-        return lod.getChildAt(0); //bldg_00000000-aaaa-0000-0000-000000000000
-    }
+        /// <summary>
+        /// FPLATEAUCityObject & GMLID : FPLATEAUCityObject のMap 生成
+        /// </summary>
+        TMap<FString, FPLATEAUCityObject> CreateCityObjectMap() {
+            TMap<FString, FPLATEAUCityObject> Map;
+            FPLATEAUCityObject CityObj;
+            CityObj.SetGmlID(TEST_OBJ_NAME);
+            CityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
+            CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+            Map.Add(TEST_OBJ_NAME, CityObj);
+            return Map;
+        }
 
-    /// <summary>
-    /// StaticMesh生成
-    /// </summary>
-    UStaticMesh* CreateStaticMesh(AActor* Actor, FName Name, FVector3f Offset = FVector3f::Zero()) {
-        FMeshDescription mesh_desc;
+        //CityObject (Building)
+        void CreateCityObjectBuilding(FPLATEAUCityObject& InCityObj) {
+            InCityObj.SetGmlID(TEST_OBJ_NAME);
+            InCityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
+            InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+        }
 
-        FStaticMeshAttributes attributes(mesh_desc);
-        attributes.Register();
+        //CityObject Children (Wall/Roof)
+        void CreateCityObjectBuildingChildren(FPLATEAUCityObject& ParentCityObj) {
+            FPLATEAUCityObject Wall;
+            Wall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
+            Wall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
+            Wall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+            ParentCityObj.Children.Add(Wall);
+            FPLATEAUCityObject Roof;
+            Roof.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
+            Roof.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
+            Roof.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+            ParentCityObj.Children.Add(Roof);
+        }
 
-        TVertexAttributesRef<FVector3f> positions = mesh_desc.GetVertexPositions();
+        /// <summary>
+        /// Load用データ生成
+        /// </summary>
+        FLoadInputData CreateLoadInputData(plateau::polygonMesh::MeshGranularity MeshGranularity) {
+            plateau::polygonMesh::MeshExtractOptions MeshExtractOptions{};
+            MeshExtractOptions.mesh_granularity = MeshGranularity;
+            return FLoadInputData
+            {
+                MeshExtractOptions,
+                std::vector<plateau::geometry::Extent>{},
+                FString(),
+                false,
+                nullptr
+            };
+        }
 
-        mesh_desc.ReserveNewVertices(4);
-        FVertexID v0 = mesh_desc.CreateVertex();
-        FVertexID v1 = mesh_desc.CreateVertex();
-        FVertexID v2 = mesh_desc.CreateVertex();
-        FVertexID v3 = mesh_desc.CreateVertex();
+        /// <summary>
+        /// StaticMesh生成
+        /// </summary>
+        UStaticMesh* CreateStaticMesh(AActor* Actor, FName Name, FVector3f Offset = FVector3f::Zero()) {
+            FMeshDescription mesh_desc;
 
-        mesh_desc.ReserveNewVertexInstances(4);
-        FVertexInstanceID vi0 = mesh_desc.CreateVertexInstance(v0);
-        FVertexInstanceID vi1 = mesh_desc.CreateVertexInstance(v1);
-        FVertexInstanceID vi2 = mesh_desc.CreateVertexInstance(v2);
-        FVertexInstanceID vi3 = mesh_desc.CreateVertexInstance(v3);
+            FStaticMeshAttributes attributes(mesh_desc);
+            attributes.Register();
 
-        mesh_desc.ReserveNewUVs(4, 0);
-        FUVID uv0 = mesh_desc.CreateUV();
-        FUVID uv1 = mesh_desc.CreateUV();
-        FUVID uv2 = mesh_desc.CreateUV();
-        FUVID uv3 = mesh_desc.CreateUV();
+            TVertexAttributesRef<FVector3f> positions = mesh_desc.GetVertexPositions();
 
-        //UV4
-        mesh_desc.SetNumUVChannels(4);
-        mesh_desc.ReserveNewUVs(4, 3);
-        FUVID uv4_0 = mesh_desc.CreateUV();
-        FUVID uv4_1 = mesh_desc.CreateUV();
-        FUVID uv4_2 = mesh_desc.CreateUV();
-        FUVID uv4_3 = mesh_desc.CreateUV();
+            mesh_desc.ReserveNewVertices(4);
+            FVertexID v0 = mesh_desc.CreateVertex();
+            FVertexID v1 = mesh_desc.CreateVertex();
+            FVertexID v2 = mesh_desc.CreateVertex();
+            FVertexID v3 = mesh_desc.CreateVertex();
 
-        FPolygonGroupID polygon_group = mesh_desc.CreatePolygonGroup();
+            mesh_desc.ReserveNewVertexInstances(4);
+            FVertexInstanceID vi0 = mesh_desc.CreateVertexInstance(v0);
+            FVertexInstanceID vi1 = mesh_desc.CreateVertexInstance(v1);
+            FVertexInstanceID vi2 = mesh_desc.CreateVertexInstance(v2);
+            FVertexInstanceID vi3 = mesh_desc.CreateVertexInstance(v3);
 
-        mesh_desc.ReserveNewPolygons(1);
-        mesh_desc.CreatePolygon(polygon_group, { vi0, vi1, vi2, vi3 });
+            mesh_desc.ReserveNewUVs(4, 0);
+            FUVID uv0 = mesh_desc.CreateUV();
+            FUVID uv1 = mesh_desc.CreateUV();
+            FUVID uv2 = mesh_desc.CreateUV();
+            FUVID uv3 = mesh_desc.CreateUV();
 
-        positions = attributes.GetVertexPositions();
+            //UV4
+            mesh_desc.SetNumUVChannels(4);
+            mesh_desc.ReserveNewUVs(4, 3);
+            FUVID uv4_0 = mesh_desc.CreateUV();
+            FUVID uv4_1 = mesh_desc.CreateUV();
+            FUVID uv4_2 = mesh_desc.CreateUV();
+            FUVID uv4_3 = mesh_desc.CreateUV();
 
-        positions[0] = FVector3f(-100, -100, 0)     + Offset;
-        positions[1] = FVector3f(-100, 100, 0)      + Offset;
-        positions[2] = FVector3f(100, 100, 0)       + Offset;
-        positions[3] = FVector3f(100, -100, 0)      + Offset;
+            FPolygonGroupID polygon_group = mesh_desc.CreatePolygonGroup();
 
-        TVertexInstanceAttributesRef<FVector3f> normals = attributes.GetVertexInstanceNormals();
+            mesh_desc.ReserveNewPolygons(1);
+            mesh_desc.CreatePolygon(polygon_group, { vi0, vi1, vi2, vi3 });
 
-        normals[0] = FVector3f(0, 0, 1);
-        normals[1] = FVector3f(0, 0, 1);
-        normals[2] = FVector3f(0, 0, 1);
-        normals[3] = FVector3f(0, 0, 1);
+            positions = attributes.GetVertexPositions();
 
-        TVertexInstanceAttributesRef<FVector2f> uvs = attributes.GetVertexInstanceUVs();
+            positions[0] = FVector3f(-100, -100, 0) + Offset;
+            positions[1] = FVector3f(-100, 100, 0) + Offset;
+            positions[2] = FVector3f(100, 100, 0) + Offset;
+            positions[3] = FVector3f(100, -100, 0) + Offset;
 
-        uvs.Get(0, 0) = FVector2f(0, 0);
-        uvs.Get(1, 0) = FVector2f(0, 1);
-        uvs.Get(2, 0) = FVector2f(1, 1);
-        uvs.Get(3, 0) = FVector2f(1, 0);
+            TVertexInstanceAttributesRef<FVector3f> normals = attributes.GetVertexInstanceNormals();
 
-        //UV4
-        uvs.SetNumChannels(4);
-        uvs.Get(0, 3) = FVector2f(0, 1);
-        uvs.Get(1, 3) = FVector2f(0, 1);
-        uvs.Get(2, 3) = FVector2f(0, 2);
-        uvs.Get(3, 3) = FVector2f(0, 2);
+            normals[0] = FVector3f(0, 0, 1);
+            normals[1] = FVector3f(0, 0, 1);
+            normals[2] = FVector3f(0, 0, 1);
+            normals[3] = FVector3f(0, 0, 1);
 
-        // At least one material must be added
-        UStaticMesh* mesh = NewObject<UStaticMesh>(Actor, Name);
-        //mesh->GetStaticMaterials().Add(FStaticMaterial());
+            TVertexInstanceAttributesRef<FVector2f> uvs = attributes.GetVertexInstanceUVs();
 
-        UStaticMesh::FBuildMeshDescriptionsParams mdParams;
-        mdParams.bBuildSimpleCollision = true;
+            uvs.Get(0, 0) = FVector2f(0, 0);
+            uvs.Get(1, 0) = FVector2f(0, 1);
+            uvs.Get(2, 0) = FVector2f(1, 1);
+            uvs.Get(3, 0) = FVector2f(1, 0);
 
-        mesh->NaniteSettings.bEnabled = false;
+            //UV4
+            uvs.SetNumChannels(4);
+            uvs.Get(0, 3) = FVector2f(0, 1);
+            uvs.Get(1, 3) = FVector2f(0, 1);
+            uvs.Get(2, 3) = FVector2f(0, 2);
+            uvs.Get(3, 3) = FVector2f(0, 2);
 
-        // Build static mesh
-        mesh->BuildFromMeshDescriptions({ &mesh_desc }, mdParams);
+            // At least one material must be added
+            UStaticMesh* mesh = NewObject<UStaticMesh>(Actor, Name);
+            //mesh->GetStaticMaterials().Add(FStaticMaterial());
 
-        mesh->InitResources();
-        // make sure it has a new lighting guid
-        mesh->SetLightingGuid();
-        // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
-        mesh->SetLightMapResolution(64);
-        mesh->SetLightMapCoordinateIndex(1);
+            UStaticMesh::FBuildMeshDescriptionsParams mdParams;
+            mdParams.bBuildSimpleCollision = true;
 
-        return mesh;
-    }
+            mesh->NaniteSettings.bEnabled = false;
 
-    /// <summary>
-    /// StaticMeshに色付きマテリアルを設定
-    /// </summary>
-    void SetMaterial(UStaticMesh* mesh, FVector3f Color = FVector3f::Zero()) {
-        const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-        UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-        UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
-        if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
-        mesh->AddMaterial(Mat);
-    }
+            // Build static mesh
+            mesh->BuildFromMeshDescriptions({ &mesh_desc }, mdParams);
 
-    /// <summary>
-    /// Componentに色付きマテリアルを設定
-    /// </summary>
-    void SetMaterial(UPLATEAUCityObjectGroup* Comp, FVector3f Color = FVector3f::Zero()) {
-        const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-        UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-        UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, Comp);
-        if(Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
-        Comp->SetMaterial(0, Mat);
-    }
+            mesh->InitResources();
+            // make sure it has a new lighting guid
+            mesh->SetLightingGuid();
+            // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
+            mesh->SetLightMapResolution(64);
+            mesh->SetLightMapCoordinateIndex(1);
 
-    //Atomic
-    /// <summary>
-    /// Actor と Compoenent生成
-    /// </summary>
-    APLATEAUInstancedCityModel* CreateActorAtomic(UWorld& World) {
-        APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
-        const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            USceneComponent::GetDefaultSceneRootVariableName());
-        const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEST_OP_NAME));
-        const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEST_LOD_NAME + "__1"));
-        const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEST_OBJ_NAME + "__1"));
-        const auto& CompObjWall = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEST_CITYOBJ_WALL_NAME + "__1"));
-        const auto& CompObjRoof = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEST_CITYOBJ_ROOF_NAME + "__1"));
+            return mesh;
+        }
 
-        Actor->SetActorLabel(TEST_ACTOR_NAME);
-        Actor->AddInstanceComponent(SceneRoot);
-        Actor->SetRootComponent(SceneRoot);
-        SceneRoot->RegisterComponent();
+        /// <summary>
+        /// StaticMeshに色付きマテリアルを設定
+        /// </summary>
+        void SetMaterial(UStaticMesh* mesh, FVector3f Color = FVector3f::Zero()) {
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
+            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
+            if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
+            mesh->AddMaterial(Mat);
+        }
 
-        Actor->AddInstanceComponent(CompRoot);
-        CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
-        CompRoot->RegisterComponent();
-        CompRoot->SetMobility(EComponentMobility::Static);
+        /// <summary>
+        /// Componentに色付きマテリアルを設定
+        /// </summary>
+        void SetMaterial(UPLATEAUCityObjectGroup* Comp, FVector3f Color = FVector3f::Zero()) {
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
+            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, Comp);
+            if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
+            Comp->SetMaterial(0, Mat);
+        }
 
-        CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompLod);
-        CompLod->RegisterComponent();
-        CompLod->SetMobility(EComponentMobility::Static);
+        //Atomic
+        /// <summary>
+        /// Actor と Compoenent生成
+        /// </summary>
+        APLATEAUInstancedCityModel* CreateActorAtomic(UWorld& World) {
+            APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
+            const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                USceneComponent::GetDefaultSceneRootVariableName());
+            const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(TEST_OP_NAME));
+            const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(TEST_LOD_NAME + "__1"));
+            const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
+                FName(TEST_OBJ_NAME + "__1"));
+            const auto& CompObjWall = NewObject<UPLATEAUCityObjectGroup>(Actor,
+                FName(TEST_CITYOBJ_WALL_NAME + "__1"));
+            const auto& CompObjRoof = NewObject<UPLATEAUCityObjectGroup>(Actor,
+                FName(TEST_CITYOBJ_ROOF_NAME + "__1"));
 
-        CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObj);
-        CompObj->RegisterComponent();
-        CompObj->SetMobility(EComponentMobility::Static);
-        CompObj->ComponentTags.Add(TEST_OBJ_TAG);
+            Actor->SetActorLabel(TEST_ACTOR_NAME);
+            Actor->AddInstanceComponent(SceneRoot);
+            Actor->SetRootComponent(SceneRoot);
+            SceneRoot->RegisterComponent();
 
-        CompObjWall->AttachToComponent(CompObj, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObjWall);
-        CompObjWall->RegisterComponent();
-        CompObjWall->SetMobility(EComponentMobility::Static);
+            Actor->AddInstanceComponent(CompRoot);
+            CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
+            CompRoot->RegisterComponent();
+            CompRoot->SetMobility(EComponentMobility::Static);
 
-        CompObjRoof->AttachToComponent(CompObj, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObjRoof);
-        CompObjRoof->RegisterComponent();
-        CompObjRoof->SetMobility(EComponentMobility::Static);
+            CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompLod);
+            CompLod->RegisterComponent();
+            CompLod->SetMobility(EComponentMobility::Static);
 
-        GEngine->BroadcastLevelActorListChanged();
-        return Actor;
-    }
+            CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompObj);
+            CompObj->RegisterComponent();
+            CompObj->SetMobility(EComponentMobility::Static);
+            CompObj->ComponentTags.Add(TEST_OBJ_TAG);
 
-    /// <summary>
-    /// Model / 各Node 生成
-    /// </summary>
-    std::shared_ptr<plateau::polygonMesh::Model> CreateModelAtomic(plateau::polygonMesh::Mesh& Mesh) {
-        std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
-        auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_OP_NAME));
-        auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_LOD_NAME));
-        auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_OBJ_NAME));
-        auto& NodeWall = NodeObj.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_CITYOBJ_WALL_NAME));
-        auto& NodeRoof = NodeObj.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_CITYOBJ_ROOF_NAME));
+            CompObjWall->AttachToComponent(CompObj, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompObjWall);
+            CompObjWall->RegisterComponent();
+            CompObjWall->SetMobility(EComponentMobility::Static);
 
-        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-        NodeWall.setMesh(std::move(MeshPtr));
-        auto MeshPtr2 = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-        NodeWall.setMesh(std::move(MeshPtr2));
+            CompObjRoof->AttachToComponent(CompObj, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompObjRoof);
+            CompObjRoof->RegisterComponent();
+            CompObjRoof->SetMobility(EComponentMobility::Static);
 
-        Model->assignNodeHierarchy();
-        Model->optimizeMeshes();
-        return Model;
-    }
+            GEngine->BroadcastLevelActorListChanged();
+            return Actor;
+        }
 
-    /// <summary>
-    /// FPLATEAUCityObject & GMLID : FPLATEAUCityObject のMap 生成
-    /// </summary>
-    TMap<FString, FPLATEAUCityObject> CreateCityObjectMapAtomic() {
-        TMap<FString, FPLATEAUCityObject> Map;
-        FPLATEAUCityObject CityObj;
-        CityObj.SetGmlID(TEST_OBJ_NAME);
-        CityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
-        FPLATEAUCityObject CityObjWall;
-        CityObjWall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
-        CityObjWall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-        FPLATEAUCityObject CityObjRoof;
-        CityObjWall.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
-        CityObjWall.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-        Map.Add(TEST_OBJ_NAME, CityObj);
-        return Map;
-    }
+        /// <summary>
+        /// Model / 各Node 生成
+        /// </summary>
+        std::shared_ptr<plateau::polygonMesh::Model> CreateModelAtomic(plateau::polygonMesh::Mesh& Mesh) {
+            std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
+            auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_OP_NAME));
+            auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_LOD_NAME));
+            auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_OBJ_NAME));
+            auto& NodeWall = NodeObj.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_CITYOBJ_WALL_NAME));
+            auto& NodeRoof = NodeObj.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_CITYOBJ_ROOF_NAME));
 
-    //Wall CityObject
-    void CreateCityObjectWall(FPLATEAUCityObject& CityObj) {
-        CityObj.SetGmlID(TEST_CITYOBJ_WALL_NAME);
-        CityObj.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-    }
-    //Roof CityObject
-    void CreateCityObjectRoof(FPLATEAUCityObject& CityObj) {
-        CityObj.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
-        CityObj.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
-        CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
-    }
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            NodeWall.setMesh(std::move(MeshPtr));
+            auto MeshPtr2 = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            NodeWall.setMesh(std::move(MeshPtr2));
 
-    //Building OutsideChildren
-    TArray<FString> CreateCityObjectBuildingOutsideChildren() {
-        TArray<FString> Children;
-        Children.Add(TEST_CITYOBJ_WALL_NAME);
-        Children.Add(TEST_CITYOBJ_ROOF_NAME);
-        return Children;
-    }
+            Model->assignNodeHierarchy();
+            Model->optimizeMeshes();
+            return Model;
+        }
 
-    /// <summary>
-    /// 属性情報を持つNodeの取得用
-    /// </summary>
-    const plateau::polygonMesh::Node& GetObjNodeAtomic(std::shared_ptr<plateau::polygonMesh::Model> Model, int32 index) {
-        const auto& root = Model->getRootNodeAt(0);
-        const auto& lod = root.getChildAt(0);
-        const auto& obj = lod.getChildAt(0); //bldg_00000000-aaaa-0000-0000-000000000000
-        return obj.getChildAt(index);
+        /// <summary>
+        /// FPLATEAUCityObject & GMLID : FPLATEAUCityObject のMap 生成
+        /// </summary>
+        TMap<FString, FPLATEAUCityObject> CreateCityObjectMapAtomic() {
+            TMap<FString, FPLATEAUCityObject> Map;
+            FPLATEAUCityObject CityObj;
+            CityObj.SetGmlID(TEST_OBJ_NAME);
+            CityObj.SetCityObjectsType(TEST_CITYOBJ_TYPE);
+            CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+            FPLATEAUCityObject CityObjWall;
+            CityObjWall.SetGmlID(TEST_CITYOBJ_WALL_NAME);
+            CityObjWall.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
+            CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+            FPLATEAUCityObject CityObjRoof;
+            CityObjWall.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
+            CityObjWall.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
+            CityObjWall.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+            Map.Add(TEST_OBJ_NAME, CityObj);
+            return Map;
+        }
+
+        //Wall CityObject
+        void CreateCityObjectWall(FPLATEAUCityObject& CityObj) {
+            CityObj.SetGmlID(TEST_CITYOBJ_WALL_NAME);
+            CityObj.SetCityObjectsType(TEST_CITYOBJ_WALL_TYPE);
+            CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+        }
+        //Roof CityObject
+        void CreateCityObjectRoof(FPLATEAUCityObject& CityObj) {
+            CityObj.SetGmlID(TEST_CITYOBJ_ROOF_NAME);
+            CityObj.SetCityObjectsType(TEST_CITYOBJ_ROOF_TYPE);
+            CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
+        }
+
+        //Building OutsideChildren
+        TArray<FString> CreateCityObjectBuildingOutsideChildren() {
+            TArray<FString> Children;
+            Children.Add(TEST_CITYOBJ_WALL_NAME);
+            Children.Add(TEST_CITYOBJ_ROOF_NAME);
+            return Children;
+        }
+
+        /// <summary>
+        /// 属性情報を持つNodeの取得用
+        /// </summary>
+        const plateau::polygonMesh::Node& GetObjNodeAtomic(std::shared_ptr<plateau::polygonMesh::Model> Model, int32 index) {
+            const auto& root = Model->getRootNodeAt(0);
+            const auto& lod = root.getChildAt(0);
+            const auto& obj = lod.getChildAt(0); //bldg_00000000-aaaa-0000-0000-000000000000
+            return obj.getChildAt(index);
+        }
     }
 
     /// <summary>
@@ -431,131 +434,143 @@ namespace PLATEAUAutomationTestUtil {
         Test->TestEqual("Model Lod Node Name is the same", BaseModel->getRootNodeAt(0).getChildAt(0).getName(), Converted->getRootNodeAt(0).getChildAt(0).getName());
     }
 
-};
+    //Landscape/Heightmap用　ダイナミック生成等のテスト用共通処理
+    namespace LandscapeFixtures {
 
-//Landscape/Heightmap用　ダイナミック生成等のテスト用共通処理
-namespace PLATEAUAutomationTestLandscapeUtil {
+        const FString TEST_DEM_OP_NAME = "000000_dem_0000_op";
+        const FString TEST_DEM_OBJ_NAME = "dem_00000000-0000-0000-0000-000000000000";
+        const FString TEST_DEM_CITYOBJ_TYPE = "TINRelief";
 
-    const FString TEST_DEM_OP_NAME = "000000_dem_0000_op";
-    const FString TEST_DEM_OBJ_NAME = "dem_00000000-0000-0000-0000-000000000000";
-    const FString TEST_DEM_CITYOBJ_TYPE = "TINRelief";
-
-    /// <summary>
-    /// Landscape用Param生成
-    /// </summary>
-    FPLATEAULandscapeParam CreateLandscapeParam() {
-        FPLATEAULandscapeParam Param;
-        Param.TextureWidth = 505;
-        Param.TextureHeight = 505;
-        Param.NumSubsections = 2;
-        Param.SubsectionSizeQuads = 63;
-        Param.ComponentCountX = 126;
-        Param.ComponentCountY = 126;
-        Param.ConvertTerrain = true;
-        Param.ConvertToLandscape = true;
-        Param.FillEdges = true;
-        Param.ApplyBlurFilter = true;
-        Param.AlignLand = true;
-        Param.InvertRoadLod3 = true;
-        return Param;
-    }
-
-    /// <summary>
-    /// DemのCityObjectIndexのList生成
-    /// </summary>
-    void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
-        CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
-    }
-
-    /// <summary>
-    /// Dem Model / 各Node 生成
-    /// </summary>
-    std::shared_ptr<plateau::polygonMesh::Model> CreateModel(plateau::polygonMesh::Mesh& Mesh) {
-        std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
-        auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_DEM_OP_NAME));
-        auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*PLATEAUAutomationTestUtil::TEST_LOD_NAME));
-        auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
-        auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-        NodeObj.setMesh(std::move(MeshPtr));
-        Model->assignNodeHierarchy();
-        Model->optimizeMeshes();
-        return Model;
-    }
-
-    /// <summary>
-    /// Actor と DEM Compoenent生成
-    /// </summary>
-    APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
-        APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
-        const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            USceneComponent::GetDefaultSceneRootVariableName());
-        const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(TEST_DEM_OP_NAME));
-        const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
-            FName(PLATEAUAutomationTestUtil::TEST_LOD_NAME + "__1"));
-        const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
-            FName(TEST_DEM_OBJ_NAME + "__1"));
-
-        Actor->SetActorLabel(PLATEAUAutomationTestUtil::TEST_ACTOR_NAME);
-        Actor->AddInstanceComponent(SceneRoot);
-        Actor->SetRootComponent(SceneRoot);
-        SceneRoot->RegisterComponent();
-
-        Actor->AddInstanceComponent(CompRoot);
-        CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
-        CompRoot->RegisterComponent();
-        CompRoot->SetMobility(EComponentMobility::Static);
-
-        CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompLod);
-        CompLod->RegisterComponent();
-        CompLod->SetMobility(EComponentMobility::Static);
-
-        CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(CompObj);
-        CompObj->RegisterComponent();
-        CompObj->SetMobility(EComponentMobility::Static);
-        CompObj->ComponentTags.Add(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
-
-        GEngine->BroadcastLevelActorListChanged();
-        return Actor;
-    }
-
-    /// <summary>
-    /// Dem CityObject
-    /// </summary>
-    void CreateCityObjectDem(FPLATEAUCityObject& InCityObj) {
-        InCityObj.SetGmlID(TEST_DEM_OBJ_NAME);
-        InCityObj.SetCityObjectsType(TEST_DEM_CITYOBJ_TYPE);
-        InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
-    }
-
-    //画像ロード
-    UTexture2D* LoadImage(FString TextureName) {
-        FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
-        UTexture2D* texture = FImageUtils::ImportFileAsTexture2D(Path);
-        return texture;
-    }
-
-    //Texture2d => Uint16 Array 変換
-    TArray<uint16> ConvertTexture2dToUint16Array(UTexture2D* Texture) {
-
-        if (Texture->GetPlatformData()->PixelFormat != PF_G16R16 &&
-            Texture->GetPlatformData()->PixelFormat != PF_R16_UINT &&
-            Texture->GetPlatformData()->PixelFormat != PF_R16F &&
-            Texture->GetPlatformData()->PixelFormat != PF_G16) {
-            UE_LOG(LogTemp, Warning, TEXT("Unsupported Pixel Format! "));
+        /// <summary>
+        /// Landscape用Param生成
+        /// </summary>
+        FPLATEAULandscapeParam CreateLandscapeParam() {
+            FPLATEAULandscapeParam Param;
+            Param.TextureWidth = 505;
+            Param.TextureHeight = 505;
+            Param.NumSubsections = 2;
+            Param.SubsectionSizeQuads = 63;
+            Param.ComponentCountX = 126;
+            Param.ComponentCountY = 126;
+            Param.ConvertTerrain = true;
+            Param.ConvertToLandscape = true;
+            Param.FillEdges = true;
+            Param.ApplyBlurFilter = true;
+            Param.AlignLand = true;
+            Param.InvertRoadLod3 = true;
+            return Param;
         }
 
-        TArray<uint16> PixelDataArray;
-        FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
-        int32 TextureWidth = Mip.SizeX;
-        int32 TextureHeight = Mip.SizeY;
-        PixelDataArray.SetNum(TextureWidth * TextureHeight);
-        void* Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
-        FMemory::Memcpy(PixelDataArray.GetData(), Data, TextureWidth * TextureHeight * sizeof(uint16));
-        Mip.BulkData.Unlock();
-        return PixelDataArray;
+        /// <summary>
+        /// DemのCityObjectIndexのList生成
+        /// </summary>
+        void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
+            CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
+        }
+
+        /// <summary>
+        /// Dem Model / 各Node 生成
+        /// </summary>
+        std::shared_ptr<plateau::polygonMesh::Model> CreateModel(plateau::polygonMesh::Mesh& Mesh) {
+            std::shared_ptr<plateau::polygonMesh::Model> Model = plateau::polygonMesh::Model::createModel();
+            auto& NodeOP = Model->addEmptyNode(TCHAR_TO_UTF8(*TEST_DEM_OP_NAME));
+            auto& NodeLod = NodeOP.addEmptyChildNode(TCHAR_TO_UTF8(*PLATEAUAutomationTestUtil::Fixtures::TEST_LOD_NAME));
+            auto& NodeObj = NodeLod.addEmptyChildNode(TCHAR_TO_UTF8(*TEST_DEM_OBJ_NAME));
+            auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
+            NodeObj.setMesh(std::move(MeshPtr));
+            Model->assignNodeHierarchy();
+            Model->optimizeMeshes();
+            return Model;
+        }
+
+        /// <summary>
+        /// Actor と DEM Compoenent生成
+        /// </summary>
+        APLATEAUInstancedCityModel* CreateActor(UWorld& World) {
+            APLATEAUInstancedCityModel* Actor = World.SpawnActor<APLATEAUInstancedCityModel>();
+            const auto& SceneRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                USceneComponent::GetDefaultSceneRootVariableName());
+            const auto& CompRoot = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(TEST_DEM_OP_NAME));
+            const auto& CompLod = NewObject<UPLATEAUSceneComponent>(Actor,
+                FName(PLATEAUAutomationTestUtil::Fixtures::TEST_LOD_NAME + "__1"));
+            const auto& CompObj = NewObject<UPLATEAUCityObjectGroup>(Actor,
+                FName(TEST_DEM_OBJ_NAME + "__1"));
+
+            Actor->SetActorLabel(PLATEAUAutomationTestUtil::Fixtures::TEST_ACTOR_NAME);
+            Actor->AddInstanceComponent(SceneRoot);
+            Actor->SetRootComponent(SceneRoot);
+            SceneRoot->RegisterComponent();
+
+            Actor->AddInstanceComponent(CompRoot);
+            CompRoot->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
+            CompRoot->RegisterComponent();
+            CompRoot->SetMobility(EComponentMobility::Static);
+
+            CompLod->AttachToComponent(CompRoot, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompLod);
+            CompLod->RegisterComponent();
+            CompLod->SetMobility(EComponentMobility::Static);
+
+            CompObj->AttachToComponent(CompLod, FAttachmentTransformRules::KeepWorldTransform);
+            Actor->AddInstanceComponent(CompObj);
+            CompObj->RegisterComponent();
+            CompObj->SetMobility(EComponentMobility::Static);
+            CompObj->ComponentTags.Add(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_TAG);
+
+            GEngine->BroadcastLevelActorListChanged();
+            return Actor;
+        }
+
+        /// <summary>
+        /// Dem CityObject
+        /// </summary>
+        void CreateCityObjectDem(FPLATEAUCityObject& InCityObj) {
+            InCityObj.SetGmlID(TEST_DEM_OBJ_NAME);
+            InCityObj.SetCityObjectsType(TEST_DEM_CITYOBJ_TYPE);
+            InCityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
+        }
+    }
+
+    // Texture処理
+    namespace Texture {
+
+        //画像ロード
+        UTexture2D* LoadImage(FString TextureName) {
+            FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
+            UTexture2D* texture = FImageUtils::ImportFileAsTexture2D(Path);
+            return texture;
+        }
+
+        //Texture2d => Uint16 Array 変換
+        TArray<uint16> ConvertTexture2dToUint16Array(UTexture2D* Texture) {
+
+            if (Texture->GetPlatformData()->PixelFormat != PF_G16R16 &&
+                Texture->GetPlatformData()->PixelFormat != PF_R16_UINT &&
+                Texture->GetPlatformData()->PixelFormat != PF_R16F &&
+                Texture->GetPlatformData()->PixelFormat != PF_G16) {
+                UE_LOG(LogTemp, Warning, TEXT("Unsupported Pixel Format! "));
+            }
+
+            TArray<uint16> PixelDataArray;
+            FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+            int32 TextureWidth = Mip.SizeX;
+            int32 TextureHeight = Mip.SizeY;
+            PixelDataArray.SetNum(TextureWidth * TextureHeight);
+            void* Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
+            FMemory::Memcpy(PixelDataArray.GetData(), Data, TextureWidth * TextureHeight * sizeof(uint16));
+            Mip.BulkData.Unlock();
+            return PixelDataArray;
+        }
+
+        // Pixel FormatをStringで取得 (Log用）
+        FString GetPixelFormatString(UTexture2D* Texture) {
+            //UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EPixelFormat"), true);  //AddInfo("Name " + GetNameSafe(EnumPtr->GetOuter())); 
+            UEnum* EnumPtr = FindObject<UEnum>(nullptr, TEXT("/Script/CoreUObject.EPixelFormat"), true);
+            FString EnumName = EnumPtr->GetDisplayNameTextByValue(Texture->GetPlatformData()->PixelFormat).ToString();
+            return EnumName;
+        }
     }
 
 };
+

@@ -9,10 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
-#include "Tasks/Task.h"
 #include "PLATEAUModelLandscapeTestEventListener.h"
-
-using namespace UE::Tasks;
 
 /// <summary>
 /// 結合分離テスト (umap読込）
@@ -40,35 +37,28 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryAtomic::RunTest(const FStr
     ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
         //Primary => Atomic 変換
-        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, this, ModelActor] {
+        const auto& TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("TargetComponent");
 
-            const auto& TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("TargetComponent");
+        auto Task = ModelActor->ReconstructModel({ TargetComponent }, EPLATEAUMeshGranularity::PerAtomicFeatureObject, false);
+        Task.Wait();
 
-            auto Task = ModelActor->ReconstructModel({ TargetComponent }, EPLATEAUMeshGranularity::PerAtomicFeatureObject, false);
-            AddNested(Task);
-            Task.Wait();
+        //Primary => Atomic Assertions
+        FString OriginalName = FPLATEAUComponentUtil::GetOriginalComponentName(TargetComponent);
+        const auto& Parent = TargetComponent->GetAttachParent();
+        const auto AllBldgs = Parent->GetAttachChildren();
 
-            //Primary => Atomic Assertions
-            FString OriginalName = FPLATEAUComponentUtil::GetOriginalComponentName(TargetComponent);
-            const auto& Parent = TargetComponent->GetAttachParent();
-            const auto AllBldgs = Parent->GetAttachChildren();
+        TestFalse("Target Visibility ", TargetComponent->IsVisible());
+        TestTrue("Target has Children Components", TargetComponent->GetNumChildrenComponents() > 0);
 
-            TestFalse("Target Visibility ", TargetComponent->IsVisible());
-            TestTrue("Target has Children Components", TargetComponent->GetNumChildrenComponents() > 0);
+        const auto& CreatedComponents = Task.GetResult();
+        UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
+        CreatedItem->GetAllRootCityObjects(); //JsonからPropertyへの値の反映
 
-            const auto& CreatedComponents = Task.GetResult();
-            UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
-            CreatedItem->GetAllRootCityObjects(); //JsonからPropertyへの値の反映
-
-            TestEqual("Granularity is Atomic ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerAtomicFeatureObject);
-            TestEqual("OutsideParent is Target", CreatedItem->OutsideParent, OriginalName);
+        TestEqual("Granularity is Atomic ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerAtomicFeatureObject);
+        TestEqual("OutsideParent is Target", CreatedItem->OutsideParent, OriginalName);
             
-            AddInfo("Primary => Atomic  Reconstruct Task Finish"); 
-            });
+        AddInfo("Primary => Atomic  Reconstruct Task Finish"); 
 
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
-            return ReconstructTestTask.IsCompleted();
-            }));
         }));
     return true;
 }
@@ -99,29 +89,22 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_PrimaryArea::RunTest(const FStrin
     ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
    
         //Primary => Area 変換
-        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, ModelActor] {
+        const auto& TargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(
+            ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TargetComponent2"));
 
-            const auto& TargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(
-                ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TargetComponent2"));
+        auto Task = ModelActor->ReconstructModel(TargetComponents, EPLATEAUMeshGranularity::PerCityModelArea, false);
+        Task.Wait();
 
-            auto Task = ModelActor->ReconstructModel(TargetComponents, EPLATEAUMeshGranularity::PerCityModelArea, false);
-            AddNested(Task);
-            Task.Wait();
+        const auto& CreatedComponents = Task.GetResult();
 
-            const auto& CreatedComponents = Task.GetResult();
+        //Primary => Area Assertions
+        TestTrue("Resulted Components art not Empty", CreatedComponents.Num() > 0);
 
-            //Primary => Area Assertions
-            TestTrue("Resulted Components art not Empty", CreatedComponents.Num() > 0);
+        UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
+        TestEqual("Granularity is Area ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerCityModelArea);
 
-            UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
-            TestEqual("Granularity is Area ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerCityModelArea);
+        AddInfo("Primary => Area Reconstruct Task Finish");
 
-            AddInfo("Primary => Area Reconstruct Task Finish");
-            });
-
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
-            return ReconstructTestTask.IsCompleted();
-            }));
         }));
     return true;
 }
@@ -155,29 +138,21 @@ bool FPLATEAUTest_Reconstruct_ModelReconstruct_AtomicPrimary::RunTest(const FStr
         const auto& AtomicTargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(
             ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "AtomicTarget"));
 
-        FTask ReconstructTestTask = Launch(TEXT("ReconstructTestTask"), [&, AtomicTargetComponents] {
+        auto Task = ModelActor->ReconstructModel(AtomicTargetComponents, EPLATEAUMeshGranularity::PerPrimaryFeatureObject, false);
+        Task.Wait();
 
-            auto Task = ModelActor->ReconstructModel(AtomicTargetComponents, EPLATEAUMeshGranularity::PerPrimaryFeatureObject, false);
-            AddNested(Task);
-            Task.Wait();
+        const auto& CreatedComponents = Task.GetResult();
 
-            const auto& CreatedComponents = Task.GetResult();
+        //Atomic => Primary Assertions
+        TestTrue("Resulted Components art not Empty", CreatedComponents.Num() > 0);
 
-            //Atomic => Primary Assertions
-            TestTrue("Resulted Components art not Empty", CreatedComponents.Num() > 0);
+        UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
+        TestEqual("Granularity is Primary ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerPrimaryFeatureObject);
 
-            UPLATEAUCityObjectGroup* CreatedItem = (UPLATEAUCityObjectGroup*)CreatedComponents[0];
-            TestEqual("Granularity is Primary ", CreatedItem->GetConvertGranularity(), ConvertGranularity::PerPrimaryFeatureObject);
+        const auto& TargetParent = AtomicTargetComponents[0]->GetAttachParent();
+        TestEqual("Atomic Item Name and Parent Name are the same", FPLATEAUComponentUtil::GetOriginalComponentName(CreatedItem), FPLATEAUComponentUtil::GetOriginalComponentName(TargetParent));
 
-            const auto& TargetParent = AtomicTargetComponents[0]->GetAttachParent();
-            TestEqual("Atomic Item Name and Parent Name are the same", FPLATEAUComponentUtil::GetOriginalComponentName(CreatedItem), FPLATEAUComponentUtil::GetOriginalComponentName(TargetParent));
-
-            AddInfo("Atomic => Primary Reconstruct Task Finish");
-            });
-
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ReconstructTestTask] {
-            return ReconstructTestTask.IsCompleted();
-            }));
+        AddInfo("Atomic => Primary Reconstruct Task Finish");
 
         }));
     return true;

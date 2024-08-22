@@ -45,30 +45,30 @@ namespace FPLATEAUTest_MeshLoader_Classification_Local {
 }
 
 /// <summary>
-/// 分割・結合 用 MeshLoader (FPLATEAUMeshLoaderForReconstruct) Test
+/// マテリアル分け 用 MeshLoader (FPLATEAUMeshLoaderForClassification) Test
 /// 主に階層生成テスト
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Classification, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.Classification", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_MeshLoader_Classification, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.MeshLoader.PLATEAUMeshLoaderForClassification", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_MeshLoader_Classification::RunTest(const FString& Parameters) {
-    InitializeTest("MeshLoader.Classification");
+    InitializeTest("MeshLoader.PLATEAUMeshLoaderForClassification");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
     plateau::polygonMesh::Mesh Mesh;
     plateau::polygonMesh::CityObjectList CityObjectList;
-    PLATEAUAutomationTestUtil::CreateCityObjectList(CityObjectList);
+    PLATEAUAutomationTestUtil::Fixtures::CreateCityObjectList(CityObjectList);
     FPLATEAUTest_MeshLoader_Classification_Local::CreateMesh(Mesh, CityObjectList);
-    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::CreateModel(Mesh);
+    std::shared_ptr<plateau::polygonMesh::Model> Model = PLATEAUAutomationTestUtil::Fixtures::CreateModel(Mesh);
 
-    const auto& Actor = PLATEAUAutomationTestUtil::CreateActor(*GetWorld());
-    const auto LoadData = PLATEAUAutomationTestUtil::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
+    const auto& Actor = PLATEAUAutomationTestUtil::Fixtures::CreateActor(*GetWorld());
+    const auto LoadData = PLATEAUAutomationTestUtil::Fixtures::CreateLoadInputData(plateau::polygonMesh::MeshGranularity::PerPrimaryFeatureObject);
     const ConvertGranularity ConvGranularity = ConvertGranularity::PerPrimaryFeatureObject;
-    TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::CreateCityObjectMap();
+    TMap<FString, FPLATEAUCityObject> CityObj = PLATEAUAutomationTestUtil::Fixtures::CreateCityObjectMap();
 
-    auto FoundItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
-    FoundItem->SerializeCityObject(PLATEAUAutomationTestUtil::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::TEST_OBJ_NAME]);
+    auto FoundItem = Actor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_TAG);
+    FoundItem->SerializeCityObject(PLATEAUAutomationTestUtil::Fixtures::GetObjNode(Model), CityObj[PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME]);
 
     TAtomic<bool> bCanceled;
     bCanceled.Store(false);
@@ -91,15 +91,14 @@ bool FPLATEAUTest_MeshLoader_Classification::RunTest(const FString& Parameters) 
 
     TestEqual("Obj should be 2", ObjComps.Num() , 2 );
     for (auto Obj : ObjComps) {
-        TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+        TestEqual("Original Compoenent Name = Node Name", FPLATEAUComponentUtil::GetOriginalComponentName(Obj), PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
         UPLATEAUCityObjectGroup* CityObjGrp = StaticCast<UPLATEAUCityObjectGroup*>(Obj);
-        TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+        TestEqual("GmlID = Node Name", CityObjGrp->GetAllRootCityObjects()[0].GmlID, PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
         //新規に生成されたComponent
-        if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::TEST_OBJ_NAME + "__2") {
+        if (CityObjGrp->GetName() == PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME + "__2") {
             const int32 NumIndices = (int32)Mesh.getIndices().size();
-
 
             //StaticMesh生成を待機
             ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, CityObjGrp, NumIndices] {

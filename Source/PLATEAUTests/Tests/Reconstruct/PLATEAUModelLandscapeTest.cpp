@@ -13,8 +13,6 @@
 #include "Tasks/Task.h"
 #include "PLATEAUModelLandscapeTestEventListener.h"
 
-using namespace UE::Tasks;
-
 /// <summary>
 /// 地形平滑化テスト
 /// </summary>
@@ -38,7 +36,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscape::RunTest(const FString& Parameters)
 
     APLATEAUInstancedCityModel* ModelActor = (APLATEAUInstancedCityModel*)FoundActors[0];
     UPLATEAUCityObjectGroup* DemComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("DemComponent");
-    FPLATEAULandscapeParam Param = PLATEAUAutomationTestLandscapeUtil::CreateLandscapeParam();
+    FPLATEAULandscapeParam Param = PLATEAUAutomationTestUtil::LandscapeFixtures::CreateLandscapeParam();
     ULandscapeLoadEventListener* Listener = NewObject<ULandscapeLoadEventListener>();
     Listener->AddToRoot();
     Listener->TestBase = this;

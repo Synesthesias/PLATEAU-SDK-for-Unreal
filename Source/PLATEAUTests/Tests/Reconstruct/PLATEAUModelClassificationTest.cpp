@@ -9,10 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
-#include "Tasks/Task.h"
 #include "PLATEAUModelLandscapeTestEventListener.h"
-
-using namespace UE::Tasks;
 
 namespace FPLATEAUTest_Reconstruct_ModelClassification_Local {
 
@@ -57,10 +54,10 @@ namespace FPLATEAUTest_Reconstruct_ModelClassification_Local {
 /// マテリアル分けテスト(Type)
 /// umap使用
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Type, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.Type", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Type, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.ClassificationByType", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Static.Type");
+    InitializeTest("Classification.Static.ClassificationByType");
     if (!OpenMap("SampleBldg"))
         AddError("Failed to OpenMap");
 
@@ -78,55 +75,47 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
     
     ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
-        FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, ModelActor] {
+        const auto& TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("TargetComponent");
+        TMap<EPLATEAUCityObjectsType, UMaterialInterface*> MaterialMap = FPLATEAUTest_Reconstruct_ModelClassification_Local::CreateMaterialMapForType();
+        auto Task = ModelActor->ClassifyModel({ TargetComponent }, MaterialMap, EPLATEAUMeshGranularity::PerMaterialInPrimary, false);
+        Task.Wait();
 
-            const auto& TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>("TargetComponent");
-            TMap<EPLATEAUCityObjectsType, UMaterialInterface*> MaterialMap = FPLATEAUTest_Reconstruct_ModelClassification_Local::CreateMaterialMapForType();
-            auto Task = ModelActor->ClassifyModel({ TargetComponent }, MaterialMap, EPLATEAUMeshGranularity::PerMaterialInPrimary, false);
-            AddNested(Task);
-            Task.Wait();
+        //Classify By Type Assertions
+        FString OriginalName = FPLATEAUComponentUtil::GetOriginalComponentName(TargetComponent);
+        const auto CreatedComponents = Task.GetResult();
 
-            //Classify By Type Assertions
-            FString OriginalName = FPLATEAUComponentUtil::GetOriginalComponentName(TargetComponent);
-            const auto CreatedComponents = Task.GetResult();
+        TestTrue("TargetComponent has Children", TargetComponent->GetNumChildrenComponents() > 0);
 
-            TestTrue("TargetComponent has Children", TargetComponent->GetNumChildrenComponents() > 0);
+        UMaterialInterface* WallMat = *MaterialMap.Find(EPLATEAUCityObjectsType::COT_WallSurface);
+        UMaterialInterface* RoofMat = *MaterialMap.Find(EPLATEAUCityObjectsType::COT_RoofSurface);
+        const FString WallMatName = WallMat->GetName();
+        const FString RoofMatName = RoofMat->GetName();
+        AddInfo("WallMatName: [" + WallMatName + "]");
+        AddInfo("RoofMatName: [" + RoofMatName + "]");
 
-            UMaterialInterface* WallMat = *MaterialMap.Find(EPLATEAUCityObjectsType::COT_WallSurface);
-            UMaterialInterface* RoofMat = *MaterialMap.Find(EPLATEAUCityObjectsType::COT_RoofSurface);
-            const FString WallMatName = WallMat->GetName();
-            const FString RoofMatName = RoofMat->GetName();
-            AddInfo("WallMatName: [" + WallMatName + "]");
-            AddInfo("RoofMatName: [" + RoofMatName + "]");
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, CreatedComponents, WallMatName, RoofMatName] {
 
-            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, CreatedComponents, WallMatName, RoofMatName] {
+            //StaticMesh生成待機
+            TArray<FString> ResultMaterialNames;
+            for (auto CreatedComp : CreatedComponents) {
+                UPLATEAUCityObjectGroup* CreatedAsCOG = StaticCast<UPLATEAUCityObjectGroup*>(CreatedComp);
+                if (CreatedAsCOG->GetStaticMesh() == nullptr)
+                    return false;
 
-                //StaticMesh生成待機
-                TArray<FString> ResultMaterialNames;
-                for (auto CreatedComp : CreatedComponents) {
-                    UPLATEAUCityObjectGroup* CreatedAsCOG = StaticCast<UPLATEAUCityObjectGroup*>(CreatedComp);
-                    if (CreatedAsCOG->GetStaticMesh() == nullptr)
-                        return false;
-
-                    AddInfo("Created: " + CreatedComp->GetName());
-                    UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
-                    if (DynMat) {
-                        ResultMaterialNames.Add(DynMat->Parent.GetName());
-                        AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
-                    }
+                AddInfo("Created: " + CreatedComp->GetName());
+                UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
+                if (DynMat) {
+                    ResultMaterialNames.Add(DynMat->Parent.GetName());
+                    AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
                 }
+            }
 
-                AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
-                TestTrue("Material has Wall", ResultMaterialNames.Contains(WallMatName));
-                TestTrue("Material has Roof", ResultMaterialNames.Contains(RoofMatName));
+            AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
+            TestTrue("Material has Wall", ResultMaterialNames.Contains(WallMatName));
+            TestTrue("Material has Roof", ResultMaterialNames.Contains(RoofMatName));
 
-                AddInfo("Primary => Atomic  Reconstruct Task Finish");
-                return true;
-                }));
-            });
-
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ClassifyTask] {
-            return ClassifyTask.IsCompleted();
+            AddInfo("Primary => Atomic  Reconstruct Task Finish");
+            return true;
             }));
 
         }));
@@ -138,10 +127,10 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
 /// マテリアル分けテスト(Attr)
 /// umap使用
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Attr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.Attr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassification_Attr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Static.ClassificationByAttr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Static.Attr");
+    InitializeTest("Classification.Static.ClassificationByAttr");
     if (!OpenMap("SampleBldg"))
         AddError("Failed to OpenMap");
 
@@ -159,53 +148,45 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& P
 
     ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, ModelActor] {
 
-        FTask ClassifyTask = Launch(TEXT("ClassifyTask"), [&, this, ModelActor] {
+        const auto& TargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TargetComponentAttr"));
 
-            const auto& TargetComponents = FPLATEAUComponentUtil::ConvertArrayToSceneComponentArray(ModelActor->GetComponentsByTag(UPLATEAUCityObjectGroup::StaticClass(), "TargetComponentAttr"));
+        FString AttrKey = FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrKey;
+        TMap<FString, UMaterialInterface*> MaterialMap = FPLATEAUTest_Reconstruct_ModelClassification_Local::CreateMaterialMapForAttr();
+        auto Task = ModelActor->ClassifyModel(TargetComponents, AttrKey, MaterialMap, EPLATEAUMeshGranularity::PerPrimaryFeatureObject, false);
+        Task.Wait();
 
-            FString AttrKey = FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrKey;
-            TMap<FString, UMaterialInterface*> MaterialMap = FPLATEAUTest_Reconstruct_ModelClassification_Local::CreateMaterialMapForAttr();
-            auto Task = ModelActor->ClassifyModel(TargetComponents, AttrKey, MaterialMap, EPLATEAUMeshGranularity::PerPrimaryFeatureObject, false);
-            AddNested(Task);
-            Task.Wait();
+        const auto CreatedComponents = Task.GetResult();
+        UMaterialInterface* AttrMat1 = *MaterialMap.Find(FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrValue1);
+        UMaterialInterface* AttrMat2 = *MaterialMap.Find(FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrValue2);
+        const FString AttrMat1Name = AttrMat1->GetName();
+        const FString AttrMat2Name = AttrMat2->GetName();
+        AddInfo("AttrMat1Name: [" + AttrMat1Name + "]");
+        AddInfo("AttrMat2Name: [" + AttrMat2Name + "]");
 
-            const auto CreatedComponents = Task.GetResult();
-            UMaterialInterface* AttrMat1 = *MaterialMap.Find(FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrValue1);
-            UMaterialInterface* AttrMat2 = *MaterialMap.Find(FPLATEAUTest_Reconstruct_ModelClassification_Local::AttrValue2);
-            const FString AttrMat1Name = AttrMat1->GetName();
-            const FString AttrMat2Name = AttrMat2->GetName();
-            AddInfo("AttrMat1Name: [" + AttrMat1Name + "]");
-            AddInfo("AttrMat2Name: [" + AttrMat2Name + "]");
+        //Classify By Attr Assertions
+        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, CreatedComponents, AttrMat1Name, AttrMat2Name] {
 
-            //Classify By Attr Assertions
-            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, CreatedComponents, AttrMat1Name, AttrMat2Name] {
+            //StaticMesh生成待機
+            TArray<FString> ResultMaterialNames;
+            for (auto CreatedComp : CreatedComponents) {
+                UPLATEAUCityObjectGroup* CreatedAsCOG = StaticCast<UPLATEAUCityObjectGroup*>(CreatedComp);
+                if (CreatedAsCOG->GetStaticMesh() == nullptr)
+                    return false;
 
-                //StaticMesh生成待機
-                TArray<FString> ResultMaterialNames;
-                for (auto CreatedComp : CreatedComponents) {
-                    UPLATEAUCityObjectGroup* CreatedAsCOG = StaticCast<UPLATEAUCityObjectGroup*>(CreatedComp);
-                    if (CreatedAsCOG->GetStaticMesh() == nullptr)
-                        return false;
-
-                    AddInfo("Created: " + CreatedComp->GetName());
-                    UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
-                    if (DynMat) {
-                        ResultMaterialNames.Add(DynMat->Parent.GetName());
-                        AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
-                    }
+                AddInfo("Created: " + CreatedComp->GetName());
+                UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
+                if (DynMat) {
+                    ResultMaterialNames.Add(DynMat->Parent.GetName());
+                    AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
                 }
+            }
 
-                AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
-                TestTrue("Material has Attr1", ResultMaterialNames.Contains(AttrMat1Name));
-                TestTrue("Material has Attr2", ResultMaterialNames.Contains(AttrMat2Name));
+            AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
+            TestTrue("Material has Attr1", ResultMaterialNames.Contains(AttrMat1Name));
+            TestTrue("Material has Attr2", ResultMaterialNames.Contains(AttrMat2Name));
 
-                AddInfo("Primary => Atomic  Reconstruct Task Finish");
-                return true;
-                }));
-            });
-
-        ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, ClassifyTask] {
-            return ClassifyTask.IsCompleted();
+            AddInfo("Primary => Atomic  Reconstruct Task Finish");
+            return true;
             }));
 
         }));

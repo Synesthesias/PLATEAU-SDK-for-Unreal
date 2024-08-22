@@ -33,8 +33,8 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
     /// FPLATEAUCityObject & GMLID : FPLATEAUCityObject のMap 生成
     /// </summary>
     void CreateCityObjectWithAttr(FPLATEAUCityObject& CityObj) {   
-        CityObj.SetGmlID(PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
-        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::TEST_CITYOBJ_TYPE);
+        CityObj.SetGmlID(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
+        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::Fixtures::TEST_CITYOBJ_TYPE);
         CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, -1));
         TMap<FString, FPLATEAUAttributeValue> AttrMap;
         FPLATEAUAttributeValue Value;
@@ -45,14 +45,14 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
     }
 
     void CreateCityObjectWall(FPLATEAUCityObject& CityObj) {
-        CityObj.SetGmlID(PLATEAUAutomationTestUtil::TEST_CITYOBJ_WALL_NAME);
-        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::TEST_CITYOBJ_WALL_TYPE);
+        CityObj.SetGmlID(PLATEAUAutomationTestUtil::Fixtures::TEST_CITYOBJ_WALL_NAME);
+        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::Fixtures::TEST_CITYOBJ_WALL_TYPE);
         CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
     }
 
     void CreateCityObjectRoof(FPLATEAUCityObject& CityObj) {
-        CityObj.SetGmlID(PLATEAUAutomationTestUtil::TEST_CITYOBJ_ROOF_NAME);
-        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::TEST_CITYOBJ_ROOF_TYPE);
+        CityObj.SetGmlID(PLATEAUAutomationTestUtil::Fixtures::TEST_CITYOBJ_ROOF_NAME);
+        CityObj.SetCityObjectsType(PLATEAUAutomationTestUtil::Fixtures::TEST_CITYOBJ_ROOF_TYPE);
         CityObj.SetCityObjectIndex(plateau::polygonMesh::CityObjectIndex(0, 0));
     }
 }
@@ -62,11 +62,11 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local {
 /// FPLATEAUModelClassificationByAttribute　単体テスト
 /// 各Componentのダイナミック生成によるTest
 /// </summary>
-IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.ModelClassificationByAttr", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Reconstruct_ModelClassificationByAttr, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Reconstruct.Classification.Dynamic.PLATEAUModelClassificationByAttribute", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 
 bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& Parameters) {
-    InitializeTest("Classification.Dynamic.ModelClassificationByAttr");
+    InitializeTest("Classification.Dynamic.PLATEAUModelClassificationByAttribute");
     if (!OpenNewMap())
         AddError("Failed to OpenNewMap");
 
@@ -76,10 +76,10 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& 
     //Required Paramters
     FString AttributeKey = FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local::TestAttrKey;
     TMap<FString, UMaterialInterface*> Materials = FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local::CreateMaterialMap();
-    APLATEAUInstancedCityModel* ModelActor = PLATEAUAutomationTestUtil::CreateActorAtomic(*GetWorld());
+    APLATEAUInstancedCityModel* ModelActor = PLATEAUAutomationTestUtil::Fixtures::CreateActorAtomic(*GetWorld());
 
     //Target Component
-    auto TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::TEST_OBJ_TAG);
+    auto TargetComponent = ModelActor->FindComponentByTag<UPLATEAUCityObjectGroup>(PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_TAG);
     TArray<USceneComponent*> ChildrenComps;
     TargetComponent->GetChildrenComponents(true, ChildrenComps);
     bool WallCreated = false;
@@ -90,10 +90,10 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& 
             //Wall
             FPLATEAUCityObject CityObj;
             FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local::CreateCityObjectWall(CityObj);
-            ChildCompConv->SerializeCityObject(CityObj, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+            ChildCompConv->SerializeCityObject(CityObj, PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
-            auto StaticMesh1 = PLATEAUAutomationTestUtil::CreateStaticMesh(ModelActor, FName(TEXT("TestMesh1")), FVector3f(-100, -100, 0));
-            PLATEAUAutomationTestUtil::SetMaterial(StaticMesh1, FVector3f(1, 0, 0));
+            auto StaticMesh1 = PLATEAUAutomationTestUtil::Fixtures::CreateStaticMesh(ModelActor, FName(TEXT("TestMesh1")), FVector3f(-100, -100, 0));
+            PLATEAUAutomationTestUtil::Fixtures::SetMaterial(StaticMesh1, FVector3f(1, 0, 0));
             ChildCompConv->SetStaticMesh(StaticMesh1);
             WallCreated = true;
         }
@@ -101,10 +101,10 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& 
             //Roof
             FPLATEAUCityObject CityObj;
             FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local::CreateCityObjectRoof(CityObj);
-            ChildCompConv->SerializeCityObject(CityObj, PLATEAUAutomationTestUtil::TEST_OBJ_NAME);
+            ChildCompConv->SerializeCityObject(CityObj, PLATEAUAutomationTestUtil::Fixtures::TEST_OBJ_NAME);
 
-            auto StaticMesh2 = PLATEAUAutomationTestUtil::CreateStaticMesh(ModelActor, FName(TEXT("TestMesh2")), FVector3f(100, 100, 0));
-            PLATEAUAutomationTestUtil::SetMaterial(StaticMesh2, FVector3f(0, 1, 0));
+            auto StaticMesh2 = PLATEAUAutomationTestUtil::Fixtures::CreateStaticMesh(ModelActor, FName(TEXT("TestMesh2")), FVector3f(100, 100, 0));
+            PLATEAUAutomationTestUtil::Fixtures::SetMaterial(StaticMesh2, FVector3f(0, 1, 0));
             ChildCompConv->SetStaticMesh(StaticMesh2);
         }  
     }
@@ -112,7 +112,7 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByAttr::RunTest(const FString& 
     //Serialize CityObject
     FPLATEAUCityObject CityObj;
     FPLATEAUTest_Reconstruct_ModelClassificationByAttr_Local::CreateCityObjectWithAttr(CityObj);
-    TargetComponent->SerializeCityObject(CityObj, "", PLATEAUAutomationTestUtil::CreateCityObjectBuildingOutsideChildren());
+    TargetComponent->SerializeCityObject(CityObj, "", PLATEAUAutomationTestUtil::Fixtures::CreateCityObjectBuildingOutsideChildren());
     TargetComponent->SetConvertGranularity(ConvertGranularity::PerPrimaryFeatureObject);
 
     /// Classification 実行 ====================================================
