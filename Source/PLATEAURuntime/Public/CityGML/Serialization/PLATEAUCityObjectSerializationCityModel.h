@@ -5,6 +5,10 @@
 #include "CoreMinimal.h"
 #include "PLATEAUCityObjectSerializationBase.h"
 
+/**
+* @brief citygml::CityModelをJsonにシリアライズ
+*
+*/
 class PLATEAURUNTIME_API FPLATEAUCityObjectSerializationCityModel : public IPLATEAUCityObjectSerializationBase {
 
 public:

@@ -2,7 +2,7 @@
 #include "CityGML/Serialization/PLATEAUCityObjectSerializationCityModel.h"
 #include <Component/PLATEAUCityObjectGroup.h>
 #include "Util/PLATEAUGmlUtil.h"
-#include <citygml/citygml.h>
+#include <citygml/citymodel.h>
 #include <citygml/cityobject.h>
 
 FString FPLATEAUCityObjectSerializationCityModel::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const citygml::CityObject* InCityObject, const plateau::polygonMesh::MeshGranularity& Granularity) {
