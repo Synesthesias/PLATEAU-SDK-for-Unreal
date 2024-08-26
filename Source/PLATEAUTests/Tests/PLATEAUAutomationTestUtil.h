@@ -8,6 +8,7 @@
 #include <PLATEAUExportSettings.h>
 #include <PLATEAUMeshExporter.h>
 #include <ImageUtils.h>
+#include <CityGML/PLATEAUCityGmlProxy.h>
 
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
@@ -569,6 +570,16 @@ namespace PLATEAUAutomationTestUtil {
             UEnum* EnumPtr = FindObject<UEnum>(nullptr, TEXT("/Script/CoreUObject.EPixelFormat"), true);
             FString EnumName = EnumPtr->GetDisplayNameTextByValue(Texture->GetPlatformData()->PixelFormat).ToString();
             return EnumName;
+        }
+    }
+
+    namespace CityModel {
+
+        std::shared_ptr<const citygml::CityModel> LoadCityModel() {
+            FPLATEAUCityObjectInfo GmlInfo;
+            GmlInfo.DatasetName = "data";
+            GmlInfo.GmlName = "53392642_bldg_6697_op2.gml";
+            return UPLATEAUCityGmlProxy::Load(GmlInfo);
         }
     }
 

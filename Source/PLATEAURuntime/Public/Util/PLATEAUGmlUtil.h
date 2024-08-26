@@ -31,4 +31,10 @@ public:
      * @brief FPLATEAUCityObjectの子階層のGml Idを取得します。
      */
     static TSet<FString> GetChildrenGmlIds(const FPLATEAUCityObject CityObj);
+
+    //CityModelからTMap<FString, FPLATEAUCityObject>を生成します
+    static TMap<FString, FPLATEAUCityObject> CreateMapFromCityModel(const std::shared_ptr<const citygml::CityModel> InCityModel);
+
+    //citygml::CityObjectからFPLATEAUCityObjectを生成します　(CityObjectIndex, Childrenは無視）
+    static void ConvertCityObject(const citygml::CityObject* InCityObject, FPLATEAUCityObject& OutCityObject);
 };
