@@ -69,8 +69,6 @@ namespace FPLATEAUTest_Filter_ModelFiltering_Local {
 
         return Actor;
     }
-
-
 }
 
 /// <summary>

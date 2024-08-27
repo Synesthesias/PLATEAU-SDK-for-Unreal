@@ -8,7 +8,7 @@
 #include "PLATEAUStaticMeshComponent.generated.h"
 
 /**
- * 
+ * 属性情報を追加しない場合にPLATEAUCityObjectGroupの代わりに使用
  */
 UCLASS()
 class PLATEAURUNTIME_API UPLATEAUStaticMeshComponent : public UStaticMeshComponent, public IPLATEAUComponentInterface
