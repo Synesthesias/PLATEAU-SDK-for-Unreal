@@ -8,7 +8,7 @@
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
 
-namespace {
+namespace FPLATEAUTest_Filter_ModelFiltering_Local {
 
     AActor* CreateComponentHierarchy(UWorld& World) {
         //Component
@@ -69,8 +69,6 @@ namespace {
 
         return Actor;
     }
-
-
 }
 
 /// <summary>
@@ -83,37 +81,30 @@ bool FPLATEAUTest_Filter_ModelFiltering::RunTest(const FString& Parameters) {
     
     FPLATEAUModelFiltering Filter;
 
-    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, &Filter] {
+    //FilterLowLods
+    AActor* Actor = FPLATEAUTest_Filter_ModelFiltering_Local::CreateComponentHierarchy(*GetWorld());
+    const auto& Root = Actor->GetRootComponent()->GetAttachChildren().GetData();      
+    Filter.FilterLowLods(Root->Get(), 2, 2);
+    TArray<USceneComponent*> Children;
+    Root->Get()->GetChildrenComponents(true, Children);
 
-        //FilterLowLods
-        AActor* Actor = CreateComponentHierarchy(*GetWorld());
-        const auto& Root = Actor->GetRootComponent()->GetAttachChildren().GetData();      
-        Filter.FilterLowLods(Root->Get(), 2, 2);
-        TArray<USceneComponent*> Children;
-        Root->Get()->GetChildrenComponents(true, Children);
-
-        for (const auto& Child : Children) {
-            if (Child->GetName() == "Lod0") {
-                const auto& Objs = Child->GetAttachChildren();
-                for(const auto& Obj : Objs)
-                    TestFalse("Lod0 should be hidden", Obj->IsVisible());
-            }     
-            else if(Child->GetName() == "Lod1") {
-                const auto& Objs = Child->GetAttachChildren();
-                for (const auto& Obj : Objs)
-                    TestFalse("Lod1 should be hidden", Obj->IsVisible());
-            }      
-            else if (Child->GetName() == "Lod2") {
-                const auto& Objs = Child->GetAttachChildren();
-                for (const auto& Obj : Objs)
-                    TestTrue("Lod2 should be visible", Obj->IsVisible());
-            }
+    for (const auto& Child : Children) {
+        if (Child->GetName() == "Lod0") {
+            const auto& Objs = Child->GetAttachChildren();
+            for(const auto& Obj : Objs)
+                TestFalse("Lod0 should be hidden", Obj->IsVisible());
+        }     
+        else if(Child->GetName() == "Lod1") {
+            const auto& Objs = Child->GetAttachChildren();
+            for (const auto& Obj : Objs)
+                TestFalse("Lod1 should be hidden", Obj->IsVisible());
+        }      
+        else if (Child->GetName() == "Lod2") {
+            const auto& Objs = Child->GetAttachChildren();
+            for (const auto& Obj : Objs)
+                TestTrue("Lod2 should be visible", Obj->IsVisible());
         }
+    }
 
-        return true;
-        }));
-    
-
-  
     return true;
 }

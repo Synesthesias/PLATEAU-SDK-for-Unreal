@@ -7,8 +7,9 @@
 #include <Landscape.h>
 #include "PLATEAULandscapeRefComponent.generated.h"
 
-
-
+/// <summary>
+/// Landscape生成時に生成するLandscape Actorの参照用コンポーネント
+/// </summary>
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PLATEAURUNTIME_API UPLATEAULandscapeRefComponent : public UPLATEAUCityObjectGroup
 {
