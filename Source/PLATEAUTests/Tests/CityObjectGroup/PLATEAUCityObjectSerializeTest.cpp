@@ -5,8 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
-#include "CityGML/Serialization/PLATEAUCityObjectSerializationPlateau.h"
-#include "CityGML/Serialization//PLATEAUCityObjectDeserializationPlateau.h"
+#include "CityGML/Serialization/PLATEAUCityObjectSerialization.h"
+#include "CityGML/Serialization//PLATEAUCityObjectDeserialization.h"
 
 
 namespace FPLATEAUTest_CityObjectGroup_Serialize_Local {
@@ -33,7 +33,7 @@ bool FPLATEAUTest_CityObjectGroup_Serialize::RunTest(const FString& Parameters) 
     TArray<FPLATEAUCityObject> OutCityObjects;
     TArray<TObjectPtr<USceneComponent>> AttachChildren;
     FString OutsideParent;
-    FPLATEAUCityObjectDeserializationPlateau Deserializer;
+    FPLATEAUCityObjectDeserialization Deserializer;
     Deserializer.DeserializeCityObjects(FPLATEAUTest_CityObjectGroup_Serialize_Local::CityObjectsSerialized, AttachChildren, OutCityObjects, OutsideParent);
 
     // Assertions Deserialize
@@ -45,7 +45,7 @@ bool FPLATEAUTest_CityObjectGroup_Serialize::RunTest(const FString& Parameters) 
 
     // Simple Serialize    
     TArray<FString> Children;
-    FPLATEAUCityObjectSerializationPlateau Serializer;
+    FPLATEAUCityObjectSerialization Serializer;
     FString Serialized = Serializer.SerializeCityObject(CityObject, OutsideParent, Children);
 
     // Assertions Serialize

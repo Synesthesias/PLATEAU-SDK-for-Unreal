@@ -9,7 +9,7 @@
 * @brief FPLATEAUCityObjectをJsonにシリアライズ
 * 
 */
-class PLATEAURUNTIME_API FPLATEAUCityObjectSerializationPlateau : public IPLATEAUCityObjectSerializationBase {
+class PLATEAURUNTIME_API FPLATEAUCityObjectSerialization : public IPLATEAUCityObjectSerializationBase {
 
 public:
 

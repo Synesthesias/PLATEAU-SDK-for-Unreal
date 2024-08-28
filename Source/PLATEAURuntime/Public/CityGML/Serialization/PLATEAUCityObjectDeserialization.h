@@ -11,7 +11,7 @@ struct FPLATEAUCityObject;
 * @brief JsonをFPLATEAUCityObjectにデシリアライズ
 *
 */
-class PLATEAURUNTIME_API FPLATEAUCityObjectDeserializationPlateau : public IPLATEAUCityObjectSerializationBase {
+class PLATEAURUNTIME_API FPLATEAUCityObjectDeserialization : public IPLATEAUCityObjectSerializationBase {
 
 public:
 

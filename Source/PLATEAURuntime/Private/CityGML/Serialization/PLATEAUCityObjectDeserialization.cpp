@@ -1,10 +1,10 @@
 /// Copyright 2023 Ministry of Land, Infrastructure and Transport
-#include "CityGML/Serialization/PLATEAUCityObjectDeserializationPlateau.h"
+#include "CityGML/Serialization/PLATEAUCityObjectDeserialization.h"
 #include <Component/PLATEAUCityObjectGroup.h>
 #include "Util/PLATEAUGmlUtil.h"
 
 
-void FPLATEAUCityObjectDeserializationPlateau::DeserializeCityObjects(const FString InSerializedCityObjects, const TArray<TObjectPtr<USceneComponent>> InAttachChildren, 
+void FPLATEAUCityObjectDeserialization::DeserializeCityObjects(const FString InSerializedCityObjects, const TArray<TObjectPtr<USceneComponent>> InAttachChildren, 
     TArray<FPLATEAUCityObject>& OutRootCityObjects, FString& OutOutsideParent) {
 
     TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(InSerializedCityObjects);
@@ -35,7 +35,7 @@ void FPLATEAUCityObjectDeserializationPlateau::DeserializeCityObjects(const FStr
 * @return シティオブジェクト情報
 */
 
-FPLATEAUCityObject FPLATEAUCityObjectDeserializationPlateau::GetCityObject(TSharedPtr<FJsonValue> CityJsonValue) {
+FPLATEAUCityObject FPLATEAUCityObjectDeserialization::GetCityObject(TSharedPtr<FJsonValue> CityJsonValue) {
     FPLATEAUCityObject CityObject;
     const auto& CityJsonObject = CityJsonValue->AsObject();
     CityObject.SetGmlID(CityJsonObject->GetStringField(plateau::CityObjectGroup::GmlIdFieldName));

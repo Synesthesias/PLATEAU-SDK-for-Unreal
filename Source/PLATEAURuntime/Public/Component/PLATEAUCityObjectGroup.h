@@ -9,9 +9,9 @@
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "PLATEAUComponentInterface.h"
-#include "CityGML/Serialization/PLATEAUCityObjectSerializationCityModel.h"
-#include "CityGML/Serialization/PLATEAUCityObjectSerializationPlateau.h"
-#include "CityGML/Serialization/PLATEAUCityObjectDeserializationPlateau.h"
+#include "CityGML/Serialization/PLATEAUNativeCityObjectSerialization.h"
+#include "CityGML/Serialization/PLATEAUCityObjectSerialization.h"
+#include "CityGML/Serialization/PLATEAUCityObjectDeserialization.h"
 #include "PLATEAUCityObjectGroup.generated.h"
 
 namespace plateau::CityObjectGroup {
@@ -137,7 +137,7 @@ private:
     TArray<FPLATEAUCityObject> RootCityObjects;
     void SetMeshGranularity(const plateau::polygonMesh::MeshGranularity Granularity);
 
-    FPLATEAUCityObjectSerializationCityModel CityModelSerializer;
-    FPLATEAUCityObjectSerializationPlateau PlateauSerializer;
-    FPLATEAUCityObjectDeserializationPlateau Deserializer;
+    FPLATEAUNativeCityObjectSerialization CityModelSerializer;
+    FPLATEAUCityObjectSerialization PlateauSerializer;
+    FPLATEAUCityObjectDeserialization Deserializer;
 };

@@ -1,9 +1,9 @@
 /// Copyright 2023 Ministry of Land, Infrastructure and Transport
-#include "CityGML/Serialization/PLATEAUCityObjectSerializationPlateau.h"
+#include "CityGML/Serialization/PLATEAUCityObjectSerialization.h"
 #include <Component/PLATEAUCityObjectGroup.h>
 #include "Util/PLATEAUGmlUtil.h"
 
-FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh,
+FString FPLATEAUCityObjectSerialization::SerializeCityObject(const FString& InNodeName, const plateau::polygonMesh::Mesh& InMesh,
     const plateau::polygonMesh::MeshGranularity& Granularity, TMap<FString, FPLATEAUCityObject> CityObjMap) {
 
     const auto& CityObjectList = InMesh.getCityObjectList();
@@ -93,7 +93,7 @@ FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const FStrin
     return SerializedCityObjects;
 }
 
-FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
+FString FPLATEAUCityObjectSerialization::SerializeCityObject(const plateau::polygonMesh::Node& InNode, const FPLATEAUCityObject& InCityObject) {
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
     // 親はなし
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, "");
@@ -117,7 +117,7 @@ FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const platea
     return SerializedCityObjects;
 }
 
-FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const FPLATEAUCityObject& InCityObject, const FString InOutsideParent, const TArray<FString> InOutsideChildren) {
+FString FPLATEAUCityObjectSerialization::SerializeCityObject(const FPLATEAUCityObject& InCityObject, const FString InOutsideParent, const TArray<FString> InOutsideChildren) {
     const TSharedPtr<FJsonObject> JsonRootObject = MakeShareable(new FJsonObject);
 
     JsonRootObject->SetStringField(plateau::CityObjectGroup::OutsideParentFieldName, InOutsideParent);
@@ -147,7 +147,7 @@ FString FPLATEAUCityObjectSerializationPlateau::SerializeCityObject(const FPLATE
  * @param InAttributesMap 属性マップ
  * @param InAttributesJsonObjectArray 属性情報を格納する配列
  */
-void FPLATEAUCityObjectSerializationPlateau::GetAttributesJsonObjectRecursive(const FPLATEAUAttributeMap& InAttributesMap, TArray<TSharedPtr<FJsonValue>>& InAttributesJsonObjectArray) {
+void FPLATEAUCityObjectSerialization::GetAttributesJsonObjectRecursive(const FPLATEAUAttributeMap& InAttributesMap, TArray<TSharedPtr<FJsonValue>>& InAttributesJsonObjectArray) {
     for (const auto& [key, value] : InAttributesMap.AttributeMap) {
         TSharedRef<FJsonObject> AttributesJsonObject = MakeShared<FJsonObject>();
         if (EPLATEAUAttributeType::AttributeSets == value.Type) {
@@ -197,7 +197,7 @@ void FPLATEAUCityObjectSerializationPlateau::GetAttributesJsonObjectRecursive(co
  * @param InCityObject CityModelから得られるシティオブジェクト情報
  * @return シティオブジェクト情報
  */
-TSharedRef<FJsonObject> FPLATEAUCityObjectSerializationPlateau::GetCityJsonObject(const FPLATEAUCityObject& InCityObject) {
+TSharedRef<FJsonObject> FPLATEAUCityObjectSerialization::GetCityJsonObject(const FPLATEAUCityObject& InCityObject) {
     TSharedRef<FJsonObject> CityJsonObject = MakeShared<FJsonObject>();
 
     CityJsonObject->SetStringField(plateau::CityObjectGroup::GmlIdFieldName, InCityObject.GmlID);
@@ -222,7 +222,7 @@ TSharedRef<FJsonObject> FPLATEAUCityObjectSerializationPlateau::GetCityJsonObjec
  * @param CityObjectIndex CityObjectListが持つインデックス情報
  * @return シティオブジェクト情報
  */
-TSharedRef<FJsonObject> FPLATEAUCityObjectSerializationPlateau::GetCityJsonObject(const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::CityObjectIndex& CityObjectIndex) {
+TSharedRef<FJsonObject> FPLATEAUCityObjectSerialization::GetCityJsonObject(const FPLATEAUCityObject& InCityObject, const plateau::polygonMesh::CityObjectIndex& CityObjectIndex) {
     TSharedRef<FJsonObject> CityJsonObject = MakeShared<FJsonObject>();
 
     CityJsonObject->SetStringField(plateau::CityObjectGroup::GmlIdFieldName, InCityObject.GmlID);
@@ -247,7 +247,7 @@ TSharedRef<FJsonObject> FPLATEAUCityObjectSerializationPlateau::GetCityJsonObjec
  * @param InCityObject FPLATEAUCityObject
  * @return シティオブジェクト情報
  */
-TSharedRef<FJsonObject> FPLATEAUCityObjectSerializationPlateau::GetCityJsonObjectWithChildren(const FPLATEAUCityObject& InCityObject) {
+TSharedRef<FJsonObject> FPLATEAUCityObjectSerialization::GetCityJsonObjectWithChildren(const FPLATEAUCityObject& InCityObject) {
     TSharedRef<FJsonObject> CityJsonObject = GetCityJsonObject(InCityObject);
     TArray<TSharedPtr<FJsonValue>> CityJsonObjectChildren;
 

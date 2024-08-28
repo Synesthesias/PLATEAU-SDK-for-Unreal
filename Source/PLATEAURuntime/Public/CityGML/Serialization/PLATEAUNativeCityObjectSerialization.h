@@ -9,7 +9,7 @@
 * @brief citygml::CityModelをJsonにシリアライズ
 *
 */
-class PLATEAURUNTIME_API FPLATEAUCityObjectSerializationCityModel : public IPLATEAUCityObjectSerializationBase {
+class PLATEAURUNTIME_API FPLATEAUNativeCityObjectSerialization : public IPLATEAUCityObjectSerializationBase {
 
 public:
 
