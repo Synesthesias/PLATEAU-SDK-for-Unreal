@@ -70,6 +70,40 @@ void FPLATEAUAttributeValue::SetValue(const TArray<TSharedPtr<FJsonValue>>& InVa
     }
 }
 
+void FPLATEAUAttributeValue::SetAttributeValue(const citygml::AttributeValue& Value) {
+    SetType(UPLATEAUAttributeValueBlueprintLibrary::AttributeTypeToString(Value.getType()));
+    switch (Value.getType()) {
+    case citygml::AttributeType::String:
+    case citygml::AttributeType::Date:
+    case citygml::AttributeType::Uri:
+        StringValue = UTF8_TO_TCHAR(Value.asString().c_str());
+        break;
+    case citygml::AttributeType::Double:
+        DoubleValue = Value.asDouble();
+        StringValue = FString::SanitizeFloat(DoubleValue);
+        break;
+    case citygml::AttributeType::Integer:
+    case citygml::AttributeType::Boolean:
+        IntValue = Value.asInteger();
+        StringValue = FString::FromInt(IntValue);
+        break;
+    case citygml::AttributeType::Measure:
+        DoubleValue = Value.asDouble();
+        StringValue = FString::SanitizeFloat(DoubleValue);
+        break;
+    case citygml::AttributeType::AttributeSet:
+        Attributes = MakeShared<FPLATEAUAttributeMap>();
+        citygml::AttributesMap CityGmlAttrMap = Value.asAttributeSet();
+        for (const auto& AttrKeyVal : CityGmlAttrMap) {    
+            const FString& AttrKey = UTF8_TO_TCHAR(AttrKeyVal.first.c_str());
+            FPLATEAUAttributeValue PLATEAUAttributeValue;
+            PLATEAUAttributeValue.SetAttributeValue(AttrKeyVal.second);
+            Attributes->AttributeMap.Add(AttrKey, PLATEAUAttributeValue);
+        }
+        break;
+    }
+}
+
 EPLATEAUAttributeType UPLATEAUAttributeValueBlueprintLibrary::GetType(const FPLATEAUAttributeValue& Value) {
     return Value.Type;
 }
@@ -108,4 +142,26 @@ TArray<FPLATEAUAttributeValue> UPLATEAUAttributeValueBlueprintLibrary::GetAttrib
         }
     }
     return Values;
+}
+
+FString UPLATEAUAttributeValueBlueprintLibrary::AttributeTypeToString(const citygml::AttributeType InType) {
+    switch (InType) {
+    case citygml::AttributeType::String:
+        return "String";
+    case citygml::AttributeType::Double:
+        return "Double";
+    case citygml::AttributeType::Integer:
+        return "Integer";
+    case citygml::AttributeType::Date:
+        return "Date";
+    case citygml::AttributeType::Uri:
+        return "Uri";
+    case citygml::AttributeType::Measure:
+        return "Measure";
+    case citygml::AttributeType::Boolean:
+        return "Boolean";
+    case citygml::AttributeType::AttributeSet:
+        return "AttributeSets";
+    }
+    return "String";
 }

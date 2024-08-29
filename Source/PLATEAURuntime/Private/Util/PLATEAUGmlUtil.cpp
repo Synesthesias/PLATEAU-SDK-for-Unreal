@@ -2,6 +2,7 @@
 
 #include "Util/PLATEAUGmlUtil.h"
 #include "Util/PLATEAUComponentUtil.h"
+#include <CityGML/citymodel.h>
 #include <plateau/dataset/i_dataset_accessor.h>
 
 namespace {
@@ -17,6 +18,16 @@ namespace {
         for (auto child : CityObj.Children) {
             IdList.Add(child.GmlID);
             GetChildrenGmlIdsRecursive(child, IdList);
+        }
+    }
+
+    void GetCityObjectRecursive(const citygml::CityObject* InCityObject, TMap<FString, FPLATEAUCityObject>& OutMap) {
+        FPLATEAUCityObject ConvertedCityObject;
+        FPLATEAUGmlUtil::ConvertCityObject(InCityObject, ConvertedCityObject);
+        OutMap.Add(ConvertedCityObject.GmlID, ConvertedCityObject);
+        for (unsigned int i = 0; i < InCityObject->getChildCityObjectsCount(); i++) {
+            const auto& childCityObject = InCityObject->getChildCityObject(i);
+            GetCityObjectRecursive(&childCityObject, OutMap);
         }
     }
 }
@@ -75,4 +86,26 @@ TSet<FString> FPLATEAUGmlUtil::GetChildrenGmlIds(const FPLATEAUCityObject CityOb
         GetChildrenGmlIdsRecursive(child, IdList);
     }
     return IdList;
+}
+
+TMap<FString, FPLATEAUCityObject> FPLATEAUGmlUtil::CreateMapFromCityModel(const std::shared_ptr<const citygml::CityModel> InCityModel) {
+    TMap<FString, FPLATEAUCityObject> OutMap;
+    const auto& rootCityObjects = InCityModel->getRootCityObjects();
+    for (const auto& cityObject : rootCityObjects) {
+        GetCityObjectRecursive(cityObject, OutMap);
+    }
+    return OutMap;
+}
+
+void FPLATEAUGmlUtil::ConvertCityObject(const citygml::CityObject* InCityObject, FPLATEAUCityObject& OutCityObject) {
+    OutCityObject.SetGmlID(UTF8_TO_TCHAR(InCityObject->getId().c_str()));
+    OutCityObject.SetCityObjectsType(plateau::CityObject::CityObjectsTypeToString(InCityObject->getType()));
+
+    FPLATEAUAttributeMap AttributeMap;
+    for (const auto& [key, value] : InCityObject->getAttributes()) {
+        FPLATEAUAttributeValue PLATEAUAttributeValue;
+        PLATEAUAttributeValue.SetAttributeValue(value);
+        AttributeMap.AttributeMap.Add(UTF8_TO_TCHAR(key.c_str()), PLATEAUAttributeValue);
+    }
+    OutCityObject.SetAttribute(AttributeMap.AttributeMap);
 }

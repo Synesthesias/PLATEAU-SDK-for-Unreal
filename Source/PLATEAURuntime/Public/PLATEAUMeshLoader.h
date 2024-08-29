@@ -7,6 +7,9 @@
 #include "CoreMinimal.h"
 
 struct FPLATEAUCityObject;
+struct FLoadInputData;
+class UPLATEAUCityObjectGroup;
+class FStaticMeshAttributes;
 
 namespace citygml {
     class CityModel;
@@ -20,6 +23,7 @@ namespace plateau::polygonMesh {
     class Mesh;
 }
 
+// SubMesh情報保持
 struct FSubMeshMaterialSet {
 public:
     bool hasMaterial;
@@ -41,7 +45,9 @@ public:
     bool Equals(const FSubMeshMaterialSet& Other) const;
 private:
 };
+FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value);
 
+// Nodeから、Node名、Nodeパスを取得し保持
 struct FNodeHierarchy {
 public:
     FString NodeName;
@@ -52,12 +58,6 @@ public:
     FNodeHierarchy(const plateau::polygonMesh::Node& InNode);
     std::string GetNameAsStandardString();
 };
-
-FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value);
-
-struct FLoadInputData;
-class UPLATEAUCityObjectGroup;
-class FStaticMeshAttributes;
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
     using FPathToTexture = TMap<FString, UTexture2D*>;
