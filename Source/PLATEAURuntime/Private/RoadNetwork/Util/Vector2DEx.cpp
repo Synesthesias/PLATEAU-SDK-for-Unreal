@@ -22,6 +22,11 @@ float FVector2DEx::Angle360(const FVector2D& From, const FVector2D& To) {
     return Angle * FMath::Sign(Cross(From, To));
 }
 
+float FVector2DEx::Angle(const FVector2D& From, const FVector2D& To)
+{
+    return UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
+}
+
 float FVector2DEx::Cross(const FVector2D& A, const FVector2D& B) {
     return A.X * B.Y - A.Y * B.X;
 }

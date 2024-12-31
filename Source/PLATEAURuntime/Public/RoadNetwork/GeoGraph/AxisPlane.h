@@ -8,9 +8,9 @@
 
 UENUM(BlueprintType)
 enum class EAxisPlane : uint8 {
-    XY UMETA(DisplayName = "XY Plane"),
-    XZ UMETA(DisplayName = "XZ Plane"),
-    YZ UMETA(DisplayName = "YZ Plane")
+    Xy UMETA(DisplayName = "Xy Plane"),
+    Xz UMETA(DisplayName = "Xz Plane"),
+    Yz UMETA(DisplayName = "YZ Plane")
 };
 
 USTRUCT()

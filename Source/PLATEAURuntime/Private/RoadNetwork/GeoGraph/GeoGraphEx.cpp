@@ -1,20 +1,20 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 
-template<typename T>
-TArray<TTuple<T, T>> FGeoGraphEx::GetEdges(const TArray<T>& Vertices, bool bIsLoop) {
-    TArray<TTuple<T, T>> Edges;
-    if (Vertices.Num() < 2) return Edges;
-
-    for (int32 i = 0; i < Vertices.Num() - 1; ++i) {
-        Edges.Add(MakeTuple(Vertices[i], Vertices[i + 1]));
-    }
-
-    if (bIsLoop && Vertices.Num() > 0) {
-        Edges.Add(MakeTuple(Vertices.Last(), Vertices[0]));
-    }
-
-    return Edges;
-}
+//template<typename T>
+//TArray<TTuple<T, T>> FGeoGraphEx::GetEdges(const TArray<T>& Vertices, bool bIsLoop) {
+//    TArray<TTuple<T, T>> Edges;
+//    if (Vertices.Num() < 2) return Edges;
+//
+//    for (int32 i = 0; i < Vertices.Num() - 1; ++i) {
+//        Edges.Add(MakeTuple(Vertices[i], Vertices[i + 1]));
+//    }
+//
+//    if (bIsLoop && Vertices.Num() > 0) {
+//        Edges.Add(MakeTuple(Vertices.Last(), Vertices[0]));
+//    }
+//
+//    return Edges;
+//}
 
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,
@@ -23,7 +23,7 @@ TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     float P) {
     P = FMath::Clamp(P, 0.0f, 1.0f);
 
-    auto LeftEdges = GetEdges(LeftVertices, false);
+    auto LeftEdges  = GetEdges(LeftVertices, false);
     auto RightEdges = GetEdges(RightVertices, false);
 
     TArray<float> Indices;
@@ -138,8 +138,8 @@ bool FGeoGraphEx::IsInInnerSide(const TOptional<FLineSegment3D>& Edge, const FVe
         return true;
     }
 
-    const FVector2D EdgeDir2D = FAxisPlaneEx::GetTangent(Edge.GetValue().GetDirection(), EAxisPlane::XY);
-    const FVector2D Dir2D = FAxisPlaneEx::GetTangent(Direction, EAxisPlane::XY);
+    const FVector2D EdgeDir2D = FAxisPlaneEx::GetTangent(Edge.GetValue().GetDirection(), EAxisPlane::Xy);
+    const FVector2D Dir2D = FAxisPlaneEx::GetTangent(Direction, EAxisPlane::Xy);
 
     float Cross = EdgeDir2D.X * Dir2D.Y - EdgeDir2D.Y * Dir2D.X;
     if (!bReverse) {
@@ -162,8 +162,8 @@ bool FGeoGraphEx::IsInInnerSide(const TOptional<FLineSegment3D>& Edge, const FVe
 }
 
 bool FGeoGraphEx::CheckCollision(const FVector& A, const FVector& B, const TArray<FLineSegment3D>& Edges, float IndexF) {
-    const FVector2D A2 = FAxisPlaneEx::GetTangent(A, EAxisPlane::XY);
-    const FVector2D B2 = FAxisPlaneEx::GetTangent(B, EAxisPlane::XY);
+    const FVector2D A2 = FAxisPlaneEx::GetTangent(A, EAxisPlane::Xy);
+    const FVector2D B2 = FAxisPlaneEx::GetTangent(B, EAxisPlane::Xy);
 
     const int32 Index = FMath::FloorToInt(IndexF);
     const float F = IndexF - Index;
@@ -175,8 +175,8 @@ bool FGeoGraphEx::CheckCollision(const FVector& A, const FVector& B, const TArra
         }
 
         const auto& Edge = Edges[i];
-        const FVector2D EdgeStart = FAxisPlaneEx::GetTangent(Edge.GetStart(), EAxisPlane::XY);
-        const FVector2D EdgeEnd = FAxisPlaneEx::GetTangent(Edge.GetEnd(), EAxisPlane::XY);
+        const FVector2D EdgeStart = FAxisPlaneEx::GetTangent(Edge.GetStart(), EAxisPlane::Xy);
+        const FVector2D EdgeEnd = FAxisPlaneEx::GetTangent(Edge.GetEnd(), EAxisPlane::Xy);
 
         // Line segment intersection check
         const FVector2D D = EdgeEnd - EdgeStart;
