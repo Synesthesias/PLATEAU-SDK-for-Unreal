@@ -10,11 +10,11 @@ RnLineString::RnLineString() {
 }
 
 RnLineString::RnLineString(int32 InitialSize) {
-    Points = std::shared_ptr<TArray<std::shared_ptr<RnPoint>>>();
+    Points = std::shared_ptr<TArray<RnRef_t<RnPoint>>>();
     Points->SetNum(InitialSize);
 }
 
-RnLineString::RnLineString(const std::shared_ptr<TArray<std::shared_ptr<RnPoint>>>& InPoints)
+RnLineString::RnLineString(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& InPoints)
 {
     Points = InPoints;
 }
@@ -26,7 +26,7 @@ int32 RnLineString::Count() const
 bool RnLineString::IsValid() const
 { return Points->Num() >= 2; }
 
-void RnLineString::AddPointOrSkip(std::shared_ptr<RnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
+void RnLineString::AddPointOrSkip(RnRef_t<RnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
     if (!Point) 
         return;
 
@@ -45,11 +45,11 @@ FVector RnLineString::GetEdgeNormal(int32 StartVertexIndex) const {
     return FVector::CrossProduct(FVector::UpVector, P1 - P0).GetSafeNormal() * -1.0f;
 }
 
-std::shared_ptr<RnLineString> RnLineString::Clone(bool CloneVertex) const {
+RnRef_t<RnLineString> RnLineString::Clone(bool CloneVertex) const {
     auto NewLineString = std::make_shared<RnLineString>();
 
     if (CloneVertex) {
-        for (const std::shared_ptr<RnPoint> Point : *Points) {
+        for (const RnRef_t<RnPoint> Point : *Points) {
             NewLineString->Points->Add(Point->Clone());
         }
     }
@@ -70,8 +70,8 @@ float RnLineString::CalcLength() const {
     return Length;
 }
 
-TArray<std::shared_ptr<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector) {
-    TArray<std::shared_ptr<RnLineString>> Result;
+TArray<RnRef_t<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector) {
+    TArray<RnRef_t<RnLineString>> Result;
     if (!IsValid() || Num <= 0) return Result;
 
     TArray<float> Rates;
@@ -95,7 +95,7 @@ TArray<std::shared_ptr<RnLineString>> RnLineString::Split(int32 Num, bool Insert
             Rates[CurrentIndex] * TotalLength < NextLength) {
             float T = (Rates[CurrentIndex] * TotalLength - CurrentLength) / SegmentLength;
             if (InsertNewPoint) {
-                auto p = std::make_shared<RnPoint>(FMath::Lerp(Get(i), Get(i+1), T));
+                auto p = RnNew<RnPoint>(FMath::Lerp(Get(i), Get(i+1), T));
                 Points->Insert(p, i + 1);
                 i++;
             }
@@ -108,7 +108,7 @@ TArray<std::shared_ptr<RnLineString>> RnLineString::Split(int32 Num, bool Insert
     SplitIndices.Add(Points->Num() - 1);
     int32 StartIndex = 0;
     for (const int32 EndIndex : SplitIndices) {
-        auto SplitPoints = std::shared_ptr<TArray<std::shared_ptr<RnPoint>>>();
+        auto SplitPoints =  std::make_shared<TArray<RnRef_t<RnPoint>>>();
         for (int32 i = StartIndex; i <= EndIndex; i++) {
             SplitPoints->Add(GetPoint(i));
         }
@@ -119,8 +119,8 @@ TArray<std::shared_ptr<RnLineString>> RnLineString::Split(int32 Num, bool Insert
     return Result;
 }
 
-TArray<std::shared_ptr<RnLineString>> RnLineString::SplitByIndex(const TArray<int32>& Indices, bool InsertNewPoint) const {
-    TArray<std::shared_ptr<RnLineString>> Result;
+TArray<RnRef_t<RnLineString>> RnLineString::SplitByIndex(const TArray<int32>& Indices, bool InsertNewPoint) const {
+    TArray<RnRef_t<RnLineString>> Result;
     if (!IsValid() || Indices.Num() == 0) return Result;
 
     TArray<int32> SortedIndices = Indices;
@@ -128,13 +128,13 @@ TArray<std::shared_ptr<RnLineString>> RnLineString::SplitByIndex(const TArray<in
 
     int32 StartIndex = 0;
     for (int32 EndIndex : SortedIndices) {
-        auto SplitPoints = std::make_shared<TArray< std::shared_ptr<RnPoint>>>();
+        auto SplitPoints = std::make_shared<TArray< RnRef_t<RnPoint>>>();
         for (int32 i = StartIndex; i <= EndIndex; ++i) {
             SplitPoints->Add(GetPoint(i));
         }
 
         if (SplitPoints->Num() >= 2) {
-            std::shared_ptr<RnLineString> Split = Create(SplitPoints, false);
+            RnRef_t<RnLineString> Split = Create(SplitPoints, false);
             Result.Add(Split);
         }
         StartIndex = EndIndex;
@@ -143,12 +143,12 @@ TArray<std::shared_ptr<RnLineString>> RnLineString::SplitByIndex(const TArray<in
     return Result;
 }
 
-void RnLineString::AddFrontPoint(std::shared_ptr<RnPoint> Point) {
+void RnLineString::AddFrontPoint(RnRef_t<RnPoint> Point) {
     if (Point) {
         Points->Insert(Point, 0);
     }
 }
-void RnLineString::AddPointFrontOrSkip(std::shared_ptr<RnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
+void RnLineString::AddPointFrontOrSkip(RnRef_t<RnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
     if (!Point) return;
 
     if (Points->Num() > 0) {
@@ -218,7 +218,7 @@ TArray<FLineSegment3D> RnLineString::GetEdges() const
     return Ret;
 }
 
-bool RnLineString::Contains(std::shared_ptr<RnPoint> Point) const {
+bool RnLineString::Contains(RnRef_t<RnPoint> Point) const {
     return Points->Contains(Point);
 }
 
@@ -240,7 +240,7 @@ void RnLineString::GetNearestPoint(const FVector& Pos, FVector& OutNearest, floa
     }
 }
 
-float RnLineString::GetDistance2D(const std::shared_ptr<RnLineString> Other, EAxisPlane Plane) const {
+float RnLineString::GetDistance2D(const RnRef_t<RnLineString> Other, EAxisPlane Plane) const {
     if (!Other || !IsValid() || !Other->IsValid()) return MAX_FLT;
 
     float MinDistance = MAX_FLT;
@@ -275,7 +275,7 @@ FVector RnLineString::GetVertexNormal(int32 VertexIndex) const {
     return (Count > 0) ? Normal / Count : FVector::ZeroVector;
 }
 
-int32 RnLineString::ReplacePoint(std::shared_ptr<RnPoint> OldPoint, std::shared_ptr<RnPoint> NewPoint) {
+int32 RnLineString::ReplacePoint(RnRef_t<RnPoint> OldPoint, RnRef_t<RnPoint> NewPoint) {
     int32 ReplaceCount = 0;
     for (int32 i = 0; i < Points->Num(); i++) {
         if (GetPoint(i) == OldPoint) {
@@ -287,33 +287,33 @@ int32 RnLineString::ReplacePoint(std::shared_ptr<RnPoint> OldPoint, std::shared_
 }
 
 
-std::shared_ptr<RnLineString> RnLineString::Create(const std::shared_ptr<TArray<std::shared_ptr<RnPoint>>>& Vertices,
+RnRef_t<RnLineString> RnLineString::Create(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& Vertices,
     bool RemoveDuplicate) {
-    auto LineString = std::make_shared<RnLineString>();
+    auto LineString = RnNew<RnLineString>();
     if (!RemoveDuplicate) {
         LineString->Points = Vertices;
         return LineString;
     }
 
-    for (std::shared_ptr<RnPoint> Point : *Vertices) {
+    for (RnRef_t<RnPoint> Point : *Vertices) {
         LineString->AddPointOrSkip(Point);
     }
 
     return LineString;
 }
 
-std::shared_ptr<RnLineString> RnLineString::Create(const TArray<FVector>& Vertices, bool RemoveDuplicate) {
-    auto Points = std::make_shared<TArray<std::shared_ptr<RnPoint>>>();
+RnRef_t<RnLineString> RnLineString::Create(const TArray<FVector>& Vertices, bool RemoveDuplicate) {
+    auto Points = std::make_shared<TArray<RnRef_t<RnPoint>>>();
     for (const FVector& Vertex : Vertices) 
     {
-        auto P = std::make_shared<RnPoint>(Vertex);        
+        auto P = RnNew<RnPoint>(Vertex);        
         Points->Add(P);
     }
 
     return Create(Points, RemoveDuplicate);
 }
 
-bool RnLineString::Equals(const std::shared_ptr<RnLineString> X, const std::shared_ptr<RnLineString> Y) {
+bool RnLineString::Equals(const RnRef_t<RnLineString> X, const RnRef_t<RnLineString> Y) {
     if (X == Y) return true;
     if (!X || !Y) return false;
     if (X->Points->Num() != Y->Points->Num()) return false;
@@ -335,7 +335,7 @@ FVector RnLineString::Get(int32 Index) const
     return (*this)[Index];
 }
 
-std::shared_ptr<RnPoint> RnLineString::GetPoint(int32 Index) const
+RnRef_t<RnPoint> RnLineString::GetPoint(int32 Index) const
 {
     return (*Points)[Index];
 }

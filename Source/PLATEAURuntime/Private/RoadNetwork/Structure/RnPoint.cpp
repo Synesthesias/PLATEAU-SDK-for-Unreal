@@ -8,8 +8,8 @@ RnPoint::RnPoint(const FVector& InVertex)
     : Vertex(InVertex) {
 }
 
-std::shared_ptr<RnPoint> RnPoint::Clone() const {
-    return std::make_shared<RnPoint>(Vertex);
+RnRef_t<RnPoint> RnPoint::Clone() const {
+    return RnNew<RnPoint>(Vertex);
 }
 
 bool RnPoint::Equals(const RnPoint* X, const RnPoint* Y, float SqrMagnitudeTolerance) {
@@ -28,7 +28,7 @@ bool RnPoint::Equals(const RnPoint& X, const RnPoint& Y, float SqrMagnitudeToler
     return (X.Vertex - Y.Vertex).SizeSquared() <= SqrMagnitudeTolerance;
 }
 
-bool RnPoint::Equals( std::shared_ptr<const RnPoint> X, std::shared_ptr<const RnPoint> Y, float SqrMagnitudeTolerance)
+bool RnPoint::Equals(RnRef_t<const RnPoint> X, RnRef_t<const RnPoint> Y, float SqrMagnitudeTolerance)
 {
     return Equals(X.get(), Y.get(), SqrMagnitudeTolerance);
 }
