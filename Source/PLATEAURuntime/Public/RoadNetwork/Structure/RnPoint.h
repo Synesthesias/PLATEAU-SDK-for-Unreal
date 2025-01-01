@@ -22,4 +22,5 @@ public:
     operator FVector() const { return Vertex; }
 
     bool IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance = 0.0f) const;
+    bool IsSamePoint(const RnRef_t<RnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
 };

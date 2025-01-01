@@ -7,6 +7,7 @@
 
 struct PLATEAURUNTIME_API FLineSegment3D {
 public:
+    FLineSegment3D(){}
     FLineSegment3D(const FVector& InStart, const FVector& InEnd);
 
     FVector GetStart() const { return Start; }

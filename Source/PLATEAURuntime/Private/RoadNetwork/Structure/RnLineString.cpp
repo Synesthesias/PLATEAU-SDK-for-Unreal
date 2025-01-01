@@ -10,11 +10,11 @@ RnLineString::RnLineString() {
 }
 
 RnLineString::RnLineString(int32 InitialSize) {
-    Points = std::shared_ptr<TArray<RnRef_t<RnPoint>>>();
+    Points = TSharedPtr<TArray<RnRef_t<RnPoint>>>();
     Points->SetNum(InitialSize);
 }
 
-RnLineString::RnLineString(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& InPoints)
+RnLineString::RnLineString(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& InPoints)
 {
     Points = InPoints;
 }
@@ -46,7 +46,7 @@ FVector RnLineString::GetEdgeNormal(int32 StartVertexIndex) const {
 }
 
 RnRef_t<RnLineString> RnLineString::Clone(bool CloneVertex) const {
-    auto NewLineString = std::make_shared<RnLineString>();
+    auto NewLineString = RnNew<RnLineString>();
 
     if (CloneVertex) {
         for (const RnRef_t<RnPoint> Point : *Points) {
@@ -87,7 +87,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint
     int32 CurrentIndex = 0;
 
     for (int32 i = 0; i < Points->Num() - 1; i++) {
-        const float SegmentLength = (Get(i + 1) - Get(i)).Size();
+        const float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
         const float NextLength = CurrentLength + SegmentLength;
 
         while (CurrentIndex < Rates.Num() &&
@@ -95,7 +95,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint
             Rates[CurrentIndex] * TotalLength < NextLength) {
             float T = (Rates[CurrentIndex] * TotalLength - CurrentLength) / SegmentLength;
             if (InsertNewPoint) {
-                auto p = RnNew<RnPoint>(FMath::Lerp(Get(i), Get(i+1), T));
+                auto p = RnNew<RnPoint>(FMath::Lerp(GetVertex(i), GetVertex(i+1), T));
                 Points->Insert(p, i + 1);
                 i++;
             }
@@ -108,7 +108,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint
     SplitIndices.Add(Points->Num() - 1);
     int32 StartIndex = 0;
     for (const int32 EndIndex : SplitIndices) {
-        auto SplitPoints =  std::make_shared<TArray<RnRef_t<RnPoint>>>();
+        auto SplitPoints =  MakeShared<TArray<RnRef_t<RnPoint>>>();
         for (int32 i = StartIndex; i <= EndIndex; i++) {
             SplitPoints->Add(GetPoint(i));
         }
@@ -128,7 +128,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::SplitByIndex(const TArray<int32>& In
 
     int32 StartIndex = 0;
     for (int32 EndIndex : SortedIndices) {
-        auto SplitPoints = std::make_shared<TArray< RnRef_t<RnPoint>>>();
+        auto SplitPoints = MakeShared<TArray< RnRef_t<RnPoint>>>();
         for (int32 i = StartIndex; i <= EndIndex; ++i) {
             SplitPoints->Add(GetPoint(i));
         }
@@ -169,7 +169,7 @@ float RnLineString::CalcLength(float StartIndex, float EndIndex) const {
 
     float Length = 0.0f;
     for (int32 i = StartIdx; i < EndIdx && i < Points->Num() - 1; ++i) {
-        Length += (Get(i + 1) - Get(i)).Size();
+        Length += (GetVertex(i + 1) - GetVertex(i)).Size();
     }
 
     return Length;
@@ -227,8 +227,8 @@ void RnLineString::GetNearestPoint(const FVector& Pos, FVector& OutNearest, floa
     OutPointIndex = 0;
 
     for (int32 i = 0; i < Points->Num() - 1; ++i) {
-        const FVector Start = Get(i);
-        const FVector End = Get(i+1);
+        const FVector Start = GetVertex(i);
+        const FVector End = GetVertex(i+1);
         const FVector ProjectedPoint = FMath::ClosestPointOnSegment(Pos, Start, End);
 
         const float Distance = (Pos - ProjectedPoint).Size();
@@ -287,7 +287,7 @@ int32 RnLineString::ReplacePoint(RnRef_t<RnPoint> OldPoint, RnRef_t<RnPoint> New
 }
 
 
-RnRef_t<RnLineString> RnLineString::Create(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& Vertices,
+RnRef_t<RnLineString> RnLineString::Create(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& Vertices,
     bool RemoveDuplicate) {
     auto LineString = RnNew<RnLineString>();
     if (!RemoveDuplicate) {
@@ -303,7 +303,7 @@ RnRef_t<RnLineString> RnLineString::Create(const std::shared_ptr<TArray<RnRef_t<
 }
 
 RnRef_t<RnLineString> RnLineString::Create(const TArray<FVector>& Vertices, bool RemoveDuplicate) {
-    auto Points = std::make_shared<TArray<RnRef_t<RnPoint>>>();
+    auto Points = MakeShared<TArray<RnRef_t<RnPoint>>>();
     for (const FVector& Vertex : Vertices) 
     {
         auto P = RnNew<RnPoint>(Vertex);        
@@ -330,7 +330,7 @@ bool RnLineString::Equals(const RnRef_t<RnLineString> X, const RnRef_t<RnLineStr
 FVector RnLineString::operator[](int32 Index) const
 { return (*Points)[Index]->Vertex; }
 
-FVector RnLineString::Get(int32 Index) const
+FVector RnLineString::GetVertex(int32 Index) const
 {
     return (*this)[Index];
 }
@@ -339,3 +339,47 @@ RnRef_t<RnPoint> RnLineString::GetPoint(int32 Index) const
 {
     return (*Points)[Index];
 }
+
+void RnLineString::SetPoint(int32 Index, const RnRef_t<RnPoint>& Point)
+{
+    (*Points)[Index] = Point;
+}
+
+FVector RnLineString::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
+    float CurrentLength = 0.0f;
+    OutStartIndex = 0;
+    OutEndIndex = 0;
+
+    for (int32 i = 0; i < Points->Num() - 1; ++i) {
+        float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
+        if (CurrentLength + SegmentLength >= Offset) {
+            OutStartIndex = i;
+            OutEndIndex = i + 1;
+            float T = (Offset - CurrentLength) / SegmentLength;
+            return FMath::Lerp(GetVertex(i), GetVertex(i + 1), T);
+        }
+        CurrentLength += SegmentLength;
+    }
+
+    return Points->Last()->Vertex;
+}
+
+FVector RnLineString::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
+    float CurrentLength = 0.0f;
+    OutStartIndex = Points->Num() - 1;
+    OutEndIndex = Points->Num() - 1;
+
+    for (int32 i = Points->Num() - 1; i > 0; --i) {
+        float SegmentLength = (GetVertex(i) - GetVertex(i-1)).Size();
+        if (CurrentLength + SegmentLength >= Offset) {
+            OutStartIndex = i;
+            OutEndIndex = i - 1;
+            float T = (Offset - CurrentLength) / SegmentLength;
+            return FMath::Lerp(GetVertex(i), GetVertex(i-1), T);
+        }
+        CurrentLength += SegmentLength;
+    }
+
+    return GetVertex(0);
+}
+

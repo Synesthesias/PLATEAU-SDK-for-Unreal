@@ -36,3 +36,8 @@ bool RnPoint::Equals(RnRef_t<const RnPoint> X, RnRef_t<const RnPoint> Y, float S
 bool RnPoint::IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance) const {
     return Equals(this, Other, SqrMagnitudeTolerance);
 }
+
+bool RnPoint::IsSamePoint(const RnRef_t<RnPoint>& Other, float SqrMagnitudeTolerance) const
+{
+    return Equals(this, Other.get(), SqrMagnitudeTolerance);
+}

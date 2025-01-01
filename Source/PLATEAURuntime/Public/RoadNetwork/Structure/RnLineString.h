@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "RnPoint.h"
 #include "Containers/Array.h"
 #include "Math/Vector.h"
@@ -15,9 +14,9 @@ class RnLineString {
 public:
     RnLineString();
     RnLineString(int32 InitialSize);
-    RnLineString(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& InPoints);
+    RnLineString(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& InPoints);
 
-    std::shared_ptr<TArray<RnRef_t<RnPoint>>> Points;
+    TSharedPtr<TArray<RnRef_t<RnPoint>>> Points;
 
     int32 Count() const;
     bool IsValid() const;
@@ -49,13 +48,19 @@ public:
     TArray<FLineSegment2D> GetEdges2D(EAxisPlane axis = FRnDef::Plane) const;
     TArray<FLineSegment3D> GetEdges() const;
 
-    static RnRef_t<RnLineString> Create(const std::shared_ptr<TArray<RnRef_t<RnPoint>>>& Vertices, bool RemoveDuplicate = true);
+    static RnRef_t<RnLineString> Create(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& Vertices, bool RemoveDuplicate = true);
     static RnRef_t<RnLineString> Create(const TArray<FVector>& Vertices, bool RemoveDuplicate = true);
     static bool Equals(const RnRef_t<RnLineString> X, const RnRef_t<RnLineString> Y);
 
     FVector operator[](int32 Index) const;
 
-    FVector Get(int32 Index) const;
+    FVector GetVertex(int32 Index) const;
 
     RnRef_t<RnPoint> GetPoint(int32 Index) const;
+
+    void SetPoint(int32 Index, const RnRef_t<RnPoint>& Point);
+
+    FVector GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
+    FVector GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
+
 };
