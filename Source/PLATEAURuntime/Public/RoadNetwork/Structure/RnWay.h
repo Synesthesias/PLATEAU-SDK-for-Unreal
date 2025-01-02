@@ -94,6 +94,14 @@ public:
             return VertexIterator(Way, Way->Count());
         }
 
+        TArray<FVector> ToArray() const {
+            TArray<FVector> Result;
+            for (int32 i = 0; i < Way->Count(); ++i) {
+                Result.Add(Way->GetVertex(i));
+            }
+            return Result;
+        }
+
         const RnWay* Way;
     };
 
@@ -163,6 +171,9 @@ public:
     // 同じ頂点列を持っているかどうか
     bool IsSameLineSequence(const RnRef_t<RnWay>& Other) const;
 
+    // 自身をnum分割して返す. 分割できない(頂点空）の時は空リストを返す.
+    // insertNewPoint=trueの時はselfにも新しい点を追加する
+    TArray<RnRef_t<RnWay>> Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector = nullptr);
 private:
     int32 ToRawIndex(int32 Index, bool AllowMinus = false) const;
     int32 SwitchIndex(int32 Index) const;

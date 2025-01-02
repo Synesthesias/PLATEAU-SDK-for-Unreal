@@ -49,11 +49,11 @@ RnRef_t<RnLineString> RnEx::CreateInnerLerpLineString(
 
     // 自己交差があれば削除する
     auto Plane = RnModel::Plane;
-    FGeoGraph2D::RemoveSelfCrossing(
-        Line->Points,
+    FGeoGraph2D::RemoveSelfCrossing<RnRef_t<RnPoint>>(
+        *Line->Points,
         [Plane](RnRef_t<RnPoint> T) { return FAxisPlaneEx::GetTangent(T->Vertex, Plane); },
         [](RnRef_t<RnPoint> P1, RnRef_t<RnPoint> P2, RnRef_t<RnPoint> P3, RnRef_t<RnPoint> P4,
-            const FVector& Inter, float F1, float F2) {
+            const FVector2D& Inter, float F1, float F2) {
                 return RnNew<RnPoint>(FMath::Lerp(P1->Vertex, P2->Vertex, F1));
         });
 

@@ -104,7 +104,7 @@ TArray<RnRef_t<RnRoadBase>> RnModel::GetNeighborRoadBases(const RnRef_t<RnRoadBa
 TArray<RnRef_t<RnRoad>> RnModel::GetNeighborRoads(const RnRef_t<RnRoadBase>& RoadBase) const {
     TArray<RnRef_t<RnRoad>> Result;
     for (const auto& Neighbor : GetNeighborRoadBases(RoadBase)) {
-        if (auto R = RnCast<RnRoad>(Neighbor)) {
+        if (auto R = Neighbor->CastToRoad()) {
             Result.Add(R);
         }
     }
@@ -114,7 +114,7 @@ TArray<RnRef_t<RnRoad>> RnModel::GetNeighborRoads(const RnRef_t<RnRoadBase>& Roa
 TArray<RnRef_t<RnIntersection>> RnModel::GetNeighborIntersections(const RnRef_t<RnRoadBase>& RoadBase) const {
     TArray<RnRef_t<RnIntersection>> Result;
     for (const auto& Neighbor : GetNeighborRoadBases(RoadBase)) {
-        if (auto Intersection = RnCast<RnIntersection>(Neighbor)) {
+        if (auto Intersection = Neighbor->CastToIntersection()) {
             Result.Add(Intersection);
         }
     }
@@ -132,7 +132,7 @@ void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOptio
         for (const auto& Edge : Intersection->GetEdges()) {
             if (!Edge->Road) continue;
 
-            auto Road = RnCast<RnRoad>(Edge->Road);
+            auto Road = Edge->Road->CastToRoad();
             if (!Road) continue;
 
             // 道路の長さを取得

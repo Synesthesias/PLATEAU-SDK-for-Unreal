@@ -1,14 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LineUtil.h"
 #include "Math/Vector2D.h"
 #include "Math/Vector.h"
 #include "Containers/Array.h"
 #include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/Vector2DEx.h"
 
 class PLATEAURUNTIME_API FGeoGraph2D {
 public:
-    static constexpr float Epsilon = 1e-5f;
+    static constexpr float Eps = 1e-5f;
 
     struct FVector2DEquitable {
         float Tolerance;
@@ -48,67 +51,40 @@ public:
         TFunction<FVector2D(const FVector&)> ToVec2,
         float Epsilon = 0.1f);
 
+    template<typename T>
     class FComputeOutlineResult {
     public:
-        TArray<FVector> Outline;
-        bool Success;
-        bool HasSelfCrossing;
+        bool Success = false;
+        bool HasSelfCrossing = false;
+        TArray<T> Outline;
+
+        FComputeOutlineResult(){}
+        FComputeOutlineResult(bool success, bool hasSelfCrossing, const TArray<T>& outline)
+            : Success(success)
+            , HasSelfCrossing(hasSelfCrossing)
+            , Outline(outline) {
+        }
     };
 
-    static FComputeOutlineResult ComputeOutline(
-        const TArray<FVector>& Vertices,
-        TFunction<FVector(const FVector&)> ToVec3,
+    template<class T>
+    static FComputeOutlineResult<T> ComputeOutline(
+        const TArray<T>& Vertices,
+        TFunction<FVector(const T&)> ToVec3,
         EAxisPlane Plane,
-        TFunction<TArray<FVector>(const FVector&)> GetNeighbor);
+        TFunction<TArray<T>(const T&)> GetNeighbor);
 
     template<class T>
     static void RemoveSelfCrossing(
         TArray<T>& Points,
-        TFunction<FVector2D(T)> GetTangent,
-        TFunction<T(T, T, T, T, const FVector&, float, float)> CreateIntersectionPoint);
-
-    static bool HasSelfCrossing(
-        const TArray<FVector>& Points,
-        TFunction<FVector2D(const FVector&)> ToVec2,
-        float Epsilon = 1e-5f);
-
-    static bool HasSelfCrossing(
-        const TArray<FVector2D>& Points,
-        float Epsilon = 1e-5f);
-
-    static bool TryGetSelfCrossing(
-        const TArray<FVector>& Points,
-        TFunction<FVector2D(const FVector&)> ToVec2,
-        int32& OutI1,
-        int32& OutI2,
-        int32& OutI3,
-        int32& OutI4,
-        FVector& OutIntersection,
-        float& OutF1,
-        float& OutF2,
-        float Epsilon = 1e-5f);
-
-    static bool TryGetSelfCrossing(
-        const TArray<FVector2D>& Points,
-        int32& OutI1,
-        int32& OutI2,
-        int32& OutI3,
-        int32& OutI4,
-        FVector2D& OutIntersection,
-        float& OutF1,
-        float& OutF2,
-        float Epsilon = 1e-5f);
+        TFunction<FVector2D(T)> Selector,
+        TFunction<T(T, T, T, T, const FVector2D&, float, float)> CreateIntersectionPoint);
 
     static float CalcTotalAngle(const TArray<FVector>& Points, TFunction<FVector2D(const FVector&)> ToVec2);
     static float CalcTotalAngle(const TArray<FVector2D>& Points);
 
-private:
     static bool IsConvex(const TArray<FVector2D>& Points);
     static int32 FindMostLeftBottom(const TArray<FVector2D>& Points);
-    static float Cross(const FVector2D& A, const FVector2D& B);
-    static bool IsCross(const FVector2D& P1, const FVector2D& P2, const FVector2D& P3, const FVector2D& P4);
-    static bool TryGetCrossPoint(const FVector2D& P1, const FVector2D& P2, const FVector2D& P3, const FVector2D& P4, FVector2D& OutIntersection, float& OutF1, float& OutF2);
-   
+    static float Cross(const FVector2D& A, const FVector2D& B);  
 private:
     static bool IsLastClockwise(const TArray<FVector2D>& List);
 };
@@ -127,41 +103,204 @@ TArray<T> FGeoGraph2D::ComputeConvexVolume(
 template<typename T>
 void FGeoGraph2D::RemoveSelfCrossing(
     TArray<T>& Points,
-    TFunction<FVector2D(T)> GetTangent,
-    TFunction<T(T, T, T, T, const FVector&, float, float)> CreateIntersectionPoint)
+    TFunction<FVector2D(T)> Selector,
+    TFunction<T(T, T, T, T, const FVector2D&, float, float)> Creator)
 {
-    if (!Points || Points.Num() < 4) {
-        return;
+    for (int32 i = 0; i < Points.Num() - 2; ++i) {
+        FVector2D P1 = Selector(Points[i]);
+        FVector2D P2 = Selector(Points[i + 1]);
+
+        for (int32 j = i + 2; j < Points.Num() - 1;) {
+            FVector2D P3 = Selector(Points[j]);
+            FVector2D P4 = Selector(Points[j + 1]);
+
+            FVector2D Intersection;
+            float F1 = 0.f;
+            float F2 = 0.f;
+            if (FLineUtil::SegmentIntersection(P1, P2, P3, P4, Intersection, F1, F2)) {
+                auto newNode = Creator(Points[i], Points[i + 1], Points[j], Points[j + 1], Intersection, F1, F2);
+                Points.RemoveAt(i + 1, j - i);
+                Points.Insert(newNode, i + 1);
+                // もう一回最初から検索しなおす
+                j = i + 2;
+            }
+            else
+            {
+                j++;
+            }
+        }
+    }
+}
+
+template<typename T>
+FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
+    const TArray<T>& Vertices,
+    TFunction<FVector(const T&)> ToVec3,
+    EAxisPlane Plane,
+    TFunction<TArray<T>(const T&)> GetNeighbor)
+{
+
+    FComputeOutlineResult<T> Result;
+    Result.Success = false;
+    Result.HasSelfCrossing = false;
+
+    if (Vertices.Num() == 0) {
+        return Result;
     }
 
-    bool Found;
-    do {
-        Found = false;
-        for (int32 i = 0; i < Points.Num() - 1; ++i) {
-            for (int32 j = i + 2; j < Points.Num() - 1; ++j) {
-                auto P1 = (*Points)[i];
-                auto P2 = (*Points)[i + 1];
-                auto P3 = (*Points)[j];
-                auto P4 = (*Points)[j + 1];
+    TSet<T> VisitedPoints;
+    auto& OutlinePoints = Result.Outline;
 
-                FVector2D T1 = GetTangent(P1);
-                FVector2D T2 = GetTangent(P3);
+    // 配列をコピーする
+    auto Keys = Vertices;
+    if(Keys.Num() <= 2)
+    {
+        Result.Outline = Keys;
+        Result.Success = false;
+        return Result;
+    }
 
-                if (IsCross(T1, T2, GetTangent(P2), GetTangent(P4))) {
-                    FVector2D Intersection;
-                    float F1, F2;
-                    if (TryGetCrossPoint(T1, T2, GetTangent(P2), GetTangent(P4), Intersection, F1, F2)) {
-                        Found = true;
-                        auto NewPoint = CreateIntersectionPoint(P1, P2, P3, P4, FVector(Intersection.X, Intersection.Y, 0), F1, F2);
+    auto ToVec2 = [&](T A) { return FAxisPlaneEx::GetTangent(ToVec3(A), Plane); };
 
-                        // Remove points between i+1 and j
-                        Points.RemoveAt(i + 1, j - i - 1);
-                        Points.Insert(NewPoint, i + 1);
-                        break;
-                    }
+    Keys.Sort([&](const T& A, const T& B) 
+        {
+            auto A2 = ToVec2(A);
+            auto B2 = ToVec2(B);
+            if (A2.X < B2.X)
+                return true;
+            if (A2.X > B2.X)
+                return false;
+            return A2.Y < B2.Y;
+        });
+
+    struct EvalValue
+    {
+        float Angle;
+        float SqrLen;
+    };
+
+    auto Search = [&](T Start, FVector2D Dir,
+        // (angle, sqrLen), (angle, sqrLen) -> evaluation value
+        TFunction<int(EvalValue, EvalValue)> Compare)
+        // success, hasSelfCrossing, outlineVertices
+        -> FComputeOutlineResult<T> {
+        auto ret = new TArray<T>{ Start };
+        auto hasCrossing = false;
+        auto Eval = [](FVector2D axis, FVector2D a) -> EvalValue {
+            auto ang = FVector2DEx::SignedAngle(axis, a);
+            if (ang < 0.f)
+                ang += 360.f;
+            auto sqrLen = a.SquaredLength();
+            EvalValue R;
+            R.Angle = ang;
+            R.SqrLen = sqrLen;
+            return R;
+            };
+
+        while (true) {
+            auto last = ToVec2(ret[ret.Num() - 1]);
+            TArray<T> neighbors = GetNeighbor(ret[ret.Num() - 1]);
+            if (neighbors.Num() == 0)
+                break;
+
+
+            // 途中につながるようなものは削除
+            TArray<T> filtered = neighbors;
+            if (ret.Num() > 1) {
+                // 
+                filtered.RemoveAll([&](T V) {
+                    return V == ret[ret.Num() - 2];
+                    });
+            }
+
+            if (filtered.Count == 0)
+                filtered = neighbors;
+            if (filtered.Count == 0)
+                break;
+
+            auto next = filtered[0];
+            auto eval0 = Eval(Dir, ToVec2(next) - last);
+            for (auto I = 1; I < filtered.Num(); ++I) {
+                auto v = filtered[I];
+                // 最も外側に近い点を返す
+                auto eval1 = Eval(Dir, ToVec2(v) - last);
+                if (Compare(eval0, eval1) < 0) {
+                    next = v;
+                    eval0 = eval1;
                 }
             }
-            if (Found) break;
+
+            // 先頭に戻ってきたら終了
+            if (ret[0].Equals(next))
+                return FComputeOutlineResult<T>(true, hasCrossing, ret);
+
+            // 途中に戻ってくる場合
+            auto index = ret.IndexOf(next);
+            if (index >= 0) {
+                // ループを検出したら終了
+                if (index > 0 && ret[index - 1] == ret[ret.Num() - 1]) {
+                    return FComputeOutlineResult<T>(false, hasCrossing, ret);
+                }
+                hasCrossing = true;
+            }
+
+            ret.Add(next);
+            Dir = last - ToVec2(next);
         }
-    } while (Found);
+
+        return FComputeOutlineResult<T>(false, hasCrossing, ret);
+        };
+
+    auto leftSearch = Search(
+        Keys[0]
+        , -FVector2D::UnitY()
+        , [](EvalValue A, EvalValue B) 
+        {
+            auto x = -RnEx::Compare(A.Angle, B.Angle);
+            if(x == 0)
+                x = RnEx::Compare(A.SqrLen, B.SqrLen);
+            return x;
+        });
+    // 見つかったらそれでおしまい
+    if (leftSearch.Success)
+        return leftSearch;
+
+    // 見つからない場合(３次元的なねじれの位置がある場合等)
+    // 反時計回りにも探す
+    auto rightSearch = Search(
+        Keys[0]
+        , FVector2D::UnitY()
+        , [](EvalValue A, EvalValue B) {
+            auto x = RnEx::Compare(A.Angle, B.Angle);
+            if (x == 0)
+                x = RnEx::Compare(A.SqrLen, B.SqrLen);
+            return x;
+        });
+
+    // 右回りで見つかったらそれでおしまい
+    if (rightSearch.Success) {
+        return rightSearch;
+    }
+
+    // #TODO:どっちも見つからない場合はしょうがないので
+    // 両方の結果をマージする
+    Result.Outline = leftSearch.Outline;
+    // 0番目は共通なので削除
+    rightSearch.Outline.RemoveAt(0);
+    while (rightSearch.Outline.Num() > 0) {
+        auto v = rightSearch.Outline[0];
+        rightSearch.Outline.RemoveAt(0);
+        auto index = Result.Outline.IndexOf(v);
+        if (index >= 0) {
+            Result.Success = true;
+            Result.Outline.RemoveAt(index, Result.Outline.Count - index);
+            Result.Outline.Add(v);
+            break;
+        }
+        Result.Outline.Add(v);
+    }
+
+
+    return Result;
 }
+

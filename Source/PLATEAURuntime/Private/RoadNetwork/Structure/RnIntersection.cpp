@@ -32,7 +32,7 @@ bool RnNeighbor::IsMedianBorder() const {
 
     if (!Road) 
         return false;
-    if (auto R = RnCast<RnRoad>(Road)) {
+    if (auto R = Road->CastToRoad()) {
         auto Median = R->MedianLane;
 
         if (Median && Median->GetAllBorders().ContainsByPredicate([&](RnRef_t<RnWay> b) {
@@ -47,7 +47,7 @@ bool RnNeighbor::IsMedianBorder() const {
 TArray<RnRef_t<RnLane>> RnNeighbor::GetConnectedLanes() const {
     TArray<RnRef_t<RnLane>> Lanes;
     if (!Road) return Lanes;
-    if (auto R = RnCast<RnRoad>(Road)) 
+    if (auto R = Road->CastToRoad()) 
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
@@ -60,12 +60,13 @@ TArray<RnRef_t<RnLane>> RnNeighbor::GetConnectedLanes() const {
         }
         return Lanes;
     }
+    return Lanes;
 }
 
 RnRef_t<RnLane> RnNeighbor::GetConnectedLane(const RnRef_t<RnWay>& BorderWay) const {
     if (!Road || !BorderWay) return nullptr;
 
-    if (auto R = RnCast<RnRoad>(Road)) 
+    if (auto R = Road->CastToRoad()) 
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
@@ -78,7 +79,7 @@ RnRef_t<RnLane> RnNeighbor::GetConnectedLane(const RnRef_t<RnWay>& BorderWay) co
         }
         return nullptr;
     }
-   
+    return nullptr;
 }
 
 RnIntersection::RnIntersection()
@@ -140,6 +141,20 @@ TArray<RnRef_t<RnNeighbor>> RnIntersection::GetEdgesBy(const TFunction<bool(cons
         }
     }
     return Result;
+}
+
+void RnIntersection::RemoveEdge(const RnRef_t<RnRoad>& Road, const RnRef_t<RnLane>& Lane)
+{
+    RemoveEdges([&](RnRef_t<RnNeighbor> Edge) 
+        {
+            if (Edge->Road != Road)
+                return false;
+            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Edge->Border))
+                return true;
+            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Edge->Border))
+                return true;
+            return false;
+        });
 }
 
 void RnIntersection::RemoveEdges(const RnRef_t<RnRoadBase>& Road) {

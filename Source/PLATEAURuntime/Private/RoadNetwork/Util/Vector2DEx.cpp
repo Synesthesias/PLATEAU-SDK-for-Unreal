@@ -27,6 +27,15 @@ float FVector2DEx::Angle(const FVector2D& From, const FVector2D& To)
     return UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
 }
 
+float FVector2DEx::SignedAngle(const FVector2D& From, const FVector2D& To)
+{
+    auto C = Cross(From, To);    
+    auto Result = UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
+    if (C < 0)
+        Result = -Result;
+    return Result;
+}
+
 float FVector2DEx::Cross(const FVector2D& A, const FVector2D& B) {
     return A.X * B.Y - A.Y * B.X;
 }

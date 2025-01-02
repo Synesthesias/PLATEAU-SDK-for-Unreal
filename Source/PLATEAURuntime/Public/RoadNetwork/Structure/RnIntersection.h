@@ -12,6 +12,7 @@ class UPLATEAUCityObjectGroup;
 class UTrafficSignalLightController;
 class RnRoadBase;
 class RnWay;
+class RnRoad;
 
 class RnNeighbor {
 public:
@@ -81,6 +82,9 @@ public:
     // 指定したRoadに接続されているEdgeを取得
     TArray<RnRef_t<RnNeighbor>> GetEdgesBy(const TFunction<bool(const RnRef_t<RnNeighbor>&)>& Predicate) const;
 
+    // Road/Laneに接続しているEdgeを削除
+    void RemoveEdge(const RnRef_t<RnRoad>& Road, const RnRef_t<RnLane>& Lane);
+
     // 指定したRoadに接続されているEdgeを削除
     void RemoveEdges(const RnRef_t<RnRoadBase>& Road);
 
@@ -98,7 +102,7 @@ public:
 
     // 指定したRoadに接続されているかどうか
     bool HasEdge(const RnRef_t<RnRoadBase>& Road, const RnRef_t<RnWay>& Border) const;
-public:
+
     // 隣接するRoadを取得
     virtual TArray<RnRef_t<RnRoadBase>> GetNeighborRoads() const override;
 
@@ -119,6 +123,17 @@ public:
 
     // 所属するすべてのWayを取得(重複の可能性あり)
     virtual TArray<RnRef_t<RnWay>> GetAllWays() const override;
+
+
+    // RnRoadへキャストする
+    virtual RnRef_t<RnRoad> CastToRoad() override {
+        return RnRef_t<RnRoad>(nullptr);
+    }
+
+    // RnIntersectionへキャストする
+    virtual RnRef_t<RnIntersection> CastToIntersection() override {
+        return RnRef_t<RnIntersection>(this);
+    }
 
     // 交差点を作成する
     static RnRef_t<RnIntersection> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);

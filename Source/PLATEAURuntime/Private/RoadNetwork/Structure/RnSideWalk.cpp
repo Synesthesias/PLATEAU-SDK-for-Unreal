@@ -3,6 +3,7 @@
 #include "RoadNetwork/Structure/RnRoadBase.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnPoint.h"
+#include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Util/Vector2DEx.h"
 #include "RoadNetwork/Util/VectorEx.h"
 
@@ -164,10 +165,10 @@ float RnSideWalk::CalcRoadProximityScore(const RnRef_t<RnRoadBase>& Other) const
     if (!Other || !this) return -1.0f;
 
     TArray<RnRef_t<RnWay>> TargetWays;
-    if (auto Road = RnCast<RnRoad>(Other)) {
+    if (auto Road = Other->CastToRoad()) {
         TargetWays = Road->GetMergedSideWays();
     }
-    else if (auto Intersection = RnCast<RnIntersection>(Other)) {
+    else if (auto Intersection = Other->CastToIntersection()) {
         for (const auto& Edge : Intersection->GetEdges()) {
             TargetWays.Add(Edge->Border);
         }

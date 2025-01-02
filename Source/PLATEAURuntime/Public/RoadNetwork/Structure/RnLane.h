@@ -5,27 +5,6 @@
 #include "RnRoad.h"
 #include "../RnDef.h"
 
-
-enum class ERnLaneAttribute {
-    None = 0,
-    // 左折専用
-    LeftOnly = 1 << 0,
-    // 右折専用
-    RightOnly = 1 << 1,
-    // 自動生成時にLeftWayが生成できなかった
-    LeftWayGenError = 1 << 2,
-    // 自動生成時にRightWayが生成できなかった
-    RightWayGenError = 1 << 3,
-};
-ENUM_CLASS_FLAGS(ERnLaneAttribute);
-
-// レーンを動かすときのオプション
-enum class ELaneWayMoveOption {
-    // 左だけ動かす
-    MoveLeftWay,
-    MoveRightWay,
-    MoveBothWay
-};
 class RnRoad;
 class RnLane {
 public:
@@ -47,9 +26,6 @@ public:
 
     // 車線(右)
     RnRef_t<RnWay> RightWay;
-
-    // 属性
-    ERnLaneAttribute Attributes;
 
     // 親Roadと逆方向(右車線等)
     bool IsReverse;

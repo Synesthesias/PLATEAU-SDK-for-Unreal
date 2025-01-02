@@ -26,7 +26,8 @@ public:
     FLineSegment3D LineSegment;
 };
 
-class RnEx {
+struct RnEx
+{
 public:
     static TArray<RnRef_t<UPLATEAUCityObjectGroup>> GetSceneSelectedCityObjectGroups();
 
@@ -48,6 +49,28 @@ public:
     static RnRef_t<FLineCrossPointResult> GetLineIntersections(
         const FLineSegment3D& LineSegment,
         const TArray<RnRef_t<RnWay>>& Ways);
+
+
+    template<typename T, typename U>
+    static TArray<U> Map(const TArray<T>& Src, TFunction< U(const T&)> Selector)
+    {
+        TArray<U> Result;
+        Result.Reserve(Src.Num());
+        for (const auto& S : Src) {
+            Result.Add(Selector(S));
+        }
+        return Result;
+    }
+
+    template<typename T>
+    static int32 Compare(T A, T B)
+    {
+        if (A < B)
+            return -1;
+        if (A > B)
+            return 1;
+        return 0;
+    }
 };
 template<typename T>
 void RnEx::Replace(TArray<T>& Self, T Before, T After) {

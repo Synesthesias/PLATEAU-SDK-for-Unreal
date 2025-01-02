@@ -25,14 +25,18 @@ bool FGeoGraph2D::IsLastClockwise(const TArray<FVector2D>& List) {
 
 TArray<FVector> FGeoGraph2D::ComputeConvexVolume(
     const TArray<FVector>& Vertices,
-    TFunction<FVector2D(const FVector&)> ToVec2) {
-    auto Points2D = Vertices.Map([&](const FVector& V) { return ToVec2(V); });
+    TFunction<FVector2D(const FVector&)> ToVec2)
+{
+    TArray<FVector2D > Points2D;
+    for(auto& v : Vertices)
+        Points2D.Add(ToVec2(v));
+
     auto ConvexHull2D = ComputeConvexVolume(Points2D);
 
     TArray<FVector> Result;
     for (const auto& Point2D : ConvexHull2D) {
         for (const auto& Vertex : Vertices) {
-            if (FVector2D::Distance(ToVec2(Vertex), Point2D) < Epsilon) {
+            if (FVector2D::Distance(ToVec2(Vertex), Point2D) < Eps) {
                 Result.Add(Vertex);
                 break;
             }
@@ -179,141 +183,11 @@ TArray<FVector> FGeoGraph2D::ComputeMeshOutlineVertices(
     return Result;
 }
 
-FGeoGraph2D::FComputeOutlineResult FGeoGraph2D::ComputeOutline(
-    const TArray<FVector>& Vertices,
-    TFunction<FVector(const FVector&)> ToVec3,
-    EAxisPlane Plane,
-    TFunction<TArray<FVector>(const FVector&)> GetNeighbor) {
-    FComputeOutlineResult Result;
-    Result.Success = false;
-    Result.HasSelfCrossing = false;
-
-    if (Vertices.Num() == 0) {
-        return Result;
-    }
-
-    TSet<FVector> VisitedPoints;
-    TArray<FVector> OutlinePoints;
-    OutlinePoints.Add(Vertices[0]);
-    VisitedPoints.Add(Vertices[0]);
-
-    while (true) {
-        auto CurrentPoint = OutlinePoints.Last();
-        auto Neighbors = GetNeighbor(CurrentPoint);
-
-        if (Neighbors.Num() == 0) {
-            break;
-        }
-
-        // Find the rightmost neighbor
-        FVector2D CurrentPoint2D = FAxisPlaneEx::ToVector2D(CurrentPoint, Plane);
-        float MaxAngle = -PI;
-        FVector NextPoint = Neighbors[0];
-
-        for (const auto& Neighbor : Neighbors) {
-            if (VisitedPoints.Contains(Neighbor)) {
-                continue;
-            }
-
-            FVector2D Vec = FAxisPlaneEx::ToVector2D(Neighbor - CurrentPoint, Plane);
-            float Angle = FMath::Atan2(Vec.Y, Vec.X);
-
-            if (Angle > MaxAngle) {
-                MaxAngle = Angle;
-                NextPoint = Neighbor;
-            }
-        }
-
-        if (VisitedPoints.Contains(NextPoint)) {
-            break;
-        }
-
-        OutlinePoints.Add(NextPoint);
-        VisitedPoints.Add(NextPoint);
-    }
-
-    Result.Outline = OutlinePoints;
-    Result.Success = true;
-    Result.HasSelfCrossing = HasSelfCrossing(OutlinePoints, [Plane](const FVector& V) { return FAxisPlaneEx::ToVector2D(V, Plane); });
-
-    return Result;
-}
-
-
-bool FGeoGraph2D::HasSelfCrossing(
-    const TArray<FVector>& Points,
-    TFunction<FVector2D(const FVector&)> ToVec2,
-    float Epsilon) {
-    TArray<FVector2D> Points2D;
-    Points2D.Reserve(Points.Num());
-    for (const auto& Point : Points) {
-        Points2D.Add(ToVec2(Point));
-    }
-    return HasSelfCrossing(Points2D, Epsilon);
-}
-
-bool FGeoGraph2D::HasSelfCrossing(
-    const TArray<FVector2D>& Points,
-    float Epsilon) {
-    int32 I1, I2, I3, I4;
-    FVector2D Intersection;
-    float F1, F2;
-    return TryGetSelfCrossing(Points, I1, I2, I3, I4, Intersection, F1, F2, Epsilon);
-}
-
-bool FGeoGraph2D::TryGetSelfCrossing(
-    const TArray<FVector>& Points,
-    int32& OutI1,
-    int32& OutI2,
-    int32& OutI3,
-    int32& OutI4,
-    FVector& OutIntersection,
-    float& OutF1,
-    float& OutF2,
-    float Epsilon) {
-    TArray<FVector2D> Points2D;
-    Points2D.Reserve(Points.Num());
-    for (const auto& Point : Points) {
-        Points2D.Add(FRnDef::To2D(Point));
-    }
-
-    FVector2D Intersection2D;
-    bool Result = TryGetSelfCrossing(Points2D, OutI1, OutI2, OutI3, OutI4, Intersection2D, OutF1, OutF2, Epsilon);
-    OutIntersection = FVector(Intersection2D.X, Intersection2D.Y, 0.0f);
-    return Result;
-}
-
-bool FGeoGraph2D::TryGetSelfCrossing(
-    const TArray<FVector2D>& Points,
-    int32& OutI1,
-    int32& OutI2,
-    int32& OutI3,
-    int32& OutI4,
-    FVector2D& OutIntersection,
-    float& OutF1,
-    float& OutF2,
-    float Epsilon) {
-    for (int32 i = 0; i < Points.Num() - 1; ++i) {
-        for (int32 j = i + 2; j < Points.Num() - 1; ++j) {
-            if (IsCross(Points[i], Points[i + 1], Points[j], Points[j + 1])) {
-                if (TryGetCrossPoint(Points[i], Points[i + 1], Points[j], Points[j + 1], OutIntersection, OutF1, OutF2)) {
-                    OutI1 = i;
-                    OutI2 = i + 1;
-                    OutI3 = j;
-                    OutI4 = j + 1;
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 float FGeoGraph2D::CalcTotalAngle(
     const TArray<FVector>& Points,
-    TFunction<FVector2(const FVector&)> ToVec2)
+    TFunction<FVector2D(const FVector&)> ToVec2)
 {
-    TArray<FVector2> Points2D;
+    TArray<FVector2D> Points2D;
     Points2D.Reserve(Points.Num());
     for (const auto& Point : Points)
     {
@@ -322,7 +196,7 @@ float FGeoGraph2D::CalcTotalAngle(
     return CalcTotalAngle(Points2D);
 }
 
-float FGeoGraph2D::CalcTotalAngle(const TArray<FVector2>& Points)
+float FGeoGraph2D::CalcTotalAngle(const TArray<FVector2D>& Points)
 {
     float TotalAngle = 0.0f;
     for (int32 i = 0; i < Points.Num(); ++i)
@@ -330,16 +204,16 @@ float FGeoGraph2D::CalcTotalAngle(const TArray<FVector2>& Points)
         int32 Prev = (i + Points.Num() - 1) % Points.Num();
         int32 Next = (i + 1) % Points.Num();
 
-        FVector2 V1 = Points[i] - Points[Prev];
-        FVector2 V2 = Points[Next] - Points[i];
+        FVector2D V1 = Points[i] - Points[Prev];
+        FVector2D V2 = Points[Next] - Points[i];
 
-        float Angle = FMath::Atan2(Cross(V1, V2), FVector2::DotProduct(V1, V2));
+        float Angle = FMath::Atan2(Cross(V1, V2), FVector2D::DotProduct(V1, V2));
         TotalAngle += Angle;
     }
     return TotalAngle;
 }
 
-bool FGeoGraph2D::IsConvex(const TArray<FVector2>& Points)
+bool FGeoGraph2D::IsConvex(const TArray<FVector2D>& Points)
 {
     if (Points.Num() < 3) return true;
 
@@ -357,7 +231,7 @@ bool FGeoGraph2D::IsConvex(const TArray<FVector2>& Points)
     return true;
 }
 
-int32 FGeoGraph2D::FindMostLeftBottom(const TArray<FVector2>& Points)
+int32 FGeoGraph2D::FindMostLeftBottom(const TArray<FVector2D>& Points)
 {
     int32 Result = 0;
     for (int32 i = 1; i < Points.Num(); ++i)
@@ -371,48 +245,7 @@ int32 FGeoGraph2D::FindMostLeftBottom(const TArray<FVector2>& Points)
     return Result;
 }
 
-float FGeoGraph2D::Cross(const FVector2& A, const FVector2& B)
+float FGeoGraph2D::Cross(const FVector2D& A, const FVector2D& B)
 {
     return A.X * B.Y - A.Y * B.X;
-}
-
-bool FGeoGraph2D::IsCross(const FVector2& P1, const FVector2& P2, const FVector2& P3, const FVector2& P4)
-{
-    float D1 = Cross(P2 - P1, P3 - P1);
-    float D2 = Cross(P2 - P1, P4 - P1);
-    float D3 = Cross(P4 - P3, P1 - P3);
-    float D4 = Cross(P4 - P3, P2 - P3);
-
-    return (D1 * D2 < 0) && (D3 * D4 < 0);
-}
-
-bool FGeoGraph2D::TryGetCrossPoint(
-    const FVector2& P1,
-    const FVector2& P2,
-    const FVector2& P3,
-    const FVector2& P4,
-    FVector2& OutIntersection,
-    float& OutF1,
-    float& OutF2)
-{
-    FVector2 V1 = P2 - P1;
-    FVector2 V2 = P4 - P3;
-    float Cross12 = Cross(V1, V2);
-
-    if (FMath::Abs(Cross12) < Epsilon)
-    {
-        return false;
-    }
-
-    FVector2 V3 = P3 - P1;
-    OutF1 = Cross(V2, V3) / Cross12;
-    OutF2 = Cross(V1, V3) / Cross12;
-
-    if (OutF1 < 0 || OutF1 > 1 || OutF2 < 0 || OutF2 > 1)
-    {
-        return false;
-    }
-
-    OutIntersection = P1 + V1 * OutF1;
-    return true;
 }

@@ -30,7 +30,7 @@ bool RnPoint::Equals(const RnPoint& X, const RnPoint& Y, float SqrMagnitudeToler
 
 bool RnPoint::Equals(RnRef_t<const RnPoint> X, RnRef_t<const RnPoint> Y, float SqrMagnitudeTolerance)
 {
-    return Equals(X.get(), Y.get(), SqrMagnitudeTolerance);
+    return Equals(X.Get(), Y.Get(), SqrMagnitudeTolerance);
 }
 
 bool RnPoint::IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance) const {
@@ -39,5 +39,5 @@ bool RnPoint::IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance) con
 
 bool RnPoint::IsSamePoint(const RnRef_t<RnPoint>& Other, float SqrMagnitudeTolerance) const
 {
-    return Equals(this, Other.get(), SqrMagnitudeTolerance);
+    return Equals(this, Other.Get(), SqrMagnitudeTolerance);
 }

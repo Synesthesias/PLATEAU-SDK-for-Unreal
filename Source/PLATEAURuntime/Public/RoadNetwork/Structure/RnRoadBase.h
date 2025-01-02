@@ -11,6 +11,8 @@ class RnBorder;
 class RnWay;
 class RnLineString;
 class RnLane;
+class RnRoad;
+class RnIntersection;
 class RnRoadBase
 {
 public:
@@ -95,4 +97,9 @@ public:
     // 指定したレーンの境界線を取得する
     virtual RnRef_t<RnWay> GetBorderWay(const RnRef_t<RnLane>& Lane, ERnLaneBorderType BorderType) const { return nullptr; }
 
+    // RnRoadへキャストする
+    virtual RnRef_t<RnRoad> CastToRoad() = 0;
+
+    // RnIntersectionへキャストする
+    virtual RnRef_t<RnIntersection> CastToIntersection() = 0;
 };

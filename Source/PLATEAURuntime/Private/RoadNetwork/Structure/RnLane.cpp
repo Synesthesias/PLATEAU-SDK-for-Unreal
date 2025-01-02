@@ -1,17 +1,15 @@
 #include "RoadNetwork/Structure/RnLane.h"
 
 RnLane::RnLane()
-    : Attributes(ERnLaneAttribute::None)
-    , IsReverse(false) {
+    : IsReverse(false) {
 }
 
 RnLane::RnLane(const RnRef_t<RnWay>& InLeftWay, const RnRef_t<RnWay>& InRightWay,
     const RnRef_t<RnWay>& InPrevBorder, const RnRef_t<RnWay>& InNextBorder)
-    : LeftWay(InLeftWay)
-    , RightWay(InRightWay)
-    , PrevBorder(InPrevBorder)
+    : PrevBorder(InPrevBorder)
     , NextBorder(InNextBorder)
-    , Attributes(ERnLaneAttribute::None)
+    , LeftWay(InLeftWay)
+    , RightWay(InRightWay)
     , IsReverse(false) {
 }
 
@@ -189,7 +187,6 @@ RnRef_t<RnLane> RnLane::Clone() const {
     NewLane->PrevBorder = PrevBorder ? PrevBorder->Clone(true) : nullptr;
     NewLane->NextBorder = NextBorder ? NextBorder->Clone(true) : nullptr;
     NewLane->IsReverse = IsReverse;
-    NewLane->Attributes = Attributes;
     if (CenterWay) NewLane->CenterWay = CenterWay->Clone(true);
     return NewLane;
 }

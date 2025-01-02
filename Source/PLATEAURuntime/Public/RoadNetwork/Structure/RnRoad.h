@@ -138,6 +138,18 @@ public:
     // 左右のWayを結合したものを取得
     TArray<RnRef_t<RnWay>> GetMergedSideWays() const;
 
+    // RnRoadへキャストする
+    virtual RnRef_t<RnRoad> CastToRoad() override
+    {
+        return RnRef_t<RnRoad>(this);
+    }
+
+    // RnIntersectionへキャストする
+    virtual RnRef_t<RnIntersection> CastToIntersection() override
+    {
+        return RnRef_t<RnIntersection>(nullptr);
+    }
+
     // 道路を作成する
     static RnRef_t<RnRoad> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
     static RnRef_t<RnRoad> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);

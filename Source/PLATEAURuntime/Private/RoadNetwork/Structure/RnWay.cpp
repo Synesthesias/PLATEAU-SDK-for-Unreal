@@ -1,6 +1,6 @@
 #include "RoadNetwork/Structure/RnWay.h"
+#include "Algo/Reverse.h"
 
-#include "EditorCategoryUtils.h"
 
 RnWay::RnWay()
     : IsReversed(false)
@@ -8,9 +8,9 @@ RnWay::RnWay()
 }
 
 RnWay::RnWay(const RnRef_t<RnLineString>& InLineString, bool bInIsReversed, bool bInIsReverseNormal)
-    : LineString(InLineString)
-    , IsReversed(bInIsReversed)
-    , IsReverseNormal(bInIsReverseNormal) {
+    : IsReversed(bInIsReversed)
+    , IsReverseNormal(bInIsReverseNormal)
+    , LineString(InLineString) {
 }
 
 int32 RnWay::Count() const
@@ -330,6 +330,11 @@ void RnWay::Move(const FVector& Offset) {
     }
 }
 
+RnRef_t<RnWay> RnWay::Clone(bool CloneVertex) const
+{
+    return RnNew<RnWay>(LineString->Clone(CloneVertex), IsReversed, IsReverseNormal);
+}
+
 bool RnWay::IsSameLineReference(const RnRef_t<RnWay>& Other) const {
     if (!Other) return false;
     return LineString == Other->LineString;
@@ -350,4 +355,17 @@ bool RnWay::IsSameLineSequence(const RnRef_t<RnWay>& Other) const {
         if (FMath::Abs(P1.Z - P2.Z) > Threshold) return false;
     }
     return true;
+}
+
+TArray<RnRef_t<RnWay>> RnWay::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector)
+{
+    TArray<RnRef_t<RnWay>> Result;
+    auto LineStrings = LineString->Split(Num, InsertNewPoint, RateSelector);
+
+    for (auto& Ls : LineStrings) {
+        Result.Add(RnNew<RnWay>(Ls, IsReversed, IsReverseNormal));
+    }
+    if(IsReversed)
+        Algo::Reverse(Result);
+    return Result;
 }

@@ -17,7 +17,11 @@ public:
     // Get signed angle between vectors (-180 to 180)
     static float Angle360(const FVector2D& From, const FVector2D& To);
 
+    // From -> Toの間の角度を取得
     static float Angle(const FVector2D& From, const FVector2D& To);
+
+    // From -> Toの間の角度を取得(符号付)
+    static float SignedAngle(const FVector2D& From, const FVector2D& To);
 
     // Cross product of 2D vectors
     static float Cross(const FVector2D& A, const FVector2D& B);

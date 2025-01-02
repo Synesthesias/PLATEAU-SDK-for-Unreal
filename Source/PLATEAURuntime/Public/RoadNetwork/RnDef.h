@@ -6,7 +6,6 @@
 #include "GeoGraph/AxisPlane.h"
 #include "RnDef.generated.h"
 
-
 UENUM(BlueprintType)
 enum class ERnDir : uint8 {
     Left UMETA(DisplayName = "XLeft"),
@@ -108,9 +107,9 @@ RnRef_t<T> RnNew(TArgs&&... Args)
     return MakeShared<T>(std::forward<TArgs>(Args)...);
 }
 
-// DynamicCastのラッパー
-// #NOTE : RnRef_t<U>だとinfer substitutionに失敗するのでTSharedPtr<U>にしておく
-template<class T, class U>
-auto RnCast(TSharedPtr<U> In) -> RnRef_t<T> {
-    return RnRef_t<T>(dynamic_cast<T*>(In.get()));
-}
+//// DynamicCastのラッパー
+//// #NOTE : RnRef_t<U>だとinfer substitutionに失敗するのでTSharedPtr<U>にしておく
+//template<class T, class U>
+//auto RnCast(TSharedPtr<U> In) -> RnRef_t<T> {
+//    return RnRef_t<T>(dynamic_cast<T*>(In.Get()));
+//}

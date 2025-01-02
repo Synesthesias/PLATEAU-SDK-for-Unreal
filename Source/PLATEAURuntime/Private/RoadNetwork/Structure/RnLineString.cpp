@@ -383,3 +383,23 @@ FVector RnLineString::GetAdvancedPointFromBack(float Offset, int32& OutStartInde
     return GetVertex(0);
 }
 
+TArray<TTuple<float, FVector>> RnLineString::GetIntersectionBy2D(
+    const FLineSegment3D& LineSegment,
+    EAxisPlane Plane) const {
+    TArray<TTuple<float, FVector>> Result;
+    auto Edges = GetEdges();
+    for(auto i = 0; i < Edges.Num(); ++i)
+    {
+        auto E = Edges[i];
+        FVector P;
+        float T1;
+        float T2;
+        if(E.TrySegmentIntersectionBy2D(LineSegment, Plane, -1.f, P, T1, T2))
+        {
+            auto V = E.Lerp(T1);
+            Result.Add(MakeTuple(i + T2, V));
+        }
+    }
+
+    return Result;
+}

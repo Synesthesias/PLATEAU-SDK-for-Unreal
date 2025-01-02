@@ -10,16 +10,6 @@ class RnWay;
 class RnLane;
 class RnLineString;
 
-UENUM()
-enum class ELaneWayMoveOption : uint8 {
-    // 両方のWayを動かす
-    MoveBothWay,
-    // 左側のWayだけ動かす
-    MoveLeftWay,
-    // 右側のWayだけ動かす
-    MoveRightWay,
-};
-
 class RnRoadGroup
 {
 public:
@@ -60,15 +50,6 @@ public:
     // 中央分離帯があるかどうか
     bool HasMedians() const;
 
-    // 中央分離帯の幅を設定する
-    bool SetMedianWidth(float Width, ELaneWayMoveOption MoveOption);
-
-    // 中央分離帯の幅を拡縮する
-    bool ExpandMedianWidth(float DeltaWidth, ELaneWayMoveOption MoveOption);
-
-    // 中央分離帯を削除する
-    void RemoveMedian(ELaneWayMoveOption MoveOption = ELaneWayMoveOption::MoveBothWay);
-
     // 中央分離帯を作成する
     bool CreateMedianOrSkip(float MedianWidth = 1.0f, float MaxMedianLaneRate = 0.5f);
 
@@ -103,7 +84,8 @@ private:
     TSharedPtr<TMap<RnRef_t<RnRoad>, TArray<RnRef_t<RnLane>>>> SplitLane(
         int32 Num,
         std::optional<ERnDir> Dir,
-        TFunction<float(int32)> GetSplitRate);
+        // #TODO : nullptr入れられるのか確認
+        TFunction<float(int32)> GetSplitRate = nullptr);
 
     // レーン分割する
     void SetLaneCountImpl(int32 Count, ERnDir Dir, bool RebuildTrack);
