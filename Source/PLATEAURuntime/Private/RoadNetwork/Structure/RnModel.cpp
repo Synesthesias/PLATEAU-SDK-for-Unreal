@@ -11,6 +11,18 @@ RnModel::RnModel() {
     SideWalks = MakeShared<TArray<RnRef_t<RnSideWalk>>>();
 }
 
+void RnModel::AddRoadBase(const RnRef_t<RnRoadBase>& RoadBase)
+{
+    if (!RoadBase) 
+        return;
+    if (auto Road = RoadBase->CastToRoad()) {
+        AddRoad(Road);
+    }
+    else if (auto Intersection = RoadBase->CastToIntersection()) {
+        AddIntersection(Intersection);
+    }
+}
+
 void RnModel::AddRoad(const RnRef_t<RnRoad>& Road) {
     if (!Road) return;
     Road->ParentModel = RnRef_t<RnModel>(this);

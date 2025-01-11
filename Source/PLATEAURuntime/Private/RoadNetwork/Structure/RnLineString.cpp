@@ -7,9 +7,11 @@
 #include "RoadNetwork/Util/Vector2DEx.h"
 
 RnLineString::RnLineString() {
+    Points = MakeShared<TArray<RnRef_t<RnPoint>>>();
 }
 
-RnLineString::RnLineString(int32 InitialSize) {
+RnLineString::RnLineString(int32 InitialSize)
+{
     Points = TSharedPtr<TArray<RnRef_t<RnPoint>>>();
     Points->SetNum(InitialSize);
 }
@@ -112,7 +114,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::Split(int32 Num, bool InsertNewPoint
         for (int32 i = StartIndex; i <= EndIndex; i++) {
             SplitPoints->Add(GetPoint(i));
         }
-        Result.Add(Create(SplitPoints, false));
+        Result.Add(RnNew<RnLineString>(SplitPoints));
         StartIndex = EndIndex;
     }
 
@@ -134,7 +136,7 @@ TArray<RnRef_t<RnLineString>> RnLineString::SplitByIndex(const TArray<int32>& In
         }
 
         if (SplitPoints->Num() >= 2) {
-            RnRef_t<RnLineString> Split = Create(SplitPoints, false);
+            RnRef_t<RnLineString> Split = RnNew<RnLineString>(SplitPoints);
             Result.Add(Split);
         }
         StartIndex = EndIndex;
@@ -287,15 +289,18 @@ int32 RnLineString::ReplacePoint(RnRef_t<RnPoint> OldPoint, RnRef_t<RnPoint> New
 }
 
 
-RnRef_t<RnLineString> RnLineString::Create(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& Vertices,
+RnRef_t<RnLineString> RnLineString::Create(const TArray<RnRef_t<RnPoint>>& Vertices,
     bool RemoveDuplicate) {
     auto LineString = RnNew<RnLineString>();
-    if (!RemoveDuplicate) {
-        LineString->Points = Vertices;
+    if (!RemoveDuplicate) 
+    {
+        for (RnRef_t<RnPoint> Point : Vertices) {
+            LineString->Points->Add(Point);
+        }
         return LineString;
     }
 
-    for (RnRef_t<RnPoint> Point : *Vertices) {
+    for (RnRef_t<RnPoint> Point : Vertices) {
         LineString->AddPointOrSkip(Point);
     }
 
@@ -303,11 +308,11 @@ RnRef_t<RnLineString> RnLineString::Create(const TSharedPtr<TArray<RnRef_t<RnPoi
 }
 
 RnRef_t<RnLineString> RnLineString::Create(const TArray<FVector>& Vertices, bool RemoveDuplicate) {
-    auto Points = MakeShared<TArray<RnRef_t<RnPoint>>>();
+    auto Points = TArray<RnRef_t<RnPoint>>();
     for (const FVector& Vertex : Vertices) 
     {
         auto P = RnNew<RnPoint>(Vertex);        
-        Points->Add(P);
+        Points.Add(P);
     }
 
     return Create(Points, RemoveDuplicate);

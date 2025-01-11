@@ -191,3 +191,15 @@ RnRef_t<RnLane> RnLane::Clone() const {
     return NewLane;
 }
 
+RnRef_t<RnLane> RnLane::CreateOneWayLane(RnRef_t<RnWay> way)
+{
+    return RnNew<RnLane>(way, nullptr, nullptr, nullptr);
+}
+
+RnRef_t<RnLane> RnLane::CreateEmptyLane(RnRef_t<RnWay> border, RnRef_t<RnWay> centerWay)
+{
+    auto ret = RnNew<RnLane>(nullptr, nullptr, border, border);
+    ret->CenterWay = centerWay;
+    return ret;
+}
+

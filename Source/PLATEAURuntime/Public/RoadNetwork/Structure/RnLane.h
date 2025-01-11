@@ -6,7 +6,8 @@
 #include "../RnDef.h"
 
 class RnRoad;
-class RnLane {
+class RnLane
+{
 public:
     RnLane();
     RnLane(const RnRef_t<RnWay>& LeftWay, const RnRef_t<RnWay>& RightWay,
@@ -115,4 +116,13 @@ public:
     // クローンを作成する
     RnRef_t<RnLane> Clone() const;
 
+    static RnRef_t<RnLane> CreateOneWayLane(RnRef_t<RnWay> way);
+
+    /// <summary>
+    /// 交差点同士の間に入れる空のレーンを作成
+    /// </summary>
+    /// <param name="border"></param>
+    /// <param name="centerWay"></param>
+    /// <returns></returns>
+    static RnRef_t<RnLane> CreateEmptyLane(RnRef_t<RnWay> border, RnRef_t<RnWay> centerWay);
 };

@@ -50,7 +50,7 @@ TArray<FVector2D> FGeoGraph2D::ComputeConvexVolume(const TArray<FVector2D>& Vert
     }
 
     // Find the leftmost bottom point
-    int32 StartIndex = FindMostLeftBottom(Vertices);
+    int32 StartIndex = FindMostLeftBottom<FVector2D>(Vertices, [](FVector2D V) {return V; });
     TArray<FVector2D> Points = { Vertices[StartIndex] };
     TArray<int32> Stack = { StartIndex };
 
@@ -229,20 +229,6 @@ bool FGeoGraph2D::IsConvex(const TArray<FVector2D>& Points)
     }
     
     return true;
-}
-
-int32 FGeoGraph2D::FindMostLeftBottom(const TArray<FVector2D>& Points)
-{
-    int32 Result = 0;
-    for (int32 i = 1; i < Points.Num(); ++i)
-    {
-        if (Points[i].X < Points[Result].X ||
-            (Points[i].X == Points[Result].X && Points[i].Y < Points[Result].Y))
-        {
-            Result = i;
-        }
-    }
-    return Result;
 }
 
 float FGeoGraph2D::Cross(const FVector2D& A, const FVector2D& B)

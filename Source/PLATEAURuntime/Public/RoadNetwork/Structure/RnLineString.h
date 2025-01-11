@@ -48,7 +48,7 @@ public:
     TArray<FLineSegment2D> GetEdges2D(EAxisPlane axis = FRnDef::Plane) const;
     TArray<FLineSegment3D> GetEdges() const;
 
-    static RnRef_t<RnLineString> Create(const TSharedPtr<TArray<RnRef_t<RnPoint>>>& Vertices, bool RemoveDuplicate = true);
+    static RnRef_t<RnLineString> Create(const TArray<RnRef_t<RnPoint>>& Vertices, bool RemoveDuplicate = true);
     static RnRef_t<RnLineString> Create(const TArray<FVector>& Vertices, bool RemoveDuplicate = true);
     static bool Equals(const RnRef_t<RnLineString> X, const RnRef_t<RnLineString> Y);
 

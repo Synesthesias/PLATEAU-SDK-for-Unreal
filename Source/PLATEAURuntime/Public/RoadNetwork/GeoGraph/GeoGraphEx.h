@@ -114,6 +114,9 @@ public:
         const TArray<T>& Vertices;
     };
 public:
+    // T型の頂点配列Verticesで構成される線分リストに対し
+    // (Vertices[0], Vertices[1]), (Vertices[1], Vertices[2]), ... (Vertices[N-1], Vertices[0])となる線分リストを取得
+    // bIsLoopがtrueの場合、最後の線分は(Vertices[N-1], Vertices[0])となる
     template<typename T>
     static EdgeEnumerator<T> GetEdges(const TArray<T>& Vertices, bool bIsLoop)
     {

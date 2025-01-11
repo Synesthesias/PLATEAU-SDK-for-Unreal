@@ -1,21 +1,5 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 
-//template<typename T>
-//TArray<TTuple<T, T>> FGeoGraphEx::GetEdges(const TArray<T>& Vertices, bool bIsLoop) {
-//    TArray<TTuple<T, T>> Edges;
-//    if (Vertices.Num() < 2) return Edges;
-//
-//    for (int32 i = 0; i < Vertices.Num() - 1; ++i) {
-//        Edges.Add(MakeTuple(Vertices[i], Vertices[i + 1]));
-//    }
-//
-//    if (bIsLoop && Vertices.Num() > 0) {
-//        Edges.Add(MakeTuple(Vertices.Last(), Vertices[0]));
-//    }
-//
-//    return Edges;
-//}
-
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,

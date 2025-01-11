@@ -46,6 +46,9 @@ public:
     RnModel();
 
     // 道路を追加
+    void AddRoadBase(const RnRef_t<RnRoadBase>& RoadBase);
+
+    // 道路を追加
     void AddRoad(const RnRef_t<RnRoad>& Road);
 
     // 道路を削除

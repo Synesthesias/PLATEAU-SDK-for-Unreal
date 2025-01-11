@@ -308,6 +308,30 @@ RnRef_t<RnRoad> RnRoad::Create(UPLATEAUCityObjectGroup* TargetTran) {
 RnRef_t<RnRoad> RnRoad::Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans) {
     return RnNew<RnRoad>(TargetTrans);
 }
+
+RnRef_t<RnRoad> RnRoad::CreateIsolatedRoad(UPLATEAUCityObjectGroup* TargetTran, RnRef_t<RnWay> Way)
+{
+    const auto Lane = RnLane::CreateOneWayLane(Way);
+    auto Ret = RnNew<RnRoad>(TargetTran);
+    Ret->AddMainLane(Lane);
+    return Ret;
+        
+}
+
+RnRef_t<RnRoad> RnRoad::CreateOneLaneRoad(UPLATEAUCityObjectGroup* TargetTran, RnRef_t<RnLane> Lane)
+{
+    auto Ret = RnNew<RnRoad>(TargetTran);
+    Ret->AddMainLane(Lane);
+    return Ret;
+}
+
+void RnRoad::OnAddLane(RnRef_t<RnLane> lane)
+{
+    if (!lane)
+        return;
+    lane->Parent = RnRef_t<RnRoad>(this);
+}
+
 TArray<RnRef_t<RnWay>> RnRoad::GetMergedSideWays() const {
     TArray<RnRef_t<RnWay>> Ways;
     RnRef_t<RnWay> LeftWay, RightWay;

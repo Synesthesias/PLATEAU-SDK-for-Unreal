@@ -89,6 +89,21 @@ public:
     // 隣接するRoadを取得
     virtual TArray<RnRef_t<RnRoadBase>> GetNeighborRoads() const override;
 
+
+    /// <summary>
+    /// #TODO : 左右の隣接情報がないので要修正
+    /// laneを追加する. ParentRoad情報も更新する
+    /// </summary>
+    /// <param name="Lane"></param>
+    void AddMainLane(RnRef_t<RnLane> Lane)
+    {
+        if (MainLanes->Contains(Lane))
+            return;
+        OnAddLane(Lane);
+        MainLanes->Add(Lane);
+    }
+
+
     // 指定した方向の境界線を取得する
     virtual RnRef_t<RnWay> GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const override;
 
@@ -153,4 +168,13 @@ public:
     // 道路を作成する
     static RnRef_t<RnRoad> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
     static RnRef_t<RnRoad> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+
+    // 孤立した道路を作成する
+    static RnRef_t<RnRoad> CreateIsolatedRoad(UPLATEAUCityObjectGroup* TargetTran, RnRef_t<RnWay> Way);
+
+    static RnRef_t<RnRoad> CreateOneLaneRoad(UPLATEAUCityObjectGroup* TargetTran, RnRef_t<RnLane> Lane);
+
+private:
+
+    void OnAddLane(RnRef_t<RnLane> lane);
 };
