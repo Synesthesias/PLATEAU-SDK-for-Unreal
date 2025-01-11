@@ -8,14 +8,17 @@
 #include "../../Component/PLATEAUSceneComponent.h"
 #include "PLATEAUSubDividedCityObjectGroup.generated.h"
 
-UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class PLATEAURUNTIME_API UPLATEAUSubDividedCityObjectGroup : public UPLATEAUSceneComponent
 {
     GENERATED_BODY()
 public:
+
+    UPLATEAUSubDividedCityObjectGroup(){}
     // --------------------
     // start:フィールド
     // --------------------
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
-    TArray<FSubDividedCityObject> cityObjects;
+    TArray<FSubDividedCityObject> CityObjects;
+
 };

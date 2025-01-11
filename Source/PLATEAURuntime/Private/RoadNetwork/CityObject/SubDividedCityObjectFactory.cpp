@@ -4,6 +4,9 @@
 #include "PLATEAUExportSettings.h"
 #include "PLATEAUMeshExporter.h"
 #include "UObject/FastReferenceCollector.h"
+#include <plateau/granularity_convert/granularity_converter.h>
+
+#include "CityGML/PLATEAUCityObject.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 
 namespace

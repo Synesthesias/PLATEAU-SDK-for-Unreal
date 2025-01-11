@@ -2,7 +2,10 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
+#include "Editor.h"
 #include "Algo/Count.h"
+#include "RoadNetwork/CityObject/PLATEAUSubDividedCityObjectGroup.h"
+#include "RoadNetwork/CityObject/SubDividedCityObjectFactory.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/RGraph/RGraph.h"
 #include "RoadNetwork/RGraph/RGraphEx.h"
@@ -13,7 +16,7 @@
 #include "RoadNetwork/Structure/RnLineString.h"
 
 
-const FString FRoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
+const FString URoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
 
 namespace
 {
@@ -266,28 +269,66 @@ namespace
 
 }
 
-RnRef_t<RnModel> FRoadNetworkFactory::CreateRoadNetwork(const FCreateRnModelRequest& req)
+void URoadNetworkFactory::CreateRnModel(APLATEAUInstancedCityModel* Actor, AActor* DestActor)
 {
-    auto Model = RnNew<RnModel>();
-    auto FactoryWork = MakeShared<FWork>();
-    FactoryWork->TerminateAllowEdgeAngle = TerminateAllowEdgeAngle;
-    FactoryWork->TerminateSkipAngleDeg = TerminateSkipAngle;
-
-    
-
-    return Model;
+    TArray<UPLATEAUCityObjectGroup*> CityObjectGroups;
+    Actor->GetComponents(CityObjectGroups);
+    auto res = CreateRoadNetwork(Actor, DestActor, CityObjectGroups);
 }
 
-RnRef_t<RnModel> FRoadNetworkFactory::CreateRoadNetwork(TSharedPtr<FRGraph> Graph)
+RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor,
+                                                        TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
+{
+    FSubDividedCityObjectFactory Factory;
+    auto Result = Factory.ConvertCityObjectsAsync(Actor, CityObjectGroups, true);
+
+    //auto World = GEditor->GetEditorWorldContext().World(); //Actor->GetWorld();
+    //auto World = Actor->GetWorld();
+    //auto Obj = World->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity);
+
+    if(DestActor->GetRootComponent() == nullptr)
+    {
+        auto DefaultSceneRoot = NewObject<USceneComponent>(DestActor, TEXT("DefaultSceneRoot"));
+        DestActor->AddOwnedComponent(DefaultSceneRoot);
+        DestActor->SetRootComponent(DefaultSceneRoot);
+        DefaultSceneRoot->RegisterComponent();
+    }
+
+    auto Root = DestActor->GetRootComponent();
+
+    UPLATEAUSubDividedCityObjectGroup* Comp = DestActor->GetComponentByClass<UPLATEAUSubDividedCityObjectGroup>();
+    if(Comp == nullptr)
+    {
+        Comp = NewObject< UPLATEAUSubDividedCityObjectGroup>(DestActor, TEXT("SubDivided"));
+        DestActor->AddInstanceComponent(Comp);
+        Comp->SetupAttachment(Root);
+        Comp->RegisterComponent();
+        Comp->AttachToComponent(Root, FAttachmentTransformRules::KeepWorldTransform);
+        DestActor->RerunConstructionScripts();
+    }
+    
+    Comp->CityObjects.Reset();
+    for (auto C : Result->ConvertedCityObjects)
+        Comp->CityObjects.Add(*C);
+   /* const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([Actor, CityObjectGroups]()
+    {
+
+           
+    }, TStatId(), nullptr, ENamedThreads::GameThread);
+    Task->Wait();*/
+    return nullptr;
+}
+
+RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(TSharedPtr<FRGraph> Graph)
 {
     auto Model = RnNew<RnModel>();
     try {
         // 道路/中央分離帯は一つのfaceGroupとしてまとめる
         auto&& mask = ~(ERRoadTypeMask::Road | ERRoadTypeMask::Median);
-        auto&& faceGroups = FRGraphHelper::GroupBy(Graph, [mask](TSharedPtr<FRFace> f0, TSharedPtr<FRFace> f1) {
-            auto&& m0 = f0->RoadTypes & mask;
-            auto&& m1 = f1->RoadTypes & mask;
-            return m0 == m1;
+        auto&& faceGroups = FRGraphHelper::GroupBy(Graph, [mask](const TSharedPtr<FRFace>& F0, const TSharedPtr<FRFace>& F1) {
+            auto&& M0 = F0->RoadTypes & mask;
+            auto&& M1 = F1->RoadTypes & mask;
+            return M0 == M1;
             });
 
         auto&& ret = RnRef_t<RnModel>();
