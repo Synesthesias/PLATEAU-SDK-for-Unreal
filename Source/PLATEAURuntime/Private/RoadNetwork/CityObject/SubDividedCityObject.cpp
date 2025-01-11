@@ -1,8 +1,8 @@
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 
-TArray<FSubDividedCityObject::FSubMesh> FSubDividedCityObject::FSubMesh::Separate() const{
-    TArray<FSubMesh> Result;
+TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() const{
+    TArray<FSubDividedCityObjectSubMesh> Result;
     if (!Triangles || Triangles->Num() == 0) {
         return Result;
     }
@@ -13,7 +13,7 @@ TArray<FSubDividedCityObject::FSubMesh> FSubDividedCityObject::FSubMesh::Separat
     for (int32 i = 0; i < Used.Num(); ++i) {
         if (Used[i]) continue;
 
-        FSubMesh NewMesh;
+        FSubDividedCityObjectSubMesh NewMesh;
         NewMesh.Triangles = MakeShared<TArray<int32>>();
 
         TArray<int32> Stack = { i };
@@ -52,7 +52,7 @@ TArray<FSubDividedCityObject::FSubMesh> FSubDividedCityObject::FSubMesh::Separat
 
     return Result;
 }
-TArray<TArray<int32>> FSubDividedCityObject::FSubMesh::CreateOutlineIndices() const
+TArray<TArray<int32>> FSubDividedCityObjectSubMesh::CreateOutlineIndices() const
 {
     TArray<TArray<int32>> Result;
     if (!Triangles || Triangles->Num() == 0) {
@@ -121,29 +121,29 @@ TArray<TArray<int32>> FSubDividedCityObject::FSubMesh::CreateOutlineIndices() co
     return Result;
 }
 
-FSubDividedCityObject::FSubMesh FSubDividedCityObject::FSubMesh::DeepCopy() const {
-    FSubMesh Result;
+FSubDividedCityObjectSubMesh FSubDividedCityObjectSubMesh::DeepCopy() const {
+    FSubDividedCityObjectSubMesh Result;
     if (Triangles) {
         Result.Triangles = MakeShared<TArray<int32>>(*Triangles);
     }
     return Result;
 }
 
-void FSubDividedCityObject::FMesh::VertexReduction() {
-    if (!Vertices || Vertices->Num() == 0) {
+void FSubDividedCityObjectMesh::VertexReduction() {
+    if (Vertices.Num() == 0) {
         return;
     }
 
     // Create vertex mapping
     TMap<FVector, int32> UniqueVertices;
     TArray<int32> OldToNewIndices;
-    OldToNewIndices.SetNum(Vertices->Num());
+    OldToNewIndices.SetNum(Vertices.Num());
 
     TArray<FVector> NewVertices;
     int32 NewIndex = 0;
 
-    for (int32 i = 0; i < Vertices->Num(); ++i) {
-        const FVector& Vertex = (*Vertices)[i];
+    for (int32 i = 0; i < Vertices.Num(); ++i) {
+        const FVector& Vertex = Vertices[i];
         int32* ExistingIndex = UniqueVertices.Find(Vertex);
 
         if (ExistingIndex) {
@@ -158,43 +158,32 @@ void FSubDividedCityObject::FMesh::VertexReduction() {
     }
 
     // Update vertices
-    *Vertices = NewVertices;
+    Vertices = NewVertices;
 
     // Update indices in submeshes
-    if (SubMeshes) {
-        for (auto& SubMesh : *SubMeshes) {
-            if (SubMesh.Triangles) {
-                for (int32 i = 0; i < SubMesh.Triangles->Num(); ++i) {
-                    (*SubMesh.Triangles)[i] = OldToNewIndices[(*SubMesh.Triangles)[i]];
-                }
+    for (auto& SubMesh : SubMeshes) {
+        if (SubMesh.Triangles) {
+            for (int32 i = 0; i < SubMesh.Triangles->Num(); ++i) {
+                (*SubMesh.Triangles)[i] = OldToNewIndices[(*SubMesh.Triangles)[i]];
             }
         }
     }
 }
 
-void FSubDividedCityObject::FMesh::Separate() {
-    if (!SubMeshes) {
-        return;
-    }
-
-    TArray<FSubMesh> NewSubMeshes;
-    for (const auto& SubMesh : *SubMeshes) {
+void FSubDividedCityObjectMesh::Separate() {
+    TArray<FSubDividedCityObjectSubMesh> NewSubMeshes;
+    for (const auto& SubMesh : SubMeshes) {
         NewSubMeshes.Append(SubMesh.Separate());
     }
 
-    *SubMeshes = NewSubMeshes;
+    SubMeshes = NewSubMeshes;
 }
 
-FSubDividedCityObject::FMesh FSubDividedCityObject::FMesh::DeepCopy() const {
-    FMesh Result;
-    if (Vertices) {
-        Result.Vertices = MakeShared<TArray<FVector>>(*Vertices);
-    }
-    if (SubMeshes) {
-        Result.SubMeshes = MakeShared<TArray<FSubMesh>>();
-        for (const auto& SubMesh : *SubMeshes) {
-            Result.SubMeshes->Add(SubMesh.DeepCopy());
-        }
+FSubDividedCityObjectMesh FSubDividedCityObjectMesh::DeepCopy() const {
+    FSubDividedCityObjectMesh Result;
+    Result.Vertices = Vertices;
+    for (const auto& SubMesh : SubMeshes) {
+        Result.SubMeshes.Add(SubMesh.DeepCopy());
     }
     return Result;
 }
@@ -209,8 +198,7 @@ ERRoadTypeMask FSubDividedCityObject::GetRoadType(bool ContainsParent) const
 }
 
 FSubDividedCityObject::FSubDividedCityObject(const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj)
-    : bVisible(true)
-    , SelfRoadType(ERRoadTypeMask::Empty)
+    : SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ERRoadTypeMask::Empty) {
 
     for (int32 i = 0; i < PlateauModel.getRootNodeCount(); ++i) {
@@ -225,36 +213,32 @@ FSubDividedCityObject::FSubDividedCityObject(
     TMap<FString, FPLATEAUCityObject>& CityObj,
     ERRoadTypeMask ParentTypeMask)
     : Name(PlateauNode.getName().c_str())
-    , bVisible(true)
     , SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ParentTypeMask) {
 
     // Convert mesh data
     if (PlateauNode.getMesh()) {
-        FMesh Mesh;
-        Mesh.Vertices = MakeShared<TArray<FVector>>();
-        Mesh.SubMeshes = MakeShared<TArray<FSubMesh>>();
-
+        FSubDividedCityObjectMesh Mesh;
         // Convert vertices
         const auto& SrcVertices = PlateauNode.getMesh()->getVertices();
         for (int32 i = 0; i < SrcVertices.size(); ++i) 
         {
             auto&& v = SrcVertices[i];
-            Mesh.Vertices->Add(FVector(v.x, v.y, v.z));
+            Mesh.Vertices.Add(FVector(v.x, v.y, v.z));
         }
 
         // Convert submeshes
         const auto& SrcSubMeshes = PlateauNode.getMesh()->getSubMeshes();
         const auto& indices = PlateauNode.getMesh()->getIndices();
         for (const auto& SrcSubMesh : SrcSubMeshes) {
-            FSubMesh SubMesh;
+            FSubDividedCityObjectSubMesh SubMesh;
             SubMesh.Triangles = MakeShared<TArray<int32>>();
             // #NOTE : PLATEAUMeshLoader.cpp参考
             for (auto Index = SrcSubMesh.getStartIndex(); Index < SrcSubMesh.getEndIndex(); Index++) 
             {                
                 SubMesh.Triangles->Add(indices[Index]);
             }
-            Mesh.SubMeshes->Add(SubMesh);
+            Mesh.SubMeshes.Add(SubMesh);
         }
 
         Meshes.Add(Mesh);
@@ -295,7 +279,6 @@ TSharedPtr<FSubDividedCityObject> FSubDividedCityObject::DeepCopy()
     auto Result = MakeShared<FSubDividedCityObject>();
     Result->Name = Name;
     Result->SerializedCityObjects = SerializedCityObjects;
-    Result->bVisible = bVisible;
     Result->CityObjectGroup = CityObjectGroup;
     Result->SelfRoadType = SelfRoadType;
     Result->ParentRoadType = ParentRoadType;

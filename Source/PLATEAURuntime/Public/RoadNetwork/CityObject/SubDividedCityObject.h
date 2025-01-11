@@ -7,40 +7,66 @@
 
 #include "CityGML/PLATEAUCityObject.h"
 #include "RoadNetwork/RGraph/RGraphDef.h"
+#include "SubDividedCityObject.generated.h"
 class UPLATEAUCityObjectGroup;
 class RnLineString;
 class RnPoint;
 struct FAttributeDataHelper;
-class FSubDividedCityObject
-{
+
+USTRUCT(BlueprintType)
+struct FSubDividedCityObjectSubMesh {
+    GENERATED_BODY()
 public:
-    class FSubMesh {
-    public:
-        TSharedPtr<TArray<int32>> Triangles;
+    TSharedPtr<TArray<int32>> Triangles;
 
-        TArray<FSubMesh> Separate() const;
-        TArray<TArray<int32>> CreateOutlineIndices() const;
-        FSubMesh DeepCopy() const;
-    };
+    TArray<FSubDividedCityObjectSubMesh> Separate() const;
+    TArray<TArray<int32>> CreateOutlineIndices() const;
+    FSubDividedCityObjectSubMesh DeepCopy() const;
+};
 
-    class FMesh {
-    public:
-        TSharedPtr<TArray<FVector>> Vertices;
-        TSharedPtr<TArray<FSubMesh>> SubMeshes;
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FSubDividedCityObjectMesh {
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    TArray<FVector> Vertices;
 
-        void VertexReduction();
-        void Separate();
-        FMesh DeepCopy() const;
-    };
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    TArray<FSubDividedCityObjectSubMesh> SubMeshes;
 
+    void VertexReduction();
+    void Separate();
+    FSubDividedCityObjectMesh DeepCopy() const;
+};
+
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FSubDividedCityObject
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FString Name;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FString SerializedCityObjects;
-    bool bVisible;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FPLATEAUCityObject CityObject;
-    TArray<FMesh> Meshes;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    TArray<FSubDividedCityObjectMesh> Meshes;
+
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     TArray<FSubDividedCityObject> Children;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
+    // 自身の道路タイプ
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     ERRoadTypeMask SelfRoadType;
+
+    // 親の道路タイプ
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     ERRoadTypeMask ParentRoadType;
 
     ERRoadTypeMask GetRoadType(bool ContainsParent) const;
@@ -50,6 +76,10 @@ public:
     TSharedPtr<FSubDividedCityObject> DeepCopy();
 
 public:
-    FSubDividedCityObject(){}
+    FSubDividedCityObject()
+    : CityObject()
+    , SelfRoadType()
+    {}
+
     FSubDividedCityObject(const plateau::polygonMesh::Node& PlateauNode, TMap<FString, FPLATEAUCityObject>& CityObj, ERRoadTypeMask ParentTypeMask);
 };

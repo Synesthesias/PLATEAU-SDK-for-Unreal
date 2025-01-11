@@ -19,6 +19,7 @@ class RnWay;
 class RnLineString;
 class RnLane;
 class RnPoint;
+
 class FRoadNetworkFactory {
 public:
     static const FString FactoryVersion;
@@ -42,15 +43,14 @@ public:
     FRGraphFactory GraphFactory;
     struct FCreateRnModelRequest
     {
-    public:
         APLATEAUInstancedCityModel* Actor;
         TWeakObjectPtr<USceneComponent> Transform;
         UStaticMesh* UnityMesh;
         TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
         //PLATEAURnStructureModel* OriginalMesh;
     };
-    RnRef_t<RnModel> CreateRoadNetwork(const FCreateRnModelRequest& Req);
 
+    RnRef_t<RnModel> CreateRoadNetwork(const FCreateRnModelRequest& Req);
 
     RnRef_t<RnModel> CreateRoadNetwork(TSharedPtr<FRGraph> Graph);
 };

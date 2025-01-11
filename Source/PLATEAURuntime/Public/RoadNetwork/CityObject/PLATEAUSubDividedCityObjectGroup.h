@@ -15,8 +15,6 @@ public:
     // --------------------
     // start:フィールド
     // --------------------
-    // 保存された中間データ
-
-private:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     TArray<FSubDividedCityObject> cityObjects;
 };

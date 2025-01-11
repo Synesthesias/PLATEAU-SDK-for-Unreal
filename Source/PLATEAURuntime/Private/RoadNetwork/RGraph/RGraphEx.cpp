@@ -524,7 +524,7 @@ TSharedPtr<FRGraph> FRGraphHelper::CreateGraph(const TArray<TSharedPtr<FSubDivid
             auto&& face = MakeShared<FRFace>(Graph, CityObject->CityObjectGroup.Get(), roadType, lodLevel);
 
             TArray<TSharedPtr<FRVertex>> vertices;
-            for(auto&& v : *mesh.Vertices)
+            for(auto&& v : mesh.Vertices)
             {
                 // #TODO : RN
                 auto v4 = FVector4(v, 1.f);// *mat;
@@ -536,7 +536,7 @@ TSharedPtr<FRGraph> FRGraphHelper::CreateGraph(const TArray<TSharedPtr<FSubDivid
 
                 vertices.Add(vertexMap[v4]);
             }
-            for(auto&& s : *mesh.SubMeshes) {
+            for(auto&& s : mesh.SubMeshes) {
                 auto AddEdge = [&edgeMap, &face](TSharedPtr<FRVertex> V0, TSharedPtr<FRVertex> V1) {
 
                     auto key = FEdgeKey(V0, V1);
