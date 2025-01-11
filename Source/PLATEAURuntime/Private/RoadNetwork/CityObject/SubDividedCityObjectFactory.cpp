@@ -6,35 +6,40 @@
 #include "UObject/FastReferenceCollector.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 
+namespace
+{
+    class PLATEAURUNTIME_API TmpLoader : public FPLATEAUModelReconstruct
+    {
+    public:
+        TmpLoader(APLATEAUInstancedCityModel* Actor, const ConvertGranularity Granularity)
+            : FPLATEAUModelReconstruct(Actor, Granularity) {
+        }
+
+        TMap<FString, FPLATEAUCityObject>& GetCityObjMap()
+        {
+            return CityObjMap;
+        }
+    };
+}
 TSharedPtr<FSubDividedCityObjectFactory::FConvertCityObjectResult>
 FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
     APLATEAUInstancedCityModel* Actor,
     const TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups,
     float Epsilon,
-    bool UseContourMesh) {
+    bool UseContourMesh)
+{
     auto Result = MakeShared<FConvertCityObjectResult>();
-    auto granularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
-    FPLATEAUModelReconstruct rec(Actor, granularity);
-    auto model = rec.ConvertModelForReconstruct(CityObjectGroups);
+    auto Granularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
+    ::TmpLoader Loader(Actor, Granularity);
+    auto model = Loader.ConvertModelForReconstruct(CityObjectGroups);
 
-   /* for (const auto& WeakCog : CityObjectGroups) 
+
+    for(auto i = 0; i < model->getRootNodeCount(); ++i)
     {
-        if (auto* Cog = WeakCog.Get()) 
-        {
-            auto CityObjectInfo = FCityObjectInfo::Create(Cog, UseContourMesh);
-            if (CityObjectInfo) {
-                auto SubDividedCityObject = MakeShared<FSubDividedCityObject>(
-                    Convert(TArray<TSharedPtr<FCityObjectInfo>>({ CityObjectInfo }),
-                        MakeShared<FUnityMeshToDllSubMeshConverter>(),
-                        true,
-                        FAdderAndCoordinateSystemConverter(),
-                        false),
-                    FAttributeDataHelper());
-
-                Result->ConvertedCityObjects->Add(SubDividedCityObject);
-            }
-        }
-    }*/
+        auto& Node = model->getRootNodeAt(i);
+        auto SO = MakeShared<FSubDividedCityObject>(Node, Loader.GetCityObjMap(), ERRoadTypeMask::Empty);
+        Result->ConvertedCityObjects.Add(SO);
+    }
 
     return Result;
 }

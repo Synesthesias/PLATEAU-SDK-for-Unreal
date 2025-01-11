@@ -519,22 +519,21 @@ TSharedPtr<FRGraph> FRGraphHelper::CreateGraph(const TArray<TSharedPtr<FSubDivid
         auto&& lodLevel = CityObject->CityObjectGroup->MinLOD;
         auto&& roadType = CityObject->GetRoadType(true);
         // transformを適用する
-        auto&& mat = CityObject->CityObjectGroup->GetRelativeTransform().ToMatrixWithScale();
+        auto&& tr = CityObject->CityObjectGroup->GetComponentTransform();
         for(auto&& mesh : CityObject->Meshes) {
             auto&& face = MakeShared<FRFace>(Graph, CityObject->CityObjectGroup.Get(), roadType, lodLevel);
 
             TArray<TSharedPtr<FRVertex>> vertices;
-            for(auto&& v : mesh.Vertices)
+            for(auto&& LocalPos : mesh.Vertices)
             {
-                // #TODO : RN
-                auto v4 = FVector4(v, 1.f);// *mat;
+                auto WorldPos = tr.TransformPosition(LocalPos);
 
-                if(vertexMap.Contains(v4) == false)
+                if(vertexMap.Contains(WorldPos) == false)
                 {
-                    vertexMap.Add(v4, MakeShared<FRVertex>(v4));
+                    vertexMap.Add(WorldPos, MakeShared<FRVertex>(WorldPos));
                 }
 
-                vertices.Add(vertexMap[v4]);
+                vertices.Add(vertexMap[WorldPos]);
             }
             for(auto&& s : mesh.SubMeshes) {
                 auto AddEdge = [&edgeMap, &face](TSharedPtr<FRVertex> V0, TSharedPtr<FRVertex> V1) {
@@ -554,11 +553,11 @@ TSharedPtr<FRGraph> FRGraphHelper::CreateGraph(const TArray<TSharedPtr<FSubDivid
                     }
                 }
                 else {
-                    for (auto&& i = 0; i < s.Triangles->Num(); i += 3) 
+                    for (auto&& i = 0; i < s.Triangles.Num(); i += 3) 
                     {
-                        AddEdge(vertices[(*s.Triangles)[i + 0]], vertices[(*s.Triangles)[i + 1]]);
-                        AddEdge(vertices[(*s.Triangles)[i + 1]], vertices[(*s.Triangles)[i + 2]]);
-                        AddEdge(vertices[(*s.Triangles)[i + 2]], vertices[(*s.Triangles)[i]]);
+                        AddEdge(vertices[s.Triangles[i + 0]], vertices[s.Triangles[i + 1]]);
+                        AddEdge(vertices[s.Triangles[i + 1]], vertices[s.Triangles[i + 2]]);
+                        AddEdge(vertices[s.Triangles[i + 2]], vertices[s.Triangles[i]]);
                     }
                 }
 

@@ -7,7 +7,8 @@
 #include "SubDividedCityObject.h"
 #include "../../Component/PLATEAUSceneComponent.h"
 #include "PLATEAUSubDividedCityObjectGroup.generated.h"
-UCLASS()
+
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PLATEAURUNTIME_API UPLATEAUSubDividedCityObjectGroup : public UPLATEAUSceneComponent
 {
     GENERATED_BODY()

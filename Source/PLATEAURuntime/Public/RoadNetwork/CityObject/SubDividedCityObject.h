@@ -17,7 +17,8 @@ USTRUCT(BlueprintType)
 struct FSubDividedCityObjectSubMesh {
     GENERATED_BODY()
 public:
-    TSharedPtr<TArray<int32>> Triangles;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    TArray<int32> Triangles;
 
     TArray<FSubDividedCityObjectSubMesh> Separate() const;
     TArray<TArray<int32>> CreateOutlineIndices() const;
@@ -61,6 +62,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
+
     // 自身の道路タイプ
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     ERRoadTypeMask SelfRoadType;

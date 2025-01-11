@@ -2,18 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "../RnDef.h"
-#include <optional>
-#include <plateau/polygon_mesh/node.h>
-
 #include "PLATEAUInstancedCityModel.h"
 #include "SubDividedCityObject.h"
-#include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
 
 class UPLATEAUCityObjectGroup;
 class RnLineString;
 class RnPoint;
-
-class PLATEAURUNTIME_API FSubDividedCityObjectFactory : public FPLATEAUMeshLoaderForReconstruct
+class PLATEAURUNTIME_API FSubDividedCityObjectFactory 
 {
 public:
     class FCityObjectInfo {
@@ -28,14 +23,13 @@ public:
 
     class FConvertCityObjectResult {
     public:
-        TSharedPtr<TArray<TSharedPtr<FSubDividedCityObject>>> ConvertedCityObjects;
+        TArray<TSharedPtr<FSubDividedCityObject>> ConvertedCityObjects;
 
         FConvertCityObjectResult() {
-            ConvertedCityObjects = MakeShared<TArray<TSharedPtr<FSubDividedCityObject>>>();
         }
     };
 
-    static TSharedPtr<FConvertCityObjectResult> ConvertCityObjectsAsync(
+    TSharedPtr<FConvertCityObjectResult> ConvertCityObjectsAsync(
         APLATEAUInstancedCityModel* Actor,
         const TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups,
         float Epsilon = 0.1f,

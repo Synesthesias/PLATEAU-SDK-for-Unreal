@@ -3,19 +3,17 @@
 
 TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() const{
     TArray<FSubDividedCityObjectSubMesh> Result;
-    if (!Triangles || Triangles->Num() == 0) {
+    if (Triangles.Num() == 0) {
         return Result;
     }
 
     TArray<bool> Used;
-    Used.SetNum(Triangles->Num() / 3);
+    Used.SetNum(Triangles.Num() / 3);
 
     for (int32 i = 0; i < Used.Num(); ++i) {
         if (Used[i]) continue;
 
         FSubDividedCityObjectSubMesh NewMesh;
-        NewMesh.Triangles = MakeShared<TArray<int32>>();
-
         TArray<int32> Stack = { i };
         while (Stack.Num() > 0) {
             int32 Current = Stack.Pop();
@@ -24,7 +22,7 @@ TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() co
             Used[Current] = true;
 
             for (int32 j = 0; j < 3; ++j) {
-                NewMesh.Triangles->Add((*Triangles)[Current * 3 + j]);
+                NewMesh.Triangles.Add(Triangles[Current * 3 + j]);
             }
 
             for (int32 j = 0; j < Used.Num(); ++j) {
@@ -32,9 +30,9 @@ TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() co
 
                 bool IsConnected = false;
                 for (int32 k = 0; k < 3; ++k) {
-                    int32 CurrentIndex = (*Triangles)[Current * 3 + k];
+                    int32 CurrentIndex = Triangles[Current * 3 + k];
                     for (int32 l = 0; l < 3; ++l) {
-                        if (CurrentIndex == (*Triangles)[j * 3 + l]) {
+                        if (CurrentIndex == Triangles[j * 3 + l]) {
                             IsConnected = true;
                             break;
                         }
@@ -55,16 +53,16 @@ TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() co
 TArray<TArray<int32>> FSubDividedCityObjectSubMesh::CreateOutlineIndices() const
 {
     TArray<TArray<int32>> Result;
-    if (!Triangles || Triangles->Num() == 0) {
+    if (Triangles.Num() == 0) {
         return Result;
     }
 
     // Create edge list
     TArray<TTuple<int32, int32>> Edges;
-    for (int32 i = 0; i < Triangles->Num(); i += 3) {
-        Edges.Add(MakeTuple((*Triangles)[i], (*Triangles)[i + 1]));
-        Edges.Add(MakeTuple((*Triangles)[i + 1], (*Triangles)[i + 2]));
-        Edges.Add(MakeTuple((*Triangles)[i + 2], (*Triangles)[i]));
+    for (int32 i = 0; i < Triangles.Num(); i += 3) {
+        Edges.Add(MakeTuple(Triangles[i], Triangles[i + 1]));
+        Edges.Add(MakeTuple(Triangles[i + 1], Triangles[i + 2]));
+        Edges.Add(MakeTuple(Triangles[i + 2], Triangles[i]));
     }
 
     // Count edge occurrences
@@ -123,9 +121,7 @@ TArray<TArray<int32>> FSubDividedCityObjectSubMesh::CreateOutlineIndices() const
 
 FSubDividedCityObjectSubMesh FSubDividedCityObjectSubMesh::DeepCopy() const {
     FSubDividedCityObjectSubMesh Result;
-    if (Triangles) {
-        Result.Triangles = MakeShared<TArray<int32>>(*Triangles);
-    }
+    Result.Triangles = Triangles;
     return Result;
 }
 
@@ -162,10 +158,8 @@ void FSubDividedCityObjectMesh::VertexReduction() {
 
     // Update indices in submeshes
     for (auto& SubMesh : SubMeshes) {
-        if (SubMesh.Triangles) {
-            for (int32 i = 0; i < SubMesh.Triangles->Num(); ++i) {
-                (*SubMesh.Triangles)[i] = OldToNewIndices[(*SubMesh.Triangles)[i]];
-            }
+        for (int32 i = 0; i < SubMesh.Triangles.Num(); ++i) {
+            SubMesh.Triangles[i] = OldToNewIndices[SubMesh.Triangles[i]];
         }
     }
 }
@@ -232,11 +226,10 @@ FSubDividedCityObject::FSubDividedCityObject(
         const auto& indices = PlateauNode.getMesh()->getIndices();
         for (const auto& SrcSubMesh : SrcSubMeshes) {
             FSubDividedCityObjectSubMesh SubMesh;
-            SubMesh.Triangles = MakeShared<TArray<int32>>();
             // #NOTE : PLATEAUMeshLoader.cpp参考
             for (auto Index = SrcSubMesh.getStartIndex(); Index < SrcSubMesh.getEndIndex(); Index++) 
             {                
-                SubMesh.Triangles->Add(indices[Index]);
+                SubMesh.Triangles.Add(indices[Index]);
             }
             Mesh.SubMeshes.Add(SubMesh);
         }
