@@ -127,17 +127,16 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
             return;
     }
 
-  /*  TArray<URVertex*> Vertices;
-    if (Op.bShowCityObjectOutline) {
-        Vertices = Work.Graph->ComputeOutlineVerticesByCityObjectGroup(Face->CityObjectGroup,
+    TArray<URVertex*> Vertices;
+    if (Op.bShowCityObjectOutline) 
+    {
+        Vertices = FRGraphEx::ComputeOutlineVerticesByCityObjectGroup(Work.Graph, Face->GetCityObjectGroup().Get(),
             Op.ShowOutlineMask, Op.ShowOutlineRemoveMask);
     }
     else {
-        Vertices = Face->ComputeOutlineVertices();
+        Vertices = FRGraphEx::ComputeOutlineVertices(Face);
     }
 
-    TArray<UREdge*> Edges;
-    FRGraphEx::OutlineVertex2Edge(Vertices, Edges);
 
     if (EnumHasAnyFlags(ShowId, ERPartsFlag::Face)) {
         FVector Center = FVector::ZeroVector;
@@ -145,26 +144,25 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
             Center += Vertex->GetPosition();
         }
         Center /= Vertices.Num();
-        UPLATEAUDebugEx::DrawString(FString::Printf(TEXT("F[%d]"), Face->GetDebugMyId()), Center);
+        //FRnDebugEx::DrawString(FString::Printf(TEXT("F[%d]"), Face->GetDebugMyId()), Center);
     }
 
-    if (Op.bShowConvexVolume) {
-        TArray<FVector> ConvexPoints;
-        for (const auto& Vertex : Face->ComputeConvexHullVertices()) {
-            ConvexPoints.Add(Vertex->GetPosition());
-        }
-        UPLATEAUDebugEx::DrawArrows(ConvexPoints, true, 0.5f, FVector::UpVector, EdgeOption.Color);
-    }
-    else if (Op.bShowOutline) {
-        for (const auto& Edge : Edges) {
-            Draw(EdgeOption, Edge, Work);
+    if (Op.bShowOutline) {
+        for(auto i = 0; i < Vertices.Num(); ++i)
+        {
+            auto V0 = Vertices[i];
+            auto V1 = Vertices[(i + 1) % Vertices.Num()];
+
+            auto Mask = V0->GetTypeMaskOrDefault(false) | V1->GetTypeMaskOrDefault(false);
+            const FLinearColor Color = GetColor(Mask);
+            FRnDebugEx::DrawLine(V0->GetPosition(), V1->GetPosition(), Color);
         }
     }
     else {
         for (const auto& Edge : Face->GetEdges()) {
             Draw(EdgeOption, Edge, Work);
         }
-    }*/
+    }
 }
 void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
     /*auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FDrawOption& Option) {
@@ -172,7 +170,7 @@ void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
             return;
 
         for (const auto& Edge : Edges) {
-            UPLATEAUDebugEx::DrawLine(
+            FRnDebugEx::DrawLine(
                 Edge->GetV0()->GetPosition(),
                 Edge->GetV1()->GetPosition(),
                 Option.Color

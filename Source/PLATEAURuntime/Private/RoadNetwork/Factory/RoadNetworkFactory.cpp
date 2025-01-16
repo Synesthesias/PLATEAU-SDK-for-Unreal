@@ -17,7 +17,7 @@
 #include "RoadNetwork/Structure/RnLineString.h"
 
 
-const FString URoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
+const FString FRoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
 
 namespace
 {
@@ -270,14 +270,14 @@ namespace
 
 }
 
-void URoadNetworkFactory::CreateRnModel(APLATEAUInstancedCityModel* Actor, AActor* DestActor)
+void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor)
 {
     TArray<UPLATEAUCityObjectGroup*> CityObjectGroups;
     Actor->GetComponents(CityObjectGroups);
-    auto res = CreateRoadNetwork(Actor, DestActor, CityObjectGroups);
+    auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor,
+RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
     if(DestActor->GetRootComponent() == nullptr)
@@ -290,14 +290,14 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(APLATEAUInstancedCityMod
 
     const auto Root = DestActor->GetRootComponent();
     TArray<FSubDividedCityObject> SubDividedCityObjects;
-    CreateSubDividedCityObjects(Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
+    CreateSubDividedCityObjects(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
 
     RGraphRef_t<URGraph> Graph;
-    CreateRGraph(Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects, Graph);
+    CreateRGraph(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects, Graph);
     return nullptr;
 }
 
-RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Graph)
+RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph)
 {
     auto Model = RnNew<RnModel>();
     try {
@@ -310,11 +310,11 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Gra
             });
 
         auto&& ret = RnRef_t<RnModel>();
-        ret->FactoryVersion = FactoryVersion;
+        ret->FactoryVersion = Self.FactoryVersion;
 
         auto&& work = MakeShared<FWork>();
         work->TerminateAllowEdgeAngle;
-        work->TerminateSkipAngleDeg = TerminateSkipAngle;
+        work->TerminateSkipAngleDeg = Self.TerminateSkipAngle;
     
         
         for(auto&& faceGroup : faceGroups) {
@@ -326,7 +326,7 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Gra
             if (FRRoadTypeEx::IsSideWalk(roadType))
                 continue;
             // ignoreHighway=trueの時は高速道路も無視
-            if (FRRoadTypeEx::IsHighWay(roadType) && bIgnoreHighway)
+            if (FRRoadTypeEx::IsHighWay(roadType) && Self.bIgnoreHighway)
                 continue;
             work->TranMap[faceGroup] = MakeShared<FTran>(work, Graph, faceGroup);
         }
@@ -346,10 +346,10 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Gra
             tran->BuildConnection();
         }
 
-        if (bAddSideWalk) 
+        if (Self.bAddSideWalk) 
         {
             // 歩道を作成する
-            auto&& sideWalks = work->CreateSideWalk(Lod1SideWalkThresholdRoadWidth, Lod1SideWalkSize);
+            auto&& sideWalks = work->CreateSideWalk(Self.Lod1SideWalkThresholdRoadWidth, Self.Lod1SideWalkSize);
             for (auto&& sideWalk : sideWalks)
                 ret->AddSideWalk(sideWalk);
 
@@ -454,8 +454,9 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Gra
     return Model;
 }
 
-void URoadNetworkFactory::CreateSubDividedCityObjects(
-    APLATEAUInstancedCityModel* Actor
+void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
+    const FRoadNetworkFactory& Self
+    , APLATEAUInstancedCityModel* Actor
     , AActor* DestActor
     , USceneComponent* Root
     , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
@@ -487,7 +488,7 @@ void URoadNetworkFactory::CreateSubDividedCityObjects(
 
     const auto SubDividedObjectName = TEXT("SubDivided");
     
-    if(bSaveTmpData)
+    if(Self.bSaveTmpData)
     {
         auto SubDividedCityObjectGroup = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
         if (SubDividedCityObjectGroup == nullptr) {
@@ -519,14 +520,14 @@ void URoadNetworkFactory::CreateSubDividedCityObjects(
 
 }
 
-void URoadNetworkFactory::CreateRGraph(APLATEAUInstancedCityModel* Actor, AActor* DestActor, USceneComponent* Root,
+void FRoadNetworkFactoryEx::CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, USceneComponent* Root,
     TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups, TArray<FSubDividedCityObject>& SubDividedCityObjects,
     RGraphRef_t<URGraph>& OutGraph)
 {
-    OutGraph = GraphFactory.CreateGraph( SubDividedCityObjects);
+    OutGraph = FRGraphFactoryEx::CreateGraph(Self.GraphFactory, SubDividedCityObjects);
 
     const auto RGraphName = TEXT("RGaph");
-    if(bSaveTmpData)
+    if(Self.bSaveTmpData)
     {
         auto RGraphObject = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
         if (RGraphObject == nullptr) {

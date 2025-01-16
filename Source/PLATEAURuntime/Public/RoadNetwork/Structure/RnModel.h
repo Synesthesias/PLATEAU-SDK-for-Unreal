@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "../RnDef.h"
-
+#include "RnModel.generated.h"
 class RnRoad;
 class RnIntersection;
 class RnSideWalk;
@@ -13,19 +13,24 @@ class RnWay;
 class UPLATEAUCityObjectGroup;
 class RnRoadBase;
 
+
+USTRUCT(BlueprintType)
+struct FRnModelCalibrateIntersectionBorderOption
+{
+    GENERATED_BODY();
+public:
+    // 交差点の停止線を道路側に移動させる量
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    float MaxOffsetMeter = 5.0f;
+
+    // 道路の長さがこれ以下にならないように交差点の移動量を減らす
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    float NeedRoadLengthMeter = 23.0f;
+};
+
 class RnModel
 {
 public:
-
-    struct CalibrateIntersectionBorderOption {
-
-
-        // 交差点の停止線を道路側に移動させる量
-        float MaxOffsetMeter = 5.0f;
-
-        // 道路の長さがこれ以下にならないように交差点の移動量を減らす
-        float NeedRoadLengthMeter = 23.0f;
-    };
 
 public:
     static constexpr float Epsilon = SMALL_NUMBER;
@@ -100,7 +105,7 @@ public:
     TArray<RnRef_t<RnSideWalk>> GetNeighborSideWalks(const RnRef_t<RnRoadBase>& RoadBase) const;
 
     // 交差点の境界線を調整する
-    void CalibrateIntersectionBorder(const CalibrateIntersectionBorderOption& Option);
+    void CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option);
 
     // 道路ネットワークを作成する
     static RnRef_t<RnModel> Create();

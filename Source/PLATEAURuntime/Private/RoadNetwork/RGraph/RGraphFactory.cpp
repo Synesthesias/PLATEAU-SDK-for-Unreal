@@ -30,14 +30,15 @@ namespace
         }
     };
 }
-RGraphRef_t<URGraph> FRGraphFactory::CreateGraph(const TArray<FSubDividedCityObject>& CityObjects)
+
+RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory,
+    const TArray<FSubDividedCityObject>& CityObjects)
 {
     auto Graph = RGraphNew<URGraph>();
 
     TMap<FVector, RGraphRef_t<URVertex>> VertexMap;
     TMap<FEdgeKey, RGraphRef_t<UREdge>> EdgeMap;
-    for (auto& CityObject : CityObjects) 
-    {
+    for (auto& CityObject : CityObjects) {
         if (CityObject.CityObjectGroup == nullptr) {
             continue;
         }
@@ -69,7 +70,7 @@ RGraphRef_t<URGraph> FRGraphFactory::CreateGraph(const TArray<FSubDividedCityObj
                     face->AddEdge(EdgeMap[key]);
                     };
 
-                if (bUseCityObjectOutline) {
+                if (Factory.bUseCityObjectOutline) {
                     auto&& indexTable = s.CreateOutlineIndices();
                     for (auto&& indices : indexTable) {
                         for (auto&& i = 0; i < indices.Num(); i++) {
@@ -90,9 +91,9 @@ RGraphRef_t<URGraph> FRGraphFactory::CreateGraph(const TArray<FSubDividedCityObj
         }
     }
 
-    if (bReductionOnCreate) {
-        FRGraphEx::Optimize(Graph, MergeCellSize, MergeCellLength,
-            RemoveMidPointTolerance, Lod1HeightTolerance);
+    if (Factory.bReductionOnCreate) {
+        FRGraphEx::Optimize(Graph, Factory.MergeCellSize, Factory.MergeCellLength,
+            Factory.RemoveMidPointTolerance, Factory.Lod1HeightTolerance);
     }
 
     return Graph;

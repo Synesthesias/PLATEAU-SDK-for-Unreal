@@ -139,7 +139,7 @@ TArray<RnRef_t<RnSideWalk>> RnModel::GetNeighborSideWalks(const RnRef_t<RnRoadBa
     return *(RoadBase->SideWalks);
 }
 
-void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOption& Option) {
+void RnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option) {
     for (const auto& Intersection : *Intersections) {
         for (const auto& Edge : Intersection->GetEdges()) {
             if (!Edge->Road) continue;

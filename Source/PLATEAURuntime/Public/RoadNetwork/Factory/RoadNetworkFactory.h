@@ -22,8 +22,8 @@ class RnLane;
 class RnPoint;
 
 
-UCLASS(BlueprintType)
-class PLATEAURUNTIME_API URoadNetworkFactory : public UObject 
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FRoadNetworkFactory
 {
     GENERATED_BODY()
 public:
@@ -71,33 +71,38 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bSeparateContinuousBorder = true;
 
-    RnRef_t<RnModel::CalibrateIntersectionBorderOption> CalibrateIntersectionOption;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FRGraphFactory GraphFactory;
 
-    struct FCreateRnModelRequest
-    {
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    FRnModelCalibrateIntersectionBorderOption CalibrateIntersectionOption;
+
+};
+
+struct FRoadNetworkFactoryEx
+{
+
+    struct FCreateRnModelRequest {
         APLATEAUInstancedCityModel* Actor;
         TWeakObjectPtr<USceneComponent> Transform;
         TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
         //PLATEAURnStructureModel* OriginalMesh;
     };
 
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-    void CreateRnModel(APLATEAUInstancedCityModel* Actor, AActor* DestActor);
+    static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor);
 
-    RnRef_t<RnModel> CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
+    static RnRef_t<RnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
-    RnRef_t<RnModel> CreateRoadNetwork(RGraphRef_t<URGraph> Graph);
-
+    static  RnRef_t<RnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph);
 private:
     // 最小地物に分解する
-    void CreateSubDividedCityObjects(APLATEAUInstancedCityModel* Actor
+    static void CreateSubDividedCityObjects(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
         , AActor* DestActor
         , USceneComponent* Root
         , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
         , TArray<FSubDividedCityObject>& OutSubDividedCityObjects);
 
-    void CreateRGraph(APLATEAUInstancedCityModel* Actor
+    static void CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
         , AActor* DestActor
         , USceneComponent* Root
         , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups

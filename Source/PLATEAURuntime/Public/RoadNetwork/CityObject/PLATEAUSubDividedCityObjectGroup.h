@@ -30,7 +30,7 @@ public:
     UPLATEAUSubDividedCityObjectGroup();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Debug")
-    bool bVisibility = true;
+    bool bVisibility = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Debug")
     bool bOnlySelectedCityObjectGroupVisible;

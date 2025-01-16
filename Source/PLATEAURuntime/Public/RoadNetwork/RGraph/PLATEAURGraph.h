@@ -97,7 +97,7 @@ public:
 public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bVisibility = true;
+    bool bVisibility = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowAll;
@@ -132,7 +132,7 @@ public:
     // --------------------
     // start:フィールド
     // --------------------
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category="PLATEAU")
     URGraph* RGraph;
 
 private:
