@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include <plateau/granularity_convert/granularity_converter.h>
+#include "CityGML/PLATEAUCityObject.h"
+
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
 

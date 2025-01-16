@@ -15,7 +15,8 @@ enum class ETopMenuPanel : uint8 {
     ImportPanel,
     ModelAdjustmentPanel,
     ExportPanel,
-    AttrInfoPanel
+    AttrInfoPanel,
+    RoadAdjustmentPanel
 };
 
 USTRUCT(BlueprintType)
