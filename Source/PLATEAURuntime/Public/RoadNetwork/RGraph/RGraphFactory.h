@@ -4,10 +4,12 @@
 #include "../RnDef.h"
 #include <memory>
 
+#include "RGraph.h"
+
 class FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
 class RnModel;
-class FRGraph;
+class URGraph;
 
 class FRGraphFactory {
 public:
@@ -18,5 +20,5 @@ public:
     float Lod1HeightTolerance = 1.5f;
     bool bUseCityObjectOutline = true;
 
-    RnRef_t<FRGraph> CreateGraph(const TArray<TSharedPtr<FSubDividedCityObject>>& CityObjects);
+    RGraphRef_t<URGraph> CreateGraph(const TArray<FSubDividedCityObject>& CityObjects);
 };

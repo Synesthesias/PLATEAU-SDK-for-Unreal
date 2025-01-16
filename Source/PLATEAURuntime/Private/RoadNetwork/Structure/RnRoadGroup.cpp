@@ -549,13 +549,13 @@ void RnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, b
         auto Lanes = (*AfterLanes)[Road];
 
         if (i == Roads->Num() - 1) {
-            NextIntersection->ReplaceEdges(Road, RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder; }));
-            NewNextBorders.Append(RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder; }));
+            NewNextBorders.Append(FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder; }));
-            NewPrevBorders.Append(RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder; }));
+            NewPrevBorders.Append(FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder->LineString; }));
         }
 
         for (int32 j = LeftCount; j < Lanes.Num(); ++j) {
@@ -623,13 +623,13 @@ void RnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, floa
 
         if (i == Roads->Num() - 1) 
         {
-            NextIntersection->ReplaceEdges(Road, RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>( Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder; }));
-            NewNextBorders.Append( RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>( Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder; }));
+            NewNextBorders.Append( FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->NextBorder->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder; }));
-            NewPrevBorders.Append(RnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnWay>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder; }));
+            NewPrevBorders.Append(FRnEx::Map<RnRef_t<RnLane>, RnRef_t<RnLineString>>(Lanes, [](const RnRef_t<RnLane>& Lane) { return Lane->PrevBorder->LineString; }));
         }
 
         for (int32 j = LeftCount + 1; j < Lanes.Num(); ++j) {
@@ -686,7 +686,7 @@ TSharedPtr<TMap<RnRef_t<RnRoad>, TArray<RnRef_t<RnLane>>>> RnRoadGroup::SplitLan
 
     auto Result = MakeShared<TMap<RnRef_t<RnRoad>, TArray<RnRef_t<RnLane>>>>();
 
-    auto MergedBorders = RnEx::Map<RnRef_t<RnRoad>, RnRef_t<RnWay>>(*Roads, [Dir](const RnRef_t<RnRoad>& Road) {
+    auto MergedBorders = FRnEx::Map<RnRef_t<RnRoad>, RnRef_t<RnWay>>(*Roads, [Dir](const RnRef_t<RnRoad>& Road) {
         return Road->GetMergedBorder(ERnLaneBorderType::Prev, Dir);
         });
     MergedBorders.Add((*Roads)[Roads->Num() - 1]->GetMergedBorder(ERnLaneBorderType::Next, Dir));
@@ -720,7 +720,7 @@ TSharedPtr<TMap<RnRef_t<RnRoad>, TArray<RnRef_t<RnLane>>>> RnRoadGroup::SplitLan
                 Rate += GetSplitRate ? GetSplitRate(N) : (1.0f / Num);
                 auto PrevBorder = PrevBorders[N];
                 auto NextBorder = NextBorders[N];
-                auto Line = RnEx::CreateInnerLerpLineString(
+                auto Line = FRnEx::CreateInnerLerpLineString(
                     LeftVertices,
                     RightVertices,
                     PrevBorder->GetPoint(-1),

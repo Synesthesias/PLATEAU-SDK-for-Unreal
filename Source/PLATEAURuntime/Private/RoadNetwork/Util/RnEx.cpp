@@ -8,12 +8,12 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
 
-void RnEx::ReplaceLane(TArray<RnRef_t<RnLane>>& Self, RnRef_t<RnLane> Before, RnRef_t<RnLane> After) {
+void FRnEx::ReplaceLane(TArray<RnRef_t<RnLane>>& Self, RnRef_t<RnLane> Before, RnRef_t<RnLane> After) {
     Replace(Self, Before, After);
 }
 
 
-RnRef_t<RnLineString> RnEx::CreateInnerLerpLineString(
+RnRef_t<RnLineString> FRnEx::CreateInnerLerpLineString(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,
     RnRef_t<RnPoint> Start,
@@ -60,7 +60,7 @@ RnRef_t<RnLineString> RnEx::CreateInnerLerpLineString(
     return Line;
 }
 
-RnRef_t<FLineCrossPointResult> RnEx::GetLineIntersections(
+RnRef_t<FLineCrossPointResult> FRnEx::GetLineIntersections(
     const FLineSegment3D& LineSegment,
     const TArray<RnRef_t<RnWay>>& Ways) {
     auto Result = RnNew<FLineCrossPointResult>();
@@ -85,4 +85,16 @@ RnRef_t<FLineCrossPointResult> RnEx::GetLineIntersections(
     }
 
     return Result;
+}
+
+void FRnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child,
+    FAttachmentTransformRules TransformRule)
+{
+    if (!Parent || !Child || !Actor)
+        return;
+    Actor->AddInstanceComponent(Child);
+    Child->SetupAttachment(Parent);
+    Child->RegisterComponent();
+    Child->AttachToComponent(Parent, TransformRule);
+    Actor->RerunConstructionScripts();
 }

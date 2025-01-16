@@ -57,7 +57,7 @@ public:
     bool bAddTrafficSignalLights = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
-    bool bSaveTmpData = false;
+    bool bSaveTmpData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bUseContourMesh = true;
@@ -87,5 +87,20 @@ public:
 
     RnRef_t<RnModel> CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
-    RnRef_t<RnModel> CreateRoadNetwork(TSharedPtr<FRGraph> Graph);
+    RnRef_t<RnModel> CreateRoadNetwork(RGraphRef_t<URGraph> Graph);
+
+private:
+    // 最小地物に分解する
+    void CreateSubDividedCityObjects(APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
+        , TArray<FSubDividedCityObject>& OutSubDividedCityObjects);
+
+    void CreateRGraph(APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
+        , TArray<FSubDividedCityObject>& SubDividedCityObjects
+        , RGraphRef_t<URGraph>& OutGraph);
 };

@@ -191,18 +191,19 @@ ERRoadTypeMask FSubDividedCityObject::GetRoadType(bool ContainsParent) const
     return Result;
 }
 
-FSubDividedCityObject::FSubDividedCityObject(const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj)
+FSubDividedCityObject::FSubDividedCityObject(UPLATEAUCityObjectGroup* Co, const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj)
     : SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ERRoadTypeMask::Empty) {
 
+    CityObjectGroup = Co;
     for (int32 i = 0; i < PlateauModel.getRootNodeCount(); ++i) {
         auto& Node = PlateauModel.getRootNodeAt(i);
-        FSubDividedCityObject Child(Node, CityObj, ERRoadTypeMask::Empty);
+        FSubDividedCityObject Child(Co, Node, CityObj, ERRoadTypeMask::Empty);
         Children.Add(Child);
     }
 }
 
-FSubDividedCityObject::FSubDividedCityObject(
+FSubDividedCityObject::FSubDividedCityObject(UPLATEAUCityObjectGroup* Co,
     const plateau::polygonMesh::Node& PlateauNode,
     TMap<FString, FPLATEAUCityObject>& CityObj,
     ERRoadTypeMask ParentTypeMask)
@@ -210,6 +211,7 @@ FSubDividedCityObject::FSubDividedCityObject(
     , SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ParentTypeMask) {
 
+    CityObjectGroup = Co;
     // Convert mesh data
     if (PlateauNode.getMesh()) {
         FSubDividedCityObjectMesh Mesh;
@@ -227,7 +229,7 @@ FSubDividedCityObject::FSubDividedCityObject(
         for (const auto& SrcSubMesh : SrcSubMeshes) {
             FSubDividedCityObjectSubMesh SubMesh;
             // #NOTE : PLATEAUMeshLoader.cpp参考
-            for (auto Index = SrcSubMesh.getStartIndex(); Index < SrcSubMesh.getEndIndex(); Index++) 
+            for (auto Index = SrcSubMesh.getStartIndex(); Index <= SrcSubMesh.getEndIndex(); Index++) 
             {                
                 SubMesh.Triangles.Add(indices[Index]);
             }
@@ -241,10 +243,11 @@ FSubDividedCityObject::FSubDividedCityObject(
     if(auto Tmp = CityObj.Find(DesiredName))
         CityObject = *Tmp;
 
+    SelfRoadType = GetRoadTypeFromCityObject(CityObject);
     // Process child nodes
     for (int32 i = 0; i < PlateauNode.getChildCount(); ++i) {
         auto& ChildNode = PlateauNode.getChildAt(i);
-        FSubDividedCityObject Child(ChildNode, CityObj, SelfRoadType);
+        FSubDividedCityObject Child(Co, ChildNode, CityObj, SelfRoadType);
         Children.Add(Child);
     }
 }
@@ -284,4 +287,49 @@ TSharedPtr<FSubDividedCityObject> FSubDividedCityObject::DeepCopy()
         Result->Children.Add(*Child.DeepCopy());
     }
     return Result;
+}
+
+ERRoadTypeMask FSubDividedCityObject::GetRoadTypeFromCityObject(const FPLATEAUCityObject& CityObject)
+{
+    auto Ret = ERRoadTypeMask::Empty;
+
+    // LOD3からチェックする
+    auto& AttrMap = CityObject.Attributes.AttributeMap;
+    if(auto TranFunc = AttrMap.Find("tran:function"))
+    {
+        auto&& Str = TranFunc->StringValue;
+        if(Str == TEXT("車道部") || Str == TEXT("車道交差部"))
+        {
+            Ret |= ERRoadTypeMask::Road;
+        }
+
+        if (Str == TEXT("歩道部")) {
+            Ret |= ERRoadTypeMask::SideWalk;
+        }
+
+        if(Str == TEXT("島"))
+        {
+            Ret |= ERRoadTypeMask::Median;
+        }
+
+        if(Str.Contains(TEXT("高速")))
+        {
+            Ret |= ERRoadTypeMask::HighWay;
+        }
+    }
+
+
+    // LOD1
+    if(auto TranClass = AttrMap.Find("tran:class"))
+    {
+        auto&& Str = TranClass->StringValue;
+        if (Str == TEXT("道路")) {
+            Ret |= ERRoadTypeMask::Road;
+        }
+    }
+
+
+    if (Ret == ERRoadTypeMask::Empty)
+        Ret |= ERRoadTypeMask::Undefined;
+    return Ret;
 }

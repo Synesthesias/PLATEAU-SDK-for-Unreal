@@ -113,3 +113,22 @@ RnRef_t<T> RnNew(TArgs&&... Args)
 //auto RnCast(TSharedPtr<U> In) -> RnRef_t<T> {
 //    return RnRef_t<T>(dynamic_cast<T*>(In.Get()));
 //}
+
+
+struct FRnPartsBase
+{
+public:
+
+    uint32 GetDebugMyId() const { return DebugId; }
+protected:
+    FRnPartsBase(uint32 Id) : DebugId(Id) {}
+private:
+    uint32 DebugId;
+};
+
+template<typename TSelf>
+struct FRnParts : public FRnPartsBase
+{
+    inline static uint32 Counter = 0;
+    FRnParts();
+};

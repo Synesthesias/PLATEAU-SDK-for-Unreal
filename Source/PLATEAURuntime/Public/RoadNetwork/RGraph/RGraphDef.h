@@ -56,3 +56,25 @@ public:
     }
 };
 
+
+template<typename T>
+struct FRGraphRef {
+    using Type = T*;
+
+    template<class... Args>
+    static T* New(Args&&... args) {
+        auto Ret = NewObject<T>();
+        Ret->Init(Forward<Args>(args)...);
+        return Ret;
+    }
+};
+template<typename T>
+using RGraphRef_t = typename FRGraphRef<T>::Type;
+
+template<typename T, class... Args>
+inline RGraphRef_t<T> RGraphNew(Args&&... args) {
+    return FRGraphRef<T>::New(Forward<Args>(args)...);
+}
+
+#define RGRAPH_REF(T) TObjectPtr<T>
+#define RGRAPH_SET_T(T) TSet<TObjectPtr<T>>

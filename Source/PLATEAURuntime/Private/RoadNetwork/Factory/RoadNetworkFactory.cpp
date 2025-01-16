@@ -7,6 +7,7 @@
 #include "RoadNetwork/CityObject/PLATEAUSubDividedCityObjectGroup.h"
 #include "RoadNetwork/CityObject/SubDividedCityObjectFactory.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
+#include "RoadNetwork/RGraph/PLATEAURGraph.h"
 #include "RoadNetwork/RGraph/RGraph.h"
 #include "RoadNetwork/RGraph/RGraphEx.h"
 #include "RoadNetwork/Structure/RnModel.h"
@@ -34,8 +35,8 @@ namespace
     class FTranLine {
     public:
         FTran* Neighbor;
-        TArray<TSharedPtr<FREdge>> Edges;
-        TArray<TSharedPtr<FRVertex>> Vertices;
+        TArray<TSharedPtr<UREdge>> Edges;
+        TArray<RGraphRef_t<URVertex>> Vertices;
         RnRef_t<RnWay> Way;
         TSharedPtr<FTranLine> Next;
         TSharedPtr<FTranLine> Prev;
@@ -48,10 +49,10 @@ namespace
     class FTran {
     public:
         TSharedPtr<FWork> Work;
-        TSharedPtr<FRGraph> Graph;
-        TSet<TSharedPtr<FRFace>> Roads;
-        TSharedPtr<FRFaceGroup> FaceGroup;
-        TArray<TSharedPtr<FRVertex>> Vertices;
+        RGraphRef_t<URGraph> Graph;
+        TSet<RGraphRef_t<URFace>> Roads;
+        RGraphRef_t<URFaceGroup> FaceGroup;
+        TArray<RGraphRef_t<URVertex>> Vertices;
         TArray<TSharedPtr<FTranLine>> Lines;
         RnRef_t<RnRoadBase> Node;
         TArray<RnRef_t<RnLane>> Lanes;
@@ -81,17 +82,17 @@ namespace
             return Algo::CountIf(Lines, [](const TSharedPtr<FTranLine>& L) {return L->IsBorder(); });
         }
 
-        FTran(const TSharedPtr<FWork>& W, const TSharedPtr<FRGraph>& G, TSharedPtr<FRFaceGroup>& FG)
+        FTran(const TSharedPtr<FWork>& W, const RGraphRef_t<URGraph>& G, RGraphRef_t<URFaceGroup>& FG)
         : Work(W)
         , Graph(G)
         , FaceGroup(FG)
         {
-            Vertices = FRGraphHelper::ComputeOutlineVertices(FaceGroup, [](TSharedPtr<FRFace> Face)
+            Vertices = FRGraphEx::ComputeOutlineVertices(FaceGroup, [](RGraphRef_t<URFace> Face)
             {
-                    return FRRoadTypeEx::HasAnyFlag(Face->RoadTypes, ERRoadTypeMask::SideWalk) == false;
+                    return FRRoadTypeEx::HasAnyFlag(Face->GetRoadTypes(), ERRoadTypeMask::SideWalk) == false;
             });
 
-            if (FGeoGraph2D::IsClockwise<TSharedPtr<FRVertex>>(Vertices, [](TSharedPtr<FRVertex> v)
+            if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
             {
                     return FRnDef::To2D(v->Position);
             })) {
@@ -121,16 +122,16 @@ namespace
 
     class FWork {
     public:
-        TMap<TSharedPtr<FRFaceGroup>, TSharedPtr<FTran>> TranMap;
-        TMap<TSharedPtr<FRVertex>, RnRef_t<RnPoint>> PointMap;
-        TMap<TArray<TSharedPtr<FRVertex>>, RnRef_t<RnLineString>> LineMap;
+        TMap<RGraphRef_t<URFaceGroup>, TSharedPtr<FTran>> TranMap;
+        TMap<RGraphRef_t<URVertex>, RnRef_t<RnPoint>> PointMap;
+        TMap<TArray<RGraphRef_t<URVertex>>, RnRef_t<RnLineString>> LineMap;
         TArray<RnRef_t<RnLineString>> PointLineStringCache;
         TMap<uint64, TArray<RnRef_t<RnLineString>>> RnPointList2LineStringMap;
         float TerminateAllowEdgeAngle = 20.0f;
         float TerminateSkipAngleDeg = 30.0f;
 
 
-        static bool IsEqual(const TArray<TSharedPtr<FRVertex>>& A, const TArray<TSharedPtr<FRVertex>>& B, bool& IsReverse)
+        static bool IsEqual(const TArray<RGraphRef_t<URVertex>>& A, const TArray<RGraphRef_t<URVertex>>& B, bool& IsReverse)
         {
             if (A.Num() != B.Num()) {
                 return false;
@@ -193,7 +194,7 @@ namespace
         }
 
 
-        RnRef_t<RnWay> CreateWay(const TArray<TSharedPtr<FRVertex>>& Vertices, bool& IsCached)
+        RnRef_t<RnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices, bool& IsCached)
         {
             for (auto& Pair : LineMap) 
             {
@@ -218,12 +219,12 @@ namespace
         }
 
 
-        RnRef_t<RnWay> CreateWay(const TArray<TSharedPtr<FRVertex>>& Vertices) {
+        RnRef_t<RnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices) {
             bool IsCached;
             return CreateWay(Vertices, IsCached);
         }
 
-        RnRef_t<RnPoint> GetOrCreatePoint(const TSharedPtr<FRVertex>& Vertex) {
+        RnRef_t<RnPoint> GetOrCreatePoint(const RGraphRef_t<URVertex>& Vertex) {
             if (auto Found = PointMap.Find(Vertex)) {
                 return *Found;
             }
@@ -279,13 +280,6 @@ void URoadNetworkFactory::CreateRnModel(APLATEAUInstancedCityModel* Actor, AActo
 RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
-    FSubDividedCityObjectFactory Factory;
-    auto Result = Factory.ConvertCityObjectsAsync(Actor, CityObjectGroups, true);
-
-    //auto World = GEditor->GetEditorWorldContext().World(); //Actor->GetWorld();
-    //auto World = Actor->GetWorld();
-    //auto Obj = World->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity);
-
     if(DestActor->GetRootComponent() == nullptr)
     {
         auto DefaultSceneRoot = NewObject<USceneComponent>(DestActor, TEXT("DefaultSceneRoot"));
@@ -294,40 +288,24 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(APLATEAUInstancedCityMod
         DefaultSceneRoot->RegisterComponent();
     }
 
-    auto Root = DestActor->GetRootComponent();
+    const auto Root = DestActor->GetRootComponent();
+    TArray<FSubDividedCityObject> SubDividedCityObjects;
+    CreateSubDividedCityObjects(Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
 
-    UPLATEAUSubDividedCityObjectGroup* Comp = DestActor->GetComponentByClass<UPLATEAUSubDividedCityObjectGroup>();
-    if(Comp == nullptr)
-    {
-        Comp = NewObject< UPLATEAUSubDividedCityObjectGroup>(DestActor, TEXT("SubDivided"));
-        DestActor->AddInstanceComponent(Comp);
-        Comp->SetupAttachment(Root);
-        Comp->RegisterComponent();
-        Comp->AttachToComponent(Root, FAttachmentTransformRules::KeepWorldTransform);
-        DestActor->RerunConstructionScripts();
-    }
-    
-    Comp->CityObjects.Reset();
-    for (auto C : Result->ConvertedCityObjects)
-        Comp->CityObjects.Add(*C);
-   /* const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([Actor, CityObjectGroups]()
-    {
-
-           
-    }, TStatId(), nullptr, ENamedThreads::GameThread);
-    Task->Wait();*/
+    RGraphRef_t<URGraph> Graph;
+    CreateRGraph(Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects, Graph);
     return nullptr;
 }
 
-RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(TSharedPtr<FRGraph> Graph)
+RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(RGraphRef_t<URGraph> Graph)
 {
     auto Model = RnNew<RnModel>();
     try {
         // 道路/中央分離帯は一つのfaceGroupとしてまとめる
         auto&& mask = ~(ERRoadTypeMask::Road | ERRoadTypeMask::Median);
-        auto&& faceGroups = FRGraphHelper::GroupBy(Graph, [mask](const TSharedPtr<FRFace>& F0, const TSharedPtr<FRFace>& F1) {
-            auto&& M0 = F0->RoadTypes & mask;
-            auto&& M1 = F1->RoadTypes & mask;
+        auto&& faceGroups = FRGraphEx::GroupBy(Graph, [mask](const RGraphRef_t<URFace>& F0, const RGraphRef_t<URFace>& F1) {
+            auto&& M0 = F0->GetRoadTypes() & mask;
+            auto&& M1 = F1->GetRoadTypes() & mask;
             return M0 == M1;
             });
 
@@ -474,4 +452,93 @@ RnRef_t<RnModel> URoadNetworkFactory::CreateRoadNetwork(TSharedPtr<FRGraph> Grap
     }
    
     return Model;
+}
+
+void URoadNetworkFactory::CreateSubDividedCityObjects(
+    APLATEAUInstancedCityModel* Actor
+    , AActor* DestActor
+    , USceneComponent* Root
+    , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
+    , TArray<FSubDividedCityObject>& OutSubDividedCityObjects)
+{
+    // 一番子のオブジェクトだけが必要なのでそれを抽出する
+
+    TArray<FSubDividedCityObject> Result;
+    struct FSubDividedObjectVisitor {
+        static void Visit(FSubDividedCityObject& So, TArray<FSubDividedCityObject>& Result) {
+            if (So.Children.Num() == 0) {
+                if (So.SelfRoadType != ERRoadTypeMask::Undefined) {
+                    Result.Add(So);                   
+                }
+                return;
+            }
+
+            for (auto& Child : So.Children) {
+                Visit( Child, Result);
+            }
+        }
+    };
+   
+    FSubDividedCityObjectFactory Factory;
+    auto SubDividedObjectResult = Factory.ConvertCityObjectsAsync(Actor, CityObjectGroups, true);
+    for (auto C : SubDividedObjectResult->ConvertedCityObjects) {
+        FSubDividedObjectVisitor::Visit(*C, OutSubDividedCityObjects);
+    }
+
+    const auto SubDividedObjectName = TEXT("SubDivided");
+    
+    if(bSaveTmpData)
+    {
+        auto SubDividedCityObjectGroup = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
+        if (SubDividedCityObjectGroup == nullptr) {
+            SubDividedCityObjectGroup = NewObject<UPLATEAUSubDividedCityObjectGroup>(DestActor, SubDividedObjectName);
+            FRnEx::AddChildInstanceComponent(DestActor, Root, SubDividedCityObjectGroup);
+        }
+
+        // 現在の子は削除する
+        auto SubDividedCityObjects = SubDividedCityObjectGroup->GetCityObjects();
+        for (auto& C : SubDividedCityObjects) {
+            C->DestroyComponent(false);
+            DestActor->RemoveInstanceComponent(C);
+        }
+
+        for (auto& So : OutSubDividedCityObjects) 
+        {
+            auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, FName(So.Name));
+            NewCityObject->CityObject = So;
+            FRnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
+        }
+    }
+    else
+    {
+        auto SubDividedCityObjectGroup = Cast<UPLATEAUSubDividedCityObjectGroup>(DestActor->GetDefaultSubobjectByName(SubDividedObjectName));
+        if(SubDividedCityObjectGroup)
+            SubDividedCityObjectGroup->DestroyComponent(false);
+    }
+    
+
+}
+
+void URoadNetworkFactory::CreateRGraph(APLATEAUInstancedCityModel* Actor, AActor* DestActor, USceneComponent* Root,
+    TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups, TArray<FSubDividedCityObject>& SubDividedCityObjects,
+    RGraphRef_t<URGraph>& OutGraph)
+{
+    OutGraph = GraphFactory.CreateGraph( SubDividedCityObjects);
+
+    const auto RGraphName = TEXT("RGaph");
+    if(bSaveTmpData)
+    {
+        auto RGraphObject = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
+        if (RGraphObject == nullptr) {
+            RGraphObject = NewObject<UPLATEAURGraph>(DestActor, RGraphName);
+            FRnEx::AddChildInstanceComponent(DestActor, Root, RGraphObject);
+        }
+        RGraphObject->RGraph = OutGraph;
+    }
+    else
+    {
+        auto RGraphObject = Cast<UPLATEAURGraph>(DestActor->GetDefaultSubobjectByName(RGraphName));
+        if (RGraphObject)
+            RGraphObject->DestroyComponent(false);
+    }
 }

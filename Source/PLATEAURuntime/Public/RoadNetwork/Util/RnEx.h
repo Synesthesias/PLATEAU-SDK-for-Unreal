@@ -26,7 +26,7 @@ public:
     FLineSegment3D LineSegment;
 };
 
-struct RnEx
+struct FRnEx
 {
 public:
     static TArray<RnRef_t<UPLATEAUCityObjectGroup>> GetSceneSelectedCityObjectGroups();
@@ -71,9 +71,48 @@ public:
             return 1;
         return 0;
     }
+
+    // ParentにChildを追加する
+    // ActorにAddInstanceComponentをして, ChildをParentにアタッチする
+    static void AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child, FAttachmentTransformRules TransformRule = FAttachmentTransformRules::KeepRelativeTransform);
+
+    // SelfのT型の子コンポーネントを取得する
+    // bIncludeAllDescendants : 子孫も含めるか
+    // bIncludeSelf : 自分自身も含めるか
+    template<typename T>
+    static TArray<T*> GetChildrenComponents(USceneComponent* Self, bool bIncludeAllDescendants = true, bool bIncludeSelf = false)
+    {
+        TArray<T*> Children;
+        if (bIncludeSelf && Cast<T>(Self)) {
+            Children.Add(Cast<T>(Self));
+        }
+        TArray<USceneComponent*> Components;
+        Self->GetChildrenComponents(bIncludeAllDescendants, Components);
+        for (auto Child : Components) {
+            if (auto C = Cast<T>(Child)) {
+                Children.Add(C);
+            }
+        }
+        return Children;
+    }
+
+    template<typename T>
+    static T* GetOrCreateInstanceComponentWithName(AActor* Actor, USceneComponent* Root, const FName& Name)
+    {
+        if (!Actor) 
+            return nullptr;
+        auto Component = Actor->GetComponentByClass<T>();
+
+        if (!Component) {
+            auto UniqueName = MakeUniqueObjectName(Actor, T::StaticClass(), Name);
+            Component = NewObject<T>(Actor, UniqueName);
+            AddChildInstanceComponent(Actor, Actor->GetRootComponent(), Component);
+        }
+        return Cast<T>(Component);
+    }
 };
 template<typename T>
-void RnEx::Replace(TArray<T>& Self, T Before, T After) {
+void FRnEx::Replace(TArray<T>& Self, T Before, T After) {
     for (int32 i = 0; i < Self.Num(); i++) {
         if (Self[i] == Before) {
             Self[i] = After;
