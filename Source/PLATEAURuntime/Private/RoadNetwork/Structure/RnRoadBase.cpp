@@ -5,30 +5,28 @@
 
 URnRoadBase::URnRoadBase()
 {
-    SideWalks = MakeShared<TArray<TRnRef_T<URnSideWalk>>>();
-    TargetTrans = MakeShared<TArray<UPLATEAUCityObjectGroup*>>();
 }
 
 void URnRoadBase::AddSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
-    if (SideWalks->Contains(SideWalk)) return;
+    if (SideWalks.Contains(SideWalk)) return;
 
     if (SideWalk->GetParentRoad()) {
         SideWalk->GetParentRoad()->RemoveSideWalk(SideWalk);
     }
     SideWalk->SetParent(TRnRef_T<URnRoadBase>(this));
-    SideWalks->Add(SideWalk);
+    SideWalks.Add(SideWalk);
 }
 
 void URnRoadBase::RemoveSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
     SideWalk->SetParent(nullptr);
-    SideWalks->Remove(SideWalk);
+    SideWalks.Remove(SideWalk);
 }
 
 void URnRoadBase::AddTargetTran(UPLATEAUCityObjectGroup* TargetTran) {
-    if (!TargetTrans->Contains(TargetTran)) {
-        TargetTrans->Add(TargetTran);
+    if (!TargetTrans.Contains(TargetTran)) {
+        TargetTrans.Add(TargetTran);
     }
 }
 
@@ -40,7 +38,7 @@ void URnRoadBase::AddTargetTrans(const TArray<UPLATEAUCityObjectGroup*>& InTarge
 
 TArray<TRnRef_T<URnWay>> URnRoadBase::GetAllWays() const {
     TArray<TRnRef_T<URnWay>> Ways;
-    for (const auto& SideWalk : *SideWalks) {
+    for (const auto& SideWalk : SideWalks) {
         for (const auto& Way : SideWalk->GetAllWays()) {
             Ways.Add(Way);
         }
@@ -50,7 +48,7 @@ TArray<TRnRef_T<URnWay>> URnRoadBase::GetAllWays() const {
 
 void URnRoadBase::DisConnect(bool RemoveFromModel) {
     if (RemoveFromModel) {
-        for (const auto& SideWalk : *SideWalks) {
+        for (const auto& SideWalk : SideWalks) {
             if (ParentModel) {
                 ParentModel->RemoveSideWalk(SideWalk);
             }
@@ -64,10 +62,11 @@ void URnRoadBase::UnLinkEachOther(const TRnRef_T<URnRoadBase>& Other) {
 }
 
 FString URnRoadBase::GetTargetTransName() const {
-    if (!this || !TargetTrans) return TEXT("null");
+    if (!this) 
+        return TEXT("null");
 
     TArray<FString> Names;
-    for (const auto& Trans : *TargetTrans) {
+    for (const auto& Trans : TargetTrans) {
         Names.Add(Trans ? Trans->GetName() : TEXT("null"));
     }
     return FString::Join(Names, TEXT(","));

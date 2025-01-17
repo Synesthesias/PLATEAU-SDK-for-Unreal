@@ -24,7 +24,7 @@ void URnWay::Init(const TRnRef_T<URnLineString>& InLineString, bool bInIsReverse
 }
 
 int32 URnWay::Count() const
-{ return LineString ? LineString->Points->Num() : 0; }
+{ return LineString ? LineString->GetPoints().Num() : 0; }
 
 bool URnWay::IsValid() const
 { return LineString ? LineString->IsValid() : false; }
@@ -86,11 +86,11 @@ TArray<FLineSegment2D> URnWay::GetEdges2D() const {
 }
 
 int32 URnWay::FindPoint(const TRnRef_T<URnPoint>& Point) const {
-    return LineString->Points->IndexOfByPredicate([&](const TRnRef_T<URnPoint>& P) { return P == Point; });
+    return LineString->GetPoints().IndexOfByPredicate([&](const TRnRef_T<URnPoint>& P) { return P == Point; });
 }
 
 int32 URnWay::FindPointIndex(const TRnRef_T<URnPoint>& Point) const {
-    int32 Index = LineString->Points->IndexOfByKey(Point);
+    int32 Index = LineString->GetPoints().IndexOfByKey(Point);
     return Index < 0 ? Index : SwitchIndex(Index);
 }
 
@@ -119,12 +119,12 @@ void URnWay::AppendBack2LineString(const TRnRef_T<URnWay>& Back) {
     if (!Back || Back->LineString == LineString) return;
 
     if (IsReversed) {
-        for (const auto& P : *(Back->LineString->Points)) {
+        for (const auto& P : Back->LineString->GetPoints()) {
             LineString->AddPointFrontOrSkip(P);
         }
     }
     else {
-        for (const auto& P : *(Back->LineString->Points)) {
+        for (const auto& P : Back->LineString->GetPoints()) {
             LineString->AddPointOrSkip(P);
         }
     }

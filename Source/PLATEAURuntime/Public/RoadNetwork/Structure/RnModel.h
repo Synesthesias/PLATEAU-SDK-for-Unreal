@@ -40,13 +40,13 @@ public:
     FString FactoryVersion;
 
     // 道路リスト
-    TSharedPtr<TArray<TRnRef_T<URnRoad>>> Roads;
+    TArray<TRnRef_T<URnRoad>> Roads;
 
     // 交差点リスト
-    TSharedPtr<TArray<TRnRef_T<URnIntersection>>> Intersections;
+    TArray<TRnRef_T<URnIntersection>> Intersections;
 
     // 歩道リスト
-    TSharedPtr<TArray<TRnRef_T<URnSideWalk>>> SideWalks;
+    TArray<TRnRef_T<URnSideWalk>> SideWalks;
 
     URnModel();
 
@@ -74,13 +74,13 @@ public:
     void RemoveSideWalk(const TRnRef_T<URnSideWalk>& SideWalk);
 
     // 道路を取得
-    TArray<TRnRef_T<URnRoad>> GetRoads() const;
+    const TArray<TRnRef_T<URnRoad>>& GetRoads() const;
 
     // 交差点を取得
-    TArray<TRnRef_T<URnIntersection>> GetIntersections() const;
+    const TArray<TRnRef_T<URnIntersection>>& GetIntersections() const;
 
     // 歩道を取得
-    TArray<TRnRef_T<URnSideWalk>> GetSideWalks() const;
+    const TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() const;
 
     // 指定したCityObjectGroupを含む道路を取得
     TRnRef_T<URnRoad> GetRoadBy(UPLATEAUCityObjectGroup* TargetTran) const;

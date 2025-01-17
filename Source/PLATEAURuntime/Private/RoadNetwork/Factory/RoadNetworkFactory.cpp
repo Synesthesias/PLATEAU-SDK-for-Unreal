@@ -182,7 +182,7 @@ namespace
         {
             for (auto& Ls : PointLineStringCache) {
                 bool IsReverse;
-                if (IsEqual(*Ls->Points, Vertices, IsReverse)) 
+                if (IsEqual(Ls->GetPoints(), Vertices, IsReverse)) 
                 {
                     IsCached = true;
                     return RnNew<URnWay>(Ls, IsReverse);

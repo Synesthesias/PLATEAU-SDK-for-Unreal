@@ -120,7 +120,7 @@ void URnLane::BuildCenterWay() {
     for (int32 i = 0; i < LeftWay->Count(); ++i) {
         auto NewPoint = RnNew<URnPoint>();
         NewPoint->Vertex = (LeftWay->GetPoint(i)->Vertex + RightWay->GetPoint(i)->Vertex) * 0.5f;
-        NewCenterWay->LineString->Points->Add(NewPoint);
+        NewCenterWay->LineString->GetPoints().Add(NewPoint);
     }
 
     CenterWay = NewCenterWay;

@@ -23,15 +23,6 @@ public:
     URnRoadBase();
     virtual ~URnRoadBase() = default;
 
-    // 自分が所属するRoadNetworkModel
-    TRnRef_T<URnModel> ParentModel;
-
-    // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
-    TSharedPtr<TArray<UPLATEAUCityObjectGroup*>> TargetTrans;
-
-    // 歩道情報
-    TSharedPtr<TArray<TRnRef_T<URnSideWalk>>> SideWalks;
-
     // 歩道sideWalkを追加する
     // sideWalkの親情報も書き換える
     void AddSideWalk(const TRnRef_T<URnSideWalk>& SideWalk);
@@ -75,7 +66,14 @@ public:
     TSet<TRnRef_T<URnLineString>> GetAllLineStringsDistinct() const;
 
     // 歩道を取得
-    const TSharedPtr<TArray<TRnRef_T<URnSideWalk>>>& GetSideWalks() const { return SideWalks; }
+    const TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() const { return SideWalks; }
+    TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() { return SideWalks; }
+
+    const TArray<UPLATEAUCityObjectGroup*>& GetTargetTrans() const { return TargetTrans; }
+    TArray<UPLATEAUCityObjectGroup*>& GetTargetTrans() { return TargetTrans; }
+
+    TRnRef_T<URnModel> GetParentModel() const { return ParentModel; }
+    void SetParentModel(const TRnRef_T<URnModel>& InParentModel) { ParentModel = InParentModel; }
 
     // 指定した方向の境界線を取得する
     virtual TRnRef_T<URnWay> GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const { return nullptr; }
@@ -112,4 +110,16 @@ public:
     {
         return nullptr;
     }
+
+private:
+
+    // 自分が所属するRoadNetworkModel
+    TRnRef_T<URnModel> ParentModel;
+
+    // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
+    TArray<UPLATEAUCityObjectGroup*> TargetTrans;
+
+    // 歩道情報
+    TArray<TRnRef_T<URnSideWalk>> SideWalks;
+
 };

@@ -90,13 +90,13 @@ void URnSideWalk::TryAlign() {
 
         if (StartEdgeWay && StartEdgeWay->IsValid()) {
             auto St = Way->GetPoint(0);
-            if (StartEdgeWay->LineString->Points->ContainsByPredicate(
+            if (StartEdgeWay->LineString->GetPoints().ContainsByPredicate(
                 [&St](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(St); })) {
                 return;
             }
 
             auto En = Way->GetPoint(-1);
-            if (StartEdgeWay->LineString->Points->ContainsByPredicate(
+            if (StartEdgeWay->LineString->GetPoints().ContainsByPredicate(
                 [&En](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(En); })) {
                 Way->Reverse(true);
                 return;
@@ -105,13 +105,13 @@ void URnSideWalk::TryAlign() {
 
         if (EndEdgeWay && EndEdgeWay->IsValid()) {
             auto En = Way->GetPoint(-1);
-            if (EndEdgeWay->LineString->Points->ContainsByPredicate(
+            if (EndEdgeWay->LineString->GetPoints().ContainsByPredicate(
                 [&En](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(En); })) {
                 return;
             }
 
             auto St = Way->GetPoint(0);
-            if (EndEdgeWay->LineString->Points->ContainsByPredicate(
+            if (EndEdgeWay->LineString->GetPoints().ContainsByPredicate(
                 [&St](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(St); })) {
                 Way->Reverse(true);
                 return;

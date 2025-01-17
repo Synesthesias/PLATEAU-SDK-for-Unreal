@@ -24,9 +24,9 @@ TRnRef_T<URnLineString> FRnEx::CreateInnerLerpLineString(
     float PointSkipDistance) {
     // 左右がどちらも直線もしくは点以下の場合 -> start/endを直接つなぐ
     if (LeftVertices.Num() <= 2 && RightVertices.Num() <= 2) {
-        auto Points = MakeShared<TArray<TRnRef_T<URnPoint>>>();
-        Points->Add(Start);
-        Points->Add(End);
+        auto Points = TArray<TRnRef_T<URnPoint>>();
+        Points.Add(Start);
+        Points.Add(End);
         return RnNew<URnLineString>(Points);
     }
 
@@ -50,7 +50,7 @@ TRnRef_T<URnLineString> FRnEx::CreateInnerLerpLineString(
     // 自己交差があれば削除する
     auto Plane = URnModel::Plane;
     FGeoGraph2D::RemoveSelfCrossing<TRnRef_T<URnPoint>>(
-        *Line->Points,
+        Line->GetPoints(),
         [Plane](TRnRef_T<URnPoint> T) { return FAxisPlaneEx::GetTangent(T->Vertex, Plane); },
         [](TRnRef_T<URnPoint> P1, TRnRef_T<URnPoint> P2, TRnRef_T<URnPoint> P3, TRnRef_T<URnPoint> P4,
             const FVector2D& Inter, float F1, float F2) {

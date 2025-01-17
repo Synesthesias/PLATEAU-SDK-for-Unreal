@@ -23,7 +23,7 @@ public:
     TRnRef_T<URnIntersection> NextIntersection;
 
     // 道路リスト
-    TSharedPtr<TArray<TRnRef_T<URnRoad>>> Roads;
+    TArray<TRnRef_T<URnRoad>> Roads;
     URnRoadGroup() = default;
     URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
         TRnRef_T<URnIntersection> InNextIntersection,
@@ -88,7 +88,7 @@ public:
 private:
 
 
-    TSharedPtr<TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>> SplitLane(
+    TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
         std::optional<ERnDir> Dir,
         // #TODO : nullptr入れられるのか確認

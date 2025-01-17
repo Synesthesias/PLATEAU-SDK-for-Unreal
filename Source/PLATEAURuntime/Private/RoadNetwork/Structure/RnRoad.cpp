@@ -9,7 +9,6 @@
 
 URnRoad::URnRoad()
 {
-    MainLanes = MakeShared<TArray<TRnRef_T<URnLane>>>();
 }
 
 URnRoad::URnRoad(UPLATEAUCityObjectGroup* TargetTran)
@@ -22,28 +21,28 @@ URnRoad::URnRoad(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans)
 
 void URnRoad::Init(UPLATEAUCityObjectGroup* TargetTran)
 {
-    MainLanes = MakeShared<TArray<TRnRef_T<URnLane>>>();
+    MainLanes.Reset();
     if (TargetTran) {
-        TargetTrans->Add(TargetTran);
+        GetTargetTrans().Add(TargetTran);
     }
 }
 
 void URnRoad::Init(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans)
 {
-    MainLanes = MakeShared<TArray<TRnRef_T<URnLane>>>();
+    MainLanes.Reset();
     for (auto* Trans : InTargetTrans) {
         if (Trans) {
-            TargetTrans->Add(Trans);
+            GetTargetTrans().Add(Trans);
         }
     }
 }
 
-TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanes() const {
-    return *MainLanes;
+const TArray<TRnRef_T<URnLane>>& URnRoad::GetAllLanes() const {
+    return MainLanes;
 }
 
 TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const {
-    TArray<TRnRef_T<URnLane>> Lanes = *MainLanes;
+    TArray<TRnRef_T<URnLane>> Lanes = MainLanes;
     if (MedianLane) {
         Lanes.Add(MedianLane);
     }
@@ -51,15 +50,15 @@ TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const {
 }
 
 bool URnRoad::IsValid() const {
-    return MainLanes->Num() > 0;
+    return MainLanes.Num() > 0;
 }
 
 bool URnRoad::IsAllBothConnectedLane() const {
-    return std::all_of(MainLanes->begin(), MainLanes->end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsBothConnectedLane(); });
+    return std::all_of(MainLanes.begin(), MainLanes.end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsBothConnectedLane(); });
 }
 
 bool URnRoad::IsAllLaneValid() const {
-    return std::all_of(MainLanes->begin(), MainLanes->end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsValidWay(); });
+    return std::all_of(MainLanes.begin(), MainLanes.end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsValidWay(); });
 }
 
 bool URnRoad::HasBothLane() const {
@@ -67,7 +66,7 @@ bool URnRoad::HasBothLane() const {
 }
 
 bool URnRoad::IsEmptyRoad() const {
-    return std::all_of(MainLanes->begin(), MainLanes->end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsEmptyLane(); });
+    return std::all_of(MainLanes.begin(), MainLanes.end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsEmptyLane(); });
 }
 
 TArray<TRnRef_T<URnLane>> URnRoad::GetLanes(ERnDir Dir) const {
@@ -101,11 +100,11 @@ TArray<TRnRef_T<URnWay>> URnRoad::GetBorders() const
 }
 
 TArray<TRnRef_T<URnLane>> URnRoad::GetLeftLanes() const {
-    return MainLanes->FilterByPredicate([this](const TRnRef_T<URnLane>& Lane) { return IsLeftLane(Lane); });
+    return MainLanes.FilterByPredicate([this](const TRnRef_T<URnLane>& Lane) { return IsLeftLane(Lane); });
 }
 
 TArray<TRnRef_T<URnLane>> URnRoad::GetRightLanes() const {
-    return MainLanes->FilterByPredicate([this](const TRnRef_T<URnLane>& Lane) { return IsRightLane(Lane); });
+    return MainLanes.FilterByPredicate([this](const TRnRef_T<URnLane>& Lane) { return IsRightLane(Lane); });
 }
 
 int32 URnRoad::GetLeftLaneCount() const {
@@ -136,6 +135,14 @@ TArray<TRnRef_T<URnRoadBase>> URnRoad::GetNeighborRoads() const {
     if (Prev) Roads.Add(Prev);
     if (Next) Roads.Add(Next);
     return Roads;
+}
+
+void URnRoad::AddMainLane(TRnRef_T<URnLane> Lane)
+{
+    if (MainLanes.Contains(Lane))
+        return;
+    OnAddLane(Lane);
+    MainLanes.Add(Lane);
 }
 
 TRnRef_T<URnWay> URnRoad::GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const {
@@ -186,7 +193,7 @@ bool URnRoad::TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& Lin
     if (!TryGetMergedSideWay(std::nullopt, LeftWay, RightWay)) return false;
 
     float MinDistance = MAX_FLT;
-    for (int32 i = 0; i < LineString->Points->Num(); ++i) {
+    for (int32 i = 0; i < LineString->Count(); ++i) {
         FVector Point = LineString->GetPoint(i)->Vertex;
         FVector Nearest;
         float PointIndex, Distance;
@@ -234,23 +241,23 @@ TRnRef_T<URnWay> URnRoad::GetBorderWay(const TRnRef_T<URnLane>& Lane, ERnLaneBor
 
 void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, ERnDir Dir) {
     auto OldLanes = GetLanes(Dir);
-    MainLanes = MakeShared<TArray<TRnRef_T<URnLane>>>();
+    MainLanes.Reset();
 
     for (const auto& Lane : GetLanes( FRnDirEx::GetOpposite(Dir))) {
-        MainLanes->Add(Lane);
+        MainLanes.Add(Lane);
     }
 
     for (const auto& Lane : NewLanes) {
         Lane->Parent = TRnRef_T<URnRoad>(this);
-        MainLanes->Add(Lane);
+        MainLanes.Add(Lane);
     }
 }
 
 void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes) {
-    MainLanes = MakeShared<TArray<TRnRef_T<URnLane>>>();
+    MainLanes.Reset();
     for (const auto& Lane : NewLanes) {
         Lane->Parent = TRnRef_T<URnRoad>(this);
-        MainLanes->Add(Lane);
+        MainLanes.Add(Lane);
     }
 }
 
@@ -295,8 +302,8 @@ void URnRoad::UnLink(const TRnRef_T<URnRoadBase>& Other) {
 
 void URnRoad::DisConnect(bool RemoveFromModel) {
     Super::DisConnect(RemoveFromModel);
-    if (RemoveFromModel && ParentModel) {
-        ParentModel->RemoveRoad(TRnRef_T<URnRoad>(this));
+    if (RemoveFromModel && GetParentModel()) {
+        GetParentModel()->RemoveRoad(TRnRef_T<URnRoad>(this));
     }
     if (Prev) Prev->UnLink(TRnRef_T<URnRoadBase>(this));
     if (Next) Next->UnLink(TRnRef_T<URnRoadBase>(this));

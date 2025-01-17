@@ -7,16 +7,14 @@
 #include "RoadNetwork/Util/Vector2DEx.h"
 
 URnLineString::URnLineString() {
-    Points = MakeShared<TArray<TRnRef_T<URnPoint>>>();
 }
 
 URnLineString::URnLineString(int32 InitialSize)
 {
-    Points = TSharedPtr<TArray<TRnRef_T<URnPoint>>>();
-    Points->SetNum(InitialSize);
+    Points.SetNum(InitialSize);
 }
 
-URnLineString::URnLineString(const TSharedPtr<TArray<TRnRef_T<URnPoint>>>& InPoints)
+URnLineString::URnLineString(const TArray<TRnRef_T<URnPoint>>& InPoints)
 {
     Points = InPoints;
 }
@@ -28,33 +26,32 @@ void URnLineString::Init()
 
 void URnLineString::Init(int32 InitialSize)
 {
-    Points = MakeShared<TArray<TRnRef_T<URnPoint>>>();
-    Points->SetNum(InitialSize);
+    Points.SetNum(InitialSize);
 }
 
-void URnLineString::Init(const TSharedPtr<TArray<TRnRef_T<URnPoint>>>& InPoints)
+void URnLineString::Init(const TArray<TRnRef_T<URnPoint>>& InPoints)
 {
     Points = InPoints;
 }
 
 
 int32 URnLineString::Count() const
-{ return Points->Num(); }
+{ return Points.Num(); }
 
 bool URnLineString::IsValid() const
-{ return Points->Num() >= 2; }
+{ return Points.Num() >= 2; }
 
 void URnLineString::AddPointOrSkip(TRnRef_T<URnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
     if (!Point) 
         return;
 
-    if (Points->Num() > 0) {
+    if (Points.Num() > 0) {
         const float SqrDistanceThreshold = DistanceEpsilon < 0.0f ? -1.0f : DistanceEpsilon * DistanceEpsilon;
-        if (URnPoint::Equals(Points->Last(), Point, SqrDistanceThreshold))
+        if (URnPoint::Equals(Points.Last(), Point, SqrDistanceThreshold))
             return;
     }
 
-    Points->Add(Point);
+    Points.Add(Point);
 }
 
 FVector URnLineString::GetEdgeNormal(int32 StartVertexIndex) const {
@@ -67,8 +64,8 @@ TRnRef_T<URnLineString> URnLineString::Clone(bool CloneVertex) const {
     auto NewLineString = RnNew<URnLineString>();
 
     if (CloneVertex) {
-        for (const TRnRef_T<URnPoint> Point : *Points) {
-            NewLineString->Points->Add(Point->Clone());
+        for (const TRnRef_T<URnPoint> Point : Points) {
+            NewLineString->Points.Add(Point->Clone());
         }
     }
     else {
@@ -82,8 +79,8 @@ float URnLineString::CalcLength() const {
     if (!IsValid()) return 0.0f;
 
     float Length = 0.0f;
-    for (int32 i = 0; i < Points->Num() - 1; ++i) {
-        Length += ((*Points)[i + 1]->Vertex - (*Points)[i]->Vertex).Size();
+    for (int32 i = 0; i < Points.Num() - 1; ++i) {
+        Length += ((Points)[i + 1]->Vertex - (Points)[i]->Vertex).Size();
     }
     return Length;
 }
@@ -104,7 +101,7 @@ TArray<TRnRef_T<URnLineString>> URnLineString::Split(int32 Num, bool InsertNewPo
     float CurrentLength = 0.0f;
     int32 CurrentIndex = 0;
 
-    for (int32 i = 0; i < Points->Num() - 1; i++) {
+    for (int32 i = 0; i < Points.Num() - 1; i++) {
         const float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
         const float NextLength = CurrentLength + SegmentLength;
 
@@ -114,7 +111,7 @@ TArray<TRnRef_T<URnLineString>> URnLineString::Split(int32 Num, bool InsertNewPo
             float T = (Rates[CurrentIndex] * TotalLength - CurrentLength) / SegmentLength;
             if (InsertNewPoint) {
                 auto p = RnNew<URnPoint>(FMath::Lerp(GetVertex(i), GetVertex(i+1), T));
-                Points->Insert(p, i + 1);
+                Points.Insert(p, i + 1);
                 i++;
             }
             SplitIndices.Add(i);
@@ -123,12 +120,12 @@ TArray<TRnRef_T<URnLineString>> URnLineString::Split(int32 Num, bool InsertNewPo
         CurrentLength = NextLength;
     }
 
-    SplitIndices.Add(Points->Num() - 1);
+    SplitIndices.Add(Points.Num() - 1);
     int32 StartIndex = 0;
     for (const int32 EndIndex : SplitIndices) {
-        auto SplitPoints =  MakeShared<TArray<TRnRef_T<URnPoint>>>();
+        auto SplitPoints = TArray<TRnRef_T<URnPoint>>();
         for (int32 i = StartIndex; i <= EndIndex; i++) {
-            SplitPoints->Add(GetPoint(i));
+            SplitPoints.Add(GetPoint(i));
         }
         Result.Add(RnNew<URnLineString>(SplitPoints));
         StartIndex = EndIndex;
@@ -146,12 +143,12 @@ TArray<TRnRef_T<URnLineString>> URnLineString::SplitByIndex(const TArray<int32>&
 
     int32 StartIndex = 0;
     for (int32 EndIndex : SortedIndices) {
-        auto SplitPoints = MakeShared<TArray< TRnRef_T<URnPoint>>>();
+        auto SplitPoints = TArray< TRnRef_T<URnPoint>>();
         for (int32 i = StartIndex; i <= EndIndex; ++i) {
-            SplitPoints->Add(GetPoint(i));
+            SplitPoints.Add(GetPoint(i));
         }
 
-        if (SplitPoints->Num() >= 2) {
+        if (SplitPoints.Num() >= 2) {
             TRnRef_T<URnLineString> Split = RnNew<URnLineString>(SplitPoints);
             Result.Add(Split);
         }
@@ -163,20 +160,20 @@ TArray<TRnRef_T<URnLineString>> URnLineString::SplitByIndex(const TArray<int32>&
 
 void URnLineString::AddFrontPoint(TRnRef_T<URnPoint> Point) {
     if (Point) {
-        Points->Insert(Point, 0);
+        Points.Insert(Point, 0);
     }
 }
 void URnLineString::AddPointFrontOrSkip(TRnRef_T<URnPoint> Point, float DistanceEpsilon, float DegEpsilon, float MidPointTolerance) {
     if (!Point) return;
 
-    if (Points->Num() > 0) {
+    if (Points.Num() > 0) {
         const float SqrDistanceThreshold = DistanceEpsilon < 0.0f ? -1.0f : DistanceEpsilon * DistanceEpsilon;
         if (URnPoint::Equals(GetPoint(0), Point, SqrDistanceThreshold)) {
             return;
         }
     }
 
-    Points->Insert(Point, 0);
+    Points.Insert(Point, 0);
 }
 
 float URnLineString::CalcLength(float StartIndex, float EndIndex) const {
@@ -186,7 +183,7 @@ float URnLineString::CalcLength(float StartIndex, float EndIndex) const {
     const int32 EndIdx = FMath::CeilToInt(EndIndex);
 
     float Length = 0.0f;
-    for (int32 i = StartIdx; i < EndIdx && i < Points->Num() - 1; ++i) {
+    for (int32 i = StartIdx; i < EndIdx && i < Points.Num() - 1; ++i) {
         Length += (GetVertex(i + 1) - GetVertex(i)).Size();
     }
 
@@ -194,11 +191,11 @@ float URnLineString::CalcLength(float StartIndex, float EndIndex) const {
 }
 
 float URnLineString::CalcTotalAngle2D() const {
-    if (Points->Num() < 3) return 0.0f;
+    if (Points.Num() < 3) return 0.0f;
 
     float TotalAngle = 0.0f;
     std::optional<FVector2D> Last = std::nullopt;
-    const auto Edges = FGeoGraphEx::GetEdges(*Points, false);
+    const auto Edges = FGeoGraphEx::GetEdges(Points, false);
     for (auto It = Edges.begin(); It != Edges.end(); ++It)
     {
         const auto e = *It;
@@ -215,7 +212,7 @@ float URnLineString::CalcTotalAngle2D() const {
 TArray<FLineSegment2D> URnLineString::GetEdges2D(EAxisPlane axis) const
 {
     TArray<FLineSegment2D> Ret;
-    const auto Edges = FGeoGraphEx::GetEdges(*Points, false);
+    const auto Edges = FGeoGraphEx::GetEdges(Points, false);
     for (auto It = Edges.begin(); It != Edges.end(); ++It) 
     {
         const auto e = *It;
@@ -228,7 +225,7 @@ TArray<FLineSegment2D> URnLineString::GetEdges2D(EAxisPlane axis) const
 TArray<FLineSegment3D> URnLineString::GetEdges() const
 {
     TArray<FLineSegment3D> Ret;
-    const auto Edges = FGeoGraphEx::GetEdges(*Points, false);
+    const auto Edges = FGeoGraphEx::GetEdges(Points, false);
     for (auto It = Edges.begin(); It != Edges.end(); ++It) {
         const auto e = *It;
         Ret.Add(FLineSegment3D(e.P0->Vertex, e.P0->Vertex));
@@ -237,14 +234,14 @@ TArray<FLineSegment3D> URnLineString::GetEdges() const
 }
 
 bool URnLineString::Contains(TRnRef_T<URnPoint> Point) const {
-    return Points->Contains(Point);
+    return Points.Contains(Point);
 }
 
 void URnLineString::GetNearestPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const {
     OutDistance = MAX_FLT;
     OutPointIndex = 0;
 
-    for (int32 i = 0; i < Points->Num() - 1; ++i) {
+    for (int32 i = 0; i < Points.Num() - 1; ++i) {
         const FVector Start = GetVertex(i);
         const FVector End = GetVertex(i+1);
         const FVector ProjectedPoint = FMath::ClosestPointOnSegment(Pos, Start, End);
@@ -275,7 +272,7 @@ float URnLineString::GetDistance2D(const TRnRef_T<URnLineString> Other, EAxisPla
 }
 
 FVector URnLineString::GetVertexNormal(int32 VertexIndex) const {
-    if (Points->Num() <= 1) return FVector::ZeroVector;
+    if (Points.Num() <= 1) return FVector::ZeroVector;
 
     FVector Normal = FVector::ZeroVector;
     int32 Count = 0;
@@ -285,7 +282,7 @@ FVector URnLineString::GetVertexNormal(int32 VertexIndex) const {
         Count++;
     }
 
-    if (VertexIndex < Points->Num() - 1) {
+    if (VertexIndex < Points.Num() - 1) {
         Normal += GetEdgeNormal(VertexIndex);
         Count++;
     }
@@ -295,9 +292,9 @@ FVector URnLineString::GetVertexNormal(int32 VertexIndex) const {
 
 int32 URnLineString::ReplacePoint(TRnRef_T<URnPoint> OldPoint, TRnRef_T<URnPoint> NewPoint) {
     int32 ReplaceCount = 0;
-    for (int32 i = 0; i < Points->Num(); i++) {
+    for (int32 i = 0; i < Points.Num(); i++) {
         if (GetPoint(i) == OldPoint) {
-            (*Points)[i] = NewPoint;
+            (Points)[i] = NewPoint;
             ReplaceCount++;
         }
     }
@@ -311,7 +308,7 @@ TRnRef_T<URnLineString> URnLineString::Create(const TArray<TRnRef_T<URnPoint>>& 
     if (!RemoveDuplicate) 
     {
         for (TRnRef_T<URnPoint> Point : Vertices) {
-            LineString->Points->Add(Point);
+            LineString->Points.Add(Point);
         }
         return LineString;
     }
@@ -337,9 +334,9 @@ TRnRef_T<URnLineString> URnLineString::Create(const TArray<FVector>& Vertices, b
 bool URnLineString::Equals(const TRnRef_T<URnLineString> X, const TRnRef_T<URnLineString> Y) {
     if (X == Y) return true;
     if (!X || !Y) return false;
-    if (X->Points->Num() != Y->Points->Num()) return false;
+    if (X->Points.Num() != Y->Points.Num()) return false;
 
-    for (int32 i = 0; i < X->Points->Num(); i++) {
+    for (int32 i = 0; i < X->Points.Num(); i++) {
         if (!URnPoint::Equals(X->GetPoint(i), Y->GetPoint(i))) {
             return false;
         }
@@ -349,7 +346,7 @@ bool URnLineString::Equals(const TRnRef_T<URnLineString> X, const TRnRef_T<URnLi
 }
 
 FVector URnLineString::operator[](int32 Index) const
-{ return (*Points)[Index]->Vertex; }
+{ return (Points)[Index]->Vertex; }
 
 FVector URnLineString::GetVertex(int32 Index) const
 {
@@ -358,12 +355,12 @@ FVector URnLineString::GetVertex(int32 Index) const
 
 TRnRef_T<URnPoint> URnLineString::GetPoint(int32 Index) const
 {
-    return (*Points)[Index];
+    return (Points)[Index];
 }
 
 void URnLineString::SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point)
 {
-    (*Points)[Index] = Point;
+    (Points)[Index] = Point;
 }
 
 FVector URnLineString::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
@@ -371,7 +368,7 @@ FVector URnLineString::GetAdvancedPointFromFront(float Offset, int32& OutStartIn
     OutStartIndex = 0;
     OutEndIndex = 0;
 
-    for (int32 i = 0; i < Points->Num() - 1; ++i) {
+    for (int32 i = 0; i < Points.Num() - 1; ++i) {
         float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
         if (CurrentLength + SegmentLength >= Offset) {
             OutStartIndex = i;
@@ -382,15 +379,15 @@ FVector URnLineString::GetAdvancedPointFromFront(float Offset, int32& OutStartIn
         CurrentLength += SegmentLength;
     }
 
-    return Points->Last()->Vertex;
+    return Points.Last()->Vertex;
 }
 
 FVector URnLineString::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
     float CurrentLength = 0.0f;
-    OutStartIndex = Points->Num() - 1;
-    OutEndIndex = Points->Num() - 1;
+    OutStartIndex = Points.Num() - 1;
+    OutEndIndex = Points.Num() - 1;
 
-    for (int32 i = Points->Num() - 1; i > 0; --i) {
+    for (int32 i = Points.Num() - 1; i > 0; --i) {
         float SegmentLength = (GetVertex(i) - GetVertex(i-1)).Size();
         if (CurrentLength + SegmentLength >= Offset) {
             OutStartIndex = i;

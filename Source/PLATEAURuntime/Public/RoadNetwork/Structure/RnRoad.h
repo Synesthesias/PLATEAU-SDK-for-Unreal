@@ -29,13 +29,13 @@ public:
     TRnRef_T<URnRoadBase> Prev;
 
     // レーンリスト
-    TSharedPtr<TArray<TRnRef_T<URnLane>>> MainLanes;
+    TArray<TRnRef_T<URnLane>> MainLanes;
 
     // 中央分離帯
     TRnRef_T<URnLane> MedianLane;
 
     // 全レーン
-    TArray<TRnRef_T<URnLane>> GetAllLanes() const;
+    const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
 
     // 中央分離帯を含めた全てのレーン
     TArray<TRnRef_T<URnLane>> GetAllLanesWithMedian() const;
@@ -100,13 +100,7 @@ public:
     /// laneを追加する. ParentRoad情報も更新する
     /// </summary>
     /// <param name="Lane"></param>
-    void AddMainLane(TRnRef_T<URnLane> Lane)
-    {
-        if (MainLanes->Contains(Lane))
-            return;
-        OnAddLane(Lane);
-        MainLanes->Add(Lane);
-    }
+    void AddMainLane(TRnRef_T<URnLane> Lane);
 
 
     // 指定した方向の境界線を取得する

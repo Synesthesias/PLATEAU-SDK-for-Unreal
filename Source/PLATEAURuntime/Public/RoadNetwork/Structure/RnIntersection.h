@@ -59,7 +59,7 @@ public:
     void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 
     // 交差点の外形情報
-    TSharedPtr<TArray<TRnRef_T<URnIntersectionEdge>>> Edges;
+    TArray<TRnRef_T<URnIntersectionEdge>> Edges;
 
     // 道路と道路の間に入れる空交差点かどうかの判定
     bool bIsEmptyIntersection;
@@ -68,7 +68,7 @@ public:
     TArray<TRnRef_T<URnIntersectionEdge>> GetNeighbors() const;
 
     // 輪郭のEdge取得
-    const TArray<TRnRef_T<URnIntersectionEdge>>& GetEdges() const { return *Edges; }
+    const TArray<TRnRef_T<URnIntersectionEdge>>& GetEdges() const { return Edges; }
 
     // 有効な交差点かどうか
     bool IsValid() const;

@@ -18,11 +18,23 @@ class URnLineString : public UObject
 public:
     URnLineString();
     URnLineString(int32 InitialSize);
-    URnLineString(const TSharedPtr<TArray<TRnRef_T<URnPoint>>>& InPoints);
+    URnLineString(const TArray<TRnRef_T<URnPoint>>& InPoints);
     void Init();
     void Init(int32 InitialSize);
-    void Init(const TSharedPtr<TArray<TRnRef_T<URnPoint>>>& InPoints);
-    TSharedPtr<TArray<TRnRef_T<URnPoint>>> Points;
+    void Init(const TArray<TRnRef_T<URnPoint>>& InPoints);
+
+    const TArray<TRnRef_T<URnPoint>>& GetPoints() const
+    {
+        return Points;    
+    }
+
+    TArray<TRnRef_T<URnPoint>>& GetPoints() {
+        return Points;
+    }
+
+    void SetPoints(const TArray<TRnRef_T<URnPoint>>& InPoints) {
+        Points = InPoints;
+    }
 
     int32 Count() const;
     bool IsValid() const;
@@ -72,4 +84,7 @@ public:
     TArray<TTuple<float, FVector>> GetIntersectionBy2D(
         const FLineSegment3D& LineSegment,
         EAxisPlane Plane) const;
+
+protected:
+    TArray<TRnRef_T<URnPoint>> Points;
 };
