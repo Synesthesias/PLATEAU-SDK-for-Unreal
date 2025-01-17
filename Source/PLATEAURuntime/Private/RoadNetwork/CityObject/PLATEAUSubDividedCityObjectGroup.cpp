@@ -55,8 +55,8 @@ void UPLATEAUSubDividedCityObjectGroup::DrawCityObjects() {
                             FRnDebugEx::DrawLine(V0, V1,
                                 FRnDebugEx::GetDebugColor(Index, MeshColorNum));
                         }
-                        Index++;
                     }
+                    Index++;
                 }
                 continue;
             }

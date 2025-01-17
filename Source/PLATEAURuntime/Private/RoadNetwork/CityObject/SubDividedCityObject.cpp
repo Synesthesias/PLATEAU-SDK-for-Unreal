@@ -1,5 +1,6 @@
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "RoadNetwork/Util/RnDebugEx.h"
 
 TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() const{
     TArray<FSubDividedCityObjectSubMesh> Result;
@@ -241,7 +242,7 @@ FSubDividedCityObject::FSubDividedCityObject(UPLATEAUCityObjectGroup* Co,
             }
             Mesh.SubMeshes.Add(SubMesh);
         }
-
+        Mesh.VertexReduction();
         Meshes.Add(Mesh);
     }
 

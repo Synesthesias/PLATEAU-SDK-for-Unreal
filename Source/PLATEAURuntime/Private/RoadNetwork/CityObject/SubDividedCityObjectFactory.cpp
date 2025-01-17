@@ -47,7 +47,6 @@ FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
             auto& Node = model->getRootNodeAt(i);
             auto SO = MakeShared<FSubDividedCityObject>(CityObjectGroup, Node, Loader.GetCityObjMap(), ERRoadTypeMask::Empty);
             Result->ConvertedCityObjects.Add(SO);
-            
         }
     }
 
