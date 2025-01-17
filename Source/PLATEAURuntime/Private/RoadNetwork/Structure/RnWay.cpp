@@ -2,72 +2,82 @@
 #include "Algo/Reverse.h"
 
 
-RnWay::RnWay()
+URnWay::URnWay()
     : IsReversed(false)
     , IsReverseNormal(false) {
 }
 
-RnWay::RnWay(const RnRef_t<RnLineString>& InLineString, bool bInIsReversed, bool bInIsReverseNormal)
-    : IsReversed(bInIsReversed)
-    , IsReverseNormal(bInIsReverseNormal)
-    , LineString(InLineString) {
+URnWay::URnWay(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed, bool bInIsReverseNormal)
+{
+    Init(InLineString, bInIsReversed, bInIsReverseNormal);
 }
 
-int32 RnWay::Count() const
+void URnWay::Init()
+{
+}
+
+void URnWay::Init(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed, bool bInIsReverseNormal)
+{
+    LineString = InLineString;
+    IsReversed = bInIsReversed;
+    IsReverseNormal = bInIsReverseNormal;
+}
+
+int32 URnWay::Count() const
 { return LineString ? LineString->Points->Num() : 0; }
 
-bool RnWay::IsValid() const
+bool URnWay::IsValid() const
 { return LineString ? LineString->IsValid() : false; }
 
-RnRef_t<RnPoint> RnWay::GetPoint(int32 Index) const {
+TRnRef_T<URnPoint> URnWay::GetPoint(int32 Index) const {
     int32 RawIndex = ToRawIndex(Index, true);
     return LineString->GetPoint(RawIndex);
 }
 
-RnRef_t<RnPoint> RnWay::SetPoint(int32 Index, const RnRef_t<RnPoint>& Point) {
+TRnRef_T<URnPoint> URnWay::SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point) {
     int32 RawIndex = ToRawIndex(Index, true);
     auto Ret = LineString->GetPoint(RawIndex);
     LineString->SetPoint(RawIndex, Point);
     return Ret;
 }
 
-FVector RnWay::GetVertex(int32 Index) const
+FVector URnWay::GetVertex(int32 Index) const
 {
     return GetPoint(Index)->Vertex;
 }
 
-FVector RnWay::operator[](int32 Index) const {
+FVector URnWay::operator[](int32 Index) const {
     return GetVertex(Index);
 }
 
-RnRef_t<RnWay> RnWay::ReversedWay() const {
-    return RnNew<RnWay>(LineString, !IsReversed, !IsReverseNormal);
+TRnRef_T<URnWay> URnWay::ReversedWay() const {
+    return RnNew<URnWay>(LineString, !IsReversed, !IsReverseNormal);
 }
 
-void RnWay::Reverse(bool KeepNormalDir) {
+void URnWay::Reverse(bool KeepNormalDir) {
     IsReversed = !IsReversed;
     if (KeepNormalDir) {
         IsReverseNormal = !IsReverseNormal;
     }
 }
 
-int32 RnWay::ToRawIndex(int32 Index, bool AllowMinus) const {
+int32 URnWay::ToRawIndex(int32 Index, bool AllowMinus) const {
     if (AllowMinus && Index < 0) {
         Index = Count() + Index;
     }
     return IsReversed ? Count() - 1 - Index : Index;
 }
 
-int32 RnWay::SwitchIndex(int32 Index) const {
+int32 URnWay::SwitchIndex(int32 Index) const {
     return IsReversed ? Count() - 1 - Index : Index;
 }
 
-float RnWay::SwitchIndex(float Index) const {
+float URnWay::SwitchIndex(float Index) const {
     return IsReversed ? Count() - 1 - Index : Index;
 }
 
 // Add implementations:
-TArray<FLineSegment2D> RnWay::GetEdges2D() const {
+TArray<FLineSegment2D> URnWay::GetEdges2D() const {
     TArray<FLineSegment2D> Edges;
     for (int32 i = 0; i < Count() - 1; i++) {
         Edges.Add(FLineSegment3D(GetPoint(i)->Vertex, GetPoint(i+1)->Vertex).To2D(FRnDef::Plane));
@@ -75,37 +85,37 @@ TArray<FLineSegment2D> RnWay::GetEdges2D() const {
     return Edges;
 }
 
-int32 RnWay::FindPoint(const RnRef_t<RnPoint>& Point) const {
-    return LineString->Points->IndexOfByPredicate([&](const RnRef_t<RnPoint>& P) { return P == Point; });
+int32 URnWay::FindPoint(const TRnRef_T<URnPoint>& Point) const {
+    return LineString->Points->IndexOfByPredicate([&](const TRnRef_T<URnPoint>& P) { return P == Point; });
 }
 
-int32 RnWay::FindPointIndex(const RnRef_t<RnPoint>& Point) const {
+int32 URnWay::FindPointIndex(const TRnRef_T<URnPoint>& Point) const {
     int32 Index = LineString->Points->IndexOfByKey(Point);
     return Index < 0 ? Index : SwitchIndex(Index);
 }
 
-void RnWay::GetNearestPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const {
+void URnWay::GetNearestPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const {
     OutNearest = FVector::ZeroVector;
     LineString->GetNearestPoint(Pos, OutNearest, OutPointIndex, OutDistance);
     OutPointIndex = SwitchIndex(OutPointIndex);
 }
 
-bool RnWay::IsValidOrDefault() const {
+bool URnWay::IsValidOrDefault() const {
     return IsValid();
 }
 
-float RnWay::CalcLength() const {
+float URnWay::CalcLength() const {
     return LineString ? LineString->CalcLength() : 0.0f;
 }
 
-float RnWay::CalcLength(float StartIndex, float EndIndex) const {
+float URnWay::CalcLength(float StartIndex, float EndIndex) const {
     if (IsReversed) {
         return LineString->CalcLength(SwitchIndex(EndIndex), SwitchIndex(StartIndex));
     }
     return LineString->CalcLength(StartIndex, EndIndex);
 }
 
-void RnWay::AppendBack2LineString(const RnRef_t<RnWay>& Back) {
+void URnWay::AppendBack2LineString(const TRnRef_T<URnWay>& Back) {
     if (!Back || Back->LineString == LineString) return;
 
     if (IsReversed) {
@@ -120,7 +130,7 @@ void RnWay::AppendBack2LineString(const RnRef_t<RnWay>& Back) {
     }
 }
 
-void RnWay::AppendFront2LineString(const RnRef_t<RnWay>& Front) {
+void URnWay::AppendFront2LineString(const TRnRef_T<URnWay>& Front) {
     if (!Front || Front->LineString == LineString) return;
 
     if (IsReversed) {
@@ -135,7 +145,7 @@ void RnWay::AppendFront2LineString(const RnRef_t<RnWay>& Front) {
     }
 }
 
-bool RnWay::IsOutSide(const FVector& V, FVector& OutNearest, float& OutDistance) const {
+bool URnWay::IsOutSide(const FVector& V, FVector& OutNearest, float& OutDistance) const {
     float PointIndex;
     GetNearestPoint(V, OutNearest, PointIndex, OutDistance);
 
@@ -154,7 +164,7 @@ bool RnWay::IsOutSide(const FVector& V, FVector& OutNearest, float& OutDistance)
     return false;
 }
 
-void RnWay::MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndOffset) {
+void URnWay::MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndOffset) {
     if (!IsValid()) return;
 
     if (Count() == 2) {
@@ -188,7 +198,7 @@ void RnWay::MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndOf
     }
 }
 
-FVector RnWay::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
+FVector URnWay::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
     if (IsReversed) {
         auto Result = LineString->GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex);
         OutStartIndex = SwitchIndex(OutStartIndex);
@@ -201,7 +211,7 @@ FVector RnWay::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int
     return Result;
 }
 
-FVector RnWay::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
+FVector URnWay::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
     if (IsReversed) {
         auto Result = LineString->GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
         OutStartIndex = SwitchIndex(OutStartIndex);
@@ -215,22 +225,22 @@ FVector RnWay::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int3
     return Result;
 }
 
-FVector RnWay::GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const {
+FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const {
     return Reverse ?
         GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex) :
         GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
 }
 
-FVector RnWay::GetAdvancedPoint(float Offset, bool Reverse) const {
+FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse) const {
     int32 StartIndex, EndIndex;
     return GetAdvancedPoint(Offset, Reverse, StartIndex, EndIndex);
 }
 
-float RnWay::GetDistance2D(const RnRef_t<RnWay>& Other, EAxisPlane Plane) const {
+float URnWay::GetDistance2D(const TRnRef_T<URnWay>& Other, EAxisPlane Plane) const {
     return LineString ? LineString->GetDistance2D(Other->LineString, Plane) : MAX_FLT;
 }
 
-FVector RnWay::GetEdgeNormal(int32 StartVertexIndex) const {
+FVector URnWay::GetEdgeNormal(int32 StartVertexIndex) const {
     int32 Index = ToRawIndex(StartVertexIndex);
     if (IsReversed) {
         Index -= 1;
@@ -242,7 +252,7 @@ FVector RnWay::GetEdgeNormal(int32 StartVertexIndex) const {
     return Normal;
 }
 
-FVector RnWay::GetVertexNormal(int32 VertexIndex) const {
+FVector URnWay::GetVertexNormal(int32 VertexIndex) const {
     if (Count() <= 1) {
         return FVector::ZeroVector;
     }
@@ -255,13 +265,13 @@ FVector RnWay::GetVertexNormal(int32 VertexIndex) const {
 }
 
 // Add implementations:
-FVector RnWay::GetLerpPoint(float P) const {
+FVector URnWay::GetLerpPoint(float P) const {
     FVector MidPoint;
     GetLerpPoint(P, MidPoint);
     return MidPoint;
 }
 
-float RnWay::GetLerpPoint(float P, FVector& OutMidPoint) const {
+float URnWay::GetLerpPoint(float P, FVector& OutMidPoint) const {
     float TotalLength = CalcLength();
     float TargetLength = TotalLength * P;
     float CurrentLength = 0.0f;
@@ -283,7 +293,7 @@ float RnWay::GetLerpPoint(float P, FVector& OutMidPoint) const {
     return static_cast<float>(Count() - 1);
 }
 
-void RnWay::MoveAlongNormal(float Offset) {
+void URnWay::MoveAlongNormal(float Offset) {
     if (!IsValid()) return;
 
     // Special handling for 2 vertices
@@ -324,23 +334,23 @@ void RnWay::MoveAlongNormal(float Offset) {
     }
 }
 
-void RnWay::Move(const FVector& Offset) {
+void URnWay::Move(const FVector& Offset) {
     for (int32 i = 0; i < Count(); ++i) {
         GetPoint(i)->Vertex += Offset;
     }
 }
 
-RnRef_t<RnWay> RnWay::Clone(bool CloneVertex) const
+TRnRef_T<URnWay> URnWay::Clone(bool CloneVertex) const
 {
-    return RnNew<RnWay>(LineString->Clone(CloneVertex), IsReversed, IsReverseNormal);
+    return RnNew<URnWay>(LineString->Clone(CloneVertex), IsReversed, IsReverseNormal);
 }
 
-bool RnWay::IsSameLineReference(const RnRef_t<RnWay>& Other) const {
+bool URnWay::IsSameLineReference(const TRnRef_T<URnWay>& Other) const {
     if (!Other) return false;
     return LineString == Other->LineString;
 }
 
-bool RnWay::IsSameLineSequence(const RnRef_t<RnWay>& Other) const {
+bool URnWay::IsSameLineSequence(const TRnRef_T<URnWay>& Other) const {
     if (!Other) return false;
     if (!LineString || !Other->LineString) return false;
     if (Count() != Other->Count()) return false;
@@ -357,13 +367,13 @@ bool RnWay::IsSameLineSequence(const RnRef_t<RnWay>& Other) const {
     return true;
 }
 
-TArray<RnRef_t<RnWay>> RnWay::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector)
+TArray<TRnRef_T<URnWay>> URnWay::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector)
 {
-    TArray<RnRef_t<RnWay>> Result;
+    TArray<TRnRef_T<URnWay>> Result;
     auto LineStrings = LineString->Split(Num, InsertNewPoint, RateSelector);
 
     for (auto& Ls : LineStrings) {
-        Result.Add(RnNew<RnWay>(Ls, IsReversed, IsReverseNormal));
+        Result.Add(RnNew<URnWay>(Ls, IsReversed, IsReverseNormal));
     }
     if(IsReversed)
         Algo::Reverse(Result);

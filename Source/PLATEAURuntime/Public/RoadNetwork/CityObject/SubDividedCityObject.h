@@ -9,8 +9,8 @@
 #include "RoadNetwork/RGraph/RGraphDef.h"
 #include "SubDividedCityObject.generated.h"
 class UPLATEAUCityObjectGroup;
-class RnLineString;
-class RnPoint;
+class URnLineString;
+class URnPoint;
 struct FAttributeDataHelper;
 
 USTRUCT(BlueprintType)

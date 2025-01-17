@@ -7,48 +7,48 @@
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
 
 class UPLATEAUCityObjectGroup;
-class RnIntersection;
-class RnLineString;
-class RnWay;
-class RnPoint;
-class RnLane;
+class URnIntersection;
+class URnLineString;
+class URnWay;
+class URnPoint;
+class URnLane;
 
 
 class FLineCrossPointResult {
 public:
     class FTargetLineInfo {
     public:
-        RnRef_t<RnLineString> LineString;
+        TRnRef_T<URnLineString> LineString;
         TArray<TTuple<float, FVector>> Intersections;
     };
 
-    TArray<RnRef_t<FTargetLineInfo>> TargetLines;
+    TArray<FTargetLineInfo> TargetLines;
     FLineSegment3D LineSegment;
 };
 
 struct FRnEx
 {
 public:
-    static TArray<RnRef_t<UPLATEAUCityObjectGroup>> GetSceneSelectedCityObjectGroups();
+    static TArray<TRnRef_T<UPLATEAUCityObjectGroup>> GetSceneSelectedCityObjectGroups();
 
     template<typename T>
     static void Replace(TArray<T>& Self, T Before, T After);
 
-    static void ReplaceLane(TArray<RnRef_t<RnLane>>& Self, RnRef_t<RnLane> Before, RnRef_t<RnLane> After);
+    static void ReplaceLane(TArray<TRnRef_T<URnLane>>& Self, TRnRef_T<URnLane> Before, TRnRef_T<URnLane> After);
 
-    static RnRef_t<RnLineString> CreateInnerLerpLineString(
+    static TRnRef_T<URnLineString> CreateInnerLerpLineString(
         const TArray<FVector>& LeftVertices,
         const TArray<FVector>& RightVertices,
-        RnRef_t<RnPoint> Start,
-        RnRef_t<RnPoint> End,
-        RnRef_t<RnWay> StartBorder,
-        RnRef_t<RnWay> EndBorder,
+        TRnRef_T<URnPoint> Start,
+        TRnRef_T<URnPoint> End,
+        TRnRef_T<URnWay> StartBorder,
+        TRnRef_T<URnWay> EndBorder,
         float T,
         float PointSkipDistance = 1e-3f);
 
-    static RnRef_t<FLineCrossPointResult> GetLineIntersections(
+    static FLineCrossPointResult GetLineIntersections(
         const FLineSegment3D& LineSegment,
-        const TArray<RnRef_t<RnWay>>& Ways);
+        const TArray<TRnRef_T<URnWay>>& Ways);
 
 
     template<typename T, typename U>

@@ -37,7 +37,7 @@ namespace
         FTran* Neighbor;
         TArray<TSharedPtr<UREdge>> Edges;
         TArray<RGraphRef_t<URVertex>> Vertices;
-        RnRef_t<RnWay> Way;
+        TRnRef_T<URnWay> Way;
         TSharedPtr<FTranLine> Next;
         TSharedPtr<FTranLine> Prev;
 
@@ -54,8 +54,8 @@ namespace
         RGraphRef_t<URFaceGroup> FaceGroup;
         TArray<RGraphRef_t<URVertex>> Vertices;
         TArray<TSharedPtr<FTranLine>> Lines;
-        RnRef_t<RnRoadBase> Node;
-        TArray<RnRef_t<RnLane>> Lanes;
+        TRnRef_T<URnRoadBase> Node;
+        TArray<TRnRef_T<URnLane>> Lanes;
 
         auto GetFaces() const
         {
@@ -101,7 +101,7 @@ namespace
         }
 
 
-        RnRef_t<RnRoadBase> CreateRoad();
+        TRnRef_T<URnRoadBase> CreateRoad();
 
         void Build()
         {
@@ -123,10 +123,10 @@ namespace
     class FWork {
     public:
         TMap<RGraphRef_t<URFaceGroup>, TSharedPtr<FTran>> TranMap;
-        TMap<RGraphRef_t<URVertex>, RnRef_t<RnPoint>> PointMap;
-        TMap<TArray<RGraphRef_t<URVertex>>, RnRef_t<RnLineString>> LineMap;
-        TArray<RnRef_t<RnLineString>> PointLineStringCache;
-        TMap<uint64, TArray<RnRef_t<RnLineString>>> RnPointList2LineStringMap;
+        TMap<RGraphRef_t<URVertex>, TRnRef_T<URnPoint>> PointMap;
+        TMap<TArray<RGraphRef_t<URVertex>>, TRnRef_T<URnLineString>> LineMap;
+        TArray<TRnRef_T<URnLineString>> PointLineStringCache;
+        TMap<uint64, TArray<TRnRef_T<URnLineString>>> RnPointList2LineStringMap;
         float TerminateAllowEdgeAngle = 20.0f;
         float TerminateSkipAngleDeg = 30.0f;
 
@@ -155,7 +155,7 @@ namespace
             return true;
         }
 
-        static bool IsEqual(const TArray<RnRef_t<RnPoint>>& A, const TArray<RnRef_t<RnPoint>>& B, bool& IsReverse) {
+        static bool IsEqual(const TArray<TRnRef_T<URnPoint>>& A, const TArray<TRnRef_T<URnPoint>>& B, bool& IsReverse) {
             if (A.Num() != B.Num()) {
                 return false;
             }
@@ -178,71 +178,71 @@ namespace
         }
 
 
-        RnRef_t<RnWay> CreateWay(const TArray<RnRef_t<RnPoint>>& Vertices, bool& IsCached)
+        TRnRef_T<URnWay> CreateWay(const TArray<TRnRef_T<URnPoint>>& Vertices, bool& IsCached)
         {
             for (auto& Ls : PointLineStringCache) {
                 bool IsReverse;
                 if (IsEqual(*Ls->Points, Vertices, IsReverse)) 
                 {
                     IsCached = true;
-                    return RnNew<RnWay>(Ls, IsReverse);
+                    return RnNew<URnWay>(Ls, IsReverse);
                 }
             }
-            auto LineString = RnLineString::Create(Vertices);
+            auto LineString = URnLineString::Create(Vertices);
             PointLineStringCache.Add(LineString);
-            return RnNew<RnWay>(LineString, false);
+            return RnNew<URnWay>(LineString, false);
         }
 
 
-        RnRef_t<RnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices, bool& IsCached)
+        TRnRef_T<URnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices, bool& IsCached)
         {
             for (auto& Pair : LineMap) 
             {
                 bool IsReverse;
                 if (IsEqual(Pair.Key, Vertices, IsReverse)) {
                     IsCached = true;
-                    return RnNew<RnWay>(Pair.Value, IsReverse) ;
+                    return RnNew<URnWay>(Pair.Value, IsReverse) ;
                 }
             }
 
-            TArray<RnRef_t<RnPoint>> Points;
+            TArray<TRnRef_T<URnPoint>> Points;
             for (const auto& Vertex : Vertices) {
                 auto Point = GetOrCreatePoint(Vertex);
                 Points.Add(Point);
             }
 
             auto Key = Vertices;
-            auto LineString = RnLineString::Create(Points);
+            auto LineString = URnLineString::Create(Points);
             LineMap.Add(Key, LineString);
 
-            return RnNew<RnWay>(LineString, false);
+            return RnNew<URnWay>(LineString, false);
         }
 
 
-        RnRef_t<RnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices) {
+        TRnRef_T<URnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices) {
             bool IsCached;
             return CreateWay(Vertices, IsCached);
         }
 
-        RnRef_t<RnPoint> GetOrCreatePoint(const RGraphRef_t<URVertex>& Vertex) {
+        TRnRef_T<URnPoint> GetOrCreatePoint(const RGraphRef_t<URVertex>& Vertex) {
             if (auto Found = PointMap.Find(Vertex)) {
                 return *Found;
             }
 
-            auto Point = RnNew<RnPoint>(Vertex->Position);
+            auto Point = RnNew<URnPoint>(Vertex->Position);
             PointMap.Add(Vertex, Point);
             return Point;
         }
 
 
-        TArray<RnRef_t<RnSideWalk>> CreateSideWalk(float minRoadSize, float lod1SideWalkSize)
+        TArray<TRnRef_T<URnSideWalk>> CreateSideWalk(float minRoadSize, float lod1SideWalkSize)
         {
-            TArray<RnRef_t<RnSideWalk>> ret;
+            TArray<TRnRef_T<URnSideWalk>> ret;
             return ret;
         }
     };
 
-    RnRef_t<RnRoadBase> FTran::CreateRoad()
+    TRnRef_T<URnRoadBase> FTran::CreateRoad()
     {
         auto CityObjectGroup = FaceGroup->CityObjectGroup;
         auto RoadType = GetRoadType();
@@ -254,7 +254,7 @@ namespace
                 return nullptr;
             }
             auto way = Work->CreateWay(Vertices);
-            return RnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
+            return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
         }
 
         // 行き止まり
@@ -262,7 +262,7 @@ namespace
         {
             // #TODO : RN
             auto way = Work->CreateWay(Vertices);
-            return RnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
+            return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
         }
         // #TODO : RN
         return nullptr;
@@ -277,7 +277,7 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor,
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
     if(DestActor->GetRootComponent() == nullptr)
@@ -297,9 +297,9 @@ RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFact
     return nullptr;
 }
 
-RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph)
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph)
 {
-    auto Model = RnNew<RnModel>();
+    auto Model = RnNew<URnModel>();
     try {
         // 道路/中央分離帯は一つのfaceGroupとしてまとめる
         auto&& mask = ~(ERRoadTypeMask::Road | ERRoadTypeMask::Median);
@@ -309,7 +309,7 @@ RnRef_t<RnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFact
             return M0 == M1;
             });
 
-        auto&& ret = RnRef_t<RnModel>();
+        auto&& ret = TRnRef_T<URnModel>();
         ret->FactoryVersion = Self.FactoryVersion;
 
         auto&& work = MakeShared<FWork>();

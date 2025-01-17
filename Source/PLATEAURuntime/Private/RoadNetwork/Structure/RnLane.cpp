@@ -1,86 +1,96 @@
 #include "RoadNetwork/Structure/RnLane.h"
 
-RnLane::RnLane()
+URnLane::URnLane()
     : IsReverse(false) {
 }
 
-RnLane::RnLane(const RnRef_t<RnWay>& InLeftWay, const RnRef_t<RnWay>& InRightWay,
-    const RnRef_t<RnWay>& InPrevBorder, const RnRef_t<RnWay>& InNextBorder)
-    : PrevBorder(InPrevBorder)
-    , NextBorder(InNextBorder)
-    , LeftWay(InLeftWay)
-    , RightWay(InRightWay)
-    , IsReverse(false) {
+URnLane::URnLane(const TRnRef_T<URnWay>& InLeftWay, const TRnRef_T<URnWay>& InRightWay,
+    const TRnRef_T<URnWay>& InPrevBorder, const TRnRef_T<URnWay>& InNextBorder)
+    : IsReverse(false) {
+    Init(InLeftWay, InRightWay, InPrevBorder, InNextBorder);
+
 }
 
-TArray<RnRef_t<RnWay>> RnLane::GetBothWays() const {
-    TArray<RnRef_t<RnWay>> Ways;
+void URnLane::Init()
+{}
+
+void URnLane::Init(const TRnRef_T<URnWay>& InLeftWay, const TRnRef_T<URnWay>& InRightWay,
+                   const TRnRef_T<URnWay>& InPrevBorder, const TRnRef_T<URnWay>& InNextBorder)
+{
+    this->LeftWay    = InLeftWay;
+    this->RightWay   = InRightWay;
+    this->PrevBorder = InPrevBorder;
+    this->NextBorder = InNextBorder;
+}
+
+TArray<TRnRef_T<URnWay>> URnLane::GetBothWays() const {
+    TArray<TRnRef_T<URnWay>> Ways;
     if (LeftWay) Ways.Add(LeftWay);
     if (RightWay) Ways.Add(RightWay);
     return Ways;
 }
 
-TArray<RnRef_t<RnWay>> RnLane::GetAllBorders() const {
-    TArray<RnRef_t<RnWay>> Borders;
+TArray<TRnRef_T<URnWay>> URnLane::GetAllBorders() const {
+    TArray<TRnRef_T<URnWay>> Borders;
     if (PrevBorder) Borders.Add(PrevBorder);
     if (NextBorder) Borders.Add(NextBorder);
     return Borders;
 }
 
-TArray<RnRef_t<RnWay>> RnLane::GetAllWays() const {
-    TArray<RnRef_t<RnWay>> Ways = GetBothWays();
+TArray<TRnRef_T<URnWay>> URnLane::GetAllWays() const {
+    TArray<TRnRef_T<URnWay>> Ways = GetBothWays();
     Ways.Append(GetAllBorders());
     return Ways;
 }
 
-bool RnLane::IsValidWay() const {
+bool URnLane::IsValidWay() const {
     return LeftWay && RightWay && LeftWay->IsValid() && RightWay->IsValid();
 }
 
-bool RnLane::IsBothConnectedLane() const {
+bool URnLane::IsBothConnectedLane() const {
     return PrevBorder && NextBorder;
 }
 
-bool RnLane::HasBothBorder() const {
+bool URnLane::HasBothBorder() const {
     return PrevBorder && NextBorder;
 }
 
-bool RnLane::IsEmptyLane() const {
+bool URnLane::IsEmptyLane() const {
     return !LeftWay && !RightWay && HasBothBorder();
 }
 
-bool RnLane::IsMedianLane() const {
-    return Parent ? Parent->IsMedianLane(RnRef_t<const RnLane>()) : false;
+bool URnLane::IsMedianLane() const {
+    return Parent ? Parent->IsMedianLane(TRnRef_T<const URnLane>()) : false;
 }
-ERnLaneBorderDir RnLane::GetBorderDir(ERnLaneBorderType Type) const {
+ERnLaneBorderDir URnLane::GetBorderDir(ERnLaneBorderType Type) const {
     return IsReverse ?
         (Type == ERnLaneBorderType::Prev ? ERnLaneBorderDir::Right2Left : ERnLaneBorderDir::Left2Right) :
         (Type == ERnLaneBorderType::Prev ? ERnLaneBorderDir::Left2Right : ERnLaneBorderDir::Right2Left);
 }
 
-RnRef_t<RnWay> RnLane::GetBorder(ERnLaneBorderType Type) const {
+TRnRef_T<URnWay> URnLane::GetBorder(ERnLaneBorderType Type) const {
     return Type == ERnLaneBorderType::Prev ? PrevBorder : NextBorder;
 }
 
-void RnLane::SetBorder(ERnLaneBorderType Type, const RnRef_t<RnWay>& Border) {
+void URnLane::SetBorder(ERnLaneBorderType Type, const TRnRef_T<URnWay>& Border) {
     if (Type == ERnLaneBorderType::Prev)
         PrevBorder = Border;
     else
         NextBorder = Border;
 }
 
-RnRef_t<RnWay> RnLane::GetSideWay(ERnDir Dir) const {
+TRnRef_T<URnWay> URnLane::GetSideWay(ERnDir Dir) const {
     return Dir == ERnDir::Left ? LeftWay : RightWay;
 }
 
-void RnLane::SetSideWay(ERnDir Dir, const RnRef_t<RnWay>& Way) {
+void URnLane::SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way) {
     if (Dir == ERnDir::Left)
         LeftWay = Way;
     else
         RightWay = Way;
 }
 
-float RnLane::CalcWidth() const {
+float URnLane::CalcWidth() const {
     if (!IsValidWay()) return 0.0f;
 
     float TotalWidth = 0.0f;
@@ -94,21 +104,21 @@ float RnLane::CalcWidth() const {
     return Count > 0 ? TotalWidth / Count : 0.0f;
 }
 
-void RnLane::Reverse() {
+void URnLane::Reverse() {
     IsReverse = !IsReverse;
     Swap(PrevBorder, NextBorder);
     if (LeftWay) LeftWay->Reverse(true);
     if (RightWay) RightWay->Reverse(true);
 }
 
-void RnLane::BuildCenterWay() {
+void URnLane::BuildCenterWay() {
     if (!IsValidWay()) return;
 
-    auto NewCenterWay = RnNew<RnWay>();
-    NewCenterWay->LineString = RnNew<RnLineString>();
+    auto NewCenterWay = RnNew<URnWay>();
+    NewCenterWay->LineString = RnNew<URnLineString>();
 
     for (int32 i = 0; i < LeftWay->Count(); ++i) {
-        auto NewPoint = RnNew<RnPoint>();
+        auto NewPoint = RnNew<URnPoint>();
         NewPoint->Vertex = (LeftWay->GetPoint(i)->Vertex + RightWay->GetPoint(i)->Vertex) * 0.5f;
         NewCenterWay->LineString->Points->Add(NewPoint);
     }
@@ -116,23 +126,23 @@ void RnLane::BuildCenterWay() {
     CenterWay = NewCenterWay;
 }
 
-RnRef_t<RnWay> RnLane::GetCenterWay() {
+TRnRef_T<URnWay> URnLane::GetCenterWay() {
     if (!CenterWay) BuildCenterWay();
     return CenterWay;
 }
 
-void RnLane::GetNearestCenterPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const {
+void URnLane::GetNearestCenterPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const {
     if (!CenterWay) {
-        const_cast<RnLane*>(this)->BuildCenterWay();
+        const_cast<URnLane*>(this)->BuildCenterWay();
     }
     CenterWay->GetNearestPoint(Pos, OutNearest, OutPointIndex, OutDistance);
 }
 
-float RnLane::GetCenterLength() const {
+float URnLane::GetCenterLength() const {
     return CenterWay ? CenterWay->CalcLength() : 0.0f;
 }
 
-float RnLane::GetCenterLength2D(EAxisPlane Plane) const {
+float URnLane::GetCenterLength2D(EAxisPlane Plane) const {
     if (!CenterWay) return 0.0f;
 
     float Length = 0.0f;
@@ -144,25 +154,25 @@ float RnLane::GetCenterLength2D(EAxisPlane Plane) const {
     return Length;
 }
 
-float RnLane::GetCenterTotalAngle2D() const {
+float URnLane::GetCenterTotalAngle2D() const {
     return CenterWay ? CenterWay->LineString->CalcTotalAngle2D() : 0.0f;
 }
 
-float RnLane::GetCenterCurvature2D() const {
+float URnLane::GetCenterCurvature2D() const {
     float Length = GetCenterLength2D();
     return Length > 0.0f ? GetCenterTotalAngle2D() / Length : 0.0f;
 }
 
-float RnLane::GetCenterRadius2D() const {
+float URnLane::GetCenterRadius2D() const {
     float Curvature = GetCenterCurvature2D();
     return Curvature > 0.0f ? 1.0f / Curvature : MAX_FLT;
 }
 
-float RnLane::GetCenterInverseRadius2D() const {
+float URnLane::GetCenterInverseRadius2D() const {
     return GetCenterCurvature2D();
 }
 
-float RnLane::GetDistanceFrom(const FVector& Point) const {
+float URnLane::GetDistanceFrom(const FVector& Point) const {
     if (!IsValidWay()) return MAX_FLT;
 
     FVector Nearest;
@@ -171,7 +181,7 @@ float RnLane::GetDistanceFrom(const FVector& Point) const {
     return Distance;
 }
 
-bool RnLane::IsInside(const FVector& Point) const {
+bool URnLane::IsInside(const FVector& Point) const {
     if (!IsValidWay()) return false;
 
     FVector Nearest;
@@ -180,8 +190,8 @@ bool RnLane::IsInside(const FVector& Point) const {
         !RightWay->IsOutSide(Point, Nearest, Distance);
 }
 
-RnRef_t<RnLane> RnLane::Clone() const {
-    auto NewLane = RnNew<RnLane>();
+TRnRef_T<URnLane> URnLane::Clone() const {
+    auto NewLane = RnNew<URnLane>();
     NewLane->LeftWay = LeftWay ? LeftWay->Clone(true) : nullptr;
     NewLane->RightWay = RightWay ? RightWay->Clone(true) : nullptr;
     NewLane->PrevBorder = PrevBorder ? PrevBorder->Clone(true) : nullptr;
@@ -191,14 +201,14 @@ RnRef_t<RnLane> RnLane::Clone() const {
     return NewLane;
 }
 
-RnRef_t<RnLane> RnLane::CreateOneWayLane(RnRef_t<RnWay> way)
+TRnRef_T<URnLane> URnLane::CreateOneWayLane(TRnRef_T<URnWay> way)
 {
-    return RnNew<RnLane>(way, nullptr, nullptr, nullptr);
+    return RnNew<URnLane>(way, nullptr, nullptr, nullptr);
 }
 
-RnRef_t<RnLane> RnLane::CreateEmptyLane(RnRef_t<RnWay> border, RnRef_t<RnWay> centerWay)
+TRnRef_T<URnLane> URnLane::CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URnWay> centerWay)
 {
-    auto ret = RnNew<RnLane>(nullptr, nullptr, border, border);
+    auto ret = RnNew<URnLane>(nullptr, nullptr, border, border);
     ret->CenterWay = centerWay;
     return ret;
 }

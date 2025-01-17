@@ -12,14 +12,14 @@
 #include "RoadNetworkFactory.generated.h"
 
 class UPLATEAUCityObjectGroup;
-class RnModel;
-class RnRoad;
-class RnIntersection;
-class RnSideWalk;
-class RnWay;
-class RnLineString;
-class RnLane;
-class RnPoint;
+class URnModel;
+class URnRoad;
+class URnIntersection;
+class URnSideWalk;
+class URnWay;
+class URnLineString;
+class URnLane;
+class URnPoint;
 
 
 USTRUCT(BlueprintType)
@@ -91,9 +91,9 @@ struct FRoadNetworkFactoryEx
 
     static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor);
 
-    static RnRef_t<RnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
+    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
-    static  RnRef_t<RnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph);
+    static  TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph);
 private:
     // 最小地物に分解する
     static void CreateSubDividedCityObjects(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor

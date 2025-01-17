@@ -8,7 +8,7 @@
 #include "RGraphFactory.generated.h"
 class FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
-class RnModel;
+class URnModel;
 class URGraph;
 
 USTRUCT(BlueprintType)

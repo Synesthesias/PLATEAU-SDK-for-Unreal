@@ -88,32 +88,32 @@ public:
 
 
 template<class T>
-struct RnRef
+struct TRnRef
 {
-    using Type = TSharedPtr<T>;
+    using Type = T*;
+
+    template<class... Args>
+    static Type New(Args&&... args) {
+        auto Ret = NewObject<T>();
+        Ret->Init(Forward<Args>(args)...);
+        return Ret;
+    }
 };
 
 // もしかしたらRn~はUObjectになるかもしれないので念のためラップしておく
 // Rn~のオブジェクトの参照を表す
 template<class T>
-using RnRef_t = typename RnRef<T>::Type;
-
+using TRnRef_T = typename TRnRef<T>::Type;
 
 // もしかしたらRn~はUObjectになるかもしれないので念のためラップしておく
 // Rn~のオブジェクトを生成する
 template<class T, class... TArgs>
-RnRef_t<T> RnNew(TArgs&&... Args)
+inline TRnRef_T<T> RnNew(TArgs&&... Args)
 {
-    return MakeShared<T>(std::forward<TArgs>(Args)...);
+    return TRnRef<T>::New(Forward<TArgs>(Args)...);
 }
 
-//// DynamicCastのラッパー
-//// #NOTE : RnRef_t<U>だとinfer substitutionに失敗するのでTSharedPtr<U>にしておく
-//template<class T, class U>
-//auto RnCast(TSharedPtr<U> In) -> RnRef_t<T> {
-//    return RnRef_t<T>(dynamic_cast<T*>(In.Get()));
-//}
-
+#define RN_REF(T) TObjectPtr<T>
 
 struct FRnPartsBase
 {

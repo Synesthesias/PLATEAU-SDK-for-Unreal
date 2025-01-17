@@ -3,26 +3,27 @@
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
 #include "../RnDef.h"
+#include "RnIntersection.generated.h"
 
-// Forward declarations
-class RnNeighbor;
-class RnWay;
-class RnPoint;
+class URnWay;
+class URnPoint;
 class UPLATEAUCityObjectGroup;
-class UTrafficSignalLightController;
-class RnRoadBase;
-class RnWay;
-class RnRoad;
+class URnRoadBase;
+class URnWay;
+class URnRoad;
 
-class RnNeighbor {
+UCLASS()
+class URnIntersectionEdge : public UObject
+{
+    GENERATED_BODY()
 public:
-    RnNeighbor();
-
+    URnIntersectionEdge();
+    void Init();
     // 接続先の道路
-    RnRef_t<RnRoadBase> Road;
+    TRnRef_T<URnRoadBase> Road;
 
     // 境界線
-    RnRef_t<RnWay> Border;
+    TRnRef_T<URnWay> Border;
 
     // 有効なNeighborかどうか
     bool IsValid() const;
@@ -36,115 +37,117 @@ public:
     bool IsMedianBorder() const;
 
     // 接続されているレーンを取得
-    TArray<RnRef_t<RnLane>> GetConnectedLanes() const;
+    TArray<TRnRef_T<URnLane>> GetConnectedLanes() const;
 
     // 指定した境界線に接続されているレーンを取得
-    RnRef_t<RnLane> GetConnectedLane(const RnRef_t<RnWay>& BorderWay) const;
+    TRnRef_T<URnLane> GetConnectedLane(const TRnRef_T<URnWay>& BorderWay) const;
 
 };
 
-class RnIntersection : public RnRoadBase {
+UCLASS()
+class URnIntersection : public URnRoadBase {
+    GENERATED_BODY()
 public:
-    using Super = RnRoadBase;
+    using Super = URnRoadBase;
 public:
-    RnIntersection();
-    explicit RnIntersection(UPLATEAUCityObjectGroup* TargetTran);
-    explicit RnIntersection(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    URnIntersection();
+    explicit URnIntersection(UPLATEAUCityObjectGroup* TargetTran);
+    explicit URnIntersection(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+
+    void Init(UPLATEAUCityObjectGroup* TargetTran);
+
+    void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 
     // 交差点の外形情報
-    TSharedPtr<TArray<RnRef_t<RnNeighbor>>> Edges;
-
-    // 信号制御器
-    UPROPERTY()
-    UTrafficSignalLightController* SignalController;
+    TSharedPtr<TArray<TRnRef_T<URnIntersectionEdge>>> Edges;
 
     // 道路と道路の間に入れる空交差点かどうかの判定
     bool bIsEmptyIntersection;
 
     // 他の道路との境界線Edge取得
-    TArray<RnRef_t<RnNeighbor>> GetNeighbors() const;
+    TArray<TRnRef_T<URnIntersectionEdge>> GetNeighbors() const;
 
     // 輪郭のEdge取得
-    const TArray<RnRef_t<RnNeighbor>>& GetEdges() const { return *Edges; }
+    const TArray<TRnRef_T<URnIntersectionEdge>>& GetEdges() const { return *Edges; }
 
     // 有効な交差点かどうか
     bool IsValid() const;
 
     // 指定したRoadに接続されているEdgeを取得
-    TArray<RnRef_t<RnNeighbor>> GetEdgesBy(const RnRef_t<RnRoadBase>& Road) const;
+    TArray<TRnRef_T<URnIntersectionEdge>> GetEdgesBy(const TRnRef_T<URnRoadBase>& Road) const;
 
     // 指定したRoadに接続されているEdgeを取得
-    RnRef_t<RnNeighbor> GetEdgeBy(const RnRef_t<RnRoadBase>& Road, const RnRef_t<RnWay>& Border) const;
+    TRnRef_T<URnIntersectionEdge> GetEdgeBy(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) const;
 
     // 指定したRoadに接続されているEdgeを取得
-    RnRef_t<RnNeighbor> GetEdgeBy(const RnRef_t<RnRoadBase>& Road, const RnRef_t<RnPoint>& Point) const;
+    TRnRef_T<URnIntersectionEdge> GetEdgeBy(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnPoint>& Point) const;
 
     // 指定したRoadに接続されているEdgeを取得
-    TArray<RnRef_t<RnNeighbor>> GetEdgesBy(const TFunction<bool(const RnRef_t<RnNeighbor>&)>& Predicate) const;
+    TArray<TRnRef_T<URnIntersectionEdge>> GetEdgesBy(const TFunction<bool(const TRnRef_T<URnIntersectionEdge>&)>& Predicate) const;
 
     // Road/Laneに接続しているEdgeを削除
-    void RemoveEdge(const RnRef_t<RnRoad>& Road, const RnRef_t<RnLane>& Lane);
+    void RemoveEdge(const TRnRef_T<URnRoad>& Road, const TRnRef_T<URnLane>& Lane);
 
     // 指定したRoadに接続されているEdgeを削除
-    void RemoveEdges(const RnRef_t<RnRoadBase>& Road);
+    void RemoveEdges(const TRnRef_T<URnRoadBase>& Road);
 
     // 指定したRoadに接続されているEdgeを削除
-    void RemoveEdges(const TFunction<bool(const RnRef_t<RnNeighbor>&)>& Predicate);
+    void RemoveEdges(const TFunction<bool(const TRnRef_T<URnIntersectionEdge>&)>& Predicate);
 
     // 指定したRoadに接続されているEdgeを置き換える
-    void ReplaceEdges(const RnRef_t<RnRoadBase>& Road, const TArray<RnRef_t<RnWay>>& NewBorders);
+    void ReplaceEdges(const TRnRef_T<URnRoadBase>& Road, const TArray<TRnRef_T<URnWay>>& NewBorders);
 
     // Edgeを追加
-    void AddEdge(const RnRef_t<RnRoadBase>& Road, const RnRef_t<RnWay>& Border);
+    void AddEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border);
 
     // 指定したRoadに接続されているかどうか
-    bool HasEdge(const RnRef_t<RnRoadBase>& Road) const;
+    bool HasEdge(const TRnRef_T<URnRoadBase>& Road) const;
 
     // 指定したRoadに接続されているかどうか
-    bool HasEdge(const RnRef_t<RnRoadBase>& Road, const RnRef_t<RnWay>& Border) const;
+    bool HasEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) const;
 
     // 隣接するRoadを取得
-    virtual TArray<RnRef_t<RnRoadBase>> GetNeighborRoads() const override;
+    virtual TArray<TRnRef_T<URnRoadBase>> GetNeighborRoads() const override;
 
     // 境界線情報を取得
-    virtual TArray<RnRef_t<RnWay>> GetBorders() const override;
+    virtual TArray<TRnRef_T<URnWay>> GetBorders() const override;
 
     // otherをつながりから削除する
-    virtual void UnLink(const RnRef_t<RnRoadBase>& Other) override;
+    virtual void UnLink(const TRnRef_T<URnRoadBase>& Other) override;
 
     // 自身の接続を切断する
     virtual void DisConnect(bool RemoveFromModel) override;
 
     // 隣接情報を置き換える
-    virtual void ReplaceNeighbor(const RnRef_t<RnRoadBase>& From, const RnRef_t<RnRoadBase>& To) override;
+    virtual void ReplaceNeighbor(const TRnRef_T<URnRoadBase>& From, const TRnRef_T<URnRoadBase>& To) override;
 
     // デバッグ用) その道路の中心を表す代表頂点を返す
     virtual FVector GetCentralVertex() const override;
 
     // 所属するすべてのWayを取得(重複の可能性あり)
-    virtual TArray<RnRef_t<RnWay>> GetAllWays() const override;
+    virtual TArray<TRnRef_T<URnWay>> GetAllWays() const override;
 
 
     // RnRoadへキャストする
-    virtual RnRef_t<RnRoad> CastToRoad() override {
-        return RnRef_t<RnRoad>(nullptr);
+    virtual TRnRef_T<URnRoad> CastToRoad() override {
+        return TRnRef_T<URnRoad>(nullptr);
     }
 
     // RnIntersectionへキャストする
-    virtual RnRef_t<RnIntersection> CastToIntersection() override {
-        return RnRef_t<RnIntersection>(this);
+    virtual TRnRef_T<URnIntersection> CastToIntersection() override {
+        return TRnRef_T<URnIntersection>(this);
     }
 
     // 交差点を作成する
-    static RnRef_t<RnIntersection> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
-    static RnRef_t<RnIntersection> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    static TRnRef_T<URnIntersection> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
+    static TRnRef_T<URnIntersection> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 private:
     // トラックを生成する
-    void BuildTracksImpl(const TSet<RnRef_t<RnLineString>>& Borders);
+    void BuildTracksImpl(const TSet<TRnRef_T<URnLineString>>& Borders);
 
     // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const RnRef_t<RnNeighbor>& From, const RnRef_t<RnNeighbor>& To);
+    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To);
 
     // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const RnRef_t<RnNeighbor>& From, const RnRef_t<RnNeighbor>& To, const TArray<FVector>& Points);
+    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To, const TArray<FVector>& Points);
 };

@@ -6,8 +6,8 @@
 #include "SubDividedCityObject.h"
 
 class UPLATEAUCityObjectGroup;
-class RnLineString;
-class RnPoint;
+class URnLineString;
+class URnPoint;
 class PLATEAURUNTIME_API FSubDividedCityObjectFactory 
 {
 public:

@@ -7,35 +7,38 @@
 #include "RoadNetwork/Util/Vector2DEx.h"
 #include "RoadNetwork/Util/VectorEx.h"
 
-RnSideWalk::RnSideWalk()
+URnSideWalk::URnSideWalk()
     : LaneType(ERnSideWalkLaneType::Undefined) {
 }
 
-TArray<RnRef_t<RnWay>> RnSideWalk::GetSideWays() const {
-    TArray<RnRef_t<RnWay>> Ways;
+void URnSideWalk::Init()
+{}
+
+TArray<TRnRef_T<URnWay>> URnSideWalk::GetSideWays() const {
+    TArray<TRnRef_T<URnWay>> Ways;
     if (OutsideWay) Ways.Add(OutsideWay);
     if (InsideWay) Ways.Add(InsideWay);
     return Ways;
 }
 
-TArray<RnRef_t<RnWay>> RnSideWalk::GetEdgeWays() const {
-    TArray<RnRef_t<RnWay>> Ways;
+TArray<TRnRef_T<URnWay>> URnSideWalk::GetEdgeWays() const {
+    TArray<TRnRef_T<URnWay>> Ways;
     if (StartEdgeWay) Ways.Add(StartEdgeWay);
     if (EndEdgeWay) Ways.Add(EndEdgeWay);
     return Ways;
 }
 
-TArray<RnRef_t<RnWay>> RnSideWalk::GetAllWays() const {
-    TArray<RnRef_t<RnWay>> Ways = GetSideWays();
+TArray<TRnRef_T<URnWay>> URnSideWalk::GetAllWays() const {
+    TArray<TRnRef_T<URnWay>> Ways = GetSideWays();
     Ways.Append(GetEdgeWays());
     return Ways;
 }
 
-bool RnSideWalk::IsValid() const {
+bool URnSideWalk::IsValid() const {
     return InsideWay && InsideWay->IsValid() && OutsideWay && OutsideWay->IsValid();
 }
 
-ERnSideWalkWayTypeMask RnSideWalk::GetValidWayTypeMask() const {
+ERnSideWalkWayTypeMask URnSideWalk::GetValidWayTypeMask() const {
     ERnSideWalkWayTypeMask Mask = ERnSideWalkWayTypeMask::None;
     if (OutsideWay) Mask |= ERnSideWalkWayTypeMask::Outside;
     if (InsideWay) Mask |= ERnSideWalkWayTypeMask::Inside;
@@ -44,57 +47,57 @@ ERnSideWalkWayTypeMask RnSideWalk::GetValidWayTypeMask() const {
     return Mask;
 }
 
-void RnSideWalk::SetParent(const RnRef_t<RnRoadBase>& Parent) {
+void URnSideWalk::SetParent(const TRnRef_T<URnRoadBase>& Parent) {
     ParentRoad = Parent;
 }
 
-void RnSideWalk::UnLinkFromParent() {
+void URnSideWalk::UnLinkFromParent() {
     if (ParentRoad) {
-        ParentRoad->RemoveSideWalk(RnRef_t<RnSideWalk>(this));
+        ParentRoad->RemoveSideWalk(TRnRef_T<URnSideWalk>(this));
     }
 }
 
-void RnSideWalk::SetSideWays(const RnRef_t<RnWay>& InOutsideWay, const RnRef_t<RnWay>& InInsideWay) {
+void URnSideWalk::SetSideWays(const TRnRef_T<URnWay>& InOutsideWay, const TRnRef_T<URnWay>& InInsideWay) {
     OutsideWay = InOutsideWay;
     InsideWay = InInsideWay;
     TryAlign();
 }
 
-void RnSideWalk::SetEdgeWays(const RnRef_t<RnWay>& StartWay, const RnRef_t<RnWay>& EndWay) {
+void URnSideWalk::SetEdgeWays(const TRnRef_T<URnWay>& StartWay, const TRnRef_T<URnWay>& EndWay) {
     StartEdgeWay = StartWay;
     EndEdgeWay = EndWay;
     TryAlign();
 }
 
-void RnSideWalk::SetStartEdgeWay(const RnRef_t<RnWay>& StartWay) {
+void URnSideWalk::SetStartEdgeWay(const TRnRef_T<URnWay>& StartWay) {
     StartEdgeWay = StartWay;
 }
 
-void RnSideWalk::SetEndEdgeWay(const RnRef_t<RnWay>& EndWay) {
+void URnSideWalk::SetEndEdgeWay(const TRnRef_T<URnWay>& EndWay) {
     EndEdgeWay = EndWay;
 }
 
-void RnSideWalk::ReverseLaneType() {
+void URnSideWalk::ReverseLaneType() {
     if (LaneType == ERnSideWalkLaneType::LeftLane)
         LaneType = ERnSideWalkLaneType::RightLane;
     else if (LaneType == ERnSideWalkLaneType::RightLane)
         LaneType = ERnSideWalkLaneType::LeftLane;
 }
 
-void RnSideWalk::TryAlign() {
-    auto AlignWay = [this](const RnRef_t<RnWay>& Way) {
+void URnSideWalk::TryAlign() {
+    auto AlignWay = [this](const TRnRef_T<URnWay>& Way) {
         if (!Way || !Way->IsValid()) return;
 
         if (StartEdgeWay && StartEdgeWay->IsValid()) {
             auto St = Way->GetPoint(0);
             if (StartEdgeWay->LineString->Points->ContainsByPredicate(
-                [&St](const RnRef_t<RnPoint>& P) { return P->IsSamePoint(St); })) {
+                [&St](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(St); })) {
                 return;
             }
 
             auto En = Way->GetPoint(-1);
             if (StartEdgeWay->LineString->Points->ContainsByPredicate(
-                [&En](const RnRef_t<RnPoint>& P) { return P->IsSamePoint(En); })) {
+                [&En](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(En); })) {
                 Way->Reverse(true);
                 return;
             }
@@ -103,13 +106,13 @@ void RnSideWalk::TryAlign() {
         if (EndEdgeWay && EndEdgeWay->IsValid()) {
             auto En = Way->GetPoint(-1);
             if (EndEdgeWay->LineString->Points->ContainsByPredicate(
-                [&En](const RnRef_t<RnPoint>& P) { return P->IsSamePoint(En); })) {
+                [&En](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(En); })) {
                 return;
             }
 
             auto St = Way->GetPoint(0);
             if (EndEdgeWay->LineString->Points->ContainsByPredicate(
-                [&St](const RnRef_t<RnPoint>& P) { return P->IsSamePoint(St); })) {
+                [&St](const TRnRef_T<URnPoint>& P) { return P->IsSamePoint(St); })) {
                 Way->Reverse(true);
                 return;
             }
@@ -120,14 +123,14 @@ void RnSideWalk::TryAlign() {
     AlignWay(OutsideWay);
 }
 
-RnRef_t<RnSideWalk> RnSideWalk::Create(
-    const RnRef_t<RnRoadBase>& Parent,
-    const RnRef_t<RnWay>& OutsideWay,
-    const RnRef_t<RnWay>& InsideWay,
-    const RnRef_t<RnWay>& StartEdgeWay,
-    const RnRef_t<RnWay>& EndEdgeWay,
+TRnRef_T<URnSideWalk> URnSideWalk::Create(
+    const TRnRef_T<URnRoadBase>& Parent,
+    const TRnRef_T<URnWay>& OutsideWay,
+    const TRnRef_T<URnWay>& InsideWay,
+    const TRnRef_T<URnWay>& StartEdgeWay,
+    const TRnRef_T<URnWay>& EndEdgeWay,
     ERnSideWalkLaneType LaneType) {
-    auto SideWalk = RnNew<RnSideWalk>();
+    auto SideWalk = RnNew<URnSideWalk>();
     SideWalk->ParentRoad = Parent;
     SideWalk->OutsideWay = OutsideWay;
     SideWalk->InsideWay = InsideWay;
@@ -143,7 +146,7 @@ RnRef_t<RnSideWalk> RnSideWalk::Create(
     return SideWalk;
 }
 
-FVector RnSideWalk::GetCentralVertex() const {
+FVector URnSideWalk::GetCentralVertex() const {
     if (!this) return FVector::ZeroVector;
 
     TArray<FVector> Points;
@@ -153,18 +156,18 @@ FVector RnSideWalk::GetCentralVertex() const {
     return FVectorEx::Centroid(Points);
 }
 
-bool RnSideWalk::IsNeighboring(const RnRef_t<RnSideWalk>& Other) const {
-    return GetAllWays().ContainsByPredicate([&Other](const RnRef_t<RnWay>& X) {
-        return Other->GetAllWays().ContainsByPredicate([&X](const RnRef_t<RnWay>& B) {
+bool URnSideWalk::IsNeighboring(const TRnRef_T<URnSideWalk>& Other) const {
+    return GetAllWays().ContainsByPredicate([&Other](const TRnRef_T<URnWay>& X) {
+        return Other->GetAllWays().ContainsByPredicate([&X](const TRnRef_T<URnWay>& B) {
             return X->IsSameLineReference(B);
             });
         });
 }
 
-float RnSideWalk::CalcRoadProximityScore(const RnRef_t<RnRoadBase>& Other) const {
+float URnSideWalk::CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) const {
     if (!Other || !this) return -1.0f;
 
-    TArray<RnRef_t<RnWay>> TargetWays;
+    TArray<TRnRef_T<URnWay>> TargetWays;
     if (auto Road = Other->CastToRoad()) {
         TargetWays = Road->GetMergedSideWays();
     }
