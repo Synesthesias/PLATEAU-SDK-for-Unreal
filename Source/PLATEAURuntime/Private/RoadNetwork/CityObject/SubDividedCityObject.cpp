@@ -59,61 +59,67 @@ TArray<TArray<int32>> FSubDividedCityObjectSubMesh::CreateOutlineIndices() const
 
     // Create edge list
     TArray<TTuple<int32, int32>> Edges;
-    for (int32 i = 0; i < Triangles.Num(); i += 3) {
-        Edges.Add(MakeTuple(Triangles[i], Triangles[i + 1]));
-        Edges.Add(MakeTuple(Triangles[i + 1], Triangles[i + 2]));
-        Edges.Add(MakeTuple(Triangles[i + 2], Triangles[i]));
-    }
+
+    auto GetEdge = [](int32 A, int32 B)
+    {
+        if (A < B)
+            Swap(A, B);
+        return MakeTuple(A, B);
+    };
 
     // Count edge occurrences
-    TMap<TTuple<int32, int32>, int32> EdgeCount;
-    for (const auto& Edge : Edges) {
-        auto NormalizedEdge = Edge.Get<0>() < Edge.Get<1>() ? Edge : MakeTuple(Edge.Get<1>(), Edge.Get<0>());
-        EdgeCount.Add(NormalizedEdge, EdgeCount.FindRef(NormalizedEdge) + 1);
+    // Key   : 辺
+    // Value : 0以上の場合は三角形のインデックス、-1の場合は複数の三角形に接続している
+    TMap<TTuple<int32, int32>, int32> Edge2Triangle;
+    for (int32 i = 0; i < Triangles.Num(); i += 3) 
+    {
+        auto T = i / 3;
+        for(auto X = 0; X < 3; ++X)
+        {
+            auto A = Triangles[i + X];
+            auto B = Triangles[i + (X + 1) % 3];
+            auto E = GetEdge(A, B);
+            if (Edge2Triangle.Contains(E) == false) {
+                Edge2Triangle.Add(E, T);
+            }
+            else if (Edge2Triangle[E] != T)
+            {
+                Edge2Triangle[E] = -1;                
+            }
+        }
     }
-
-    // Find outline edges
-    TArray<TTuple<int32, int32>> OutlineEdges;
-    for (const auto& Edge : Edges) {
-        auto NormalizedEdge = Edge.Get<0>() < Edge.Get<1>() ? Edge : MakeTuple(Edge.Get<1>(), Edge.Get<0>());
-        if (EdgeCount[NormalizedEdge] == 1) {
-            OutlineEdges.Add(Edge);
+    TArray< TTuple<int32, int32>> OutlineEdges;
+    for(auto& E : Edge2Triangle)
+    {
+        if(E.Value >= 0)
+        {
+            OutlineEdges.Add(E.Key);
         }
     }
 
     // Convert to continuous outlines
-    while (OutlineEdges.Num() > 0) {
+    while (OutlineEdges.Num() > 0) 
+    {
         TArray<int32> Outline;
-        int32 CurrentVertex = OutlineEdges[0].Get<0>();
-        Outline.Add(CurrentVertex);
+        auto Edge = OutlineEdges[0];
+        OutlineEdges.RemoveAt(0);
 
-        while (true) {
-            bool Found = false;
-            for (int32 i = 0; i < OutlineEdges.Num(); ++i) {
-                if (OutlineEdges[i].Get<0>() == CurrentVertex) {
-                    CurrentVertex = OutlineEdges[i].Get<1>();
-                    Outline.Add(CurrentVertex);
-                    OutlineEdges.RemoveAt(i);
-                    Found = true;
-                    break;
-                }
-                if (OutlineEdges[i].Get<1>() == CurrentVertex) {
-                    CurrentVertex = OutlineEdges[i].Get<0>();
-                    Outline.Add(CurrentVertex);
-                    OutlineEdges.RemoveAt(i);
-                    Found = true;
-                    break;
-                }
-            }
-
-            if (!Found || Outline[0] == CurrentVertex) {
+        auto Indices = TArray<int32>{ Edge.Key, Edge.Value };
+        while(OutlineEdges.Num() > 0)
+        {
+            auto V0 = Indices[0];
+            auto LastV = Indices[Indices.Num() - 1];
+            auto Index = OutlineEdges.IndexOfByPredicate([LastV](const TTuple<int32, int32>& E) { return E.Key == LastV || E.Value == LastV; });
+            if (Index < 0)
                 break;
-            }
+            auto E = OutlineEdges[Index];
+            OutlineEdges.RemoveAt(Index);
+            // 1周した
+            if (E.Key == V0 || E.Value == V0)
+                break;
+            Indices.Add(E.Key == LastV ? E.Value : E.Key);
         }
-
-        if (Outline.Num() >= 3) {
-            Result.Add(Outline);
-        }
+        Result.Add(Indices);      
     }
 
     return Result;

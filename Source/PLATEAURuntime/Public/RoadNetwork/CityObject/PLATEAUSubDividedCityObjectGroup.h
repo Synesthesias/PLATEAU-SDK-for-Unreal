@@ -33,9 +33,6 @@ public:
     bool bVisibility = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Debug")
-    bool bOnlySelectedCityObjectGroupVisible;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Debug")
     int32 MeshColorNum;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Debug")

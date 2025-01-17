@@ -6,7 +6,6 @@
 
 UPLATEAUSubDividedCityObjectGroup::UPLATEAUSubDividedCityObjectGroup()
 {
-    bOnlySelectedCityObjectGroupVisible = true;
     MeshColorNum = 16;
     bShowVertexIndex = false;
     bShowOutline = false;
