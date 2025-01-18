@@ -86,10 +86,17 @@ public:
     float CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) const;
 
 private:
-    TRnRef_T<URnRoadBase> ParentRoad;
-    TRnRef_T<URnWay> OutsideWay;
-    TRnRef_T<URnWay> InsideWay;
-    TRnRef_T<URnWay> StartEdgeWay;
-    TRnRef_T<URnWay> EndEdgeWay;
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> ParentRoad;
+
+    UPROPERTY()
+    TObjectPtr<URnWay> OutsideWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> InsideWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> StartEdgeWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> EndEdgeWay;
+    UPROPERTY()
     ERnSideWalkLaneType LaneType;
 };

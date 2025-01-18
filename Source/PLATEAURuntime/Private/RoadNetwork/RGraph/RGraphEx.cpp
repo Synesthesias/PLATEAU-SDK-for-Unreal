@@ -1,8 +1,12 @@
 #include "RoadNetwork/RGraph/RGraphEx.h"
 
+#include "Algo/Count.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
+#include "RoadNetwork/GeoGraph/GeoGraphEx.h"
+#include "Algo/AnyOf.h"
+#include "RoadNetwork/Util/RnDebugEx.h"
 
 namespace
 {
@@ -94,65 +98,66 @@ void FRGraphEx::VertexReduction(
     float MidPointTolerance) {
     if (!Graph) return;
 
-    auto&& Vertices = Graph->GetAllVertices();
+    //auto&& Vertices = Graph->GetAllVertices();
     TMap<FIntVector2, TArray<RGraphRef_t<URVertex>>> Grid;
 
     // Create grid for vertex grouping
-    for (auto Vertex : Vertices) {
-        FVector2D Pos2D = FRnDef::To2D(Vertex->Position);
-        FIntVector2 GridPos(
-            FMath::FloorToInt(Pos2D.X / MergeCellSize),
-            FMath::FloorToInt(Pos2D.Y / MergeCellSize)
-        );
-        Grid.FindOrAdd(GridPos).Add(Vertex);
-    }
-
-    // Process each grid cell
-    for (auto& GridPair : Grid) {
-        auto& CellVertices = GridPair.Value;
-        if (CellVertices.Num() <= 1) continue;
-
-        // Group vertices by road type and LOD level
-        TMap<TTuple<ERRoadTypeMask, int32>, TArray<RGraphRef_t<URVertex>>> TypeLodGroups;
-        for (auto Vertex : CellVertices) {
-            ERRoadTypeMask RoadType = Vertex->GetTypeMaskOrDefault();
-            int32 LodLevel = Vertex->GetMaxLodLevel();
-            TypeLodGroups.FindOrAdd(MakeTuple(RoadType, LodLevel)).Add(Vertex);
+    while(true)
+    {
+        auto Vertices = Graph->GetAllVertices();
+        TArray<FVector> Positions;
+        for (auto V : Vertices)
+            Positions.Add(V->Position);
+        auto Map = FGeoGraphEx::MergeVertices(Positions, MergeCellSize, MergeCellLength);
+        TSet<FVector> Keys;
+        for (auto& Pair : Map) {
+            Keys.Add(Pair.Value);
         }
 
-        // Process each type-LOD group
-        for (auto& GroupPair : TypeLodGroups) {
-            auto& GroupVertices = GroupPair.Value;
-            if (GroupVertices.Num() <= 1) continue;
+        TMap<FVector, RGraphRef_t<URVertex>> Vertex2RVertex;
+        for (auto V : Keys)
+            Vertex2RVertex.Add(V, RGraphNew<URVertex>(V));
 
-            // Calculate average position
-            FVector AveragePos(0, 0, 0);
-            for (auto Vertex : GroupVertices) {
-                AveragePos += Vertex->Position;
-            }
-            AveragePos /= GroupVertices.Num();
-
-            // Find closest vertex to average position
-            float MinDist = MAX_flt;
-            RGraphRef_t<URVertex> ClosestVertex = nullptr;
-            for (auto Vertex : GroupVertices) {
-                float Dist = FVector::DistSquared(Vertex->Position, AveragePos);
-                if (Dist < MinDist) {
-                    MinDist = Dist;
-                    ClosestVertex = Vertex;
-                }
-            }
-
-            if (ClosestVertex) {
-                ClosestVertex->Position = AveragePos;
-                for (auto Vertex : GroupVertices) {
-                    if (Vertex != ClosestVertex) {
-                        Vertex->MergeTo(ClosestVertex);
-                    }
-                }
+        auto AfterCount = Vertex2RVertex.Num() + Algo::CountIf(Vertices, [&Vertex2RVertex](RGraphRef_t<URVertex> V) {return !Vertex2RVertex.Contains(V->Position); });
+        
+        for (auto V : Vertices) {
+            auto Pos = V->Position;
+            if (Map.Contains(Pos)) {
+                auto NewVertex = Vertex2RVertex[Map[Pos]];
+                V->MergeTo(NewVertex);
             }
         }
+
+        if(AfterCount == Vertices.Num())
+            break;
     }
+
+    // a-b-cのような直線状の頂点を削除する
+    while (true) 
+    {
+        const auto SqrLen = MidPointTolerance * MidPointTolerance;
+        auto Count = 0;
+        for(auto&& V : Graph->GetAllVertices())
+        {
+            // 2つのエッジにしか繋がっていない頂点を探す
+            if (V->GetEdges().Num() != 2)
+                continue;
+            // 隣接する頂点が2つしかない頂点を探す
+            auto Neighbors = V->GetNeighborVertices();
+            if (Neighbors.Num() != 2)
+                continue;
+            // 中間点があってもほぼ直線だった場合は中間点は削除する
+            auto segment = FLineSegment3D(Neighbors[0]->GetPosition(), Neighbors[1]->GetPosition());
+            auto p = segment.GetNearestPoint(V->GetPosition());
+            // とりあえずNeighbors[0]にマージする
+            if ((p - V->GetPosition()).SquaredLength() < SqrLen) {
+                V->MergeTo(Neighbors[0]);
+                Count++;
+            }
+        }
+        if (Count == 0)
+            break;
+    }    
 }
 
 void FRGraphEx::EdgeReduction(RGraphRef_t<URGraph> Graph) {
@@ -252,11 +257,11 @@ void FRGraphEx::Optimize(
     float Lod1HeightTolerance) {
     if (!Graph) return;
 
-    InsertVerticesInEdgeIntersection(Graph, Lod1HeightTolerance);
+    //InsertVerticesInEdgeIntersection(Graph, MidPointTolerance);
     AdjustSmallLodHeight(Graph, MergeCellSize, MergeCellLength, Lod1HeightTolerance);
     VertexReduction(Graph, MergeCellSize, MergeCellLength, MidPointTolerance);
-    EdgeReduction(Graph);
-    MergeIsolatedVertices(Graph);
+    //EdgeReduction(Graph);
+    //MergeIsolatedVertices(Graph);
 }
 
 void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Tolerance)
@@ -488,4 +493,82 @@ TSet<RGraphRef_t<URVertex>> FRGraphEx::CreateVertexSet(RGraphRef_t<URFace> Face)
         }
     }
     return Result;
+}
+
+void FRGraphEx::RemoveIsolatedEdgeFromFace(RGraphRef_t<URGraph> Self)
+{
+    for (auto&& Face : Self->GetFaces())
+        RemoveIsolatedEdge(Face);
+
+    // コピー
+    auto Faces = Self->GetFaces();
+    for(auto&& Face : Faces)
+    {
+        if(Face->GetEdges().Num() == 0)
+        {
+            Self->RemoveFace(Face);
+        }
+    }
+}
+
+TSet<RGraphRef_t<UREdge>> FRGraphEx::RemoveIsolatedEdge(RGraphRef_t<URFace> Self)
+{
+    auto IsIsolatedEdge = [Self](RGraphRef_t<UREdge> Edge) -> bool {
+        // edgeのどっちかの頂点がedgeでしかselfに繋がっていない場合は孤立している
+        return Algo::AnyOf(Edge->GetVertices(), [Self, Edge](RGraphRef_t<URVertex> V) {
+            if (V == nullptr)
+                return true;
+            for (auto E : V->GetEdges()) {
+                if (E == Edge)
+                    continue;
+                if (E->GetFaces().Contains(Self))
+                    return false;
+            }
+            return true;
+        });
+    };
+        
+    TQueue<RGraphRef_t<UREdge>> removeEdgeQueue;
+
+    for(auto&& Edge : Self->GetEdges()) 
+    {
+        if (IsIsolatedEdge(Edge)) {
+            removeEdgeQueue.Enqueue(Edge);
+        }
+    }
+
+    TSet<RGraphRef_t<UREdge>> removeEdgeSet;
+    TSet<RGraphRef_t<UREdge>> disconnectedEdges;
+    while (removeEdgeQueue.IsEmpty() == false) 
+    {
+        RGraphRef_t<UREdge> Edge;
+        removeEdgeQueue.Dequeue(Edge);
+        // すでに削除済みの場合は無視
+        if (removeEdgeSet.Contains(Edge))
+            continue;
+        removeEdgeSet.Add(Edge);
+
+        Self->RemoveEdge(Edge);
+
+        // edgeが削除されたことにより別の辺が孤立するかもしれないのでそれも削除キューに入れる
+        // 以下のような場合, b-cの辺を削除するとa-bの辺も孤立する
+        // o-o
+        // | |
+        // o-o-a-b-c ←の様な飛び出た辺をFaceから削除する.
+        for(auto E : Edge->GetNeighborEdges()) 
+        {
+            if (IsIsolatedEdge(E) == false)
+                continue;
+            removeEdgeQueue.Enqueue(E);
+        }
+
+        // どの面にも所属しない辺になったら削除する
+        if (Edge->GetFaces().Num() == 0) {
+            Edge->DisConnect();
+            disconnectedEdges.Add(Edge);
+        }
+    }
+    //if (removeEdgeSet.Any())
+    //    DebugEx.Log($"[{self.GetDebugLabelOrDefault()}] Remove edges {removeEdgeSet.Count}");
+    return disconnectedEdges;
 }

@@ -15,7 +15,6 @@ public:
     URnPoint(const FVector& InVertex);
     void Init();
     void Init(const FVector& InVertex);
-    FVector Vertex;
 
     TRnRef_T<URnPoint> Clone() const;
 
@@ -25,4 +24,9 @@ public:
 
     bool IsSamePoint(const URnPoint* Other, float SqrMagnitudeTolerance = 0.0f) const;
     bool IsSamePoint(const TRnRef_T<URnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
+
+public:
+    UPROPERTY()
+    FVector Vertex;
+
 };

@@ -112,9 +112,7 @@ public:
     URnWay(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
     void Init();
     void Init(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
-    bool IsReversed;
-    bool IsReverseNormal;
-    TRnRef_T<URnLineString> LineString;
+
 
 
     PointsEnumerator GetPoints() const
@@ -181,4 +179,14 @@ private:
     int32 ToRawIndex(int32 Index, bool AllowMinus = false) const;
     int32 SwitchIndex(int32 Index) const;
     float SwitchIndex(float Index) const;
+
+public:
+    UPROPERTY()
+    bool IsReversed;
+
+    UPROPERTY()
+    bool IsReverseNormal;
+
+    UPROPERTY()
+    TObjectPtr<URnLineString> LineString;
 };

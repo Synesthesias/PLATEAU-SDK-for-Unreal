@@ -113,8 +113,6 @@ inline TRnRef_T<T> RnNew(TArgs&&... Args)
     return TRnRef<T>::New(Forward<TArgs>(Args)...);
 }
 
-#define RN_REF(T) TObjectPtr<T>
-
 struct FRnPartsBase
 {
 public:

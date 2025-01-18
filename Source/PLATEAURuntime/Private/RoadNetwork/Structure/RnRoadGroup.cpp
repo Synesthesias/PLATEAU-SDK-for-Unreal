@@ -415,7 +415,7 @@ void URnRoadGroup::AdjustBorder() {
             if ((P->Vertex - CheckVertex).SizeSquared() < 1e-6f)
                 return;
 
-            for (const auto& Edge : Inter->Edges) {
+            for (const auto& Edge : Inter->GetEdges()) {
                 if (Edge->Road != Road && Edge->Border->LineString->Contains(P)) {
                     int32 I = Edge->Border->LineString->GetPoints().IndexOfByKey(P);
                     if (I == 0) {

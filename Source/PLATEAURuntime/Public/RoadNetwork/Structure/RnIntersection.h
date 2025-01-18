@@ -58,11 +58,6 @@ public:
 
     void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 
-    // 交差点の外形情報
-    TArray<TRnRef_T<URnIntersectionEdge>> Edges;
-
-    // 道路と道路の間に入れる空交差点かどうかの判定
-    bool bIsEmptyIntersection;
 
     // 他の道路との境界線Edge取得
     TArray<TRnRef_T<URnIntersectionEdge>> GetNeighbors() const;
@@ -150,4 +145,14 @@ private:
 
     // 指定したEdgeから指定したEdgeへのトラックを生成する
     void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To, const TArray<FVector>& Points);
+
+private:
+
+    // 交差点の外形情報
+    UPROPERTY()
+    TArray<TObjectPtr<URnIntersectionEdge>> Edges;
+
+    // 道路と道路の間に入れる空交差点かどうかの判定
+    UPROPERTY()
+    bool bIsEmptyIntersection;
 };

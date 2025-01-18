@@ -94,10 +94,29 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
         }
     }
 
-    if (Factory.bReductionOnCreate) {
-        FRGraphEx::Optimize(Graph, Factory.MergeCellSize, Factory.MergeCellLength,
-            Factory.RemoveMidPointTolerance, Factory.Lod1HeightTolerance);
+    if (Factory.bOptAdjustSmallLodHeight) {
+        FRGraphEx::AdjustSmallLodHeight(Graph, Factory.MergeCellSize, Factory.MergeCellLength, Factory.RemoveMidPointTolerance);
     }
-
+    if (Factory.bOptEdgeReduction) {
+        FRGraphEx::EdgeReduction(Graph);
+    }
+    if (Factory.bOptVertexReduction) {
+        FRGraphEx::VertexReduction(Graph, Factory.MergeCellSize, Factory.MergeCellLength, Factory.RemoveMidPointTolerance);
+    }
+    if (Factory.bOptRemoveIsolatedEdgeFromFace) {
+        FRGraphEx::RemoveIsolatedEdgeFromFace(Graph);
+    }
+    if (Factory.bOptEdgeReduction) {
+        FRGraphEx::EdgeReduction(Graph);
+    }
+    if (Factory.bOptInsertVertexInNearEdge) {
+        FRGraphEx::InsertVertexInNearEdge(Graph, Factory.RemoveMidPointTolerance);
+    }
+    if (Factory.bOptEdgeReduction) {
+        FRGraphEx::EdgeReduction(Graph);
+    }
+    if (Factory.bOptSeparateFaces) {
+        FRGraphEx::SeparateFaces(Graph);
+    }
     return Graph;
 }

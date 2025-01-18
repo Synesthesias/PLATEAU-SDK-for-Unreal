@@ -86,5 +86,5 @@ public:
         EAxisPlane Plane) const;
 
 protected:
-    TArray<TRnRef_T<URnPoint>> Points;
+    TArray<TObjectPtr<URnPoint>> Points;
 };

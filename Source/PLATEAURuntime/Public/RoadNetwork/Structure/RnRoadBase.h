@@ -114,12 +114,15 @@ public:
 private:
 
     // 自分が所属するRoadNetworkModel
-    TRnRef_T<URnModel> ParentModel;
+    UPROPERTY()
+    TObjectPtr<URnModel> ParentModel;
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
+    UPROPERTY()
     TArray<UPLATEAUCityObjectGroup*> TargetTrans;
 
     // 歩道情報
-    TArray<TRnRef_T<URnSideWalk>> SideWalks;
+    UPROPERTY()
+    TArray<TObjectPtr<URnSideWalk>> SideWalks;
 
 };

@@ -18,26 +18,6 @@ public:
     void Init();
     void Init(const TRnRef_T<URnWay>& InLeftWay, const TRnRef_T<URnWay>& InRightWay,
               const TRnRef_T<URnWay>& InPrevBorder, const TRnRef_T<URnWay>& InNextBorder);
-    // 親リンク
-    TRnRef_T<URnRoad> Parent;
-
-    // 境界線(下流)
-    TRnRef_T<URnWay> PrevBorder;
-
-    // 境界線(上流)
-    TRnRef_T<URnWay> NextBorder;
-
-    // 車線(左)
-    TRnRef_T<URnWay> LeftWay;
-
-    // 車線(右)
-    TRnRef_T<URnWay> RightWay;
-
-    // 親Roadと逆方向(右車線等)
-    bool IsReverse;
-
-    // 内部的に持つだけ. 中心線
-    TRnRef_T<URnWay> CenterWay;
 
     // Left/Right両方のWayを返す(nullの物は含まない)
     TArray<TRnRef_T<URnWay>> GetBothWays() const;
@@ -130,4 +110,34 @@ public:
     /// <param name="centerWay"></param>
     /// <returns></returns>
     static TRnRef_T<URnLane> CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URnWay> centerWay);
+
+public:
+    // 親リンク
+    UPROPERTY()
+    TObjectPtr<URnRoad> Parent;
+
+    // 境界線(下流)
+    UPROPERTY()
+    TObjectPtr<URnWay> PrevBorder;
+
+    // 境界線(上流)
+    UPROPERTY()
+    TObjectPtr<URnWay> NextBorder;
+
+    // 車線(左)
+    UPROPERTY()
+    TObjectPtr<URnWay> LeftWay;
+
+    // 車線(右)
+    UPROPERTY()
+    TObjectPtr<URnWay> RightWay;
+
+    // 親Roadと逆方向(右車線等)
+    UPROPERTY()
+    bool IsReverse;
+
+    // 内部的に持つだけ. 中心線
+    UPROPERTY()
+    TObjectPtr<URnWay> CenterWay;
+
 };

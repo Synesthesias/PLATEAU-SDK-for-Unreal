@@ -6,6 +6,7 @@
 #include <memory>
 #include <functional>
 
+
 class FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
 class FRGraphEx {
@@ -29,4 +30,6 @@ public:
     static TArray<RGraphRef_t<URVertex>> ComputeConvexHullVertices(RGraphRef_t<URFace> Face);
     static bool IsShareEdge(RGraphRef_t<URFace> A, RGraphRef_t<URFace> B);
     static TSet<RGraphRef_t<URVertex>> CreateVertexSet(RGraphRef_t<URFace> Face);
+    static void RemoveIsolatedEdgeFromFace(RGraphRef_t<URGraph> Self);
+    static TSet<RGraphRef_t<UREdge>> RemoveIsolatedEdge(RGraphRef_t<URFace> Self);
 };

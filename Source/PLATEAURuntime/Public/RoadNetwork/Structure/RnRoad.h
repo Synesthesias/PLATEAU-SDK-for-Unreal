@@ -22,17 +22,6 @@ public:
 
     void Init(UPLATEAUCityObjectGroup* TargetTran);
     void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
-    // 接続先(nullの場合は接続なし)
-    TRnRef_T<URnRoadBase> Next;
-
-    // 接続元(nullの場合は接続なし)
-    TRnRef_T<URnRoadBase> Prev;
-
-    // レーンリスト
-    TArray<TRnRef_T<URnLane>> MainLanes;
-
-    // 中央分離帯
-    TRnRef_T<URnLane> MedianLane;
 
     // 全レーン
     const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
@@ -176,4 +165,22 @@ public:
 private:
 
     void OnAddLane(TRnRef_T<URnLane> lane);
+
+public:
+    // 接続先(nullの場合は接続なし)
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> Next;
+
+    // 接続元(nullの場合は接続なし)
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> Prev;
+
+    // レーンリスト
+    UPROPERTY()
+    TArray<TObjectPtr<URnLane>> MainLanes;
+
+    // 中央分離帯
+    UPROPERTY()
+    TObjectPtr<URnLane> MedianLane;
+
 };

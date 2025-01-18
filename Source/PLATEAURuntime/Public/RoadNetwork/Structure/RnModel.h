@@ -36,18 +36,6 @@ public:
     static constexpr float Epsilon = SMALL_NUMBER;
     static constexpr EAxisPlane Plane = EAxisPlane::Xz;
 
-    // 自動生成で作成されたときのバージョン
-    FString FactoryVersion;
-
-    // 道路リスト
-    TArray<TRnRef_T<URnRoad>> Roads;
-
-    // 交差点リスト
-    TArray<TRnRef_T<URnIntersection>> Intersections;
-
-    // 歩道リスト
-    TArray<TRnRef_T<URnSideWalk>> SideWalks;
-
     URnModel();
 
     void Init(){}
@@ -127,5 +115,21 @@ public:
     // 指定したRoadBaseに接続されているRoadBaseを取得
     TArray<TRnRef_T<URnRoadBase>> GetConnectedRoadBasesRecursive(const TRnRef_T<URnRoadBase>& RoadBase) const;
 
+public:
+
+    // 自動生成で作成されたときのバージョン
+    FString FactoryVersion;
+
+    // 道路リスト
+    UPROPERTY()
+    TArray<TObjectPtr<URnRoad>> Roads;
+
+    // 交差点リスト
+    UPROPERTY()
+    TArray< TObjectPtr<URnIntersection>> Intersections;
+
+    // 歩道リスト
+    UPROPERTY()
+    TArray< TObjectPtr<URnSideWalk>> SideWalks;
 
 };
