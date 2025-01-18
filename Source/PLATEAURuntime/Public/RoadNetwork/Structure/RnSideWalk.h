@@ -3,41 +3,44 @@
 #include "CoreMinimal.h"
 #include "../RnDef.h"
 
+#include "RnSideWalk.generated.h"
 // Forward declarations
-class RnRoadBase;
-class RnWay;
-class RnPoint;
+class URnRoadBase;
+class URnWay;
+class URnPoint;
 
-class RnSideWalk {
+UCLASS()
+class URnSideWalk : public UObject {
+    GENERATED_BODY()
 public:
-    RnSideWalk();
-
+    URnSideWalk();
+    void Init();
     // 自分が所属するRoadNetworkModel
-    RnRef_t<RnRoadBase> GetParentRoad() const { return ParentRoad; }
+    TRnRef_T<URnRoadBase> GetParentRoad() const { return ParentRoad; }
 
     // 道路と反対側のWay
-    RnRef_t<RnWay> GetOutsideWay() const { return OutsideWay; }
+    TRnRef_T<URnWay> GetOutsideWay() const { return OutsideWay; }
 
     // 道路と同じ側のWay
-    RnRef_t<RnWay> GetInsideWay() const { return InsideWay; }
+    TRnRef_T<URnWay> GetInsideWay() const { return InsideWay; }
 
     // outsideWayとinsideWayの始点を繋ぐWay
-    RnRef_t<RnWay> GetStartEdgeWay() const { return StartEdgeWay; }
+    TRnRef_T<URnWay> GetStartEdgeWay() const { return StartEdgeWay; }
 
     // outsideWayとinsideWayの終点を繋ぐWay
-    RnRef_t<RnWay> GetEndEdgeWay() const { return EndEdgeWay; }
+    TRnRef_T<URnWay> GetEndEdgeWay() const { return EndEdgeWay; }
 
     ERnSideWalkLaneType GetLaneType() const { return LaneType; }
     void SetLaneType(ERnSideWalkLaneType Type) { LaneType = Type; }
 
     // 左右のWay(OutsideWay, InsideWay)を列挙
-    TArray<RnRef_t<RnWay>> GetSideWays() const;
+    TArray<TRnRef_T<URnWay>> GetSideWays() const;
 
     // 開始/終了の境界線のWay(StartEdgeWay, EndEdgeWay)を列挙
-    TArray<RnRef_t<RnWay>> GetEdgeWays() const;
+    TArray<TRnRef_T<URnWay>> GetEdgeWays() const;
 
     // 全てのWay(nullは含まない)
-    TArray<RnRef_t<RnWay>> GetAllWays() const;
+    TArray<TRnRef_T<URnWay>> GetAllWays() const;
 
     // Inside/OutsideのWayが両方ともValidかどうか
     bool IsValid() const;
@@ -45,18 +48,18 @@ public:
     ERnSideWalkWayTypeMask GetValidWayTypeMask() const;
 
     // 強制的に親を変更する. 構造壊れるので扱い注意
-    void SetParent(const RnRef_t<RnRoadBase>& Parent);
+    void SetParent(const TRnRef_T<URnRoadBase>& Parent);
 
     // 親からのリンク解除
     void UnLinkFromParent();
 
     // 左右のWayを再設定
-    void SetSideWays(const RnRef_t<RnWay>& OutsideWay, const RnRef_t<RnWay>& InsideWay);
+    void SetSideWays(const TRnRef_T<URnWay>& OutsideWay, const TRnRef_T<URnWay>& InsideWay);
 
     // 境界のWayを再設定
-    void SetEdgeWays(const RnRef_t<RnWay>& StartWay, const RnRef_t<RnWay>& EndWay);
-    void SetStartEdgeWay(const RnRef_t<RnWay>& StartWay);
-    void SetEndEdgeWay(const RnRef_t<RnWay>& EndWay);
+    void SetEdgeWays(const TRnRef_T<URnWay>& StartWay, const TRnRef_T<URnWay>& EndWay);
+    void SetStartEdgeWay(const TRnRef_T<URnWay>& StartWay);
+    void SetEndEdgeWay(const TRnRef_T<URnWay>& EndWay);
 
     // レーンタイプを入れ替え
     void ReverseLaneType();
@@ -65,28 +68,35 @@ public:
     void TryAlign();
 
     // 歩道作成
-    static RnRef_t<RnSideWalk> Create(
-        const RnRef_t<RnRoadBase>& Parent,
-        const RnRef_t<RnWay>& OutsideWay,
-        const RnRef_t<RnWay>& InsideWay,
-        const RnRef_t<RnWay>& StartEdgeWay,
-        const RnRef_t<RnWay>& EndEdgeWay,
+    static TRnRef_T<URnSideWalk> Create(
+        const TRnRef_T<URnRoadBase>& Parent,
+        const TRnRef_T<URnWay>& OutsideWay,
+        const TRnRef_T<URnWay>& InsideWay,
+        const TRnRef_T<URnWay>& StartEdgeWay,
+        const TRnRef_T<URnWay>& EndEdgeWay,
         ERnSideWalkLaneType LaneType = ERnSideWalkLaneType::Undefined);
 
     // 代表点を取得
     FVector GetCentralVertex() const;
 
     // 隣接判定
-    bool IsNeighboring(const RnRef_t<RnSideWalk>& Other) const;
+    bool IsNeighboring(const TRnRef_T<URnSideWalk>& Other) const;
 
     // 近接スコア計算
-    float CalcRoadProximityScore(const RnRef_t<RnRoadBase>& Other) const;
+    float CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) const;
 
 private:
-    RnRef_t<RnRoadBase> ParentRoad;
-    RnRef_t<RnWay> OutsideWay;
-    RnRef_t<RnWay> InsideWay;
-    RnRef_t<RnWay> StartEdgeWay;
-    RnRef_t<RnWay> EndEdgeWay;
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> ParentRoad;
+
+    UPROPERTY()
+    TObjectPtr<URnWay> OutsideWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> InsideWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> StartEdgeWay;
+    UPROPERTY()
+    TObjectPtr<URnWay> EndEdgeWay;
+    UPROPERTY()
     ERnSideWalkLaneType LaneType;
 };

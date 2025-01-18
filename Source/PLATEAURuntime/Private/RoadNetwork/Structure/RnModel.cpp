@@ -5,13 +5,10 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnWay.h"
 
-RnModel::RnModel() {
-    Roads = MakeShared<TArray<RnRef_t<RnRoad>>>();
-    Intersections = MakeShared<TArray<RnRef_t<RnIntersection>>>();
-    SideWalks = MakeShared<TArray<RnRef_t<RnSideWalk>>>();
+URnModel::URnModel() {
 }
 
-void RnModel::AddRoadBase(const RnRef_t<RnRoadBase>& RoadBase)
+void URnModel::AddRoadBase(const TRnRef_T<URnRoadBase>& RoadBase)
 {
     if (!RoadBase) 
         return;
@@ -23,98 +20,98 @@ void RnModel::AddRoadBase(const RnRef_t<RnRoadBase>& RoadBase)
     }
 }
 
-void RnModel::AddRoad(const RnRef_t<RnRoad>& Road) {
+void URnModel::AddRoad(const TRnRef_T<URnRoad>& Road) {
     if (!Road) return;
-    Road->ParentModel = RnRef_t<RnModel>(this);
-    Roads->AddUnique(Road);
+    Road->SetParentModel(TRnRef_T<URnModel>(this));
+    Roads.AddUnique(Road);
 }
 
-void RnModel::RemoveRoad(const RnRef_t<RnRoad>& Road) {
+void URnModel::RemoveRoad(const TRnRef_T<URnRoad>& Road) {
     if (!Road) return;
-    Road->ParentModel = nullptr;
-    Roads->Remove(Road);
+    Road->SetParentModel(nullptr);
+    Roads.Remove(Road);
 }
 
-void RnModel::AddIntersection(const RnRef_t<RnIntersection>& Intersection) {
+void URnModel::AddIntersection(const TRnRef_T<URnIntersection>& Intersection) {
     if (!Intersection) return;
-    Intersection->ParentModel = RnRef_t<RnModel>(this);
-    Intersections->AddUnique(Intersection);
+    Intersection->SetParentModel(TRnRef_T<URnModel>(this));
+    Intersections.AddUnique(Intersection);
 }
 
-void RnModel::RemoveIntersection(const RnRef_t<RnIntersection>& Intersection) {
+void URnModel::RemoveIntersection(const TRnRef_T<URnIntersection>& Intersection) {
     if (!Intersection) return;
-    Intersection->ParentModel = nullptr;
-    Intersections->Remove(Intersection);
+    Intersection->SetParentModel(nullptr);
+    Intersections.Remove(Intersection);
 }
 
-void RnModel::AddSideWalk(const RnRef_t<RnSideWalk>& SideWalk) {
+void URnModel::AddSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
-    SideWalks->AddUnique(SideWalk);
+    SideWalks.AddUnique(SideWalk);
 }
 
-void RnModel::RemoveSideWalk(const RnRef_t<RnSideWalk>& SideWalk) {
+void URnModel::RemoveSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
-    SideWalks->Remove(SideWalk);
+    SideWalks.Remove(SideWalk);
 }
 
-TArray<RnRef_t<RnRoad>> RnModel::GetRoads() const {
-    return *Roads;
+const TArray<TRnRef_T<URnRoad>>& URnModel::GetRoads() const {
+    return Roads;
 }
 
-TArray<RnRef_t<RnIntersection>> RnModel::GetIntersections() const {
-    return *Intersections;
+const TArray<TRnRef_T<URnIntersection>>& URnModel::GetIntersections() const {
+    return Intersections;
 }
 
-TArray<RnRef_t<RnSideWalk>> RnModel::GetSideWalks() const {
-    return *SideWalks;
+const TArray<TRnRef_T<URnSideWalk>>& URnModel::GetSideWalks() const {
+    return SideWalks;
 }
 
-RnRef_t<RnRoad> RnModel::GetRoadBy(UPLATEAUCityObjectGroup* TargetTran) const {
+TRnRef_T<URnRoad> URnModel::GetRoadBy(UPLATEAUCityObjectGroup* TargetTran) const {
     if (!TargetTran) return nullptr;
 
-    for (const auto& Road : *Roads) {
-        if (Road->TargetTrans->Contains(TargetTran)) {
+    for (const auto& Road : Roads) {
+        if (Road->GetTargetTrans().Contains(TargetTran)) {
             return Road;
         }
     }
     return nullptr;
 }
 
-RnRef_t<RnIntersection> RnModel::GetIntersectionBy(UPLATEAUCityObjectGroup* TargetTran) const {
+TRnRef_T<URnIntersection> URnModel::GetIntersectionBy(UPLATEAUCityObjectGroup* TargetTran) const {
     if (!TargetTran) return nullptr;
 
-    for (const auto& Intersection : *Intersections) {
-        if (Intersection->TargetTrans->Contains(TargetTran)) {
+    for (const auto& Intersection : Intersections) {
+        if (Intersection->GetTargetTrans().Contains(TargetTran)) {
             return Intersection;
         }
     }
     return nullptr;
 }
 
-RnRef_t<RnSideWalk> RnModel::GetSideWalkBy(UPLATEAUCityObjectGroup* TargetTran) const {
+TRnRef_T<URnSideWalk> URnModel::GetSideWalkBy(UPLATEAUCityObjectGroup* TargetTran) const {
     if (!TargetTran) return nullptr;
 
-    for (const auto& SideWalk : *SideWalks) {
-        if (SideWalk->GetParentRoad() && SideWalk->GetParentRoad()->TargetTrans->Contains(TargetTran)) {
+    for (const auto& SideWalk : SideWalks) {
+        if (SideWalk->GetParentRoad() && SideWalk->GetParentRoad()->GetTargetTrans().Contains(TargetTran)) {
             return SideWalk;
         }
     }
     return nullptr;
 }
 
-RnRef_t<RnRoadBase> RnModel::GetRoadBaseBy(UPLATEAUCityObjectGroup* TargetTran) const {
+TRnRef_T<URnRoadBase> URnModel::GetRoadBaseBy(UPLATEAUCityObjectGroup* TargetTran) const {
     auto Road = GetRoadBy(TargetTran);
     if (Road) return Road;
     return GetIntersectionBy(TargetTran);
 }
 
-TArray<RnRef_t<RnRoadBase>> RnModel::GetNeighborRoadBases(const RnRef_t<RnRoadBase>& RoadBase) const {
-    if (!RoadBase) return TArray<RnRef_t<RnRoadBase>>();
+TArray<TRnRef_T<URnRoadBase>> URnModel::GetNeighborRoadBases(const TRnRef_T<URnRoadBase>& RoadBase) const {
+    if (!RoadBase) return TArray<TRnRef_T<URnRoadBase>>();
     return RoadBase->GetNeighborRoads();
 }
 
-TArray<RnRef_t<RnRoad>> RnModel::GetNeighborRoads(const RnRef_t<RnRoadBase>& RoadBase) const {
-    TArray<RnRef_t<RnRoad>> Result;
+TArray<TRnRef_T<URnRoad>> URnModel::GetNeighborRoads(const TRnRef_T<URnRoadBase>& RoadBase) const {
+    TArray<TRnRef_T<URnRoad>> Result;
     for (const auto& Neighbor : GetNeighborRoadBases(RoadBase)) {
         if (auto R = Neighbor->CastToRoad()) {
             Result.Add(R);
@@ -123,8 +120,8 @@ TArray<RnRef_t<RnRoad>> RnModel::GetNeighborRoads(const RnRef_t<RnRoadBase>& Roa
     return Result;
 }
 
-TArray<RnRef_t<RnIntersection>> RnModel::GetNeighborIntersections(const RnRef_t<RnRoadBase>& RoadBase) const {
-    TArray<RnRef_t<RnIntersection>> Result;
+TArray<TRnRef_T<URnIntersection>> URnModel::GetNeighborIntersections(const TRnRef_T<URnRoadBase>& RoadBase) const {
+    TArray<TRnRef_T<URnIntersection>> Result;
     for (const auto& Neighbor : GetNeighborRoadBases(RoadBase)) {
         if (auto Intersection = Neighbor->CastToIntersection()) {
             Result.Add(Intersection);
@@ -133,14 +130,14 @@ TArray<RnRef_t<RnIntersection>> RnModel::GetNeighborIntersections(const RnRef_t<
     return Result;
 }
 
-TArray<RnRef_t<RnSideWalk>> RnModel::GetNeighborSideWalks(const RnRef_t<RnRoadBase>& RoadBase) const {
-    if (!RoadBase || !RoadBase->SideWalks)
-        return TArray<RnRef_t<RnSideWalk>>();
-    return *(RoadBase->SideWalks);
+TArray<TRnRef_T<URnSideWalk>> URnModel::GetNeighborSideWalks(const TRnRef_T<URnRoadBase>& RoadBase) const {
+    if (!RoadBase )
+        return TArray<TRnRef_T<URnSideWalk>>();
+    return RoadBase->GetSideWalks();
 }
 
-void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOption& Option) {
-    for (const auto& Intersection : *Intersections) {
+void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option) {
+    for (const auto& Intersection : Intersections) {
         for (const auto& Edge : Intersection->GetEdges()) {
             if (!Edge->Road) continue;
 
@@ -149,7 +146,7 @@ void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOptio
 
             // 道路の長さを取得
             float RoadLength = 0.0f;
-            RnRef_t<RnWay> LeftWay, RightWay;
+            TRnRef_T<URnWay> LeftWay, RightWay;
             if (Road->TryGetMergedSideWay(std::nullopt, LeftWay, RightWay)) {
                 RoadLength = (LeftWay->CalcLength() + RightWay->CalcLength()) * 0.5f;
             }
@@ -171,7 +168,7 @@ void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOptio
                 Dir.Normalize();
 
                 // 境界線を移動
-                for (auto& Point : *Border->LineString->Points) {
+                for (auto& Point : Border->LineString->GetPoints()) {
                     Point->Vertex += Dir * Offset;
                 }
             }
@@ -179,33 +176,33 @@ void RnModel::CalibrateIntersectionBorder(const CalibrateIntersectionBorderOptio
     }
 }
 
-RnRef_t<RnModel> RnModel::Create() {
-    return RnNew<RnModel>();
+TRnRef_T<URnModel> URnModel::Create() {
+    return RnNew<URnModel>();
 }
 
-TArray<RnRef_t<RnRoadBase>> RnModel::GetConnectedRoadBases(const RnRef_t<RnRoadBase>& RoadBase) const {
+TArray<TRnRef_T<URnRoadBase>> URnModel::GetConnectedRoadBases(const TRnRef_T<URnRoadBase>& RoadBase) const {
     return GetNeighborRoadBases(RoadBase);
 }
 
-TArray<RnRef_t<RnRoad>> RnModel::GetConnectedRoads(const RnRef_t<RnRoadBase>& RoadBase) const {
+TArray<TRnRef_T<URnRoad>> URnModel::GetConnectedRoads(const TRnRef_T<URnRoadBase>& RoadBase) const {
     return GetNeighborRoads(RoadBase);
 }
 
-TArray<RnRef_t<RnIntersection>> RnModel::GetConnectedIntersections(const RnRef_t<RnRoadBase>& RoadBase) const {
+TArray<TRnRef_T<URnIntersection>> URnModel::GetConnectedIntersections(const TRnRef_T<URnRoadBase>& RoadBase) const {
     return GetNeighborIntersections(RoadBase);
 }
 
-TArray<RnRef_t<RnSideWalk>> RnModel::GetConnectedSideWalks(const RnRef_t<RnRoadBase>& RoadBase) const {
+TArray<TRnRef_T<URnSideWalk>> URnModel::GetConnectedSideWalks(const TRnRef_T<URnRoadBase>& RoadBase) const {
     return GetNeighborSideWalks(RoadBase);
 }
 
-TArray<RnRef_t<RnRoadBase>> RnModel::GetConnectedRoadBasesRecursive(const RnRef_t<RnRoadBase>& RoadBase) const {
-    TArray<RnRef_t<RnRoadBase>> Result;
-    TSet<RnRef_t<RnRoadBase>> Visited;
+TArray<TRnRef_T<URnRoadBase>> URnModel::GetConnectedRoadBasesRecursive(const TRnRef_T<URnRoadBase>& RoadBase) const {
+    TArray<TRnRef_T<URnRoadBase>> Result;
+    TSet<TRnRef_T<URnRoadBase>> Visited;
 
     if (!RoadBase) return Result;
 
-    TArray<RnRef_t<RnRoadBase>> Stack;
+    TArray<TRnRef_T<URnRoadBase>> Stack;
     Stack.Push(RoadBase);
     Visited.Add(RoadBase);
 

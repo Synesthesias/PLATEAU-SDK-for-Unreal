@@ -3,44 +3,42 @@
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnModel.h"
 
-RnRoadBase::RnRoadBase()
+URnRoadBase::URnRoadBase()
 {
-    SideWalks = MakeShared<TArray<RnRef_t<RnSideWalk>>>();
-    TargetTrans = MakeShared<TArray<UPLATEAUCityObjectGroup*>>();
 }
 
-void RnRoadBase::AddSideWalk(const RnRef_t<RnSideWalk>& SideWalk) {
+void URnRoadBase::AddSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
-    if (SideWalks->Contains(SideWalk)) return;
+    if (SideWalks.Contains(SideWalk)) return;
 
     if (SideWalk->GetParentRoad()) {
         SideWalk->GetParentRoad()->RemoveSideWalk(SideWalk);
     }
-    SideWalk->SetParent(RnRef_t<RnRoadBase>(this));
-    SideWalks->Add(SideWalk);
+    SideWalk->SetParent(TRnRef_T<URnRoadBase>(this));
+    SideWalks.Add(SideWalk);
 }
 
-void RnRoadBase::RemoveSideWalk(const RnRef_t<RnSideWalk>& SideWalk) {
+void URnRoadBase::RemoveSideWalk(const TRnRef_T<URnSideWalk>& SideWalk) {
     if (!SideWalk) return;
     SideWalk->SetParent(nullptr);
-    SideWalks->Remove(SideWalk);
+    SideWalks.Remove(SideWalk);
 }
 
-void RnRoadBase::AddTargetTran(UPLATEAUCityObjectGroup* TargetTran) {
-    if (!TargetTrans->Contains(TargetTran)) {
-        TargetTrans->Add(TargetTran);
+void URnRoadBase::AddTargetTran(UPLATEAUCityObjectGroup* TargetTran) {
+    if (!TargetTrans.Contains(TargetTran)) {
+        TargetTrans.Add(TargetTran);
     }
 }
 
-void RnRoadBase::AddTargetTrans(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans) {
+void URnRoadBase::AddTargetTrans(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans) {
     for (const auto& Tran : InTargetTrans) {
         AddTargetTran(Tran);
     }
 }
 
-TArray<RnRef_t<RnWay>> RnRoadBase::GetAllWays() const {
-    TArray<RnRef_t<RnWay>> Ways;
-    for (const auto& SideWalk : *SideWalks) {
+TArray<TRnRef_T<URnWay>> URnRoadBase::GetAllWays() const {
+    TArray<TRnRef_T<URnWay>> Ways;
+    for (const auto& SideWalk : SideWalks) {
         for (const auto& Way : SideWalk->GetAllWays()) {
             Ways.Add(Way);
         }
@@ -48,9 +46,9 @@ TArray<RnRef_t<RnWay>> RnRoadBase::GetAllWays() const {
     return Ways;
 }
 
-void RnRoadBase::DisConnect(bool RemoveFromModel) {
+void URnRoadBase::DisConnect(bool RemoveFromModel) {
     if (RemoveFromModel) {
-        for (const auto& SideWalk : *SideWalks) {
+        for (const auto& SideWalk : SideWalks) {
             if (ParentModel) {
                 ParentModel->RemoveSideWalk(SideWalk);
             }
@@ -58,23 +56,24 @@ void RnRoadBase::DisConnect(bool RemoveFromModel) {
     }
 }
 
-void RnRoadBase::UnLinkEachOther(const RnRef_t<RnRoadBase>& Other) {
+void URnRoadBase::UnLinkEachOther(const TRnRef_T<URnRoadBase>& Other) {
     if (this) UnLink(Other);
-    if (Other) Other->UnLink(RnRef_t<RnRoadBase>(this));
+    if (Other) Other->UnLink(TRnRef_T<URnRoadBase>(this));
 }
 
-FString RnRoadBase::GetTargetTransName() const {
-    if (!this || !TargetTrans) return TEXT("null");
+FString URnRoadBase::GetTargetTransName() const {
+    if (!this) 
+        return TEXT("null");
 
     TArray<FString> Names;
-    for (const auto& Trans : *TargetTrans) {
+    for (const auto& Trans : TargetTrans) {
         Names.Add(Trans ? Trans->GetName() : TEXT("null"));
     }
     return FString::Join(Names, TEXT(","));
 }
 
-TSet<RnRef_t<RnLineString>> RnRoadBase::GetAllLineStringsDistinct() const {
-    TSet<RnRef_t<RnLineString>> LineStrings;
+TSet<TRnRef_T<URnLineString>> URnRoadBase::GetAllLineStringsDistinct() const {
+    TSet<TRnRef_T<URnLineString>> LineStrings;
     if (!this) return LineStrings;
 
     for (const auto& Way : GetAllWays()) {

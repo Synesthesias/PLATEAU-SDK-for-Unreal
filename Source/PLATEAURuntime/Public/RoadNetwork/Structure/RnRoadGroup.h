@@ -3,28 +3,35 @@
 #include "CoreMinimal.h"
 #include "../RnDef.h"
 #include <optional>
-class RnIntersection;
-class RnRoad;
-class RnSideWalk;
-class RnWay;
-class RnLane;
-class RnLineString;
+#include "RnRoadGroup.generated.h"
+class URnIntersection;
+class URnRoad;
+class URnSideWalk;
+class URnWay;
+class URnLane;
+class URnLineString;
 
-class RnRoadGroup
+UCLASS()
+class URnRoadGroup : public UObject
 {
+    GENERATED_BODY()
 public:
     // 開始ノード
-    RnRef_t<RnIntersection> PrevIntersection;
+    TRnRef_T<URnIntersection> PrevIntersection;
 
     // 終了ノード
-    RnRef_t<RnIntersection> NextIntersection;
+    TRnRef_T<URnIntersection> NextIntersection;
 
     // 道路リスト
-    TSharedPtr<TArray<RnRef_t<RnRoad>>> Roads;
+    TArray<TRnRef_T<URnRoad>> Roads;
+    URnRoadGroup() = default;
+    URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
+        TRnRef_T<URnIntersection> InNextIntersection,
+        const TArray<TRnRef_T<URnRoad>>& InRoads);
 
-    RnRoadGroup(RnRef_t<RnIntersection> InPrevIntersection,
-        RnRef_t<RnIntersection> InNextIntersection,
-        const TArray<RnRef_t<RnRoad>>& InRoads);
+    void Init(TRnRef_T<URnIntersection> InPrevIntersection,
+        TRnRef_T<URnIntersection> InNextIntersection,
+        const TArray<TRnRef_T<URnRoad>>& InRoads);
 
     // 有効なRoadGroupかどうか
     bool IsValid() const;
@@ -36,16 +43,16 @@ public:
     int32 GetRightLaneCount() const;
 
     // 右側のレーンを取得
-    TArray<RnRef_t<RnLane>> GetRightLanes() const;
+    TArray<TRnRef_T<URnLane>> GetRightLanes() const;
 
     // 左側のレーンを取得
-    TArray<RnRef_t<RnLane>> GetLeftLanes() const;
+    TArray<TRnRef_T<URnLane>> GetLeftLanes() const;
 public:
     // RnDirで指定した側のレーンを取得
-    TArray<RnRef_t<RnLane>> GetLanes(ERnDir Dir) const;
+    TArray<TRnRef_T<URnLane>> GetLanes(ERnDir Dir) const;
 
     // 中央分離帯を取得
-    void GetMedians(TArray<RnRef_t<RnWay>>& OutLeft, TArray<RnRef_t<RnWay>>& OutRight) const;
+    void GetMedians(TArray<TRnRef_T<URnWay>>& OutLeft, TArray<TRnRef_T<URnWay>>& OutRight) const;
 
     // 中央分離帯があるかどうか
     bool HasMedians() const;
@@ -75,13 +82,13 @@ public:
     void AdjustBorder();
 
     // Static Methods
-    static RnRef_t<RnRoadGroup> CreateRoadGroupOrDefault(RnRef_t<RnIntersection> PrevIntersection, RnRef_t<RnIntersection> NextIntersection);
-    static bool IsSameRoadGroup(RnRef_t<RnRoadGroup> A, RnRef_t<RnRoadGroup> B);
+    static TRnRef_T<URnRoadGroup> CreateRoadGroupOrDefault(TRnRef_T<URnIntersection> PrevIntersection, TRnRef_T<URnIntersection> NextIntersection);
+    static bool IsSameRoadGroup(TRnRef_T<URnRoadGroup> A, TRnRef_T<URnRoadGroup> B);
 
 private:
 
 
-    TSharedPtr<TMap<RnRef_t<RnRoad>, TArray<RnRef_t<RnLane>>>> SplitLane(
+    TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
         std::optional<ERnDir> Dir,
         // #TODO : nullptr入れられるのか確認

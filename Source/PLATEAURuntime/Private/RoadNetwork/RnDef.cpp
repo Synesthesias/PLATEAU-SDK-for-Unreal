@@ -15,3 +15,9 @@ ERnDir FRnDirEx::GetOpposite(ERnDir dir)
 inline FVector2D FRnDef::To2D(const FVector& Vector) {
     return FAxisPlaneEx::ToVector2D(Vector, Plane);
 }
+
+template <typename TSelf>
+FRnParts<TSelf>::FRnParts()
+: FRnPartsBase(Counter++)
+{
+}

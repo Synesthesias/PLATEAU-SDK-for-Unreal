@@ -8,81 +8,94 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
 
-void RnEx::ReplaceLane(TArray<RnRef_t<RnLane>>& Self, RnRef_t<RnLane> Before, RnRef_t<RnLane> After) {
+void FRnEx::ReplaceLane(TArray<TRnRef_T<URnLane>>& Self, TRnRef_T<URnLane> Before, TRnRef_T<URnLane> After) {
     Replace(Self, Before, After);
 }
 
 
-RnRef_t<RnLineString> RnEx::CreateInnerLerpLineString(
+TRnRef_T<URnLineString> FRnEx::CreateInnerLerpLineString(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,
-    RnRef_t<RnPoint> Start,
-    RnRef_t<RnPoint> End,
-    RnRef_t<RnWay> StartBorder,
-    RnRef_t<RnWay> EndBorder,
+    TRnRef_T<URnPoint> Start,
+    TRnRef_T<URnPoint> End,
+    TRnRef_T<URnWay> StartBorder,
+    TRnRef_T<URnWay> EndBorder,
     float T,
     float PointSkipDistance) {
     // 左右がどちらも直線もしくは点以下の場合 -> start/endを直接つなぐ
     if (LeftVertices.Num() <= 2 && RightVertices.Num() <= 2) {
-        auto Points = MakeShared<TArray<RnRef_t<RnPoint>>>();
-        Points->Add(Start);
-        Points->Add(End);
-        return RnNew<RnLineString>(Points);
+        auto Points = TArray<TRnRef_T<URnPoint>>();
+        Points.Add(Start);
+        Points.Add(End);
+        return RnNew<URnLineString>(Points);
     }
 
-    auto Line = RnNew<RnLineString>();
+    auto Line = RnNew<URnLineString>();
 
-    auto AddPoint = [&](RnRef_t<RnPoint> P) {
+    auto AddPoint = [&](TRnRef_T<URnPoint> P) {
         if (!P) return;
         Line->AddPointOrSkip(P, PointSkipDistance);
         };
 
     AddPoint(Start);
-    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, RnModel::Plane, T);
+    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, URnModel::Plane, T);
 
     // 1つ目の点はボーダーと重複するのでスキップ
     for (int32 i = 1; i < Segments.Num(); ++i) {
-        AddPoint(RnNew<RnPoint>(Segments[i]));
+        AddPoint(RnNew<URnPoint>(Segments[i]));
     }
 
     AddPoint(End);
 
     // 自己交差があれば削除する
-    auto Plane = RnModel::Plane;
-    FGeoGraph2D::RemoveSelfCrossing<RnRef_t<RnPoint>>(
-        *Line->Points,
-        [Plane](RnRef_t<RnPoint> T) { return FAxisPlaneEx::GetTangent(T->Vertex, Plane); },
-        [](RnRef_t<RnPoint> P1, RnRef_t<RnPoint> P2, RnRef_t<RnPoint> P3, RnRef_t<RnPoint> P4,
+    auto Plane = URnModel::Plane;
+    FGeoGraph2D::RemoveSelfCrossing<TRnRef_T<URnPoint>>(
+        Line->GetPoints(),
+        [Plane](TRnRef_T<URnPoint> T) { return FAxisPlaneEx::GetTangent(T->Vertex, Plane); },
+        [](TRnRef_T<URnPoint> P1, TRnRef_T<URnPoint> P2, TRnRef_T<URnPoint> P3, TRnRef_T<URnPoint> P4,
             const FVector2D& Inter, float F1, float F2) {
-                return RnNew<RnPoint>(FMath::Lerp(P1->Vertex, P2->Vertex, F1));
+                return RnNew<URnPoint>(FMath::Lerp(P1->Vertex, P2->Vertex, F1));
         });
 
     return Line;
 }
 
-RnRef_t<FLineCrossPointResult> RnEx::GetLineIntersections(
+FLineCrossPointResult FRnEx::GetLineIntersections(
     const FLineSegment3D& LineSegment,
-    const TArray<RnRef_t<RnWay>>& Ways) {
-    auto Result = RnNew<FLineCrossPointResult>();
-    Result->LineSegment = LineSegment;
+    const TArray<TRnRef_T<URnWay>>& Ways)
+{
+    FLineCrossPointResult Result;
+    Result.LineSegment = LineSegment;
 
     // 全てのwayのLineStringを取得
-    TSet<RnRef_t<RnLineString>> TargetLines;
+    TSet<TRnRef_T<URnLineString>> TargetLines;
     for (const auto& Way : Ways) {
         TargetLines.Add(Way->LineString);
     }
 
     for (const auto& Way : TargetLines) {
-        auto Elem = RnNew<FLineCrossPointResult::FTargetLineInfo>();
-        Elem->LineString = Way;
+        FLineCrossPointResult::FTargetLineInfo Elem;
+        Elem.LineString = Way;
 
-        auto Intersections = Way->GetIntersectionBy2D(LineSegment, RnModel::Plane);
+        auto Intersections = Way->GetIntersectionBy2D(LineSegment, URnModel::Plane);
         for (const auto& R : Intersections) {
-            Elem->Intersections.Add(MakeTuple(R.Key, R.Value));
+            Elem.Intersections.Add(MakeTuple(R.Key, R.Value));
         }
 
-        Result->TargetLines.Add(Elem);
+        Result.TargetLines.Add(Elem);
     }
 
     return Result;
+}
+
+void FRnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child,
+    FAttachmentTransformRules TransformRule)
+{
+    if (!Parent || !Child || !Actor)
+        return;
+    Actor->AddInstanceComponent(Child);
+    Child->SetupAttachment(Parent);
+    Child->RegisterComponent();
+    Child->AttachToComponent(Parent, TransformRule);
+    Actor->RerunConstructionScripts();
 }

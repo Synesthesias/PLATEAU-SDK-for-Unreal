@@ -14,6 +14,7 @@ public:
     FPLATEAUModelReconstruct();
     FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const ConvertGranularity Granularity);
 
+    virtual ~FPLATEAUModelReconstruct() = default;
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
      */

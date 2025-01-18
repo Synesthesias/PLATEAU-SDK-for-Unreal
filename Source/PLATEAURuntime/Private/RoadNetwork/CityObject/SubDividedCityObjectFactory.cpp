@@ -18,6 +18,8 @@ namespace
             : FPLATEAUModelReconstruct(Actor, Granularity) {
         }
 
+        virtual ~TmpLoader() {}
+
         TMap<FString, FPLATEAUCityObject>& GetCityObjMap()
         {
             return CityObjMap;
@@ -34,15 +36,24 @@ FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
     auto Result = MakeShared<FConvertCityObjectResult>();
     auto Granularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
     ::TmpLoader Loader(Actor, Granularity);
-    auto model = Loader.ConvertModelForReconstruct(CityObjectGroups);
 
-
-    for(auto i = 0; i < model->getRootNodeCount(); ++i)
+    for (auto CityObjectGroup : CityObjectGroups) 
     {
-        auto& Node = model->getRootNodeAt(i);
-        auto SO = MakeShared<FSubDividedCityObject>(Node, Loader.GetCityObjMap(), ERRoadTypeMask::Empty);
-        Result->ConvertedCityObjects.Add(SO);
+        // 見えていないものはスキップ
+        if (CityObjectGroup->IsVisible() == false)
+            continue;
+        TArray<UPLATEAUCityObjectGroup*> Tmp;
+        Tmp.Add(CityObjectGroup);
+        auto model = Loader.ConvertModelForReconstruct(Tmp);
+
+        for (auto i = 0; i < model->getRootNodeCount(); ++i) {
+            auto& Node = model->getRootNodeAt(i);
+            auto SO = MakeShared<FSubDividedCityObject>(CityObjectGroup, Node, Loader.GetCityObjMap(), ERRoadTypeMask::Empty);
+            Result->ConvertedCityObjects.Add(SO);
+        }
     }
+
+   
 
     return Result;
 }

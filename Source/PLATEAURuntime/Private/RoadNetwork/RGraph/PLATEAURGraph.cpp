@@ -1,0 +1,213 @@
+#include "RoadNetwork/RGraph/PLATEAURGraph.h"
+
+#include "RoadNetwork/RGraph/RGraphEx.h"
+#include "RoadNetwork/Util/RnDebugEx.h"
+
+
+struct FDrawWork {
+    URGraph* Graph;
+    TSet<RGraphRef_t<URVertex>> VisitedVertices;
+    TSet<RGraphRef_t<UREdge>>VisitedEdges;
+    TSet<RGraphRef_t<URFace>>VisitedFaces;    
+};
+
+UPLATEAURGraph::UPLATEAURGraph() {
+    bShowNormal = true;
+    ShowFaceType = ERRoadTypeMask::All;
+    RemoveFaceType = ERRoadTypeMask::Empty;
+    ShowId = ERPartsFlag::None;
+    RoadColor = FLinearColor::White;
+    HighWayColor = FLinearColor::Blue;
+    SideWalkColor = FLinearColor::Green;
+    UndefinedColor = FLinearColor::Red;
+    VertexOption.bVisible = false;
+    // Initialize default road type mask options
+    int32 Index = 0;
+   /* for (const auto Value : TEnumRange<ERRoadTypeMask>()) 
+    {
+        if (Value == ERRoadTypeMask::Empty || Value == ERRoadTypeMask::All)
+            continue;
+
+        FRoadTypeMaskOption Option;
+        Option.Type = Value;
+        Option.Color = FRnDebugEx::GetDebugColor(Index++);
+        Option.bEnable = true;
+        RoadTypeMaskOptions.Add(Option);
+    }*/
+}
+
+FLinearColor UPLATEAURGraph::GetColor(ERRoadTypeMask RoadType) {
+
+    if(FRRoadTypeMaskEx::IsHighWay(RoadType))
+        return HighWayColor;
+    if (FRRoadTypeMaskEx::IsSideWalk(RoadType))
+        return SideWalkColor;
+    if (FRRoadTypeMaskEx::IsRoad(RoadType))
+        return RoadColor;
+    return UndefinedColor;
+}
+
+void UPLATEAURGraph::Draw(const FRGraphDrawVertexOption& Op, RGraphRef_t<URVertex> Vertex, FDrawWork& Work) {
+    if (!Op.bVisible || Work.VisitedVertices.Contains(Vertex))
+        return;
+
+    Work.VisitedVertices.Add(Vertex);
+
+    FString Text = TEXT("●");
+    if (Op.bShowEdgeCount)
+        Text += FString::Printf(TEXT("%d"), Vertex->GetEdges().Num());
+
+    //if (EnumHasAnyFlags(ShowId, ERPartsFlag::Vertex))
+    //    Text += FString::Printf(TEXT("[%d]"), Vertex->GetDebugMyId());
+
+    if (Op.bShowPos)
+        Text += FString::Printf(TEXT("(%.2f,%.2f)"), Vertex->GetPosition().X, Vertex->GetPosition().Z);
+
+    // Draw vertex visualization
+    FRnDebugEx::DrawString(Text, Vertex->GetPosition(),   GetColor(Vertex->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor)));
+
+    //if (TargetVertices.Contains(Vertex) && Op.NeighborOption.bVisible) {
+    //    for (const auto& Edge : Vertex->GetEdges()) {
+    //        FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(),
+    //            Edge->GetV1()->GetPosition(), Op.NeighborOption.Color);
+    //    }
+    //}
+}
+
+void UPLATEAURGraph::Draw(const FRGraphDrawEdgeOption& Op, RGraphRef_t<UREdge> Edge, FDrawWork& Work)
+{
+    if (Work.VisitedEdges.Contains(Edge))
+        return;
+
+    Work.VisitedEdges.Add(Edge);
+
+    if (Op.bVisible) {
+        const FLinearColor Color = GetColor(Edge->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor));
+        FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(), Edge->GetV1()->GetPosition(), Color);
+
+        if (EnumHasAnyFlags(ShowId, ERPartsFlag::Edge)) {
+            const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
+           // FRnDebugEx::DrawString(FString::Printf(TEXT("[%d]"), Edge->GetDebugMyId()), MidPoint);
+        }
+
+        if (Op.bShowNeighborCount) {
+            const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
+            FRnDebugEx::DrawString(FString::Printf(TEXT("%d"), Edge->GetFaces().Num()), MidPoint);
+        }
+    }
+
+    Draw(VertexOption, Edge->GetV0(), Work);
+    Draw(VertexOption, Edge->GetV1(), Work);
+}
+
+void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> Face, FDrawWork& Work)
+{
+    if (!Op.bVisible)
+        return;
+
+    if (!EnumHasAnyFlags(Face->GetRoadTypes(), ShowFaceType))
+        return;
+
+    if (EnumHasAnyFlags(Face->GetRoadTypes(), RemoveFaceType))
+        return;
+
+    if (Work.VisitedFaces.Contains(Face))
+        return;
+
+    Work.VisitedFaces.Add(Face);
+
+    TArray<URVertex*> Vertices;
+    if (Op.bShowCityObjectOutline) 
+    {
+        Vertices = FRGraphEx::ComputeOutlineVerticesByCityObjectGroup(Work.Graph, Face->GetCityObjectGroup().Get(),
+            Op.ShowOutlineMask, Op.ShowOutlineRemoveMask);
+    }
+    else {
+        Vertices = FRGraphEx::ComputeOutlineVertices(Face);
+    }
+
+
+    if (EnumHasAnyFlags(ShowId, ERPartsFlag::Face)) {
+        FVector Center = FVector::ZeroVector;
+        for (const auto& Vertex : Vertices) {
+            Center += Vertex->GetPosition();
+        }
+        Center /= Vertices.Num();
+        //FRnDebugEx::DrawString(FString::Printf(TEXT("F[%d]"), Face->GetDebugMyId()), Center);
+    }
+
+    if (Op.bShowOutline) {
+        for(auto i = 0; i < Vertices.Num(); ++i)
+        {
+            auto V0 = Vertices[i];
+            auto V1 = Vertices[(i + 1) % Vertices.Num()];
+
+            auto Mask = V0->GetTypeMaskOrDefault(false) | V1->GetTypeMaskOrDefault(false);
+            const FLinearColor Color = GetColor(Mask);
+            FRnDebugEx::DrawLine(V0->GetPosition(), V1->GetPosition(), Color);
+        }
+    }
+    else {
+        for (const auto& Edge : Face->GetEdges()) {
+            Draw(EdgeOption, Edge, Work);
+        }
+    }
+}
+void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
+    /*auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FDrawOption& Option) {
+        if (!Option.bVisible)
+            return;
+
+        for (const auto& Edge : Edges) {
+            FRnDebugEx::DrawLine(
+                Edge->GetV0()->GetPosition(),
+                Edge->GetV1()->GetPosition(),
+                Option.Color
+            );
+        }
+        };
+
+    for (const auto& Face : Graph->GetFaces()) {
+        if (!Face->GetRoadTypes().IsSideWalk())
+            continue;
+
+        TArray<UREdge*> OutsideEdges, InsideEdges, StartEdges, EndEdges;
+        if (!Face->CreateSideWalk(OutsideEdges, InsideEdges, StartEdges, EndEdges))
+            continue;
+
+        DrawEdges(OutsideEdges, DrawSideWalkOption.OutsideColor);
+        DrawEdges(InsideEdges, DrawSideWalkOption.InsideColor);
+        DrawEdges(StartEdges, DrawSideWalkOption.StartColor);
+        DrawEdges(EndEdges, DrawSideWalkOption.EndColor);
+    }*/
+}
+
+void UPLATEAURGraph::DrawNormal(URGraph* Graph, FDrawWork& Work)
+{
+    for (const auto& Face : Graph->GetFaces()) {
+        Draw(FaceOption, Face, Work);
+    }
+}
+
+void UPLATEAURGraph::TickComponent(float DeltaTime, ELevelTick TickType,
+                                   FActorComponentTickFunction* ThisTickFunction) {
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (IsVisible() == false)
+        return;
+    if (bVisibility == false)
+        return;
+    if (!RGraph)
+        return;
+
+    FDrawWork Work;
+    Work.Graph = RGraph;
+
+    if (bShowNormal) 
+    {
+        DrawNormal(RGraph, Work);
+    }
+    else
+    {
+        DrawSideWalk(RGraph, Work);
+    }
+}

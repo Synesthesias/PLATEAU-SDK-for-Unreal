@@ -1,5 +1,6 @@
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "RoadNetwork/Util/RnDebugEx.h"
 
 TArray<FSubDividedCityObjectSubMesh> FSubDividedCityObjectSubMesh::Separate() const{
     TArray<FSubDividedCityObjectSubMesh> Result;
@@ -59,61 +60,67 @@ TArray<TArray<int32>> FSubDividedCityObjectSubMesh::CreateOutlineIndices() const
 
     // Create edge list
     TArray<TTuple<int32, int32>> Edges;
-    for (int32 i = 0; i < Triangles.Num(); i += 3) {
-        Edges.Add(MakeTuple(Triangles[i], Triangles[i + 1]));
-        Edges.Add(MakeTuple(Triangles[i + 1], Triangles[i + 2]));
-        Edges.Add(MakeTuple(Triangles[i + 2], Triangles[i]));
-    }
+
+    auto GetEdge = [](int32 A, int32 B)
+    {
+        if (A < B)
+            Swap(A, B);
+        return MakeTuple(A, B);
+    };
 
     // Count edge occurrences
-    TMap<TTuple<int32, int32>, int32> EdgeCount;
-    for (const auto& Edge : Edges) {
-        auto NormalizedEdge = Edge.Get<0>() < Edge.Get<1>() ? Edge : MakeTuple(Edge.Get<1>(), Edge.Get<0>());
-        EdgeCount.Add(NormalizedEdge, EdgeCount.FindRef(NormalizedEdge) + 1);
+    // Key   : 辺
+    // Value : 0以上の場合は三角形のインデックス、-1の場合は複数の三角形に接続している
+    TMap<TTuple<int32, int32>, int32> Edge2Triangle;
+    for (int32 i = 0; i < Triangles.Num(); i += 3) 
+    {
+        auto T = i / 3;
+        for(auto X = 0; X < 3; ++X)
+        {
+            auto A = Triangles[i + X];
+            auto B = Triangles[i + (X + 1) % 3];
+            auto E = GetEdge(A, B);
+            if (Edge2Triangle.Contains(E) == false) {
+                Edge2Triangle.Add(E, T);
+            }
+            else if (Edge2Triangle[E] != T)
+            {
+                Edge2Triangle[E] = -1;                
+            }
+        }
     }
-
-    // Find outline edges
-    TArray<TTuple<int32, int32>> OutlineEdges;
-    for (const auto& Edge : Edges) {
-        auto NormalizedEdge = Edge.Get<0>() < Edge.Get<1>() ? Edge : MakeTuple(Edge.Get<1>(), Edge.Get<0>());
-        if (EdgeCount[NormalizedEdge] == 1) {
-            OutlineEdges.Add(Edge);
+    TArray< TTuple<int32, int32>> OutlineEdges;
+    for(auto& E : Edge2Triangle)
+    {
+        if(E.Value >= 0)
+        {
+            OutlineEdges.Add(E.Key);
         }
     }
 
     // Convert to continuous outlines
-    while (OutlineEdges.Num() > 0) {
+    while (OutlineEdges.Num() > 0) 
+    {
         TArray<int32> Outline;
-        int32 CurrentVertex = OutlineEdges[0].Get<0>();
-        Outline.Add(CurrentVertex);
+        auto Edge = OutlineEdges[0];
+        OutlineEdges.RemoveAt(0);
 
-        while (true) {
-            bool Found = false;
-            for (int32 i = 0; i < OutlineEdges.Num(); ++i) {
-                if (OutlineEdges[i].Get<0>() == CurrentVertex) {
-                    CurrentVertex = OutlineEdges[i].Get<1>();
-                    Outline.Add(CurrentVertex);
-                    OutlineEdges.RemoveAt(i);
-                    Found = true;
-                    break;
-                }
-                if (OutlineEdges[i].Get<1>() == CurrentVertex) {
-                    CurrentVertex = OutlineEdges[i].Get<0>();
-                    Outline.Add(CurrentVertex);
-                    OutlineEdges.RemoveAt(i);
-                    Found = true;
-                    break;
-                }
-            }
-
-            if (!Found || Outline[0] == CurrentVertex) {
+        auto Indices = TArray<int32>{ Edge.Key, Edge.Value };
+        while(OutlineEdges.Num() > 0)
+        {
+            auto V0 = Indices[0];
+            auto LastV = Indices[Indices.Num() - 1];
+            auto Index = OutlineEdges.IndexOfByPredicate([LastV](const TTuple<int32, int32>& E) { return E.Key == LastV || E.Value == LastV; });
+            if (Index < 0)
                 break;
-            }
+            auto E = OutlineEdges[Index];
+            OutlineEdges.RemoveAt(Index);
+            // 1周した
+            if (E.Key == V0 || E.Value == V0)
+                break;
+            Indices.Add(E.Key == LastV ? E.Value : E.Key);
         }
-
-        if (Outline.Num() >= 3) {
-            Result.Add(Outline);
-        }
+        Result.Add(Indices);      
     }
 
     return Result;
@@ -131,37 +138,48 @@ void FSubDividedCityObjectMesh::VertexReduction() {
     }
 
     // Create vertex mapping
-    TMap<FVector, int32> UniqueVertices;
+    TMap<FVector, int32> VertexMap;
     TArray<int32> OldToNewIndices;
     OldToNewIndices.SetNum(Vertices.Num());
-
-    TArray<FVector> NewVertices;
-    int32 NewIndex = 0;
-
     for (int32 i = 0; i < Vertices.Num(); ++i) {
         const FVector& Vertex = Vertices[i];
-        int32* ExistingIndex = UniqueVertices.Find(Vertex);
-
-        if (ExistingIndex) {
-            OldToNewIndices[i] = *ExistingIndex;
+        if (VertexMap.Contains(Vertex))
+            continue;
+        VertexMap.Add(Vertex, VertexMap.Num());
+    }
+    for (auto& SubMesh : SubMeshes) 
+    {
+        TSet<TTuple<int32, int32, int32>> NewTriangles;
+        for (int32 i = 0; i < SubMesh.Triangles.Num(); i+=3) 
+        {
+            auto I0 = VertexMap[Vertices[SubMesh.Triangles[i]]];
+            auto I1 = VertexMap[Vertices[SubMesh.Triangles[i + 1]]];
+            auto I2 = VertexMap[Vertices[SubMesh.Triangles[i + 2]]];
+            // 三角形にならない場合は削除
+            if (I0 == I1 || I1 == I2 || I2 == I0) {
+                continue;
+            }
+            // 同じ三関係を削除するためにソート
+            TArray<int32> Ind = { I0, I1, I2 };
+            Ind.Sort();
+            NewTriangles.Add(MakeTuple(Ind[0], Ind[1], Ind[2]));
         }
-        else {
-            UniqueVertices.Add(Vertex, NewIndex);
-            OldToNewIndices[i] = NewIndex;
-            NewVertices.Add(Vertex);
-            NewIndex++;
+        SubMesh.Triangles.Empty();
+        for (auto&& T : NewTriangles) {
+            SubMesh.Triangles.Add(T.Get<0>());
+            SubMesh.Triangles.Add(T.Get<1>());
+            SubMesh.Triangles.Add(T.Get<2>());
         }
     }
 
+    TArray<FVector> NewVertices;
+    NewVertices.SetNumUninitialized(VertexMap.Num());
+    for (auto&& P : VertexMap) {
+        NewVertices[P.Value] = P.Key;
+    }
+   
     // Update vertices
     Vertices = NewVertices;
-
-    // Update indices in submeshes
-    for (auto& SubMesh : SubMeshes) {
-        for (int32 i = 0; i < SubMesh.Triangles.Num(); ++i) {
-            SubMesh.Triangles[i] = OldToNewIndices[SubMesh.Triangles[i]];
-        }
-    }
 }
 
 void FSubDividedCityObjectMesh::Separate() {
@@ -191,18 +209,19 @@ ERRoadTypeMask FSubDividedCityObject::GetRoadType(bool ContainsParent) const
     return Result;
 }
 
-FSubDividedCityObject::FSubDividedCityObject(const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj)
+FSubDividedCityObject::FSubDividedCityObject(UPLATEAUCityObjectGroup* Co, const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj)
     : SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ERRoadTypeMask::Empty) {
 
+    CityObjectGroup = Co;
     for (int32 i = 0; i < PlateauModel.getRootNodeCount(); ++i) {
         auto& Node = PlateauModel.getRootNodeAt(i);
-        FSubDividedCityObject Child(Node, CityObj, ERRoadTypeMask::Empty);
+        FSubDividedCityObject Child(Co, Node, CityObj, ERRoadTypeMask::Empty);
         Children.Add(Child);
     }
 }
 
-FSubDividedCityObject::FSubDividedCityObject(
+FSubDividedCityObject::FSubDividedCityObject(UPLATEAUCityObjectGroup* Co,
     const plateau::polygonMesh::Node& PlateauNode,
     TMap<FString, FPLATEAUCityObject>& CityObj,
     ERRoadTypeMask ParentTypeMask)
@@ -210,6 +229,7 @@ FSubDividedCityObject::FSubDividedCityObject(
     , SelfRoadType(ERRoadTypeMask::Empty)
     , ParentRoadType(ParentTypeMask) {
 
+    CityObjectGroup = Co;
     // Convert mesh data
     if (PlateauNode.getMesh()) {
         FSubDividedCityObjectMesh Mesh;
@@ -227,13 +247,13 @@ FSubDividedCityObject::FSubDividedCityObject(
         for (const auto& SrcSubMesh : SrcSubMeshes) {
             FSubDividedCityObjectSubMesh SubMesh;
             // #NOTE : PLATEAUMeshLoader.cpp参考
-            for (auto Index = SrcSubMesh.getStartIndex(); Index < SrcSubMesh.getEndIndex(); Index++) 
+            for (auto Index = SrcSubMesh.getStartIndex(); Index <= SrcSubMesh.getEndIndex(); Index++) 
             {                
                 SubMesh.Triangles.Add(indices[Index]);
             }
             Mesh.SubMeshes.Add(SubMesh);
         }
-
+        Mesh.VertexReduction();
         Meshes.Add(Mesh);
     }
 
@@ -241,10 +261,11 @@ FSubDividedCityObject::FSubDividedCityObject(
     if(auto Tmp = CityObj.Find(DesiredName))
         CityObject = *Tmp;
 
+    SelfRoadType = GetRoadTypeFromCityObject(CityObject);
     // Process child nodes
     for (int32 i = 0; i < PlateauNode.getChildCount(); ++i) {
         auto& ChildNode = PlateauNode.getChildAt(i);
-        FSubDividedCityObject Child(ChildNode, CityObj, SelfRoadType);
+        FSubDividedCityObject Child(Co, ChildNode, CityObj, SelfRoadType);
         Children.Add(Child);
     }
 }
@@ -284,4 +305,49 @@ TSharedPtr<FSubDividedCityObject> FSubDividedCityObject::DeepCopy()
         Result->Children.Add(*Child.DeepCopy());
     }
     return Result;
+}
+
+ERRoadTypeMask FSubDividedCityObject::GetRoadTypeFromCityObject(const FPLATEAUCityObject& CityObject)
+{
+    auto Ret = ERRoadTypeMask::Empty;
+
+    // LOD3からチェックする
+    auto& AttrMap = CityObject.Attributes.AttributeMap;
+    if(auto TranFunc = AttrMap.Find("tran:function"))
+    {
+        auto&& Str = TranFunc->StringValue;
+        if(Str == TEXT("車道部") || Str == TEXT("車道交差部"))
+        {
+            Ret |= ERRoadTypeMask::Road;
+        }
+
+        if (Str == TEXT("歩道部")) {
+            Ret |= ERRoadTypeMask::SideWalk;
+        }
+
+        if(Str == TEXT("島"))
+        {
+            Ret |= ERRoadTypeMask::Median;
+        }
+
+        if(Str.Contains(TEXT("高速")))
+        {
+            Ret |= ERRoadTypeMask::HighWay;
+        }
+    }
+
+
+    // LOD1
+    if(auto TranClass = AttrMap.Find("tran:class"))
+    {
+        auto&& Str = TranClass->StringValue;
+        if (Str == TEXT("道路")) {
+            Ret |= ERRoadTypeMask::Road;
+        }
+    }
+
+
+    if (Ret == ERRoadTypeMask::Empty)
+        Ret |= ERRoadTypeMask::Undefined;
+    return Ret;
 }

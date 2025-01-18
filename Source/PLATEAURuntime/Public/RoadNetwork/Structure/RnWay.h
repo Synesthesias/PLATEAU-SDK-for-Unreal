@@ -12,19 +12,21 @@
 #include "RnLineString.h"
 #include "RnPoint.h"
 #include "../RnDef.h"
-
-class RnWay
+#include "RnWay.generated.h"
+UCLASS()
+class URnWay : public UObject
 {
+    GENERATED_BODY()
 public:
     class PointIterator
     {
     public:
-        PointIterator(const RnWay* InWay, int32 index)
+        PointIterator(const URnWay* InWay, int32 index)
             : Way(InWay)
             , Index(index) {
         }
 
-        RnRef_t<RnPoint> operator*() const {
+        TRnRef_T<URnPoint> operator*() const {
             return Way->GetPoint(Index);
         }
 
@@ -36,14 +38,14 @@ public:
         bool operator!=(const PointIterator& Other) const {
             return Index != Other.Index;
         }
-        const RnWay* Way;
+        const URnWay* Way;
         int32 Index;
     };
 
     class PointsEnumerator
     {
     public:
-        PointsEnumerator(const RnWay* InWay)
+        PointsEnumerator(const URnWay* InWay)
             : Way(InWay)
         {
         }
@@ -55,12 +57,12 @@ public:
             return PointIterator(Way, Way->Count());
         }
 
-        const RnWay* Way;
+        const URnWay* Way;
     };
 
     class VertexIterator {
     public:
-        VertexIterator(const RnWay* InWay, int32 index)
+        VertexIterator(const URnWay* InWay, int32 index)
             : Way(InWay)
             , Index(index) {
         }
@@ -77,13 +79,13 @@ public:
         bool operator!=(const VertexIterator& Other) const {
             return Index != Other.Index;
         }
-        const RnWay* Way;
+        const URnWay* Way;
         int32 Index;
     };
 
     class VertexEnumerator {
     public:
-        VertexEnumerator(const RnWay* InWay)
+        VertexEnumerator(const URnWay* InWay)
             : Way(InWay) {
         }
         VertexIterator begin() const {
@@ -102,16 +104,15 @@ public:
             return Result;
         }
 
-        const RnWay* Way;
+        const URnWay* Way;
     };
 
 public:
-    RnWay();
-    RnWay(const RnRef_t<RnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
+    URnWay();
+    URnWay(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
+    void Init();
+    void Init(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
 
-    bool IsReversed;
-    bool IsReverseNormal;
-    RnRef_t<RnLineString> LineString;
 
 
     PointsEnumerator GetPoints() const
@@ -126,13 +127,13 @@ public:
     int32 Count() const;
     bool IsValid() const;
 
-    RnRef_t<RnPoint> GetPoint(int32 Index) const;
-    RnRef_t<RnPoint> SetPoint(int32 Index, const RnRef_t<RnPoint>& Point);
+    TRnRef_T<URnPoint> GetPoint(int32 Index) const;
+    TRnRef_T<URnPoint> SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point);
 
     FVector GetVertex(int32 Index) const;
     FVector operator[](int32 Index) const;
 
-    RnRef_t<RnWay> ReversedWay() const;
+    TRnRef_T<URnWay> ReversedWay() const;
     void Reverse(bool KeepNormalDir);
 
     FVector GetVertexNormal(int32 VertexIndex) const;
@@ -141,41 +142,51 @@ public:
     void MoveAlongNormal(float Offset);
     void Move(const FVector& Offset);
 
-    RnRef_t<RnWay> Clone(bool CloneVertex) const;
+    TRnRef_T<URnWay> Clone(bool CloneVertex) const;
 
     TArray<FLineSegment2D> GetEdges2D() const;
 
-    int32 FindPoint(const RnRef_t<RnPoint>& Point) const;
-    int32 FindPointIndex(const RnRef_t<RnPoint>& Point) const;
+    int32 FindPoint(const TRnRef_T<URnPoint>& Point) const;
+    int32 FindPointIndex(const TRnRef_T<URnPoint>& Point) const;
     void GetNearestPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const;
     bool IsValidOrDefault() const;
     float CalcLength() const;
     float CalcLength(float StartIndex, float EndIndex) const;
-    void AppendBack2LineString(const RnRef_t<RnWay>& Back);
-    void AppendFront2LineString(const RnRef_t<RnWay>& Front);
+    void AppendBack2LineString(const TRnRef_T<URnWay>& Back);
+    void AppendFront2LineString(const TRnRef_T<URnWay>& Front);
     bool IsOutSide(const FVector& V, FVector& OutNearest, float& OutDistance) const;
     void MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndOffset);
     FVector GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPoint(float Offset, bool Reverse) const;
-    float GetDistance2D(const RnRef_t<RnWay>& Other, EAxisPlane Plane = FRnDef::Plane) const;
+    float GetDistance2D(const TRnRef_T<URnWay>& Other, EAxisPlane Plane = FRnDef::Plane) const;
 
     // 線分の距離をp : (1-p)で分割した点を返す
     FVector GetLerpPoint(float P) const;
     float GetLerpPoint(float P, FVector& OutMidPoint) const;
 
     // 同じLineStringを参照しているかどうか
-    bool IsSameLineReference(const RnRef_t<RnWay>& Other) const;
+    bool IsSameLineReference(const TRnRef_T<URnWay>& Other) const;
 
     // 同じ頂点列を持っているかどうか
-    bool IsSameLineSequence(const RnRef_t<RnWay>& Other) const;
+    bool IsSameLineSequence(const TRnRef_T<URnWay>& Other) const;
 
     // 自身をnum分割して返す. 分割できない(頂点空）の時は空リストを返す.
     // insertNewPoint=trueの時はselfにも新しい点を追加する
-    TArray<RnRef_t<RnWay>> Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector = nullptr);
+    TArray<TRnRef_T<URnWay>> Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector = nullptr);
 private:
     int32 ToRawIndex(int32 Index, bool AllowMinus = false) const;
     int32 SwitchIndex(int32 Index) const;
     float SwitchIndex(float Index) const;
+
+public:
+    UPROPERTY()
+    bool IsReversed;
+
+    UPROPERTY()
+    bool IsReverseNormal;
+
+    UPROPERTY()
+    TObjectPtr<URnLineString> LineString;
 };

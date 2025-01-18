@@ -11,19 +11,20 @@
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetworkFactory.generated.h"
 
+class APLATEAURnStructureModel;
 class UPLATEAUCityObjectGroup;
-class RnModel;
-class RnRoad;
-class RnIntersection;
-class RnSideWalk;
-class RnWay;
-class RnLineString;
-class RnLane;
-class RnPoint;
+class URnModel;
+class URnRoad;
+class URnIntersection;
+class URnSideWalk;
+class URnWay;
+class URnLineString;
+class URnLane;
+class URnPoint;
 
 
-UCLASS(BlueprintType)
-class PLATEAURUNTIME_API URoadNetworkFactory : public UObject 
+USTRUCT(BlueprintType)
+struct PLATEAURUNTIME_API FRoadNetworkFactory
 {
     GENERATED_BODY()
 public:
@@ -57,7 +58,7 @@ public:
     bool bAddTrafficSignalLights = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
-    bool bSaveTmpData = false;
+    bool bSaveTmpData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bUseContourMesh = true;
@@ -71,21 +72,48 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bSeparateContinuousBorder = true;
 
-    RnRef_t<RnModel::CalibrateIntersectionBorderOption> CalibrateIntersectionOption;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FRGraphFactory GraphFactory;
 
-    struct FCreateRnModelRequest
-    {
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    FRnModelCalibrateIntersectionBorderOption CalibrateIntersectionOption;
+
+};
+
+struct FRoadNetworkFactoryEx
+{
+
+    struct FCreateRnModelRequest {
         APLATEAUInstancedCityModel* Actor;
         TWeakObjectPtr<USceneComponent> Transform;
         TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
         //PLATEAURnStructureModel* OriginalMesh;
     };
 
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-    void CreateRnModel(APLATEAUInstancedCityModel* Actor, AActor* DestActor);
+    static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
-    RnRef_t<RnModel> CreateRoadNetwork(APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
+    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
-    RnRef_t<RnModel> CreateRoadNetwork(TSharedPtr<FRGraph> Graph);
+private:
+    // 最小地物に分解する
+    static void CreateSubDividedCityObjects(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
+        , TArray<FSubDividedCityObject>& OutSubDividedCityObjects);
+
+    // RGraphを作成する
+    static void CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , TArray<FSubDividedCityObject>& SubDividedCityObjects
+        , RGraphRef_t<URGraph>& OutGraph);
+
+    // RnModelを作成する
+    static  TRnRef_T<URnModel> CreateRoadNetwork(
+        const FRoadNetworkFactory& Self
+        , APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , RGraphRef_t<URGraph> Graph);
 };

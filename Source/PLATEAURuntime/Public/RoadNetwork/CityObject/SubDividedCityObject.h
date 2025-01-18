@@ -9,8 +9,8 @@
 #include "RoadNetwork/RGraph/RGraphDef.h"
 #include "SubDividedCityObject.generated.h"
 class UPLATEAUCityObjectGroup;
-class RnLineString;
-class RnPoint;
+class URnLineString;
+class URnPoint;
 struct FAttributeDataHelper;
 
 USTRUCT(BlueprintType)
@@ -72,16 +72,17 @@ public:
     ERRoadTypeMask ParentRoadType;
 
     ERRoadTypeMask GetRoadType(bool ContainsParent) const;
-    FSubDividedCityObject(const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj );
     TArray<const FSubDividedCityObject*> GetAllChildren() const;
     void SetCityObjectGroup(UPLATEAUCityObjectGroup* Group);
     TSharedPtr<FSubDividedCityObject> DeepCopy();
 
-public:
+    static ERRoadTypeMask GetRoadTypeFromCityObject(const FPLATEAUCityObject& CityObject);
+
     FSubDividedCityObject()
     : CityObject()
     , SelfRoadType()
     {}
 
-    FSubDividedCityObject(const plateau::polygonMesh::Node& PlateauNode, TMap<FString, FPLATEAUCityObject>& CityObj, ERRoadTypeMask ParentTypeMask);
+    FSubDividedCityObject(UPLATEAUCityObjectGroup* Co, const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj);
+    FSubDividedCityObject(UPLATEAUCityObjectGroup* Co, const plateau::polygonMesh::Node& PlateauNode, TMap<FString, FPLATEAUCityObject>& CityObj, ERRoadTypeMask ParentTypeMask);
 };

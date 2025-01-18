@@ -4,44 +4,29 @@
 #include "RnWay.h"
 #include "RnRoad.h"
 #include "../RnDef.h"
+#include "RnLane.generated.h"
 
-class RnRoad;
-class RnLane
+class URnRoad;
+UCLASS()
+class URnLane : public UObject
 {
+    GENERATED_BODY()
 public:
-    RnLane();
-    RnLane(const RnRef_t<RnWay>& LeftWay, const RnRef_t<RnWay>& RightWay,
-        const RnRef_t<RnWay>& PrevBorder, const RnRef_t<RnWay>& NextBorder);
-
-    // 親リンク
-    RnRef_t<RnRoad> Parent;
-
-    // 境界線(下流)
-    RnRef_t<RnWay> PrevBorder;
-
-    // 境界線(上流)
-    RnRef_t<RnWay> NextBorder;
-
-    // 車線(左)
-    RnRef_t<RnWay> LeftWay;
-
-    // 車線(右)
-    RnRef_t<RnWay> RightWay;
-
-    // 親Roadと逆方向(右車線等)
-    bool IsReverse;
-
-    // 内部的に持つだけ. 中心線
-    RnRef_t<RnWay> CenterWay;
+    URnLane();
+    URnLane(const TRnRef_T<URnWay>& LeftWay, const TRnRef_T<URnWay>& RightWay,
+        const TRnRef_T<URnWay>& PrevBorder, const TRnRef_T<URnWay>& NextBorder);
+    void Init();
+    void Init(const TRnRef_T<URnWay>& InLeftWay, const TRnRef_T<URnWay>& InRightWay,
+              const TRnRef_T<URnWay>& InPrevBorder, const TRnRef_T<URnWay>& InNextBorder);
 
     // Left/Right両方のWayを返す(nullの物は含まない)
-    TArray<RnRef_t<RnWay>> GetBothWays() const;
+    TArray<TRnRef_T<URnWay>> GetBothWays() const;
 
     // Prev/Nextの境界線を返す(nullの物は含まない)
-    TArray<RnRef_t<RnWay>> GetAllBorders() const;
+    TArray<TRnRef_T<URnWay>> GetAllBorders() const;
 
     // Border/Side両方合わせた全てのWayを返す
-    TArray<RnRef_t<RnWay>> GetAllWays() const;
+    TArray<TRnRef_T<URnWay>> GetAllWays() const;
 
     // 有効なレーンかどうか
     // Left/Rightどっちも有効ならtrue
@@ -63,16 +48,16 @@ public:
     ERnLaneBorderDir GetBorderDir(ERnLaneBorderType Type) const;
 
     // 境界線を取得する
-    RnRef_t<RnWay> GetBorder(ERnLaneBorderType Type) const;
+    TRnRef_T<URnWay> GetBorder(ERnLaneBorderType Type) const;
 
     // 境界線を設定する
-    void SetBorder(ERnLaneBorderType Type, const RnRef_t<RnWay>& Border);
+    void SetBorder(ERnLaneBorderType Type, const TRnRef_T<URnWay>& Border);
 
     // 指定した側のWayを取得する
-    RnRef_t<RnWay> GetSideWay(ERnDir Dir) const;
+    TRnRef_T<URnWay> GetSideWay(ERnDir Dir) const;
 
     // 指定した側のWayを設定する
-    void SetSideWay(ERnDir Dir, const RnRef_t<RnWay>& Way);
+    void SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way);
 
     // 車線の幅を計算する
     float CalcWidth() const;
@@ -84,7 +69,7 @@ public:
     void BuildCenterWay();
 
     // 中心線を取得する
-    RnRef_t<RnWay> GetCenterWay();
+    TRnRef_T<URnWay> GetCenterWay();
 
     // 指定した点に最も近い中心線上の点を取得する
     void GetNearestCenterPoint(const FVector& Pos, FVector& OutNearest, float& OutPointIndex, float& OutDistance) const;
@@ -114,9 +99,9 @@ public:
     bool IsInside(const FVector& Point) const;
 
     // クローンを作成する
-    RnRef_t<RnLane> Clone() const;
+    TRnRef_T<URnLane> Clone() const;
 
-    static RnRef_t<RnLane> CreateOneWayLane(RnRef_t<RnWay> way);
+    static TRnRef_T<URnLane> CreateOneWayLane(TRnRef_T<URnWay> way);
 
     /// <summary>
     /// 交差点同士の間に入れる空のレーンを作成
@@ -124,5 +109,35 @@ public:
     /// <param name="border"></param>
     /// <param name="centerWay"></param>
     /// <returns></returns>
-    static RnRef_t<RnLane> CreateEmptyLane(RnRef_t<RnWay> border, RnRef_t<RnWay> centerWay);
+    static TRnRef_T<URnLane> CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URnWay> centerWay);
+
+public:
+    // 親リンク
+    UPROPERTY()
+    TObjectPtr<URnRoad> Parent;
+
+    // 境界線(下流)
+    UPROPERTY()
+    TObjectPtr<URnWay> PrevBorder;
+
+    // 境界線(上流)
+    UPROPERTY()
+    TObjectPtr<URnWay> NextBorder;
+
+    // 車線(左)
+    UPROPERTY()
+    TObjectPtr<URnWay> LeftWay;
+
+    // 車線(右)
+    UPROPERTY()
+    TObjectPtr<URnWay> RightWay;
+
+    // 親Roadと逆方向(右車線等)
+    UPROPERTY()
+    bool IsReverse;
+
+    // 内部的に持つだけ. 中心線
+    UPROPERTY()
+    TObjectPtr<URnWay> CenterWay;
+
 };

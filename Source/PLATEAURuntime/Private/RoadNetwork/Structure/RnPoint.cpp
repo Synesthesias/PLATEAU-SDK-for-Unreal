@@ -1,26 +1,27 @@
 #include "Roadnetwork/Structure/RnPoint.h"
 
-RnPoint::RnPoint()
+URnPoint::URnPoint()
     : Vertex(FVector::ZeroVector) {
 }
 
-RnPoint::RnPoint(const FVector& InVertex)
-    : Vertex(InVertex) {
+URnPoint::URnPoint(const FVector& InVertex)
+{
+    Init(InVertex);
 }
 
-RnRef_t<RnPoint> RnPoint::Clone() const {
-    return RnNew<RnPoint>(Vertex);
+void URnPoint::Init()
+{}
+
+void URnPoint::Init(const FVector& InVertex)
+{
+    Vertex = InVertex;
 }
 
-bool RnPoint::Equals(const RnPoint* X, const RnPoint* Y, float SqrMagnitudeTolerance) {
-    if (X == Y) return true;
-    if (!X || !Y) return false;
-    if (SqrMagnitudeTolerance < 0.0f) return false;
-
-    return Equals(*X, *Y, SqrMagnitudeTolerance);
+TRnRef_T<URnPoint> URnPoint::Clone() const {
+    return RnNew<URnPoint>(Vertex);
 }
 
-bool RnPoint::Equals(const RnPoint& X, const RnPoint& Y, float SqrMagnitudeTolerance)
+bool URnPoint::Equals(const URnPoint& X, const URnPoint& Y, float SqrMagnitudeTolerance)
 {
     // ポインタが同じなら同じ点とみなす
     if (&X == &Y) 
@@ -28,16 +29,20 @@ bool RnPoint::Equals(const RnPoint& X, const RnPoint& Y, float SqrMagnitudeToler
     return (X.Vertex - Y.Vertex).SizeSquared() <= SqrMagnitudeTolerance;
 }
 
-bool RnPoint::Equals(RnRef_t<const RnPoint> X, RnRef_t<const RnPoint> Y, float SqrMagnitudeTolerance)
+bool URnPoint::Equals(TRnRef_T<const URnPoint> X, TRnRef_T<const URnPoint> Y, float SqrMagnitudeTolerance)
 {
-    return Equals(X.Get(), Y.Get(), SqrMagnitudeTolerance);
+    if (X == Y) return true;
+    if (!X || !Y) return false;
+    if (SqrMagnitudeTolerance < 0.0f) return false;
+
+    return Equals(*X, *Y, SqrMagnitudeTolerance);
 }
 
-bool RnPoint::IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance) const {
+bool URnPoint::IsSamePoint(const URnPoint* Other, float SqrMagnitudeTolerance) const {
     return Equals(this, Other, SqrMagnitudeTolerance);
 }
 
-bool RnPoint::IsSamePoint(const RnRef_t<RnPoint>& Other, float SqrMagnitudeTolerance) const
+bool URnPoint::IsSamePoint(const TRnRef_T<URnPoint>& Other, float SqrMagnitudeTolerance) const
 {
-    return Equals(this, Other.Get(), SqrMagnitudeTolerance);
+    return Equals(this, Other, SqrMagnitudeTolerance);
 }

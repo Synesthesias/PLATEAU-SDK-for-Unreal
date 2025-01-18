@@ -5,22 +5,28 @@
 #include <memory>
 
 #include "RoadNetwork/RnDef.h"
+#include "RnPoint.generated.h"
 
-class RnPoint  {
+UCLASS()
+class URnPoint : public UObject {
+    GENERATED_BODY()
 public:
-    RnPoint();
-    RnPoint(const FVector& InVertex);
+    URnPoint();
+    URnPoint(const FVector& InVertex);
+    void Init();
+    void Init(const FVector& InVertex);
 
-    FVector Vertex;
+    TRnRef_T<URnPoint> Clone() const;
 
-    RnRef_t<RnPoint> Clone() const;
-
-    static bool Equals(const RnPoint* X, const RnPoint* Y, float SqrMagnitudeTolerance = 0.0f);
-
-    static bool Equals(const RnPoint& X, const RnPoint& Y, float SqrMagnitudeTolerance = 0.0f);
-    static bool Equals(RnRef_t<const RnPoint> X, RnRef_t< const RnPoint> Y, float SqrMagnitudeTolerance = 0.0f);
+    static bool Equals(const URnPoint& X, const URnPoint& Y, float SqrMagnitudeTolerance = 0.0f);
+    static bool Equals(TRnRef_T<const URnPoint> X, TRnRef_T< const URnPoint> Y, float SqrMagnitudeTolerance = 0.0f);
     operator FVector() const { return Vertex; }
 
-    bool IsSamePoint(const RnPoint* Other, float SqrMagnitudeTolerance = 0.0f) const;
-    bool IsSamePoint(const RnRef_t<RnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
+    bool IsSamePoint(const URnPoint* Other, float SqrMagnitudeTolerance = 0.0f) const;
+    bool IsSamePoint(const TRnRef_T<URnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
+
+public:
+    UPROPERTY()
+    FVector Vertex;
+
 };
