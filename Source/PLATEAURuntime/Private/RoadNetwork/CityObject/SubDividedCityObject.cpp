@@ -138,37 +138,48 @@ void FSubDividedCityObjectMesh::VertexReduction() {
     }
 
     // Create vertex mapping
-    TMap<FVector, int32> UniqueVertices;
+    TMap<FVector, int32> VertexMap;
     TArray<int32> OldToNewIndices;
     OldToNewIndices.SetNum(Vertices.Num());
-
-    TArray<FVector> NewVertices;
-    int32 NewIndex = 0;
-
     for (int32 i = 0; i < Vertices.Num(); ++i) {
         const FVector& Vertex = Vertices[i];
-        int32* ExistingIndex = UniqueVertices.Find(Vertex);
-
-        if (ExistingIndex) {
-            OldToNewIndices[i] = *ExistingIndex;
+        if (VertexMap.Contains(Vertex))
+            continue;
+        VertexMap.Add(Vertex, VertexMap.Num());
+    }
+    for (auto& SubMesh : SubMeshes) 
+    {
+        TSet<TTuple<int32, int32, int32>> NewTriangles;
+        for (int32 i = 0; i < SubMesh.Triangles.Num(); i+=3) 
+        {
+            auto I0 = VertexMap[Vertices[SubMesh.Triangles[i]]];
+            auto I1 = VertexMap[Vertices[SubMesh.Triangles[i + 1]]];
+            auto I2 = VertexMap[Vertices[SubMesh.Triangles[i + 2]]];
+            // 三角形にならない場合は削除
+            if (I0 == I1 || I1 == I2 || I2 == I0) {
+                continue;
+            }
+            // 同じ三関係を削除するためにソート
+            TArray<int32> Ind = { I0, I1, I2 };
+            Ind.Sort();
+            NewTriangles.Add(MakeTuple(Ind[0], Ind[1], Ind[2]));
         }
-        else {
-            UniqueVertices.Add(Vertex, NewIndex);
-            OldToNewIndices[i] = NewIndex;
-            NewVertices.Add(Vertex);
-            NewIndex++;
+        SubMesh.Triangles.Empty();
+        for (auto&& T : NewTriangles) {
+            SubMesh.Triangles.Add(T.Get<0>());
+            SubMesh.Triangles.Add(T.Get<1>());
+            SubMesh.Triangles.Add(T.Get<2>());
         }
     }
 
+    TArray<FVector> NewVertices;
+    NewVertices.SetNumUninitialized(VertexMap.Num());
+    for (auto&& P : VertexMap) {
+        NewVertices[P.Value] = P.Key;
+    }
+   
     // Update vertices
     Vertices = NewVertices;
-
-    // Update indices in submeshes
-    for (auto& SubMesh : SubMeshes) {
-        for (int32 i = 0; i < SubMesh.Triangles.Num(); ++i) {
-            SubMesh.Triangles[i] = OldToNewIndices[SubMesh.Triangles[i]];
-        }
-    }
 }
 
 void FSubDividedCityObjectMesh::Separate() {
