@@ -10,6 +10,7 @@
 #include "RoadNetwork/RGraph/PLATEAURGraph.h"
 #include "RoadNetwork/RGraph/RGraph.h"
 #include "RoadNetwork/RGraph/RGraphEx.h"
+#include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
@@ -48,7 +49,7 @@ namespace
 
     class FTran {
     public:
-        TSharedPtr<FWork> Work;
+        FWork& Work;
         RGraphRef_t<URGraph> Graph;
         TSet<RGraphRef_t<URFace>> Roads;
         RGraphRef_t<URFaceGroup> FaceGroup;
@@ -82,14 +83,14 @@ namespace
             return Algo::CountIf(Lines, [](const TSharedPtr<FTranLine>& L) {return L->IsBorder(); });
         }
 
-        FTran(const TSharedPtr<FWork>& W, const RGraphRef_t<URGraph>& G, RGraphRef_t<URFaceGroup>& FG)
+        FTran(FWork& W, const RGraphRef_t<URGraph>& G, RGraphRef_t<URFaceGroup>& FG)
         : Work(W)
         , Graph(G)
         , FaceGroup(FG)
         {
             Vertices = FRGraphEx::ComputeOutlineVertices(FaceGroup, [](RGraphRef_t<URFace> Face)
             {
-                    return FRRoadTypeEx::HasAnyFlag(Face->GetRoadTypes(), ERRoadTypeMask::SideWalk) == false;
+                    return FRRoadTypeMaskEx::HasAnyFlag(Face->GetRoadTypes(), ERRoadTypeMask::SideWalk) == false;
             });
 
             if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
@@ -250,10 +251,10 @@ namespace
         {
             // 孤立した中央分離帯は道路構造の生成対象から外す
             // (道路に完全内包する中央分離帯だったりと無意味なので)
-            if (FRRoadTypeEx::IsMedian(FaceGroup->GetRoadTypes())) {
+            if (FRRoadTypeMaskEx::IsMedian(FaceGroup->GetRoadTypes())) {
                 return nullptr;
             }
-            auto way = Work->CreateWay(Vertices);
+            auto way = Work.CreateWay(Vertices);
             return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
         }
 
@@ -261,7 +262,7 @@ namespace
         if (RoadType == ERoadType::Terminate) 
         {
             // #TODO : RN
-            auto way = Work->CreateWay(Vertices);
+            auto way = Work.CreateWay(Vertices);
             return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
         }
         // #TODO : RN
@@ -270,14 +271,14 @@ namespace
 
 }
 
-void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor)
+void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor)
 {
     TArray<UPLATEAUCityObjectGroup*> CityObjectGroups;
     Actor->GetComponents(CityObjectGroups);
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor,
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
     if(DestActor->GetRootComponent() == nullptr)
@@ -293,11 +294,22 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
     CreateSubDividedCityObjects(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
 
     RGraphRef_t<URGraph> Graph;
-    CreateRGraph(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects, Graph);
+    CreateRGraph(Self, Actor, DestActor, Root, SubDividedCityObjects, Graph);
+
+
+    const auto RnModelName = TEXT("RnModel");
+    auto RnModel = CreateRoadNetwork(Self, Actor, DestActor, Root, Graph);
+
+    DestActor->Model = RnModel;
     return nullptr;
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph)
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
+    const FRoadNetworkFactory& Self
+    , APLATEAUInstancedCityModel* Actor
+    , AActor* DestActor
+    , USceneComponent* Root
+    , RGraphRef_t<URGraph> Graph)
 {
     auto Model = RnNew<URnModel>();
     try {
@@ -309,39 +321,38 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
             return M0 == M1;
             });
 
-        auto&& ret = TRnRef_T<URnModel>();
-        ret->FactoryVersion = Self.FactoryVersion;
+        Model->FactoryVersion = Self.FactoryVersion;
 
-        auto&& work = MakeShared<FWork>();
-        work->TerminateAllowEdgeAngle;
-        work->TerminateSkipAngleDeg = Self.TerminateSkipAngle;
+        FWork work;
+        work.TerminateAllowEdgeAngle;
+        work.TerminateSkipAngleDeg = Self.TerminateSkipAngle;
     
         
         for(auto&& faceGroup : faceGroups) {
             auto&& roadType = faceGroup->GetRoadTypes();
 
             // 道路を全く含まない時は無視
-            if (FRRoadTypeEx::IsRoad(roadType) == false)
+            if (FRRoadTypeMaskEx::IsRoad(roadType) == false)
                 continue;
-            if (FRRoadTypeEx::IsSideWalk(roadType))
+            if (FRRoadTypeMaskEx::IsSideWalk(roadType))
                 continue;
             // ignoreHighway=trueの時は高速道路も無視
-            if (FRRoadTypeEx::IsHighWay(roadType) && Self.bIgnoreHighway)
+            if (FRRoadTypeMaskEx::IsHighWay(roadType) && Self.bIgnoreHighway)
                 continue;
-            work->TranMap[faceGroup] = MakeShared<FTran>(work, Graph, faceGroup);
+            work.TranMap.Add(faceGroup, MakeShared<FTran>(work, Graph, faceGroup));
         }
 
         // 作成したFTranを元にRoadを作成
-        for(auto&& pair : work->TranMap)
+        for(auto&& pair : work.TranMap)
             pair.Value->BuildLine();
-        for(auto&& pair : work->TranMap) {
+        for(auto&& pair : work.TranMap) {
             auto&& tran = pair.Value;
             tran->Build();
             if (tran->Node != nullptr)
-                ret->AddRoadBase(tran->Node);
+                Model->AddRoadBase(tran->Node);
         }
 
-        for(auto&& pair : work->TranMap) {
+        for(auto&& pair : work.TranMap) {
             auto&& tran = pair.Value;
             tran->BuildConnection();
         }
@@ -349,9 +360,9 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
         if (Self.bAddSideWalk) 
         {
             // 歩道を作成する
-            auto&& sideWalks = work->CreateSideWalk(Self.Lod1SideWalkThresholdRoadWidth, Self.Lod1SideWalkSize);
+            auto&& sideWalks = work.CreateSideWalk(Self.Lod1SideWalkThresholdRoadWidth, Self.Lod1SideWalkSize);
             for (auto&& sideWalk : sideWalks)
-                ret->AddSideWalk(sideWalk);
+                Model->AddSideWalk(sideWalk);
 
             //for(auto&& fg : faceGroups) {
             //    for(auto&& sideWalkFace : fg.Faces.Where(f = > f.RoadTypes.IsSideWalk())) {
@@ -450,7 +461,8 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
     {
         
     }
-   
+
+
     return Model;
 }
 
@@ -520,8 +532,7 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
 
 }
 
-void FRoadNetworkFactoryEx::CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, USceneComponent* Root,
-    TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups, TArray<FSubDividedCityObject>& SubDividedCityObjects,
+void FRoadNetworkFactoryEx::CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, USceneComponent* Root, TArray<FSubDividedCityObject>& SubDividedCityObjects,
     RGraphRef_t<URGraph>& OutGraph)
 {
     OutGraph = FRGraphFactoryEx::CreateGraph(Self.GraphFactory, SubDividedCityObjects);

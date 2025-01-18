@@ -28,7 +28,7 @@ enum class ERRoadTypeMask : uint8 {
 };
 ENUM_CLASS_FLAGS(ERRoadTypeMask);
 
-class FRRoadTypeEx {
+class FRRoadTypeMaskEx {
 public:
     // 車道部分
     static bool IsRoad(ERRoadTypeMask Self) {

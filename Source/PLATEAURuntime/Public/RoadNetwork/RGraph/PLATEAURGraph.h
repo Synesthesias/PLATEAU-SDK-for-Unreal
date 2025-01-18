@@ -99,11 +99,6 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bVisibility = false;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bShowAll;
-
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bOnlySelectedCityObjectGroupVisible;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNormal;
@@ -128,6 +123,19 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     TArray<FRoadTypeMaskOption> RoadTypeMaskOptions;
+
+    UPROPERTY(EditAnywhere)
+    FLinearColor RoadColor;
+
+    UPROPERTY(EditAnywhere)
+    FLinearColor SideWalkColor;
+
+    UPROPERTY(EditAnywhere)
+    FLinearColor HighWayColor;
+
+
+    UPROPERTY(EditAnywhere)
+    FLinearColor UndefinedColor;
 
     // --------------------
     // start:フィールド

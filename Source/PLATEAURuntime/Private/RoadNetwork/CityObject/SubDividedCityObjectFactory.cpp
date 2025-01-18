@@ -39,6 +39,9 @@ FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
 
     for (auto CityObjectGroup : CityObjectGroups) 
     {
+        // 見えていないものはスキップ
+        if (CityObjectGroup->IsVisible() == false)
+            continue;
         TArray<UPLATEAUCityObjectGroup*> Tmp;
         Tmp.Add(CityObjectGroup);
         auto model = Loader.ConvertModelForReconstruct(Tmp);

@@ -6,7 +6,7 @@ URVertex::URVertex(const FVector& InPosition)
 
 URVertex::~URVertex()
 {
-    DisConnect();
+   // DisConnect();
 }
 
 void URVertex::Init(const FVector& InPosition)
@@ -170,7 +170,7 @@ UREdge::UREdge(RGraphRef_t<URVertex> InV0, RGraphRef_t<URVertex> InV1)
 
 UREdge::~UREdge()
 {
-    DisConnect();
+    //DisConnect();
 }
 
 void UREdge::Init(RGraphRef_t<URVertex> InV0, RGraphRef_t<URVertex> InV1)
@@ -368,7 +368,7 @@ URFace::URFace(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObje
 
 URFace::~URFace()
 {
-    DisConnect();
+    //DisConnect();
 }
 
 void URFace::Init(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObjectGroup, ERRoadTypeMask InRoadType,

@@ -8,7 +8,6 @@
 
 namespace
 {
-
     struct FEdgeKey {
         RGraphRef_t<URVertex> V0;
         RGraphRef_t<URVertex> V1;
@@ -38,6 +37,8 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
 
     TMap<FVector, RGraphRef_t<URVertex>> VertexMap;
     TMap<FEdgeKey, RGraphRef_t<UREdge>> EdgeMap;
+    auto OrigVertexCount = 0;
+    auto OrigEdgeCount = 0;
     for (auto& CityObject : CityObjects) {
         if (CityObject.CityObjectGroup == nullptr) {
             continue;
@@ -60,14 +61,16 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
 
                 vertices.Add(VertexMap[WorldPos]);
             }
+            OrigVertexCount += mesh.Vertices.Num();
             for (auto&& s : mesh.SubMeshes) {
-                auto AddEdge = [&EdgeMap, &face](RGraphRef_t<URVertex> V0, RGraphRef_t<URVertex> V1) {
+                auto AddEdge = [&EdgeMap, &face, &OrigEdgeCount](RGraphRef_t<URVertex> V0, RGraphRef_t<URVertex> V1) {
 
                     auto key = FEdgeKey(V0, V1);
                     if (EdgeMap.Contains(key) == false) {
                         EdgeMap.Add(key, RGraphNew<UREdge>(key.V0, key.V1));
                     }
                     face->AddEdge(EdgeMap[key]);
+                    OrigEdgeCount++;
                     };
 
                 if (Factory.bUseCityObjectOutline) {

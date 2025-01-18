@@ -11,6 +11,7 @@
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetworkFactory.generated.h"
 
+class APLATEAURnStructureModel;
 class UPLATEAUCityObjectGroup;
 class URnModel;
 class URnRoad;
@@ -89,11 +90,10 @@ struct FRoadNetworkFactoryEx
         //PLATEAURnStructureModel* OriginalMesh;
     };
 
-    static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor);
+    static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
-    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, AActor* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
+    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
-    static  TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, RGraphRef_t<URGraph> Graph);
 private:
     // 最小地物に分解する
     static void CreateSubDividedCityObjects(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
@@ -102,10 +102,18 @@ private:
         , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
         , TArray<FSubDividedCityObject>& OutSubDividedCityObjects);
 
+    // RGraphを作成する
     static void CreateRGraph(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
         , AActor* DestActor
         , USceneComponent* Root
-        , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
         , TArray<FSubDividedCityObject>& SubDividedCityObjects
         , RGraphRef_t<URGraph>& OutGraph);
+
+    // RnModelを作成する
+    static  TRnRef_T<URnModel> CreateRoadNetwork(
+        const FRoadNetworkFactory& Self
+        , APLATEAUInstancedCityModel* Actor
+        , AActor* DestActor
+        , USceneComponent* Root
+        , RGraphRef_t<URGraph> Graph);
 };

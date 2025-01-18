@@ -8,17 +8,19 @@ struct FDrawWork {
     URGraph* Graph;
     TSet<RGraphRef_t<URVertex>> VisitedVertices;
     TSet<RGraphRef_t<UREdge>>VisitedEdges;
-    TSet<RGraphRef_t<URFace>>VisitedFaces;
+    TSet<RGraphRef_t<URFace>>VisitedFaces;    
 };
 
 UPLATEAURGraph::UPLATEAURGraph() {
-    bShowAll = true;
     bShowNormal = true;
-    bOnlySelectedCityObjectGroupVisible = true;
     ShowFaceType = ERRoadTypeMask::All;
     RemoveFaceType = ERRoadTypeMask::Empty;
     ShowId = ERPartsFlag::None;
-
+    RoadColor = FLinearColor::White;
+    HighWayColor = FLinearColor::Blue;
+    SideWalkColor = FLinearColor::Green;
+    UndefinedColor = FLinearColor::Red;
+    VertexOption.bVisible = false;
     // Initialize default road type mask options
     int32 Index = 0;
    /* for (const auto Value : TEnumRange<ERRoadTypeMask>()) 
@@ -35,20 +37,14 @@ UPLATEAURGraph::UPLATEAURGraph() {
 }
 
 FLinearColor UPLATEAURGraph::GetColor(ERRoadTypeMask RoadType) {
-    FLinearColor Result = FLinearColor::Black;
-    int32 Count = 0;
 
-    for (const auto& Option : RoadTypeMaskOptions) {
-        if (Option.bEnable && EnumHasAnyFlags(RoadType, Option.Type)) {
-            Result += Option.Color;
-            Count++;
-        }
-    }
-
-    if (Count > 0)
-        Result /= Count;
-
-    return Result;
+    if(FRRoadTypeMaskEx::IsHighWay(RoadType))
+        return HighWayColor;
+    if (FRRoadTypeMaskEx::IsSideWalk(RoadType))
+        return SideWalkColor;
+    if (FRRoadTypeMaskEx::IsRoad(RoadType))
+        return RoadColor;
+    return UndefinedColor;
 }
 
 void UPLATEAURGraph::Draw(const FRGraphDrawVertexOption& Op, RGraphRef_t<URVertex> Vertex, FDrawWork& Work) {
@@ -119,13 +115,6 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
         return;
 
     Work.VisitedFaces.Add(Face);
-
-    if (bOnlySelectedCityObjectGroupVisible) {
-        // Implement selected city object group check
-        bool bShow = false;
-        if (!bShow)
-            return;
-    }
 
     TArray<URVertex*> Vertices;
     if (Op.bShowCityObjectOutline) 
