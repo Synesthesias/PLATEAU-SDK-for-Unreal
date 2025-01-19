@@ -173,7 +173,7 @@ float URnSideWalk::CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) co
     }
     else if (auto Intersection = Other->CastToIntersection()) {
         for (const auto& Edge : Intersection->GetEdges()) {
-            TargetWays.Add(Edge->Border);
+            TargetWays.Add(Edge->GetBorder());
         }
     }
 

@@ -19,11 +19,15 @@ class URnIntersectionEdge : public UObject
 public:
     URnIntersectionEdge();
     void Init();
-    // 接続先の道路
-    TRnRef_T<URnRoadBase> Road;
+    void Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder);
 
-    // 境界線
-    TRnRef_T<URnWay> Border;
+    TRnRef_T<URnRoadBase> GetRoad() const { return Road; }
+
+    TRnRef_T<URnWay> GetBorder() const { return Border; }
+
+    void SetRoad(const TRnRef_T<URnRoadBase>& InRoad) { Road = InRoad; }
+
+    void SetBorder(const TRnRef_T<URnWay>& InBorder) { Border = InBorder; }
 
     // 有効なNeighborかどうか
     bool IsValid() const;
@@ -42,6 +46,15 @@ public:
     // 指定した境界線に接続されているレーンを取得
     TRnRef_T<URnLane> GetConnectedLane(const TRnRef_T<URnWay>& BorderWay) const;
 
+private:
+
+    // 接続先の道路
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> Road;
+
+    // 境界線
+    UPROPERTY()
+    TObjectPtr<URnWay> Border;
 };
 
 UCLASS()

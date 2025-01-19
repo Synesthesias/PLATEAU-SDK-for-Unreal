@@ -1,4 +1,5 @@
 #pragma once
+#include "PLATEAURnModelDrawerDebug.h"
 #include "RoadNetwork/Factory/RoadNetworkFactory.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "PLATEAURnStructureModel.generated.h"
@@ -10,13 +11,21 @@ UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpa
 class PLATEAURUNTIME_API APLATEAURnStructureModel : public AActor {
     GENERATED_BODY()
 public:
+    APLATEAURnStructureModel();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PLATEAU")
     FRoadNetworkFactory Factory;
 
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
-    URnModel* Model;
+    TObjectPtr<URnModel> Model;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    FPLATEAURnModelDrawerDebug Debug;
 public:
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU")
     void CreateRnModel(APLATEAUInstancedCityModel* Actor);
+
+
+    virtual void Tick(float DeltaTime) override;
 };

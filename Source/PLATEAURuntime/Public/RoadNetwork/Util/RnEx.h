@@ -81,6 +81,20 @@ public:
         return false;
     }
 
+    template<typename T, typename F>
+    static auto SelectWithIndex(T&& Src, F&& Selector)
+    {
+        using U = decltype(Selector(Src[0], 0));
+        TArray<U> Result;
+        auto Index = 0;
+        for (auto&& E : Src) 
+        {
+            Result.Add(Selector(E, Index));
+            Index++;
+        }
+        return Result;
+    }
+
     template<typename T>
     static int32 Compare(T A, T B)
     {

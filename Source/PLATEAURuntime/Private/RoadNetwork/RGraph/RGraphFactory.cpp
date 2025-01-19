@@ -110,7 +110,34 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
             Graph->AddFace(face);
         }
     }
+#if false
+    auto CheckVertices = [&]() {
+        auto Vertices = Graph->GetAllVertices().Array();
+        for (auto i = 0; i < Vertices.Num() - 1; ++i) {
+            auto V1 = Vertices[i];
+            for (auto j = i + 1; j < Vertices.Num(); ++j) {
+                auto V2 = Vertices[j];
+                auto Dist = FVector::Distance(V1->GetPosition(), V2->GetPosition());
+                if (Dist < 1e-3f) {
+                    auto Tmp = 0;
+                }
 
+            }
+        }
+    };
+    auto CheckEdge = [&]() {
+        auto Edges = Graph->GetAllEdges().Array();
+        for (auto i = 0; i < Edges.Num() - 1; ++i) {
+            auto E1 = Edges[i];
+            for (auto j = i + 1; j < Edges.Num(); ++j) {
+                auto E2 = Edges[j];
+                if (E1->IsSameVertex(E2)) {
+                    auto Tmp = 0;
+                }
+            }
+        }
+    };
+#endif
     if (Factory.bOptAdjustSmallLodHeight) {
         FRGraphEx::AdjustSmallLodHeight(Graph, Factory.MergeCellSize, Factory.MergeCellLength, Factory.RemoveMidPointTolerance);
     }
@@ -135,32 +162,7 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
     if (Factory.bOptSeparateFaces) {
         FRGraphEx::SeparateFaces(Graph);
     }
-    auto Vertices = Graph->GetAllVertices().Array();
-    for(auto i = 0; i < Vertices.Num() - 1; ++i)
-    {
-        auto V1 = Vertices[i];
-        for(auto j = i+1; j < Vertices.Num(); ++j)
-        {
-            auto V2 = Vertices[j];
-            auto Dist = FVector::Distance(V1->GetPosition(), V2->GetPosition());
-            if (Dist < 1e-3f) {
-                auto Tmp = 0;
-            }
-            
-        }
-    }
 
-    auto Edges = Graph->GetAllEdges().Array();
-    for(auto i = 0; i < Edges.Num() - 1; ++i)
-    {
-        auto E1 = Edges[i];
-        for (auto j = i + 1; j < Edges.Num(); ++j) {
-            auto E2 = Edges[j];
-            if (E1->IsSameVertex(E2)) {
-                auto Tmp = 0;
-            }
-        }
-    }
 
     return Graph;
 }

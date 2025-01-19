@@ -45,7 +45,7 @@ namespace
         TSharedPtr<FTranLine> Prev;
 
         bool IsBorder() const {
-            return Neighbor == nullptr;
+            return Neighbor != nullptr;
         }
     };
 
@@ -275,7 +275,6 @@ namespace
 
         // 通常の道
         if (RoadType == ERoadType::Road) {
-            // #TODO : RN
             auto lanes = Lines.FilterByPredicate([](const TSharedPtr<FTranLine>& L) {return L->IsBorder() == false; });
 
             using KeyType = TTuple<TSharedPtr<FTranLine>, TSharedPtr<FTranLine>>;

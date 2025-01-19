@@ -97,13 +97,13 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNormal;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "ERRoadTypeMask"))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
     ERRoadTypeMask ShowFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum="ERRoadTypeMask"))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum= ERRoadTypeMask))
     ERRoadTypeMask RemoveFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "ERPartsFlag"))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERPartsFlag))
     ERPartsFlag ShowId;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")

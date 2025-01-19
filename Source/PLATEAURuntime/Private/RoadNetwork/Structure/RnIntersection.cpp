@@ -13,6 +13,12 @@ URnIntersectionEdge::URnIntersectionEdge()
 void URnIntersectionEdge::Init()
 {}
 
+void URnIntersectionEdge::Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder)
+{
+    Road = InRoad;
+    Border = InBorder;
+}
+
 bool URnIntersectionEdge::IsValid() const {
     return Road != nullptr && Border != nullptr;
 }
@@ -119,20 +125,20 @@ TArray<TRnRef_T<URnIntersectionEdge>> URnIntersection::GetNeighbors() const {
 }
 
 TArray<TRnRef_T<URnIntersectionEdge>> URnIntersection::GetEdgesBy(const TRnRef_T<URnRoadBase>& Road) const {
-    return GetEdgesBy([&Road](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->Road == Road; });
+    return GetEdgesBy([&Road](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad() == Road; });
 }
 
 TRnRef_T<URnIntersectionEdge> URnIntersection::GetEdgeBy(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) const
 {
     auto E = GetEdgesBy([&](const TRnRef_T<URnIntersectionEdge>& Edge) {
-        return Edge->Road == Road && Edge->Border->IsSameLineReference(Border);
+        return Edge->GetRoad() == Road && Edge->GetBorder()->IsSameLineReference(Border);
         });
     return E.Num() > 0 ? E[0] : nullptr;
 }
 
 TRnRef_T<URnIntersectionEdge> URnIntersection::GetEdgeBy(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnPoint>& Point) const {
     auto E = GetEdgesBy([&](const TRnRef_T<URnIntersectionEdge>& Edge) {
-        return Edge->Road == Road && Edge->Border->LineString->GetPoints().Contains(Point);
+        return Edge->GetRoad() == Road && Edge->GetBorder()->LineString->GetPoints().Contains(Point);
         });
     return E.Num() > 0 ? E[0] : nullptr;
 }
@@ -152,18 +158,18 @@ void URnIntersection::RemoveEdge(const TRnRef_T<URnRoad>& Road, const TRnRef_T<U
 {
     RemoveEdges([&](TRnRef_T<URnIntersectionEdge> Edge) 
         {
-            if (Edge->Road != Road)
+            if (Edge->GetRoad() != Road)
                 return false;
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Edge->Border))
+            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Edge->GetBorder()))
                 return true;
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Edge->Border))
+            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Edge->GetBorder()))
                 return true;
             return false;
         });
 }
 
 void URnIntersection::RemoveEdges(const TRnRef_T<URnRoadBase>& Road) {
-    RemoveEdges([&](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->Road == Road; });
+    RemoveEdges([&](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad() == Road; });
 }
 
 void URnIntersection::RemoveEdges(const TFunction<bool(const TRnRef_T<URnIntersectionEdge>&)>& Predicate) {
@@ -182,9 +188,7 @@ void URnIntersection::ReplaceEdges(const TRnRef_T<URnRoadBase>& Road, const TArr
 }
 
 void URnIntersection::AddEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) {
-    auto NewEdge = RnNew<URnIntersectionEdge>();
-    NewEdge->Road = Road;
-    NewEdge->Border = Border;
+    auto NewEdge = RnNew<URnIntersectionEdge>(Road, Border);
     Edges.Add(NewEdge);
 }
 
@@ -199,8 +203,8 @@ bool URnIntersection::HasEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<
 TArray<TRnRef_T<URnRoadBase>> URnIntersection::GetNeighborRoads() const {
     TArray<TRnRef_T<URnRoadBase>> Roads;
     for (const auto& Edge : Edges) {
-        if (Edge->Road) {
-            Roads.AddUnique(Edge->Road);
+        if (Edge->GetRoad()) {
+            Roads.AddUnique(Edge->GetRoad());
         }
     }
     return Roads;
@@ -209,8 +213,8 @@ TArray<TRnRef_T<URnRoadBase>> URnIntersection::GetNeighborRoads() const {
 TArray<TRnRef_T<URnWay>> URnIntersection::GetBorders() const {
     TArray<TRnRef_T<URnWay>> Borders;
     for (const auto& Edge : Edges) {
-        if (Edge->Border) {
-            Borders.Add(Edge->Border);
+        if (Edge->GetBorder()) {
+            Borders.Add(Edge->GetBorder());
         }
     }
     return Borders;
@@ -235,8 +239,8 @@ void URnIntersection::DisConnect(bool RemoveFromModel) {
 
 void URnIntersection::ReplaceNeighbor(const TRnRef_T<URnRoadBase>& From, const TRnRef_T<URnRoadBase>& To) {
     for (auto& Edge : Edges) {
-        if (Edge->Road == From) {
-            Edge->Road = To;
+        if (Edge->GetRoad() == From) {
+            Edge->SetRoad(To);
         }
     }
 }
@@ -246,8 +250,8 @@ FVector URnIntersection::GetCentralVertex() const {
 
     TArray<FVector> Points;
     for (const auto& Edge : Edges) {
-        if (Edge->Border) {
-            Points.Add(Edge->Border->GetLerpPoint(0.5f));
+        if (Edge->GetBorder()) {
+            Points.Add(Edge->GetBorder()->GetLerpPoint(0.5f));
         }
     }
     return FVectorEx::Centroid(Points);
@@ -256,8 +260,8 @@ FVector URnIntersection::GetCentralVertex() const {
 TArray<TRnRef_T<URnWay>> URnIntersection::GetAllWays() const {
     TArray<TRnRef_T<URnWay>> Ways = Super::GetAllWays();
     for (const auto& Edge : Edges) {
-        if (Edge->Border) {
-            Ways.Add(Edge->Border);
+        if (Edge->GetBorder()) {
+            Ways.Add(Edge->GetBorder());
         }
     }
     return Ways;

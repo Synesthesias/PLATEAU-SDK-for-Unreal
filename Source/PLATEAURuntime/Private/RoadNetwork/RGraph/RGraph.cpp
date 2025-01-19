@@ -427,7 +427,7 @@ void URFace::RemoveEdge(RGraphRef_t<UREdge> Edge) {
 }
 
 void URFace::ChangeEdge(RGraphRef_t<UREdge> From, RGraphRef_t<UREdge> To) {
-    if (From && To && From != To) {
+    if (From && To && From != To && Edges.Contains(From)) {
         RemoveEdge(From);
         AddEdge(To);
     }
