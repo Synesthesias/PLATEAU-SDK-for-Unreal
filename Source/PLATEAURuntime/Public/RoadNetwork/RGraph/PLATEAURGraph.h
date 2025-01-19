@@ -38,6 +38,12 @@ struct FRGraphDrawFaceOption : public FRnDrawOption {
 
     UPROPERTY(EditAnywhere)
     bool bShowOutlineLoop = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bShowOnlyTargets;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    TArray<FString> ShowTargetNames;
 };
 
 USTRUCT()
@@ -71,20 +77,6 @@ struct FRGraphDrawVertexOption : public FRnDrawOption {
     bool bUseAnyFaceVertexColor = false;
 };
 
-USTRUCT()
-struct FRoadTypeMaskOption {
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere)
-    ERRoadTypeMask Type;
-
-    UPROPERTY(EditAnywhere)
-    FLinearColor Color;
-
-    UPROPERTY(EditAnywhere)
-    bool bEnable = true;
-};
-
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class PLATEAURUNTIME_API UPLATEAURGraph : public UPLATEAUSceneComponent {
     GENERATED_BODY()
@@ -96,20 +88,22 @@ public:
 
 public:
 
+    // --------------------
+    // start:フィールド
+    // --------------------
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bVisibility = false;
-
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNormal;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "ERRoadTypeMask"))
     ERRoadTypeMask ShowFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum="ERRoadTypeMask"))
     ERRoadTypeMask RemoveFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "ERPartsFlag"))
     ERPartsFlag ShowId;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
@@ -122,24 +116,21 @@ public:
     FRGraphDrawVertexOption VertexOption;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    TArray<FRoadTypeMaskOption> RoadTypeMaskOptions;
-
-    UPROPERTY(EditAnywhere)
     FLinearColor RoadColor;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor SideWalkColor;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor HighWayColor;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    float FontScale = 1.f;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor UndefinedColor;
 
-    // --------------------
-    // start:フィールド
-    // --------------------
+
     UPROPERTY(VisibleAnywhere, Category="PLATEAU")
     URGraph* RGraph;
 

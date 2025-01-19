@@ -28,7 +28,15 @@ public:
 
 struct FRnEx
 {
+
+    class Vector3Comparer {
+    public:
+        int32 operator()(const FVector& A, const FVector& B) const;
+    };
+
+
 public:
+
     static TArray<TRnRef_T<UPLATEAUCityObjectGroup>> GetSceneSelectedCityObjectGroups();
 
     template<typename T>
@@ -62,6 +70,17 @@ public:
         return Result;
     }
 
+    template<typename T, typename F>
+    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
+        for (auto& S : Set) {
+            if (Predicate(S)) {
+                OutV = S;
+                return true;
+            }
+        }
+        return false;
+    }
+
     template<typename T>
     static int32 Compare(T A, T B)
     {
@@ -71,6 +90,9 @@ public:
             return 1;
         return 0;
     }
+
+
+
 
     // ParentにChildを追加する
     // ActorにAddInstanceComponentをして, ChildをParentにアタッチする

@@ -248,11 +248,10 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         return Result;
     }
 
-    TSet<T> VisitedPoints;
     auto& OutlinePoints = Result.Outline;
 
     // 配列をコピーする
-    auto Keys = Vertices;
+    TArray<T> Keys = Vertices;
     if(Keys.Num() <= 2)
     {
         Result.Outline = Keys;
@@ -260,17 +259,18 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         return Result;
     }
 
-    auto ToVec2 = [&](T A) { return FAxisPlaneEx::GetTangent(ToVec3(A), Plane); };
-
-    Keys.Sort([&](const T& A, const T& B) 
-        {
-            auto A2 = ToVec2(A);
-            auto B2 = ToVec2(B);
-            if (A2.X < B2.X)
-                return true;
-            if (A2.X > B2.X)
-                return false;
-            return A2.Y < B2.Y;
+    auto ToVec2 = [&](const T& A)->FVector2D
+    {
+        return FAxisPlaneEx::GetTangent(ToVec3(A), Plane);
+    };
+    Keys.Sort([&](const T& A, const T& B) {
+        const FVector2D A2 = ToVec2(A);
+        const FVector2D B2 = ToVec2(B);
+        if (A2.X < B2.X)
+            return true;
+        if (A2.X > B2.X)
+            return false;
+        return A2.Y < B2.Y;
         });
 
     struct EvalValue
@@ -284,7 +284,7 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         TFunction<int(EvalValue, EvalValue)> Compare)
         // success, hasSelfCrossing, outlineVertices
         -> FComputeOutlineResult<T> {
-        auto ret = new TArray<T>{ Start };
+        TArray<T> ret = { Start };
         auto hasCrossing = false;
         auto Eval = [](FVector2D axis, FVector2D a) -> EvalValue {
             auto ang = FVector2DEx::SignedAngle(axis, a);
@@ -298,32 +298,32 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
             };
 
         while (true) {
-            auto last = ToVec2(ret[ret.Num() - 1]);
-            TArray<T> neighbors = GetNeighbor(ret[ret.Num() - 1]);
+            const auto& LastNode = ret[ret.Num() - 1];
+            auto LastPos = ToVec2(LastNode);
+            TArray<T> neighbors = GetNeighbor(LastNode);
             if (neighbors.Num() == 0)
                 break;
-
 
             // 途中につながるようなものは削除
             TArray<T> filtered = neighbors;
             if (ret.Num() > 1) {
                 // 
                 filtered.RemoveAll([&](T V) {
-                    return V == ret[ret.Num() - 2];
+                    return V == ret[ret.Num() - 2] || V == LastNode;
                     });
             }
 
-            if (filtered.Count == 0)
+            if (filtered.Num() == 0)
                 filtered = neighbors;
-            if (filtered.Count == 0)
+            if (filtered.Num() == 0)
                 break;
 
             auto next = filtered[0];
-            auto eval0 = Eval(Dir, ToVec2(next) - last);
+            auto eval0 = Eval(Dir, ToVec2(next) - LastPos);
             for (auto I = 1; I < filtered.Num(); ++I) {
                 auto v = filtered[I];
                 // 最も外側に近い点を返す
-                auto eval1 = Eval(Dir, ToVec2(v) - last);
+                auto eval1 = Eval(Dir, ToVec2(v) - LastPos);
                 if (Compare(eval0, eval1) < 0) {
                     next = v;
                     eval0 = eval1;
@@ -331,11 +331,11 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
             }
 
             // 先頭に戻ってきたら終了
-            if (ret[0].Equals(next))
+            if (ret[0] == next)
                 return FComputeOutlineResult<T>(true, hasCrossing, ret);
 
-            // 途中に戻ってくる場合
-            auto index = ret.IndexOf(next);
+            // 途中に戻ってくる場合            
+            auto index = ret.IndexOfByKey(next);
             if (index >= 0) {
                 // ループを検出したら終了
                 if (index > 0 && ret[index - 1] == ret[ret.Num() - 1]) {
@@ -345,7 +345,7 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
             }
 
             ret.Add(next);
-            Dir = last - ToVec2(next);
+            Dir = LastPos - ToVec2(next);
         }
 
         return FComputeOutlineResult<T>(false, hasCrossing, ret);
@@ -356,9 +356,9 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         , -FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) 
         {
-            auto x = -RnEx::Compare(A.Angle, B.Angle);
+            auto x = -FRnEx::Compare(A.Angle, B.Angle);
             if(x == 0)
-                x = RnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FRnEx::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
     // 見つかったらそれでおしまい
@@ -371,9 +371,9 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         Keys[0]
         , FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) {
-            auto x = RnEx::Compare(A.Angle, B.Angle);
+            auto x = FRnEx::Compare(A.Angle, B.Angle);
             if (x == 0)
-                x = RnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FRnEx::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
 
@@ -390,10 +390,10 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
     while (rightSearch.Outline.Num() > 0) {
         auto v = rightSearch.Outline[0];
         rightSearch.Outline.RemoveAt(0);
-        auto index = Result.Outline.IndexOf(v);
+        auto index = Result.Outline.IndexOfByKey(v);
         if (index >= 0) {
             Result.Success = true;
-            Result.Outline.RemoveAt(index, Result.Outline.Count - index);
+            Result.Outline.RemoveAt(index, Result.Outline.Num() - index);
             Result.Outline.Add(v);
             break;
         }

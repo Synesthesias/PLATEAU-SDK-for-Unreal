@@ -67,6 +67,23 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
 
                     auto key = FEdgeKey(V0, V1);
                     if (EdgeMap.Contains(key) == false) {
+                        auto Found = false;
+                        for(auto& Pair : EdgeMap)
+                        {
+                            auto K = Pair.Key;
+
+                            if((K.V0 == V0 && K.V1 == V1)
+                                || (K.V0 == V1 && K.V1 == V0))
+                            {
+                                Found = true;
+                                break;
+                            }
+                        }
+
+                        if(Found)
+                        {
+                            auto Tmp = 0;
+                        }
                         EdgeMap.Add(key, RGraphNew<UREdge>(key.V0, key.V1));
                     }
                     face->AddEdge(EdgeMap[key]);
@@ -118,5 +135,32 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
     if (Factory.bOptSeparateFaces) {
         FRGraphEx::SeparateFaces(Graph);
     }
+    auto Vertices = Graph->GetAllVertices().Array();
+    for(auto i = 0; i < Vertices.Num() - 1; ++i)
+    {
+        auto V1 = Vertices[i];
+        for(auto j = i+1; j < Vertices.Num(); ++j)
+        {
+            auto V2 = Vertices[j];
+            auto Dist = FVector::Distance(V1->GetPosition(), V2->GetPosition());
+            if (Dist < 1e-3f) {
+                auto Tmp = 0;
+            }
+            
+        }
+    }
+
+    auto Edges = Graph->GetAllEdges().Array();
+    for(auto i = 0; i < Edges.Num() - 1; ++i)
+    {
+        auto E1 = Edges[i];
+        for (auto j = i + 1; j < Edges.Num(); ++j) {
+            auto E2 = Edges[j];
+            if (E1->IsSameVertex(E2)) {
+                auto Tmp = 0;
+            }
+        }
+    }
+
     return Graph;
 }

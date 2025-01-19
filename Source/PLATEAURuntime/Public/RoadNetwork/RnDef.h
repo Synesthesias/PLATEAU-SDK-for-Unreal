@@ -83,6 +83,10 @@ struct PLATEAURUNTIME_API FRnDef
 public: 
     static constexpr EAxisPlane Plane = EAxisPlane::Xy;
 
+    // 1[m]のUnreal上での単位
+    static constexpr float Meter2Unit = 100;
+
+
     static FVector2D To2D(const FVector& Vector);
 };
 

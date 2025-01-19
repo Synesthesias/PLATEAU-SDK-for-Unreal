@@ -1,5 +1,7 @@
 #include "RoadNetwork/RGraph/RGraphEx.h"
 
+#include <array>
+
 #include "Algo/Count.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
@@ -38,15 +40,16 @@ void FRGraphEx::RemoveInnerVertex(RGraphRef_t<URGraph> Graph) {
 
 TSet<RGraphRef_t<URVertex>> FRGraphEx::AdjustSmallLodHeight(
     RGraphRef_t<URGraph> Graph,
-    float MergeCellSize,
+    float MergeCellSizeMeter,
     int32 MergeCellLength,
-    float HeightTolerance) {
+    float HeightToleranceMeter) {
     if (!Graph) return TSet<RGraphRef_t<URVertex>>();
 
     TSet<RGraphRef_t<URVertex>> Result;
     auto&& Vertices = Graph->GetAllVertices();
 
-    // Create grid for vertex grouping
+    auto MergeCellSize = MergeCellSizeMeter * FRnDef::Meter2Unit;
+    auto HeightTolerance = HeightToleranceMeter * FRnDef::Meter2Unit;
     TMap<FIntVector2, TArray<RGraphRef_t<URVertex>>> Grid;
     for (auto Vertex : Vertices) {
         FVector2D Pos2D = FRnDef::To2D(Vertex->Position);
@@ -93,15 +96,16 @@ TSet<RGraphRef_t<URVertex>> FRGraphEx::AdjustSmallLodHeight(
 
 void FRGraphEx::VertexReduction(
     RGraphRef_t<URGraph> Graph,
-    float MergeCellSize,
+    float MergeCellSizeMeter,
     int32 MergeCellLength,
-    float MidPointTolerance) {
+    float MidPointToleranceMeter) {
     if (!Graph) return;
 
     //auto&& Vertices = Graph->GetAllVertices();
     TMap<FIntVector2, TArray<RGraphRef_t<URVertex>>> Grid;
 
-    // Create grid for vertex grouping
+    auto MergeCellSize = MergeCellSizeMeter * FRnDef::Meter2Unit;
+    auto MidPointTolerance = MidPointToleranceMeter * FRnDef::Meter2Unit;
     while(true)
     {
         auto Vertices = Graph->GetAllVertices();
@@ -222,120 +226,230 @@ TArray<RGraphRef_t<URFaceGroup>> FRGraphEx::GroupBy(
     TSet<RGraphRef_t<URFace>> UnprocessedFaces;
     for(auto&& Face : Graph->GetFaces())
         UnprocessedFaces.Add(Face);
-    while (UnprocessedFaces.Num() > 0) {
-        TArray<RGraphRef_t<URFace>> GroupFaces;
-        auto FirstFace = *UnprocessedFaces.CreateIterator();
-        GroupFaces.Add(FirstFace);
-        UnprocessedFaces.Remove(FirstFace);
-
-        for (int32 i = 0; i < GroupFaces.Num(); ++i) {
-            auto Face = GroupFaces[i];
-            TArray<RGraphRef_t<URFace>> Neighbors;
-            for (auto Edge : Face->GetEdges()) {
-                Neighbors.Append(Edge->GetFaces().Array());
-            }
-
-            for (auto Neighbor : Neighbors) {
-                if (UnprocessedFaces.Contains(Neighbor) && IsMatch(Face, Neighbor)) {
-                    GroupFaces.Add(Neighbor);
-                    UnprocessedFaces.Remove(Neighbor);
+    auto&& Faces = Graph->GetFaces();
+    TMap<TWeakObjectPtr<UPLATEAUCityObjectGroup>, TSet<RGraphRef_t<URFace>>> Groups;
+    for (auto&& Face : Faces) {
+        Groups.FindOrAdd(Face->GetCityObjectGroup()).Add(Face);
+    }
+    for(auto&& Pair : Groups)
+    {
+        auto&& faces =Pair.Value;
+        while (faces.IsEmpty() == false) 
+        {
+            TArray<RGraphRef_t<URFace>> queue;
+            queue.Add(*faces.begin());
+            faces.Remove(*faces.begin());
+            TSet<RGraphRef_t<URFace>> g;
+            while (queue.IsEmpty() == false)
+            {
+                RGraphRef_t<URFace> f0 = queue[0];
+                queue.RemoveAt(0);
+                g.Add(f0);
+                for(auto&& f1 : faces) 
+                {
+                    if (IsShareEdge(f0, f1) && IsMatch(f0, f1)) {
+                        g.Add(f1);
+                        queue.Add(f1);
+                        // ここではfacesから削除できない(イテレート中だから)         
+                    }
                 }
+                for(auto&& f : queue)
+                    faces.Remove(f);
             }
-        }
 
-        Result.Add(RGraphNew<URFaceGroup>(Graph, FirstFace->GetCityObjectGroup().Get(), GroupFaces));
+            Result.Add(RGraphNew<URFaceGroup>(Graph, Pair.Key.Get(), g.Array()));
+        }
     }
 
     return Result;
 }
 
-void FRGraphEx::Optimize(
-    RGraphRef_t<URGraph> Graph,
-    float MergeCellSize,
-    int32 MergeCellLength,
-    float MidPointTolerance,
-    float Lod1HeightTolerance) {
-    if (!Graph) return;
-
-    //InsertVerticesInEdgeIntersection(Graph, MidPointTolerance);
-    AdjustSmallLodHeight(Graph, MergeCellSize, MergeCellLength, Lod1HeightTolerance);
-    VertexReduction(Graph, MergeCellSize, MergeCellLength, MidPointTolerance);
-    //EdgeReduction(Graph);
-    //MergeIsolatedVertices(Graph);
-}
-
-void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Tolerance)
+void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float ToleranceMeter)
 {
-    if (!Graph) return;
+    if (!Graph) 
+        return;
+    auto Tolerance = ToleranceMeter * FRnDef::Meter2Unit;
 
-    auto&& Vertices = Graph->GetAllVertices();
-    auto&& Edges = Graph->GetAllEdges();
-    TArray<TTuple<RGraphRef_t<URVertex>, RGraphRef_t<UREdge>>> InsertVertices;
+    auto&& Vertices = Graph->GetAllVertices().Array();
 
-    // #TODO : 元の実装と違う(平面操作層ではなく全探索になっている)
-#if false
-    for (auto Vertex : Vertices) {
-        for (auto Edge : Edges) {
-            if (!Edge->GetEdges().Contains(Vertex)) {
-                FLineSegment2D Segment(
-                    FRnDef::To2D(Edge->GetV0()->Position),
-                    FRnDef::To2D(Edge->GetV1()->Position)
-                );
+    constexpr auto Comp = FRnEx::Vector3Comparer();
 
-                float Distance = Segment.GetDistance(FRnDef::To2D(Vertex->Position));
-                if (Distance <= Tolerance) {
-                    InsertVertices.Add(MakeTuple(Vertex, Edge));
-                }
+    auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
+        return Comp(A->Position, B->Position);
+        };
+    // #NOTE : UEのバグ？ ポインタのTArrayをソートしようとするとラムダ式にはポインタを消したうえで行う必要がある模様
+    Vertices.Sort([&](const URVertex& A, const URVertex& B)
+    {
+            return Comp(A.Position, B.Position) < 0;
+    });
+
+    TSet<RGraphRef_t<UREdge>> queue;
+
+    TMap<RGraphRef_t<UREdge>, TSet<RGraphRef_t<URVertex>>> edgeInsertMap;
+    auto Threshold = Tolerance * Tolerance;
+
+    for (auto i = 0; i < Vertices.Num(); i++) {
+        auto V = Vertices[i];
+        // 新規追加分
+        TArray<RGraphRef_t<UREdge>> addEdges;
+        TSet<RGraphRef_t<UREdge>> removeEdges;
+        for(auto&& E : V->GetEdges()) 
+        {
+            // vと反対側の点を見る
+            auto o = E->GetOppositeVertex(V);
+            auto d = Comparer(V, o);
+            // vが開始点の辺を追加する
+            if (d < 0)
+                addEdges.Add(E);
+            // vが終了点の辺を取り出す
+            else if (d > 0)
+                removeEdges.Add(E);
+        }
+        for(auto&& remove : removeEdges)
+            queue.Remove(remove);
+
+        for(auto e : queue) 
+        {
+            if (e->GetV0() == V || e->GetV1() == V)
+                continue;
+
+            auto s = FLineSegment3D(e->GetV0()->GetPosition(), e->GetV1()->GetPosition());
+            auto near = s.GetNearestPoint(V->GetPosition());
+            if ((near - V->GetPosition()).SquaredLength() < Threshold) 
+            {
+                edgeInsertMap.FindOrAdd(e).Add(V);
             }
         }
+
+        for(auto&& add : addEdges)
+            queue.Add(add);
     }
-#endif
-    for (const auto& Pair : InsertVertices) {
-        Pair.Get<1>()->SplitEdge(Pair.Get<0>());
+
+    for(auto&& e : edgeInsertMap) {
+
+        InsertVertices(e.Key, e.Value.Array());
     }
 }
 
-void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, float HeightTolerance) {
+void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, float HeightToleranceMeter) {
     if (!Graph) return;
 
-    auto&& Edges = Graph->GetAllEdges().Array();
-    for (int32 i = 0; i < Edges.Num(); ++i) {
-        for (int32 j = i + 1; j < Edges.Num(); ++j) {
-            auto Edge1 = Edges[i];
-            auto Edge2 = Edges[j];
+    auto HeightTolerance = HeightToleranceMeter * FRnDef::Meter2Unit;
 
-            if (!Edge1->IsShareAnyVertex(Edge2)) {
-                FVector2D E1_Start = FRnDef::To2D(Edge1->GetV0()->Position);
-                FVector2D E1_End = FRnDef::To2D(Edge1->GetV1()->Position);
-                FVector2D E2_Start = FRnDef::To2D(Edge2->GetV0()->Position);
-                FVector2D E2_End = FRnDef::To2D(Edge2->GetV1()->Position);
-                float T1 = 0.f;
-                float T2 = 0.f;
-                FVector2D Intersection;
-                if (FLineUtil::SegmentIntersection(E1_Start, E1_End, E2_Start, E2_End, Intersection, T1, T2)) 
+    auto&& Vertices = Graph->GetAllVertices().Array();
+
+    constexpr auto Comp = FRnEx::Vector3Comparer();
+
+    auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
+        return Comp(A->Position, B->Position);
+        };
+    // #NOTE : UEのバグ？ ポインタのTArrayをソートしようとするとラムダ式にはポインタを消したうえで行う必要がある模様
+    Vertices.Sort([&](const URVertex& A, const URVertex& B) {
+        return Comp(A.Position, B.Position) < 0;
+        });
+
+    TSet<RGraphRef_t<UREdge>> queue;
+
+    TMap<RGraphRef_t<UREdge>, TSet<RGraphRef_t<URVertex>>> edgeInsertMap;
+
+    TMap<FVector, RGraphRef_t<URVertex>> vertexMap;
+    for (auto i = 0; i < Vertices.Num(); i++) {
+        auto V = Vertices[i];
+        // 新規追加分
+        TArray<RGraphRef_t<UREdge>> addEdges;
+        TSet<RGraphRef_t<UREdge>> removeEdges;
+        for (auto&& E : V->GetEdges()) {
+            // vと反対側の点を見る
+            auto o = E->GetOppositeVertex(V);
+            auto d = Comparer(V, o);
+            // vが開始点の辺を追加する
+            if (d < 0)
+                addEdges.Add(E);
+            // vが終了点の辺を取り出す
+            else if (d > 0)
+                removeEdges.Add(E);
+        }
+
+        auto NearlyEqual = [](float a, float b) {
+            return FMath::Abs(a - b) < 1e-3f;
+            };
+        TArray<RGraphRef_t<UREdge>> targets;
+        for(auto&& t : queue)
+        {
+            // vを端点に持つ辺は無視
+            if (t->GetV0() == V || t->GetV1() == V)
+                continue;
+            if (removeEdges.Contains(t))
+                continue;
+            targets.Add(t);
+        }
+
+        for(auto e0 : removeEdges) {
+            auto s0 = FLineSegment3D(e0->GetV0()->GetPosition(), e0->GetV1()->GetPosition());
+            for(auto e1 : targets) {
+                auto s1 = FLineSegment3D(e1->GetV0()->GetPosition(), e1->GetV1()->Position);
+                // e0とe1が共有している頂点がある場合は無視
+                RGraphRef_t<URVertex> shareV;
+                if (e0->IsShareAnyVertex(e1, shareV)) {
+                    //auto (sv, s) = s0.Magnitude < s1.Magnitude
+                    //    ? (e0->GetOppositeVertex(shareV), s1)
+                    //    : (e1->GetOppositeVertex(shareV), s0);
+                    //if ((s.GetNearestPoint(sv.Position) - sv.Position).sqrMagnitude < shareMid)
+                    //{
+                    //    edgeInsertMap.GetValueOrCreate(e0).Add(sv);
+                    //}
+
+                    continue;
+                }
+                FVector intersection;
+                float t1;
+                float t2;
+                if (s0.TrySegmentIntersectionBy2D(s1, FRnDef::Plane, HeightTolerance, intersection, t1, t2)) 
                 {
-                    float Z = FMath::Lerp(Edge1->GetV0()->Position.Z, Edge1->GetV1()->Position.Z, T1);
-                    float Z2 = FMath::Lerp(Edge2->GetV0()->Position.Z, Edge2->GetV1()->Position.Z, T2);
-
-                    if (FMath::Abs(Z - Z2) <= HeightTolerance) {
-                        Z = (Z + Z2) * 0.5f;
-                    }
-
-                    auto NewVertex = RGraphNew<URVertex>(FVector(Intersection.X, Intersection.Y, Z));
-                    Edge1->SplitEdge(NewVertex);
-                    Edge2->SplitEdge(NewVertex);
+                    // お互いの端点で交差している場合は無視
+                    if ((NearlyEqual(t1, 0) || NearlyEqual(t1, 1)) && (NearlyEqual(t2, 0) || NearlyEqual(t2, 1)))
+                        continue;
+                    if(vertexMap.Contains(intersection) == false)
+                        vertexMap.Add(intersection, RGraphNew<URVertex>(intersection));
+                    auto p = vertexMap[intersection];
+                    // #TODO : 0 or 1で交差した場合を考慮
+                    edgeInsertMap.FindOrAdd(e0).Add(p);
+                    edgeInsertMap.FindOrAdd(e1).Add(p);
                 }
             }
         }
+
+        for (auto&& add : addEdges)
+            queue.Add(add);
+
+        for (auto&& remove : removeEdges)
+            queue.Remove(remove);
+
+    }
+
+    for (auto&& e : edgeInsertMap) {
+
+        InsertVertices(e.Key, e.Value.Array());
     }
 }
 
-TArray<RGraphRef_t<UREdge>> FRGraphEx::InsertVertices(RGraphRef_t<UREdge> Edge, const TArray<RGraphRef_t<URVertex>>& Vertices) {
+TArray<RGraphRef_t<UREdge>> FRGraphEx::InsertVertices(RGraphRef_t<UREdge> Edge, TArray<RGraphRef_t<URVertex>> Vertices)
+{
     TArray<RGraphRef_t<UREdge>> Result;
     if (!Edge || Vertices.Num() == 0) return Result;
 
     Result.Add(Edge);
-    for (auto Vertex : Vertices) {
+
+    auto O = Edge->GetV0();
+
+
+    // V0 -> V1の順に並ぶようにして分割する.
+    Vertices.Sort([&](const URVertex& A, const URVertex& B)
+        {
+            return (A.GetPosition() - O->GetPosition()).SquaredLength() < (B.GetPosition() - O->GetPosition()).SquaredLength();
+        });
+    for (auto Vertex : Vertices) 
+    {
         auto LastEdge = Result.Last();
         auto NewEdge = LastEdge->SplitEdge(Vertex);
         if (NewEdge) {
@@ -348,95 +462,119 @@ TArray<RGraphRef_t<UREdge>> FRGraphEx::InsertVertices(RGraphRef_t<UREdge> Edge, 
 void FRGraphEx::SeparateFaces(RGraphRef_t<URGraph> Graph) {
     if (!Graph) return;
 
-    auto&& Edges = Graph->GetAllEdges();
-    for (auto Edge : Edges) {
-        if (Edge->GetFaces().Num() > 1) {
-            TArray<RGraphRef_t<URFace>> Faces = Edge->GetFaces().Array();
-            for (int32 i = 1; i < Faces.Num(); ++i) {
-                auto NewEdge = RGraphNew<UREdge>(Edge->GetV0(), Edge->GetV1());
-                Faces[i]->ChangeEdge(Edge, NewEdge);
+    // リストはコピーで持っておく
+    auto CopiedFaces = Graph->GetFaces();
+    for(auto Face : CopiedFaces)
+        SeparateFace(Face);
+}
+
+void FRGraphEx::SeparateFace(RGraphRef_t<URFace> Face)
+{
+    // コピーする
+    auto edges = Face->GetEdges();
+    if (edges.IsEmpty())
+        return;
+    TArray<TSet<RGraphRef_t<UREdge>>> separatedEdges;
+    while (edges.IsEmpty() == false) 
+    {
+        TQueue<RGraphRef_t<UREdge>> queue;
+        queue.Enqueue(*edges.begin());
+        edges.Remove(*edges.begin());
+
+        TSet<RGraphRef_t<UREdge>> subFace;
+        while (queue.IsEmpty() == false) 
+        {
+            RGraphRef_t<UREdge> edge;
+            queue.Dequeue(edge);
+            subFace.Add(edge);
+            for(auto e : edge->GetNeighborEdges()) 
+            {
+                // すでに分離済み or 別のFaceに属している辺は無視
+                if (edges.Contains(e)) {
+                    // 分離すると元のリストからは削除
+                    edges.Remove(e);
+                    
+                    queue.Enqueue(e);
+                }
             }
+        }
+        separatedEdges.Add(subFace);
+    }
+
+    if (separatedEdges.Num() <= 1)
+        return;
+
+    // 0番目は元のFaceにする
+    for (auto i = 1; i < separatedEdges.Num(); i++) 
+    {
+        const auto NewFace = RGraphNew<URFace>(Face->GetGraph().Get(), Face->GetCityObjectGroup().Get(), Face->GetRoadTypes(), Face->GetLodLevel());
+        for (const auto E : separatedEdges[i]) {
+            NewFace->AddEdge(E);
+            // 元のFaceからは削除
+            Face->RemoveEdge(E);
         }
     }
 }
 
-TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(RGraphRef_t<URFace> Face) {
-    TArray<RGraphRef_t<URVertex>> Result;
-    if (!Face) return Result;
 
-    TArray<RGraphRef_t<UREdge>> OutlineEdges;
-    for (auto Edge : Face->GetEdges()) {
-        if (Edge->GetFaces().Num() == 1) {
-            OutlineEdges.Add(Edge);
+TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(const TArray<RGraphRef_t<URFace>>& Faces)
+{
+    TSet<TObjectPtr<URVertex>> Vertices;
+    TSet<TObjectPtr<UREdge>> Edges;
+    for(auto&& Face : Faces)
+    {
+        if (!Face)
+            continue;
+        for(auto&& Edge : Face->GetEdges())
+        {
+            if (!Edge)
+                continue;
+            Edges.Add(Edge);
+            for (auto&& V : Edge->GetVertices()) 
+            {
+                if (!V)
+                    continue;
+                Vertices.Add(V);
+            }
         }
     }
+    const TArray<TObjectPtr<URVertex>> VerticesArray = Vertices.Array();
+    auto Result = FGeoGraph2D::ComputeOutline<TObjectPtr<URVertex>>(
+        VerticesArray
+        , [](const TObjectPtr<URVertex>& V) {return V->Position; }
+        , FRnDef::Plane
+        , [&](const TObjectPtr<URVertex>& V)
+        {
+            TArray<TObjectPtr<URVertex>> Res;
+             for(auto&& E : V->GetEdges())
+             {
+                 if (Edges.Contains(E) == false)
+                     continue;
+                 auto Ov = E->GetOppositeVertex(V);
+                 if(Ov)
+                     Res.Add(Ov);
+             }
+             return Res;
+        });
 
-    if (OutlineEdges.Num() > 0) {
-        auto CurrentEdge = OutlineEdges[0];
-        auto StartVertex = CurrentEdge->GetV0();
-        auto CurrentVertex = StartVertex;
+    return Result.Outline;
+}
 
-        do {
-            Result.Add(CurrentVertex);
-            CurrentVertex = CurrentEdge->GetOppositeVertex(CurrentVertex);
-
-            CurrentEdge = nullptr;
-            for (auto Edge : OutlineEdges) {
-                if (Edge->GetV0() == CurrentVertex || Edge->GetV1() == CurrentVertex) {
-                    CurrentEdge = Edge;
-                    break;
-                }
-            }
-        } while (CurrentEdge && CurrentVertex != StartVertex);
-    }
-
-    return Result;
+TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(RGraphRef_t<URFace> Face)
+{
+    const TArray Faces{ Face };
+    return ComputeOutlineVertices(Faces);
 }
 
 TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(
     RGraphRef_t<URFaceGroup> FaceGroup,
     TFunction<bool(RGraphRef_t<URFace>)> Predicate) {
-    TArray<RGraphRef_t<URVertex>> Result;
-    if (!FaceGroup) return Result;
-
-    TSet<RGraphRef_t<UREdge>> OutlineEdges;
-    for (auto Face : FaceGroup->Faces) {
-        if (!Predicate || Predicate(Face)) {
-            for (auto Edge : Face->GetEdges()) {
-                bool IsOutline = true;
-                for (auto EdgeFace : Edge->GetFaces()) {
-                    if (EdgeFace != Face && (!Predicate || Predicate(EdgeFace))) {
-                        IsOutline = false;
-                        break;
-                    }
-                }
-                if (IsOutline) {
-                    OutlineEdges.Add(Edge);
-                }
-            }
-        }
+    TArray<RGraphRef_t<URFace>> Faces;
+    for (auto&& Face : FaceGroup->Faces) {
+        if (Predicate(Face))
+            Faces.Add(Face);
     }
-
-    if (OutlineEdges.Num() > 0) {
-        auto CurrentEdge = *OutlineEdges.CreateIterator();
-        auto StartVertex = CurrentEdge->GetV0();
-        auto CurrentVertex = StartVertex;
-
-        do {
-            Result.Add(CurrentVertex);
-            CurrentVertex = CurrentEdge->GetOppositeVertex(CurrentVertex);
-
-            CurrentEdge = nullptr;
-            for (auto Edge : OutlineEdges) {
-                if (Edge->GetV0() == CurrentVertex || Edge->GetV1() == CurrentVertex) {
-                    CurrentEdge = Edge;
-                    break;
-                }
-            }
-        } while (CurrentEdge && CurrentVertex != StartVertex);
-    }
-
-    return Result;
+    return ComputeOutlineVertices(Faces);
 }
 
 TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVerticesByCityObjectGroup(
@@ -444,20 +582,20 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVerticesByCityObjectGroup
     UPLATEAUCityObjectGroup* CityObjectGroup,
     ERRoadTypeMask RoadTypes,
     ERRoadTypeMask RemoveRoadTypes) {
-    auto Groups = GroupBy(Graph, [](RGraphRef_t<URFace> A, RGraphRef_t<URFace> B) {
-        return A->GetCityObjectGroup() == B->GetCityObjectGroup();
-        });
 
-    for (auto Group : Groups) {
-        if (Group->CityObjectGroup == CityObjectGroup) {
-            return ComputeOutlineVertices(Group, [RoadTypes, RemoveRoadTypes](RGraphRef_t<URFace> Face) {
-                return (static_cast<uint8>(Face->GetRoadTypes()) & static_cast<uint8>(RoadTypes)) != 0 &&
-                    (static_cast<uint8>(Face->GetRoadTypes()) & static_cast<uint8>(RemoveRoadTypes)) == 0;
-                });
-        }
+    TArray<RGraphRef_t<URFace>> Faces;
+    for (auto&& Face : Graph->GetFaces()) 
+    {
+        if (Face->GetCityObjectGroup() != CityObjectGroup)
+            continue;
+        auto FaceRoadType = Face->GetRoadTypes();
+        if(!FRRoadTypeMaskEx::HasAnyFlag(FaceRoadType, RoadTypes))
+            continue;
+        if (FRRoadTypeMaskEx::HasAnyFlag(FaceRoadType, RemoveRoadTypes))
+            continue;
+            Faces.Add(Face);
     }
-
-    return TArray<RGraphRef_t<URVertex>>();
+    return ComputeOutlineVertices(Faces);
 }
 
 TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeConvexHullVertices(RGraphRef_t<URFace> Face) {
@@ -477,6 +615,21 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeConvexHullVertices(RGraphRef_t<U
         , [](RGraphRef_t<URVertex> V) {return V->Position; }
         , FRnDef::Plane
         , 1e-3f);
+}
+
+bool FRGraphEx::IsShareEdge(RGraphRef_t<URFace> A, RGraphRef_t<URFace> B)
+{
+    if (!A || !B)
+        return false;
+    auto AVertices = CreateVertexSet(A);
+    auto BVertices = CreateVertexSet(B);
+
+    for (auto&& V : AVertices) {
+        if (BVertices.Contains(V))
+            return true;
+    }
+
+    return false;
 }
 
 // Add to implementation file

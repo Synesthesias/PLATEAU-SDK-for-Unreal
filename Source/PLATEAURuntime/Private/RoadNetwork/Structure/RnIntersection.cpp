@@ -86,29 +86,19 @@ TRnRef_T<URnLane> URnIntersectionEdge::GetConnectedLane(const TRnRef_T<URnWay>& 
 }
 
 URnIntersection::URnIntersection()
-    : bIsEmptyIntersection(false) {
-}
-
-URnIntersection::URnIntersection(UPLATEAUCityObjectGroup* TargetTran)
-    : bIsEmptyIntersection(false)
 {
 }
 
-URnIntersection::URnIntersection(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans)
-    : bIsEmptyIntersection(false) {
-
-}
-
-void URnIntersection::Init(UPLATEAUCityObjectGroup* TargetTran)
+void URnIntersection::Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
 {
     if (TargetTran) {
         GetTargetTrans().Add(TargetTran);
     }
 }
 
-void URnIntersection::Init(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans)
+void URnIntersection::Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
 {
-    for (auto* Trans : InTargetTrans) {
+    for (auto Trans : InTargetTrans) {
         if (Trans) {
             GetTargetTrans().Add(Trans);
         }
@@ -274,10 +264,10 @@ TArray<TRnRef_T<URnWay>> URnIntersection::GetAllWays() const {
 }
 
 
-TRnRef_T<URnIntersection> URnIntersection::Create(UPLATEAUCityObjectGroup* TargetTran) {
+TRnRef_T<URnIntersection> URnIntersection::Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran) {
     return RnNew<URnIntersection>(TargetTran);
 }
 
-TRnRef_T<URnIntersection> URnIntersection::Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans) {
+TRnRef_T<URnIntersection> URnIntersection::Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans) {
     return RnNew<URnIntersection>(TargetTrans);
 }

@@ -17,11 +17,11 @@ public:
     using Super = URnRoadBase;
 public:
     URnRoad();
-    explicit URnRoad(UPLATEAUCityObjectGroup* TargetTran);
-    explicit URnRoad(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    explicit URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    explicit URnRoad(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
-    void Init(UPLATEAUCityObjectGroup* TargetTran);
-    void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // 全レーン
     const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
@@ -154,13 +154,13 @@ public:
     }
 
     // 道路を作成する
-    static TRnRef_T<URnRoad> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
-    static TRnRef_T<URnRoad> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    static TRnRef_T<URnRoad> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
+    static TRnRef_T<URnRoad> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // 孤立した道路を作成する
-    static TRnRef_T<URnRoad> CreateIsolatedRoad(UPLATEAUCityObjectGroup* TargetTran, TRnRef_T<URnWay> Way);
+    static TRnRef_T<URnRoad> CreateIsolatedRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way);
 
-    static TRnRef_T<URnRoad> CreateOneLaneRoad(UPLATEAUCityObjectGroup* TargetTran, TRnRef_T<URnLane> Lane);
+    static TRnRef_T<URnRoad> CreateOneLaneRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane);
 
 private:
 

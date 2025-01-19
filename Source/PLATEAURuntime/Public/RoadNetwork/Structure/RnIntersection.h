@@ -51,12 +51,10 @@ public:
     using Super = URnRoadBase;
 public:
     URnIntersection();
-    explicit URnIntersection(UPLATEAUCityObjectGroup* TargetTran);
-    explicit URnIntersection(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 
-    void Init(UPLATEAUCityObjectGroup* TargetTran);
+    void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
 
-    void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
 
     // 他の道路との境界線Edge取得
@@ -134,25 +132,12 @@ public:
     }
 
     // 交差点を作成する
-    static TRnRef_T<URnIntersection> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
-    static TRnRef_T<URnIntersection> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
-private:
-    // トラックを生成する
-    void BuildTracksImpl(const TSet<TRnRef_T<URnLineString>>& Borders);
-
-    // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To);
-
-    // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To, const TArray<FVector>& Points);
+    static TRnRef_T<URnIntersection> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
+    static TRnRef_T<URnIntersection> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
 private:
 
     // 交差点の外形情報
     UPROPERTY()
     TArray<TObjectPtr<URnIntersectionEdge>> Edges;
-
-    // 道路と道路の間に入れる空交差点かどうかの判定
-    UPROPERTY()
-    bool bIsEmptyIntersection;
 };

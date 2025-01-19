@@ -70,9 +70,14 @@ public:
 
     void Init(RGraphRef_t<URVertex> InV0, RGraphRef_t<URVertex> InV1);
     const auto& GetFaces() const { return Faces; }
-    RGraphRef_t<URVertex> GetV0() const { return Vertices[0]; }
-    RGraphRef_t<URVertex> GetV1() const { return Vertices[1]; }
-    const TArray<RGraphRef_t<URVertex>>& GetVertices() const { return Vertices; }
+    RGraphRef_t<URVertex> GetV0() const { return GetVertex(EVertexType::V0); }
+    RGraphRef_t<URVertex> GetV1() const { return GetVertex(EVertexType::V1); }
+
+    RGraphRef_t<URVertex> GetVertex(EVertexType Type) const
+    {
+        return Vertices[static_cast<int32>(Type)];    
+    }
+    const auto& GetVertices() const { return Vertices; }
     bool IsValid() const;
     TArray<RGraphRef_t<UREdge>> GetNeighborEdges();
     RGraphRef_t<URVertex> GetVertex(EVertexType Type);
@@ -121,6 +126,9 @@ public:
     void Init(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObjectGroup, ERRoadTypeMask InRoadType, int32 InLodLevel);
 
     const auto& GetEdges() const { return Edges; }
+    auto GetGraph() const { return Graph; }
+    auto GetGraph() { return Graph; }
+
     bool IsValid() const { return Edges.Num() > 0; }
     void AddEdge(RGraphRef_t<UREdge> Edge);
     void RemoveGraph(RGraphRef_t<URGraph> G);

@@ -215,11 +215,25 @@ void UREdge::SetVertex(EVertexType Type, RGraphRef_t<URVertex> Vertex) {
 }
 
 void UREdge::ChangeVertex(RGraphRef_t<URVertex> From, RGraphRef_t<URVertex> To) {
-    if (Vertices[0] == From) {
-        SetVertex(EVertexType::V0, To);
+    if (GetV0() == From) {
+        // 両方ともToになる場合は接続自体解除
+        if (GetV1() == To)
+        {
+            DisConnect();
+        }
+        else
+        {
+            SetVertex(EVertexType::V0, To);            
+        }
     }
-    else if (Vertices[1] == From) {
-        SetVertex(EVertexType::V1, To);
+    else if (GetV1() == From) 
+    {
+        if (GetV0() == To) {
+            DisConnect();
+        }
+        else {
+            SetVertex(EVertexType::V1, To);
+        }
     }
 }
 

@@ -21,7 +21,7 @@ class URnRoadBase : public UObject
     GENERATED_BODY()
 public:
     URnRoadBase();
-    virtual ~URnRoadBase() = default;
+    virtual ~URnRoadBase() override = default;
 
     // 歩道sideWalkを追加する
     // sideWalkの親情報も書き換える
@@ -69,8 +69,8 @@ public:
     const TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() const { return SideWalks; }
     TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() { return SideWalks; }
 
-    const TArray<UPLATEAUCityObjectGroup*>& GetTargetTrans() const { return TargetTrans; }
-    TArray<UPLATEAUCityObjectGroup*>& GetTargetTrans() { return TargetTrans; }
+    const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& GetTargetTrans() const { return TargetTrans; }
+    TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& GetTargetTrans() { return TargetTrans; }
 
     TRnRef_T<URnModel> GetParentModel() const { return ParentModel; }
     void SetParentModel(const TRnRef_T<URnModel>& InParentModel) { ParentModel = InParentModel; }
@@ -119,7 +119,7 @@ private:
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
     UPROPERTY()
-    TArray<UPLATEAUCityObjectGroup*> TargetTrans;
+    TArray<TObjectPtr<UPLATEAUCityObjectGroup>> TargetTrans;
 
     // 歩道情報
     UPROPERTY()

@@ -13,17 +13,18 @@ class FRGraphEx {
 public:
     static void RemoveInnerVertex(RGraphRef_t<URFace> Face);
     static void RemoveInnerVertex(RGraphRef_t<URGraph> Graph);
-    static TSet<RGraphRef_t<URVertex>> AdjustSmallLodHeight(RGraphRef_t<URGraph> Graph, float MergeCellSize, int32 MergeCellLength, float HeightTolerance);
-    static void VertexReduction(RGraphRef_t<URGraph> Graph, float MergeCellSize, int32 MergeCellLength, float MidPointTolerance);
+    static TSet<RGraphRef_t<URVertex>> AdjustSmallLodHeight(RGraphRef_t<URGraph> Graph, float MergeCellSizeMeter, int32 MergeCellLength, float HeightToleranceMeter);
+    static void VertexReduction(RGraphRef_t<URGraph> Graph, float MergeCellSizeMeter, int32 MergeCellLength, float MidPointToleranceMeter);
     static void EdgeReduction(RGraphRef_t<URGraph> Graph);
     static void MergeIsolatedVertices(RGraphRef_t<URGraph> Graph);
     static void MergeIsolatedVertex(RGraphRef_t<URFace> Face);
     static TArray<RGraphRef_t<URFaceGroup>> GroupBy(RGraphRef_t<URGraph> Graph, TFunction<bool(RGraphRef_t<URFace>, RGraphRef_t<URFace>)> IsMatch);
-    static void Optimize(RGraphRef_t<URGraph> Graph, float MergeCellSize, int32 MergeCellLength, float MidPointTolerance, float Lod1HeightTolerance);
-    static void InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Tolerance);
-    static void InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, float HeightTolerance);
-    static TArray<RGraphRef_t<UREdge>> InsertVertices(RGraphRef_t<UREdge> Edge, const TArray<RGraphRef_t<URVertex>>& Vertices);
+    static void InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float ToleranceMeter);
+    static void InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, float HeightToleranceMeter);
+    static TArray<RGraphRef_t<UREdge>> InsertVertices(RGraphRef_t<UREdge> Edge, TArray<RGraphRef_t<URVertex>> Vertices);
     static void SeparateFaces(RGraphRef_t<URGraph> Graph);
+    static void SeparateFace(RGraphRef_t<URFace> Face);
+    static TArray<RGraphRef_t<URVertex>> ComputeOutlineVertices(const TArray<RGraphRef_t<URFace>>& Faces);
     static TArray<RGraphRef_t<URVertex>> ComputeOutlineVertices(RGraphRef_t<URFace> Face);
     static TArray<RGraphRef_t<URVertex>> ComputeOutlineVertices(RGraphRef_t<URFaceGroup> FaceGroup, TFunction<bool(RGraphRef_t<URFace>)> Predicate);
     static TArray<RGraphRef_t<URVertex>> ComputeOutlineVerticesByCityObjectGroup(RGraphRef_t<URGraph> Graph, UPLATEAUCityObjectGroup* CityObjectGroup, ERRoadTypeMask RoadTypes, ERRoadTypeMask RemoveRoadTypes);
