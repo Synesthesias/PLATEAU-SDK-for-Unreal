@@ -347,7 +347,7 @@ bool URnRoadGroup::MergeRoads() {
     }
 
     if (NextIntersection) {
-        NextIntersection->RemoveEdges([&](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->Road == (Roads)[Roads.Num() - 1]; });
+        NextIntersection->RemoveEdges([&](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad() == (Roads)[Roads.Num() - 1]; });
         for (const auto& Lane : DstLanes) {
             NextIntersection->AddEdge(DstRoad, DstRoad->GetBorderWay(Lane, ERnLaneBorderType::Next, ERnLaneBorderDir::Left2Right));
         }
@@ -416,13 +416,13 @@ void URnRoadGroup::AdjustBorder() {
                 return;
 
             for (const auto& Edge : Inter->GetEdges()) {
-                if (Edge->Road != Road && Edge->Border->LineString->Contains(P)) {
-                    int32 I = Edge->Border->LineString->GetPoints().IndexOfByKey(P);
+                if (Edge->GetRoad() != Road && Edge->GetBorder()->LineString->Contains(P)) {
+                    int32 I = Edge->GetBorder()->LineString->GetPoints().IndexOfByKey(P);
                     if (I == 0) {
-                        Edge->Border->LineString->GetPoints().Insert(RnNew<URnPoint>(P->Vertex), 1);
+                        Edge->GetBorder()->LineString->GetPoints().Insert(RnNew<URnPoint>(P->Vertex), 1);
                     }
-                    else if (I == Edge->Border->LineString->GetPoints().Num() - 1) {
-                        Edge->Border->LineString->GetPoints().Insert(RnNew<URnPoint>(P->Vertex), Edge->Border->LineString->GetPoints().Num() - 1);
+                    else if (I == Edge->GetBorder()->LineString->GetPoints().Num() - 1) {
+                        Edge->GetBorder()->LineString->GetPoints().Insert(RnNew<URnPoint>(P->Vertex), Edge->GetBorder()->LineString->GetPoints().Num() - 1);
                     }
                 }
             }

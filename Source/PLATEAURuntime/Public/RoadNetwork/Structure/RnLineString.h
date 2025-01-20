@@ -85,6 +85,7 @@ public:
         const FLineSegment3D& LineSegment,
         EAxisPlane Plane) const;
 
-protected:
+private:
+    UPROPERTY()
     TArray<TObjectPtr<URnPoint>> Points;
 };

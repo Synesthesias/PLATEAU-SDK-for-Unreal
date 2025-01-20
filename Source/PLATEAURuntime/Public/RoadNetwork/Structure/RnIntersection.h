@@ -19,11 +19,15 @@ class URnIntersectionEdge : public UObject
 public:
     URnIntersectionEdge();
     void Init();
-    // 接続先の道路
-    TRnRef_T<URnRoadBase> Road;
+    void Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder);
 
-    // 境界線
-    TRnRef_T<URnWay> Border;
+    TRnRef_T<URnRoadBase> GetRoad() const { return Road; }
+
+    TRnRef_T<URnWay> GetBorder() const { return Border; }
+
+    void SetRoad(const TRnRef_T<URnRoadBase>& InRoad) { Road = InRoad; }
+
+    void SetBorder(const TRnRef_T<URnWay>& InBorder) { Border = InBorder; }
 
     // 有効なNeighborかどうか
     bool IsValid() const;
@@ -42,6 +46,15 @@ public:
     // 指定した境界線に接続されているレーンを取得
     TRnRef_T<URnLane> GetConnectedLane(const TRnRef_T<URnWay>& BorderWay) const;
 
+private:
+
+    // 接続先の道路
+    UPROPERTY()
+    TObjectPtr<URnRoadBase> Road;
+
+    // 境界線
+    UPROPERTY()
+    TObjectPtr<URnWay> Border;
 };
 
 UCLASS()
@@ -51,12 +64,10 @@ public:
     using Super = URnRoadBase;
 public:
     URnIntersection();
-    explicit URnIntersection(UPLATEAUCityObjectGroup* TargetTran);
-    explicit URnIntersection(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
 
-    void Init(UPLATEAUCityObjectGroup* TargetTran);
+    void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
 
-    void Init(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
+    void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
 
     // 他の道路との境界線Edge取得
@@ -134,25 +145,12 @@ public:
     }
 
     // 交差点を作成する
-    static TRnRef_T<URnIntersection> Create(UPLATEAUCityObjectGroup* TargetTran = nullptr);
-    static TRnRef_T<URnIntersection> Create(const TArray<UPLATEAUCityObjectGroup*>& TargetTrans);
-private:
-    // トラックを生成する
-    void BuildTracksImpl(const TSet<TRnRef_T<URnLineString>>& Borders);
-
-    // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To);
-
-    // 指定したEdgeから指定したEdgeへのトラックを生成する
-    void BuildTrack(const TRnRef_T<URnIntersectionEdge>& From, const TRnRef_T<URnIntersectionEdge>& To, const TArray<FVector>& Points);
+    static TRnRef_T<URnIntersection> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
+    static TRnRef_T<URnIntersection> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
 private:
 
     // 交差点の外形情報
     UPROPERTY()
     TArray<TObjectPtr<URnIntersectionEdge>> Edges;
-
-    // 道路と道路の間に入れる空交差点かどうかの判定
-    UPROPERTY()
-    bool bIsEmptyIntersection;
 };

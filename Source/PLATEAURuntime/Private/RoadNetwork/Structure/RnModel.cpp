@@ -139,9 +139,9 @@ TArray<TRnRef_T<URnSideWalk>> URnModel::GetNeighborSideWalks(const TRnRef_T<URnR
 void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option) {
     for (const auto& Intersection : Intersections) {
         for (const auto& Edge : Intersection->GetEdges()) {
-            if (!Edge->Road) continue;
+            if (!Edge->GetRoad()) continue;
 
-            auto Road = Edge->Road->CastToRoad();
+            auto Road = Edge->GetRoad()->CastToRoad();
             if (!Road) continue;
 
             // 道路の長さを取得
@@ -159,7 +159,7 @@ void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBo
 
             // 境界線を移動
             for (const auto& Lane : Edge->GetConnectedLanes()) {
-                auto Border = Edge->Border;
+                auto Border = Edge->GetBorder();
                 if (!Border) continue;
 
                 // 境界線の方向を取得

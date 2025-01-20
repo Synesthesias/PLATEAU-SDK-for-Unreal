@@ -110,10 +110,7 @@ private:
         , RGraphRef_t<URGraph>& OutGraph);
 
     // RnModelを作成する
-    static  TRnRef_T<URnModel> CreateRoadNetwork(
+    static  TRnRef_T<URnModel> CreateRnModel(
         const FRoadNetworkFactory& Self
-        , APLATEAUInstancedCityModel* Actor
-        , AActor* DestActor
-        , USceneComponent* Root
         , RGraphRef_t<URGraph> Graph);
 };

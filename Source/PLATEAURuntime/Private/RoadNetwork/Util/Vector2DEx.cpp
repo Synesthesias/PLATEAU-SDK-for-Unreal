@@ -18,22 +18,20 @@ FVector2D FVector2DEx::Clamp(const FVector2D& Vec, const FVector2D& Min, const F
 }
 
 float FVector2DEx::Angle360(const FVector2D& From, const FVector2D& To) {
-    float Angle = FMath::RadiansToDegrees(FMath::Acos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal())));
-    return Angle * FMath::Sign(Cross(From, To));
+    const float Ang = FMath::RadiansToDegrees(FMath::Acos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal())));
+    return Ang * FMath::Sign(Cross(From, To));
 }
 
 float FVector2DEx::Angle(const FVector2D& From, const FVector2D& To)
 {
-    return UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
+    float Num = (float)FMath::Sqrt((double)From.SquaredLength() * (double)To.SquaredLength());
+    return (double)Num < 1.0000000116861E-07 ? 0.0f : UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From, To) / Num);
 }
 
 float FVector2DEx::SignedAngle(const FVector2D& From, const FVector2D& To)
 {
-    auto C = Cross(From, To);    
-    auto Result = UKismetMathLibrary::DegAcos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
-    if (C < 0)
-        Result = -Result;
-    return Result;
+    float Ang = Angle(From, To);
+    return Ang * FMath::Sign((float)((double)From.X * (double)To.Y - (double)From.Y * (double)To.X));
 }
 
 float FVector2DEx::Cross(const FVector2D& A, const FVector2D& B) {

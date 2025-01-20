@@ -86,18 +86,6 @@ void FRnDebugEx::DrawDashedLine(const FVector& Start, const FVector& End, const 
     }
 }
 
-void FRnDebugEx::Log(const FString& Message) {
-    UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
-}
-
-void FRnDebugEx::LogWarning(const FString& Message) {
-    UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-}
-
-void FRnDebugEx::LogError(const FString& Message) {
-    UE_LOG(LogTemp, Error, TEXT("%s"), *Message);
-}
-
 void FRnDebugEx::DrawDashedArrow(const FVector& Start, const FVector& End, const FLinearColor& Color, float LineLength, float SpaceLength, float Duration, float ArrowSize, const FVector& ArrowUp) {
     const FVector Direction = (End - Start).GetSafeNormal();
     const float TotalLength = FVector::Distance(Start, End);
@@ -142,7 +130,7 @@ void FRnDebugEx::DrawRay(const FVector& Start, const FVector& Direction, const F
 }
 
 void FRnDebugEx::DrawString(const FString& Text, const FVector& Location, const FLinearColor& Color, float Duration,
-    int32 FontSize)
+    float FontScale)
 {
-    DrawDebugString(GWorld, Location, Text, nullptr, Color.ToFColor(true), Duration, false, FontSize);
+    DrawDebugString(GWorld, Location, Text, nullptr, Color.ToFColor(true), Duration, false, FontScale);
 }

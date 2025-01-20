@@ -14,8 +14,10 @@
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
+#include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLineString.h"
+#include "RoadNetwork/Structure/RnWay.h"
 
 
 const FString FRoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
@@ -36,14 +38,14 @@ namespace
     class FTranLine {
     public:
         FTran* Neighbor;
-        TArray<TSharedPtr<UREdge>> Edges;
+        TArray<RGraphRef_t<UREdge>> Edges;
         TArray<RGraphRef_t<URVertex>> Vertices;
         TRnRef_T<URnWay> Way;
         TSharedPtr<FTranLine> Next;
         TSharedPtr<FTranLine> Prev;
 
         bool IsBorder() const {
-            return Neighbor == nullptr;
+            return Neighbor != nullptr;
         }
     };
 
@@ -101,7 +103,6 @@ namespace
             }
         }
 
-
         TRnRef_T<URnRoadBase> CreateRoad();
 
         void Build()
@@ -109,16 +110,9 @@ namespace
             Node = CreateRoad();
         }
 
-        void BuildConnection()
-        {
-            // #TODO : RN
-        }
+        void BuildConnection();
 
-        void BuildLine()
-        {
-            // #TODO : RN
-        }
-
+        bool BuildLine();
     };
 
     class FWork {
@@ -241,6 +235,19 @@ namespace
             TArray<TRnRef_T<URnSideWalk>> ret;
             return ret;
         }
+
+
+        FTran* FindTranOrDefault(URFace* Face)
+        {
+            for (auto& Pair : TranMap)
+            {
+                if (Pair.Key->Faces.Contains(Face)) {
+                    return Pair.Value.Get();
+                }
+            }
+            return nullptr;
+        }
+
     };
 
     TRnRef_T<URnRoadBase> FTran::CreateRoad()
@@ -265,10 +272,200 @@ namespace
             auto way = Work.CreateWay(Vertices);
             return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
         }
-        // #TODO : RN
+
+        // 通常の道
+        if (RoadType == ERoadType::Road) {
+            auto lanes = Lines.FilterByPredicate([](const TSharedPtr<FTranLine>& L) {return L->IsBorder() == false; });
+
+            using KeyType = TTuple<TSharedPtr<FTranLine>, TSharedPtr<FTranLine>>;
+            auto GetKey = [](TSharedPtr<FTranLine> A, TSharedPtr<FTranLine> B)-> KeyType
+            {
+                if (A.Get() < B.Get())
+                    Swap(A, B);
+
+                return MakeTuple(A, B);
+                };
+            auto Road = RnNew<URnRoad>(CityObjectGroup.Get());
+
+            TMap<KeyType, TArray<TSharedPtr<FTranLine>>> Groups;
+            for (auto&& Lane : lanes) 
+            {
+                auto&& Key = GetKey(Lane->Prev, Lane->Next);
+                Groups.FindOrAdd(Key).Add(Lane);
+            }
+            TSharedPtr<FTranLine> Left = nullptr;
+            TSharedPtr<FTranLine> Right = nullptr;
+            for(auto G : Groups)
+            {
+                auto& LaneLines = G.Value;
+                auto L = LaneLines.Num() > 0 ? LaneLines[0] : nullptr;
+                auto R = LaneLines.Num() > 1 ? LaneLines[1] : nullptr;
+                if (L && L->Way || L->Way->IsReversed)
+                    Swap(L, R);
+                Left = L;
+                Right = R;
+                if(L && R)
+                    break;
+            }
+
+            if (!Left && !Right) 
+            {
+                UE_LOG(LogTemp, Error, TEXT("不正なレーン構成(Wayの存在しないLane). %s"), *FaceGroup->CityObjectGroup->GetName());
+                return Road;
+            }
+
+            if (!Left || !Right) {
+                UE_LOG(LogTemp, Warning, TEXT("不正なレーン構成(片側Wayのみ存在). %s"), *(FaceGroup->CityObjectGroup->GetName()));
+            }
+            auto line = Left ? Left : Right;
+            auto prevBorderLine = line->Prev; ;
+            auto nextBorderLine = line->Next;
+            auto prevBorderWay = prevBorderLine ? prevBorderLine->Way : nullptr;
+            auto nextBorderWay = nextBorderLine ? nextBorderLine->Way : nullptr;
+
+            auto leftWay = Left ? Left->Way : nullptr;
+            auto rightWay = Right ? Right->Way : nullptr;
+
+            // 方向そろえる
+            if (Left != nullptr && Left->Prev != prevBorderLine)
+                leftWay = leftWay->ReversedWay();
+            if (Right != nullptr && Right->Prev != prevBorderLine)
+                rightWay = rightWay->ReversedWay();
+            if (rightWay != nullptr)
+                rightWay->IsReverseNormal = true;
+
+            auto lane = RnNew<URnLane>(leftWay, rightWay, prevBorderWay, nextBorderWay);
+            Road->AddMainLane(lane);
+            return Road;
+        }
+
+        // 交差点
+        if (RoadType == ERoadType::Intersection) {
+            auto intersection = URnIntersection::Create(TObjectPtr<UPLATEAUCityObjectGroup>(CityObjectGroup.Get()));
+            return intersection;
+        }
+
+        UE_LOG(LogTemp, Error, TEXT("不正なレーン構成 %s"), *FaceGroup->CityObjectGroup->GetName());
         return nullptr;
     }
 
+    void FTran::BuildConnection()
+    {
+        if (!Node)
+            return;
+        if (auto road = Node->CastToRoad()) 
+        {
+            auto lane = road->MainLanes.Num() > 0 ? road->MainLanes[0] : nullptr;
+            if (lane == nullptr)
+                return;
+            auto Prev =Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
+                if (!L->IsBorder() || !L->Way)
+                    return false;
+                return lane->PrevBorder && lane->PrevBorder->IsSameLineReference(L->Way);
+                });
+
+            auto Next = Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
+                if (!L->IsBorder() || !L->Way)
+                    return false;
+                return lane->NextBorder && lane->NextBorder->IsSameLineReference(L->Way);
+                });
+
+            auto GetNode = [](TSharedPtr<FTranLine> L)-> TRnRef_T<URnRoadBase>
+            {
+                if (L == nullptr)
+                    return nullptr;
+                return L->Neighbor ? L->Neighbor->Node : nullptr;
+                };
+            auto prevRoad = GetNode(Prev ? *Prev : nullptr);
+            auto nextRoad = GetNode(Next ? *Next : nullptr);
+            road->SetPrevNext(prevRoad, nextRoad);
+        }
+        else if (auto intersection = Node->CastToIntersection() ) 
+        {
+            // 境界線情報
+            for(auto B : Lines)
+            {
+                intersection->AddEdge(B->Neighbor ? B->Neighbor->Node : nullptr, B->Way);
+            }
+        }
+    }
+
+    bool FTran::BuildLine()
+    {
+        auto Edges = TArray<RGraphRef_t<UREdge>>();
+        Edges.SetNum(Vertices.Num());
+        auto Neighbors = TArray<FTran*>();
+        Neighbors.SetNum(Vertices.Num());
+        auto Success = true;
+        for (auto i = 0; i < Vertices.Num(); i++) {
+            auto V0 = Vertices[i];
+            auto V1 = Vertices[(i + 1) % Vertices.Num()];
+
+            TObjectPtr<UREdge> E;                
+            if(FRnEx::TryFirstOrDefault(
+                V0->GetEdges()
+                , [V0, V1](TObjectPtr<UREdge> E)-> bool {
+                    return E->IsSameVertex(V0, V1);
+                }, E) == false)
+            {
+                UE_LOG(LogTemp,Error, TEXT("ループしていないメッシュ. %s"), *FaceGroup->CityObjectGroup->GetName());
+                Success = false;
+                continue;        
+            }
+
+            Edges[i] = E;
+            for (auto F : E->GetFaces()) 
+            {
+                auto Tran = Work.FindTranOrDefault(F);
+                if (Tran != nullptr && Tran != this) {
+                    Neighbors[i] = Tran;
+                    break;
+                }
+            }
+        }
+        auto startIndex = 0;
+        for (auto i = 1; i < Edges.Num(); i++) {
+            if (Neighbors[i] != Neighbors[0]) {
+                startIndex = i;
+                break;
+            }
+        }
+
+        TSharedPtr<FTranLine> line = nullptr;
+        for (auto x = 0; x < Edges.Num(); x++)
+        {
+            auto i = (x + startIndex) % Edges.Num();
+            auto v = Vertices[i];
+            auto e = Edges[i];
+            auto n = Neighbors[i];
+            // 切り替わり発生したら新しいLineを作成
+            if (line == nullptr || line->Neighbor != n) {
+                if (line != nullptr)
+                    line->Vertices.Add(v);
+                auto next = MakeShared<FTranLine>();
+                next->Neighbor = n;
+                next->Prev = line;
+                if (line != nullptr)
+                    line->Next = next;
+                line = next;
+                Lines.Add(line);
+            }
+
+            line->Edges.Add(e);
+            line->Vertices.Add(v);
+        }
+
+        if (line != nullptr && Lines.Num() > 1) {
+            line->Vertices.Add(Vertices[startIndex]);
+            line->Next = Lines[0];
+            Lines[0]->Prev = line;
+        }
+
+        // Wayを先に作っておく
+        for(auto l : Lines)
+            l->Way = Work.CreateWay(l->Vertices);
+        return Success;
+    }
 }
 
 void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor)
@@ -296,19 +493,12 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
     RGraphRef_t<URGraph> Graph;
     CreateRGraph(Self, Actor, DestActor, Root, SubDividedCityObjects, Graph);
 
-
-    const auto RnModelName = TEXT("RnModel");
-    auto RnModel = CreateRoadNetwork(Self, Actor, DestActor, Root, Graph);
-
-    DestActor->Model = RnModel;
+    DestActor->Model = CreateRnModel(Self, Graph);
     return nullptr;
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
     const FRoadNetworkFactory& Self
-    , APLATEAUInstancedCityModel* Actor
-    , AActor* DestActor
-    , USceneComponent* Root
     , RGraphRef_t<URGraph> Graph)
 {
     auto Model = RnNew<URnModel>();
@@ -324,7 +514,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
         Model->FactoryVersion = Self.FactoryVersion;
 
         FWork work;
-        work.TerminateAllowEdgeAngle;
+        work.TerminateAllowEdgeAngle = Self.TerminateAllowEdgeAngle;
         work.TerminateSkipAngleDeg = Self.TerminateSkipAngle;
     
         
@@ -345,6 +535,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
         // 作成したFTranを元にRoadを作成
         for(auto&& pair : work.TranMap)
             pair.Value->BuildLine();
+
         for(auto&& pair : work.TranMap) {
             auto&& tran = pair.Value;
             tran->Build();
