@@ -70,8 +70,9 @@ public:
         return Result;
     }
 
-    template<typename T, typename F>
-    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
+private:
+    template<typename T>
+    static bool TryFirstOrDefaultImpl(const TSet<T>& Set, TFunction<bool(const T&)> Predicate, T& OutV) {
         for (auto& S : Set) {
             if (Predicate(S)) {
                 OutV = S;
@@ -79,6 +80,11 @@ public:
             }
         }
         return false;
+    }
+public:
+    template<typename T, typename F>
+    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
+        return TryFirstOrDefaultImpl<T>(Set, Predicate, OutV);
     }
 
     template<typename T, typename F>

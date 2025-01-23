@@ -570,7 +570,7 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(
     RGraphRef_t<URFaceGroup> FaceGroup,
     TFunction<bool(RGraphRef_t<URFace>)> Predicate) {
     TArray<RGraphRef_t<URFace>> Faces;
-    for (auto&& Face : FaceGroup->Faces) {
+    for (auto&& Face : FaceGroup->GetFaces()) {
         if (Predicate(Face))
             Faces.Add(Face);
     }
@@ -724,4 +724,143 @@ TSet<RGraphRef_t<UREdge>> FRGraphEx::RemoveIsolatedEdge(RGraphRef_t<URFace> Self
     //if (removeEdgeSet.Any())
     //    DebugEx.Log($"[{self.GetDebugLabelOrDefault()}] Remove edges {removeEdgeSet.Count}");
     return disconnectedEdges;
+}
+
+bool FRGraphEx::SegmentEdge2VertexArray(const TArray<RGraphRef_t<UREdge>>& Edges,
+    TArray<RGraphRef_t<URVertex>>& OutVertices, bool& OutIsLoop)
+{
+    OutIsLoop = Edges.Num() > 1 && Edges[0]->IsShareAnyVertex(Edges.Last());
+    OutVertices.Reset();
+    OutVertices.Reserve(Edges.Num() + 1);
+    if (Edges.Num() == 0)
+        return false;
+
+    for(auto i = 0; i < Edges.Num(); ++i)
+    {
+        auto E = Edges[i];
+        if(i == 0)
+        {
+            // 一つ目の頂点はEdges[1]と共有しない頂点
+            auto E0 = Edges[0];
+            auto E1 = Edges[1 % Edges.Num()];
+            RGraphRef_t<URVertex> ShareVertex;
+            if (E0->IsShareAnyVertex(E1, ShareVertex) == false)
+                return false;
+            auto V = E0->GetOppositeVertex(ShareVertex);
+            if (!V)
+                return false;
+            OutVertices.Add(V);
+        }
+
+        auto ShareVertex = OutVertices.Last();
+        auto V = E->GetOppositeVertex(ShareVertex);
+        if (!V)
+            return false;
+        OutVertices.Add(V);
+    }
+    return true;
+}
+
+bool FRGraphEx::OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices,
+                                   TArray<RGraphRef_t<UREdge>>& OutlineEdges)
+{
+    OutlineEdges.Reset();
+    OutlineEdges.Reserve(Vertices.Num());
+    for (auto i = 0; i < Vertices.Num(); i++) 
+    {
+        auto V0 = Vertices[i % Vertices.Num()];
+        auto V1 = Vertices[(i + 1) % Vertices.Num()];
+        TObjectPtr<UREdge> E;
+        if (FRnEx::TryFirstOrDefault(
+            V0->GetEdges()
+            , [V0, V1](RGraphRef_t<UREdge> E) { return E->GetOppositeVertex(V0) == V1; }
+            , E) == false)
+            return false;
+
+        OutlineEdges.Add(E);
+    }
+
+    return true;
+}
+
+bool FRGraphEx::CreateSideWalk(RGraphRef_t<URFace> Face, TArray<RGraphRef_t<UREdge>>& OutsideEdges,
+    TArray<RGraphRef_t<UREdge>>& InsideEdges, TArray<RGraphRef_t<UREdge>>& StartEdges,
+    TArray<RGraphRef_t<UREdge>>& EndEdges)
+{
+    if (!Face)
+        return false;
+
+    // 歩道のみ
+    if (FRRoadTypeMaskEx::IsSideWalk(Face->GetRoadTypes()) == false)
+        return false;
+
+    // 面ができない場合は無視
+    if (Face->GetEdges().Num() < 3)
+        return false;
+
+    auto Edge2WayType = [](RGraphRef_t<UREdge> e)
+    {
+        // 自身の歩道にしか所属しない場合は外側の辺
+        if (e->GetFaces().Num() == 1)
+            return 0;
+
+        // 以下複数のFaceと所属する場合        
+        auto t = e->GetAllFaceTypeMask();
+
+        // 複数の歩道に所属している場合は歩道との境界線
+        if ( FRRoadTypeMaskEx::HasAnyFlag(t, ERRoadTypeMask::SideWalk))
+            return 2;
+
+        // 歩道との境界線ではない and 他のtranメッシュとの境界線は外側の辺
+        TSet<TWeakObjectPtr<UPLATEAUCityObjectGroup>> CityObjects;
+        for (auto&& F : e->GetFaces())
+            CityObjects.Add(F->GetCityObjectGroup());
+        if (CityObjects.Num() > 1)
+            return 0;
+
+        // 自身のtranメッシュの歩道以外に所属している場合は内側の辺
+        return 1;
+    };
+    auto OutlineVertices = ComputeOutlineVertices(Face);
+    TArray<RGraphRef_t<UREdge>> OutlineEdges;
+    OutlineVertex2Edge(OutlineVertices, OutlineEdges);
+
+    auto Group = CreateOutlineBorderGroup<int32>(OutlineEdges, [&](RGraphRef_t<UREdge> E) {
+        return Edge2WayType(E);
+        });
+
+    // #TODO : このチェックはいらないかも(OutSideが無い歩道もあるため)
+    auto OutsideGroup = Group.FindByPredicate([](const FOutlineBorderGroup<int32>& G) { return G.Key == 0; });
+    if (!OutsideGroup)
+        return false;
+
+    for(auto i = 0; i < Group.Num(); ++i)
+    {
+        auto& G = Group[i];
+        TArray<RGraphRef_t<UREdge>>* DstEdges = nullptr;
+        if(G.Key == 0)
+        {
+            DstEdges = &OutsideEdges;
+        }
+        else if(G.Key == 1)
+        {
+            DstEdges = &InsideEdges;
+        }
+        else
+        {
+            // ひとつ前がOutsideだったら次の境界線はEnd
+            const auto LastKey = Group[(i - 1 + Group.Num()) % Group.Num()].Key;
+            if(LastKey == 0)
+                DstEdges = &EndEdges;
+            else
+                DstEdges = &StartEdges;
+        }
+
+        if(DstEdges)
+        {
+            for (auto&& E : G.Edges)
+                DstEdges->Add(E);
+        }
+    }
+    return true;
 }

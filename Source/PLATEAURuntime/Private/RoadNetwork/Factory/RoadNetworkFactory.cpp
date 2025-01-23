@@ -60,9 +60,9 @@ namespace
         TRnRef_T<URnRoadBase> Node;
         TArray<TRnRef_T<URnLane>> Lanes;
 
-        auto GetFaces() const
+        auto&& GetFaces() const
         {
-            return FaceGroup->Faces;
+            return FaceGroup->GetFaces();
         }
 
 
@@ -241,7 +241,7 @@ namespace
         {
             for (auto& Pair : TranMap)
             {
-                if (Pair.Key->Faces.Contains(Face)) {
+                if (Pair.Key->GetFaces().Contains(Face)) {
                     return Pair.Value.Get();
                 }
             }
@@ -555,46 +555,65 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
             for (auto&& sideWalk : sideWalks)
                 Model->AddSideWalk(sideWalk);
 
-            //for(auto&& fg : faceGroups) {
-            //    for(auto&& sideWalkFace : fg.Faces.Where(f = > f.RoadTypes.IsSideWalk())) {
-            //        if (sideWalkFace.CreateSideWalk(out auto&& outsideEdges, out auto&& insideEdges,
-            //            out auto&& startEdges, out auto&& endEdges) == false)
-            //            continue;
+            for(auto&& fg : faceGroups) 
+            {
+                for(auto&& sideWalkFace : fg->GetFaces()) 
+                {
+                    if (FRRoadTypeMaskEx::IsSideWalk(sideWalkFace->GetRoadTypes()) == false)
+                        continue;
+                    TArray<RGraphRef_t<UREdge>> OutsideEdges;
+                    TArray<RGraphRef_t<UREdge>> InsideEdges;
+                    TArray<RGraphRef_t<UREdge>> StartEdges;
+                    TArray<RGraphRef_t<UREdge>> EndEdges;
 
-            //        RnWay AsWay(IReadOnlyList<REdge> edges, out bool isCached) {
-            //            isCached = false;
-            //            if (edges.Any() == false)
-            //                return nullptr;
-            //            if (RGraphEx.SegmentEdge2Vertex(edges, out auto&& vertices, out auto&& isLoop))
-            //                return work->CreateWay(vertices, out isCached);
-            //            return nullptr;
-            //        }
-            //        auto&& outsideWay = AsWay(outsideEdges, out auto&& outsideCached);
-            //        auto&& insideWay = AsWay(insideEdges, out auto&& insideCached);
-            //        auto&& startWay = AsWay(startEdges, out auto&& startCached);
-            //        auto&& endWay = AsWay(endEdges, out auto&& endCached);
-            //        auto&& parent = work->TranMap.Values.FirstOrDefault(t = >
-            //            t.FaceGroup.CityObjectGroup == sideWalkFace.CityObjectGroup && t.Node != nullptr);
+                    if (FRGraphEx::CreateSideWalk(sideWalkFace, OutsideEdges, InsideEdges, StartEdges, EndEdges) == false)
+                        continue;
 
-            //        RnSideWalkLaneType laneType = RnSideWalkLaneType.Undefined;
-            //        if (parent ? .Node is RnRoad road) {
-            //            auto&& way = road.GetMergedSideWay(RnDir.Left);
-            //            if (insideWay != nullptr) {
-            //                // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
-            //                // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
-            //                if (way == nullptr)
-            //                    laneType = RnSideWalkLaneType.Undefined;
-            //                else if (insideWay.IsSameLineReference(way))
-            //                    laneType = RnSideWalkLaneType.LeftLane;
-            //                else
-            //                    laneType = RnSideWalkLaneType.RightLane;
-            //            }
-            //        }
 
-            //        auto&& sideWalk = RnSideWalk.Create(parent ? .Node, outsideWay, insideWay, startWay, endWay, laneType);
-            //        ret.AddSideWalk(sideWalk);
-            //    }
-            //}
+                    auto AsWay = [&](const TArray<RGraphRef_t<UREdge>>& edges) -> TRnRef_T<URnWay>
+                    {
+                        if (edges.IsEmpty())
+                            return nullptr;
+                        TArray<RGraphRef_t<URVertex>> Vertices;
+                        bool IsLoop;
+                        bool isCached = false;
+                        if (FRGraphEx::SegmentEdge2VertexArray(edges, Vertices, IsLoop))
+                            return work.CreateWay(Vertices, isCached);
+                        return nullptr;
+                    };
+                    auto&& outsideWay = AsWay(OutsideEdges);
+                    auto&& insideWay = AsWay(InsideEdges);
+                    auto&& startWay = AsWay(StartEdges);
+                    auto&& endWay = AsWay(EndEdges);
+                    auto ParentPair = Algo::FindByPredicate(work.TranMap, [&](const TTuple<RGraphRef_t<URFaceGroup>, TSharedPtr<FTran>>& X) {
+                        return X.Value->FaceGroup->CityObjectGroup == sideWalkFace->GetCityObjectGroup() && X.Value->Node != nullptr;
+                        });
+                    ERnSideWalkLaneType laneType = ERnSideWalkLaneType::Undefined;
+
+                    TRnRef_T<URnRoadBase> Parent = nullptr;
+                    if (ParentPair != nullptr && ParentPair->Value && ParentPair->Value->Node)
+                    {
+                        Parent = ParentPair->Value->Node;
+                    }
+
+                    if (auto road = Parent->CastToRoad()) {
+                        auto&& way = road->GetMergedSideWay(ERnDir::Left);
+                        if (insideWay != nullptr) {
+                            // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
+                            // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
+                            if (way == nullptr)
+                                laneType = ERnSideWalkLaneType::Undefined;
+                            else if (insideWay->IsSameLineReference(way))
+                                laneType = ERnSideWalkLaneType::LeftLane;
+                            else
+                                laneType = ERnSideWalkLaneType::RightLane;
+                        }
+                    }
+
+                    auto&& sideWalk = URnSideWalk::Create(Parent, outsideWay, insideWay, startWay, endWay, laneType);
+                    Model->AddSideWalk(sideWalk);
+                }
+            }
         }
 
         // 交差点の

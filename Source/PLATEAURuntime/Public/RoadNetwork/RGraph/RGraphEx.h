@@ -33,4 +33,70 @@ public:
     static TSet<RGraphRef_t<URVertex>> CreateVertexSet(RGraphRef_t<URFace> Face);
     static void RemoveIsolatedEdgeFromFace(RGraphRef_t<URGraph> Self);
     static TSet<RGraphRef_t<UREdge>> RemoveIsolatedEdge(RGraphRef_t<URFace> Self);
+
+    // Edgesで表現された線分を頂点配列に分解
+    // OutIsLoopはEdgesがループしているかどうかを返す
+    static bool SegmentEdge2VertexArray(const TArray<RGraphRef_t<UREdge>>& Edges, TArray<RGraphRef_t<URVertex>>& OutVertices, bool& OutIsLoop);
+
+    // Verticesで表されるポリゴン情報をEdge表現に変換
+    // Verticesの隣接情報に基づくので生成できない場合もある
+    static bool OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices, TArray<RGraphRef_t<UREdge>>& OutlineEdges);
+
+    static bool CreateSideWalk(
+        RGraphRef_t<URFace> Face
+        , TArray<RGraphRef_t<UREdge>>& OutsideEdges
+        , TArray<RGraphRef_t<UREdge>>& InsideEdges
+        , TArray<RGraphRef_t<UREdge>>& StartEdges
+        , TArray<RGraphRef_t<UREdge>>& EndEdges
+    );
+
+    // EdgesをKeyでグループ化したもの
+    template<typename TKey>
+    struct FOutlineBorderGroup
+    {
+    public:
+        TKey Key;
+        TArray<RGraphRef_t<UREdge>> Edges;
+    };
+
+    // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
+    // ただし, 飛び飛びの辺はグループ化されない
+    // 例: OutlineEdges = {A, A, B, B, A, A, C, C, A}
+    //   => {B, (2,3)}, {A, (4,5)}, {C, (6,7)}, {A, (8,0, 1)}のようにグループ化される
+    template<typename T>
+    static TArray<FOutlineBorderGroup<T>> CreateOutlineBorderGroup(
+        const TArray<RGraphRef_t<UREdge>>& OutlineEdges
+        , TFunction<T(RGraphRef_t<UREdge>)> KeySelector)
+    {
+        T LastKey = T();
+        TArray<RGraphRef_t<UREdge>> Edges;
+        TArray<FOutlineBorderGroup<T>> Ret;
+        for (auto i = 0; i < OutlineEdges.Num(); ++i) 
+        {
+            auto&& e = OutlineEdges[i];
+            auto key = KeySelector(e);
+            if (i == 0 || LastKey != key) 
+            {
+                if (Edges.IsEmpty() == false)
+                    Ret.Add(FOutlineBorderGroup<T>{ LastKey, Edges });
+
+                Edges = TArray<RGraphRef_t<UREdge>>();
+                LastKey = key;
+            }
+            Edges.Add(e);
+        }
+
+        if (Edges.IsEmpty() == false)
+            Ret.Add(FOutlineBorderGroup<T>{ LastKey, Edges });
+
+        // Waysの最初と最後が同じKeyの場合は結合
+        if (Ret.Num() > 1 && Ret[0].Key == Ret[Ret.Num() - 1].Key) 
+        {
+            for (auto&& E : Ret[0].Edges)
+                Ret[Ret.Num() - 1].Edges.Add(E);
+            Ret.RemoveAt(0);
+        }
+
+        return Ret;
+    }
 };

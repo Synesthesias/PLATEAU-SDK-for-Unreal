@@ -185,9 +185,15 @@ public:
     URFaceGroup(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObjectGroup, const TArray<RGraphRef_t<URFace>>& InFaces);
 
     void Init(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObjectGroup, const TArray<RGraphRef_t<URFace>>& InFaces);
+
+
+    const auto& GetFaces() const { return Faces; }
+
     RGraphRef_t<URGraph> Graph;
     TWeakObjectPtr<UPLATEAUCityObjectGroup> CityObjectGroup;
-    TSet<RGraphRef_t<URFace>> Faces;
 
     ERRoadTypeMask GetRoadTypes() const;
+
+private:
+    TSet<RGraphRef_t<URFace>> Faces;
 };
