@@ -6,6 +6,8 @@
 #include <memory>
 #include <functional>
 
+#include "RoadNetwork/Util/RnEx.h"
+
 
 class FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
@@ -52,12 +54,7 @@ public:
 
     // EdgesをKeyでグループ化したもの
     template<typename TKey>
-    struct FOutlineBorderGroup
-    {
-    public:
-        TKey Key;
-        TArray<RGraphRef_t<UREdge>> Edges;
-    };
+    using FOutlineBorderGroup = FRnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;
 
     // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
     // ただし, 飛び飛びの辺はグループ化されない
@@ -68,35 +65,6 @@ public:
         const TArray<RGraphRef_t<UREdge>>& OutlineEdges
         , TFunction<T(RGraphRef_t<UREdge>)> KeySelector)
     {
-        T LastKey = T();
-        TArray<RGraphRef_t<UREdge>> Edges;
-        TArray<FOutlineBorderGroup<T>> Ret;
-        for (auto i = 0; i < OutlineEdges.Num(); ++i) 
-        {
-            auto&& e = OutlineEdges[i];
-            auto key = KeySelector(e);
-            if (i == 0 || LastKey != key) 
-            {
-                if (Edges.IsEmpty() == false)
-                    Ret.Add(FOutlineBorderGroup<T>{ LastKey, Edges });
-
-                Edges = TArray<RGraphRef_t<UREdge>>();
-                LastKey = key;
-            }
-            Edges.Add(e);
-        }
-
-        if (Edges.IsEmpty() == false)
-            Ret.Add(FOutlineBorderGroup<T>{ LastKey, Edges });
-
-        // Waysの最初と最後が同じKeyの場合は結合
-        if (Ret.Num() > 1 && Ret[0].Key == Ret[Ret.Num() - 1].Key) 
-        {
-            for (auto&& E : Ret[0].Edges)
-                Ret[Ret.Num() - 1].Edges.Add(E);
-            Ret.RemoveAt(0);
-        }
-
-        return Ret;
+        return FRnEx::GroupByOutlineEdges<T, RGraphRef_t<UREdge>>(OutlineEdges, KeySelector);
     }
 };

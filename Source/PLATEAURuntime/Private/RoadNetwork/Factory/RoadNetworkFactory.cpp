@@ -85,6 +85,17 @@ namespace
             return Algo::CountIf(Lines, [](const TSharedPtr<FTranLine>& L) {return L->IsBorder(); });
         }
 
+        // 最大LODレベルを取得
+        int32_t GetLodLevel() const
+        {
+            auto Ret = 0;
+            for(const auto Face : GetFaces())
+            {
+                Ret = FMath::Max(Ret, Face->GetLodLevel());
+            }
+            return Ret;
+        }
+
         FTran(FWork& W, const RGraphRef_t<URGraph>& G, RGraphRef_t<URFaceGroup>& FG)
         : Work(W)
         , Graph(G)
@@ -189,6 +200,11 @@ namespace
         }
 
 
+
+        TRnRef_T<URnWay> CreateWay(const TArray<RGraphRef_t<URnPoint>>& Points) {
+            bool IsCached;
+            return CreateWay(Points, IsCached);
+        }
         TRnRef_T<URnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices, bool& IsCached)
         {
             for (auto& Pair : LineMap) 
@@ -230,10 +246,181 @@ namespace
         }
 
 
-        TArray<TRnRef_T<URnSideWalk>> CreateSideWalk(float minRoadSize, float lod1SideWalkSize)
+        TArray<TRnRef_T<URnSideWalk>> CreateSideWalk(float MinRoadSize, float Lod1SideWalkSize)
         {
-            TArray<TRnRef_T<URnSideWalk>> ret;
-            return ret;
+            if (Lod1SideWalkSize < 0) {
+                return TArray<URnSideWalk*>();
+            }
+
+            struct FPointMoveInfo
+            {
+                TRnRef_T<URnPoint> Point;
+                TArray<FVector> Normal;
+            };
+            TMap<TRnRef_T<URnPoint>, TArray<TRnRef_T<URnSideWalk>>> WaySideWalks;
+            TMap<TRnRef_T<URnPoint>, FPointMoveInfo> Visited;
+            TMap<TRnRef_T<URnRoad>, float> AddedRoads;
+
+            TArray<TRnRef_T<URnSideWalk>> ReturnSideWalks;
+            auto MoveWay = [&](URnWay* Way, URnRoadBase* Parent, ERnSideWalkLaneType LaneType, float SideWalkSize)
+            {
+                if (!Way || SideWalkSize <= 0.0f) {
+                    return false;
+                }
+
+                TArray<FVector> Normals;
+                for (int32 i = 0; i < Way->Count(); ++i) {
+                    Normals.Add(Way->GetVertexNormal(i));
+                }
+
+                TArray<URnPoint*> OutsidePoints;
+                for (int32 i = 0; i < Way->Count(); ++i) {
+                    URnPoint* P = Way->GetPoint(i);
+                    FVector N = Normals[i];
+
+                    if (!Visited.Contains(P)) {
+                        URnPoint* Before = RnNew<URnPoint>(P->Vertex);
+                        P->Vertex -= N * SideWalkSize;
+
+                        FPointMoveInfo VertexInfo;
+                        VertexInfo.Point = Before;
+                        VertexInfo.Normal.Add(N);
+                        Visited.Add(P, VertexInfo);
+                        OutsidePoints.Add(Before);
+                    }
+                    else {
+                        auto& Last = Visited[P];
+                        for (const FVector& NN : Last.Normal) {
+                            N -= FVector::DotProduct(N, NN) * NN;
+                        }
+                        P->Vertex -= N * SideWalkSize;
+                        Last.Normal.Add(N);
+                        OutsidePoints.Add(Last.Point);
+                    }
+                }
+                ;
+                URnWay* StartWay = CreateWay(TArray{ OutsidePoints[0], Way->GetPoint(0) });
+                URnWay* EndWay = CreateWay(TArray{OutsidePoints.Last(), Way->GetPoint(-1)});
+                URnWay* OutsideWay = CreateWay(OutsidePoints);
+
+                URnSideWalk* SideWalk = URnSideWalk::Create(Parent, OutsideWay, Way, StartWay, EndWay, LaneType);
+                ReturnSideWalks.Add(SideWalk);
+
+                return true;
+                };
+            // 道路の幅によってはLOD1でも歩道を作らない場合もある
+
+            // そのため先に道路に対して歩道を作成する
+            // そのあと交差点に対して歩道を作成する
+            // その際, 各輪郭線に対してそれに接続する道路が
+            // 　1. 歩道を作成した(十分な道幅があった)
+            //   2. LOD2以上だった
+            // のどれかの場合のみ作成するようにする.
+            // 交差点は広く見えても接続する道路が狭い場合.
+
+            for (const auto& TranPair : TranMap) {
+                const auto& Tran = TranPair.Value;
+
+                // Only process LODLevel 1
+                if (Tran->GetRoadType() != 1) {
+                    if (URnRoad* Road = Cast<URnRoad>(Tran->Node)) {
+                        AddedRoads.Add(Road, Lod1SideWalkSize);
+                    }
+                    continue;
+                }
+
+                if (URnRoad* Road = Cast<URnRoad>(Tran->Node)) {
+                    URnLane* LeftLane = Road->MainLanes.Num() > 0 ? Road->MainLanes[0] : nullptr;
+                    URnLane* RightLane = Road->MainLanes.Num() > 0 ? Road->MainLanes.Last() : nullptr;
+
+                    float SideWalkSize;
+                    if (LeftLane == RightLane) {
+                        float LeftWidth = FMath::Min(LeftLane->CalcMinWidth(), RightLane->CalcMinWidth());
+                        SideWalkSize = FMath::Min(LeftWidth - MinRoadSize * 2, Lod1SideWalkSize);
+                    }
+                    else {
+                        float LeftWidth = LeftLane->CalcMinWidth();
+                        float RightWidth = RightLane->CalcMinWidth();
+                        SideWalkSize = FMath::Min3(LeftWidth - MinRoadSize, RightWidth - MinRoadSize, Lod1SideWalkSize);
+                    }
+
+                    if (SideWalkSize < Lod1SideWalkSize) {
+                        continue;
+                    }
+
+                    AddedRoads.Add(Road, SideWalkSize);
+                }
+            }
+
+            // Process roads and intersections
+            for (const auto& TranPair : TranMap) {
+                const auto& Tran = TranPair.Value;
+
+                if (Tran->GetLodLevel() != 1) {
+                    continue;
+                }
+
+                if (URnRoad* Road = Cast<URnRoad>(Tran->Node)) {
+                    float SideWalkSize;
+                    if (!AddedRoads.Contains(Road)) {
+                        continue;
+                    }
+                    SideWalkSize = AddedRoads[Road];
+
+                    URnLane* LeftLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes()[0] : nullptr;
+                    URnLane* RightLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes().Last() : nullptr;
+
+                    MoveWay(LeftLane ? LeftLane->GetLeftWay() : nullptr, Road, ERnSideWalkLaneType::LeftLane, SideWalkSize);
+                    MoveWay(RightLane ? RightLane->GetRightWay() : nullptr, Road, ERnSideWalkLaneType::RightLane, SideWalkSize);
+                }
+                else if (URnIntersection* Intersection = Cast<URnIntersection>(Tran->Node)) 
+                {
+                    auto EdgeGroups = FRnIntersectionEx::CreateEdgeGroup(Intersection);
+                    for (const auto& Eg : EdgeGroups) 
+                    {
+                        // 不正なエッジや境界線はスキップ
+                        if (Eg.IsBorder() || !Eg.IsValid()) {
+                            continue;
+                        }
+
+                        auto IsTarget = [&](const FRnIntersectionEx::FEdgeGroup* E, float& OutSwSize) -> bool
+                        {
+                            OutSwSize = 0.0f;
+                            if (E == &Eg) {
+                                return false;
+                            }
+                            if (URnRoad* R = Cast<URnRoad>(E->Key)) {
+                                float* FoundSize = AddedRoads.Find(R);
+                                if (FoundSize) {
+                                    OutSwSize = *FoundSize;
+                                    return true;
+                                }
+                                return false;
+                            }
+                            OutSwSize = Lod1SideWalkSize;
+                            return true;
+                        };
+
+                        float LeftSwSize, RightSwSize;
+                        // このEdgeGroupと隣接する道路のどっちかが歩道対象じゃない場合は無視する
+                        if (!IsTarget(Eg.LeftSide, LeftSwSize) || !IsTarget(Eg.RightSide, RightSwSize)) {
+                            continue;
+                        }
+
+                        float SideWalkSize = FMath::Min3(LeftSwSize, RightSwSize, Lod1SideWalkSize);
+                        // lod1SizeWalkSize以下になる場合は作らない
+                        if (SideWalkSize < Lod1SideWalkSize) {
+                            continue;
+                        }
+
+                        for (const auto& Edge : Eg.Edges) {
+                            MoveWay(Edge->GetBorder(), Intersection, ERnSideWalkLaneType::Undefined, SideWalkSize);
+                        }
+                    }
+                }
+            }
+
+            return ReturnSideWalks;
         }
 
 

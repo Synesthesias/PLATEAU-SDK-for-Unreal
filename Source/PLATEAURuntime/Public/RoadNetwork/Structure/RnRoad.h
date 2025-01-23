@@ -23,6 +23,9 @@ public:
     void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
     void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
+    // メインレーンすべて取得
+    const auto& GetMainLanes() const { return MainLanes; }
+
     // 全レーン
     const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
 

@@ -1,4 +1,6 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
+
+#include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnRoad.h"
@@ -200,6 +202,43 @@ bool URnIntersection::HasEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<
     return GetEdgeBy(Road, Border) != nullptr;
 }
 
+void URnIntersection::Align()
+{
+    for (auto&& i = 0; i < Edges.Num(); ++i) 
+    {
+        auto&& e0 = Edges[i]->GetBorder();
+        for (auto&& j = i + 1; j < Edges.Num(); ++j) {
+            auto&& e1 = Edges[j]->GetBorder();
+            if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(0))) {
+                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                break;
+            }
+            if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(-1))) {
+                e1->Reverse(false);
+                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                break;
+            }
+        }
+    }
+
+    // 時計回りになるように整列
+    if (FGeoGraph2D::IsClockwise<TRnRef_T<URnIntersectionEdge>>(Edges
+        , [](TRnRef_T<URnIntersectionEdge> E)
+        {
+            return FRnDef::To2D(E->GetBorder()->GetVertex(0));
+        }) == false) 
+    {
+        for(auto&& e : Edges)
+            e->GetBorder()->Reverse(true);
+        Algo::Reverse(Edges);
+    }
+
+    // 法線は必ず外向きを向くようにする
+    for(auto&& e : Edges) {
+        AlignEdgeNormal(e);
+    }
+}
+
 TArray<TRnRef_T<URnRoadBase>> URnIntersection::GetNeighborRoads() const {
     TArray<TRnRef_T<URnRoadBase>> Roads;
     for (const auto& Edge : Edges) {
@@ -274,4 +313,45 @@ TRnRef_T<URnIntersection> URnIntersection::Create(TObjectPtr<UPLATEAUCityObjectG
 
 TRnRef_T<URnIntersection> URnIntersection::Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans) {
     return RnNew<URnIntersection>(TargetTrans);
+}
+
+void URnIntersection::AlignEdgeNormal(TRnRef_T<URnIntersectionEdge> edge)
+{
+    if (edge && edge->GetBorder() && edge->GetBorder()->IsReverseNormal)
+        edge->GetBorder()->IsReverseNormal = false;
+}
+
+bool FRnIntersectionEx::FEdgeGroup::IsValid() const
+{
+    if (Edges.IsEmpty())
+        return false;
+    for(auto&& E : Edges)
+    {
+        if (E && FRnWayEx::IsValidWayOrDefault(E->GetBorder()) == false)
+            return false;
+    }
+    return true;
+}
+
+TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection)
+{
+    auto CopiedEdges = Intersection->GetEdges();
+    auto Groups = FRnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
+        CopiedEdges
+        , [](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad(); }
+    );
+
+    TArray<FEdgeGroup> Ret;
+    Ret.SetNum(Groups.Num());
+    for(auto i = 0; i < Groups.Num(); ++i)
+    {
+        auto& G = Groups[i];
+        Ret[i].Key = G.Key;
+        Ret[i].Edges = G.Edges;
+        Ret[i].RightSide = &Ret[(i + Ret.Num() - 1) % Ret.Num()];
+        Ret[i].LeftSide = &Ret[(i + 1) % Ret.Num()];
+    }
+
+
+    return {};
 }

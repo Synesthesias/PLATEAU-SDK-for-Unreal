@@ -114,12 +114,13 @@ public:
     void Init(const TRnRef_T<URnLineString>& InLineString, bool bInIsReversed = false, bool bInIsReverseNormal = false);
 
 
-
+    // URnPointのイテレータ
     PointsEnumerator GetPoints() const
     {
         return PointsEnumerator(this);    
     }
 
+    // FVectorのイテレータ
     VertexEnumerator GetVertices() const {
         return VertexEnumerator(this);
     }
@@ -189,4 +190,13 @@ public:
 
     UPROPERTY()
     TObjectPtr<URnLineString> LineString;
+};
+
+struct FRnWayEx
+{
+    // Selfの長さを計算する
+    static float CalcLengthOrDefault(const URnWay* Self);
+
+    // Self != nullptr && Self->IsValid()
+    static bool IsValidWayOrDefault(const URnWay* Self);
 };
