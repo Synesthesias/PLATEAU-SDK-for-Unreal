@@ -170,19 +170,46 @@ TRnRef_T<URnWay> URnRoad::GetMergedSideWay(ERnDir Dir) const {
     return Dir == ERnDir::Left ? LeftWay : RightWay;
 }
 
-bool URnRoad::TryGetMergedSideWay(std::optional<ERnDir>  Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const {
+bool URnRoad::TryGetMergedSideWay(std::optional<ERnDir>  Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const
+{
     auto Lanes = Dir.has_value() == false ? GetAllLanesWithMedian() : GetLanes(*Dir);
     if (Lanes.Num() == 0) return false;
 
-    OutLeftWay = Lanes[0]->LeftWay->Clone(true);
-    OutRightWay = Lanes[Lanes.Num() - 1]->RightWay->Clone(true);
+    OutLeftWay = OutRightWay = nullptr;
+    if (IsValid() == false)
+        return false;
 
-    for (int32 i = 1; i < Lanes.Num(); ++i) {
-        OutLeftWay->AppendBack2LineString(Lanes[i]->LeftWay);
+    TArray<TRnRef_T<URnLane>> TargetLanes;
+    for (auto&& Lane : MainLanes) 
+    {
+        if (Dir.has_value() == false || GetLaneDir(Lane) == *Dir)
+            TargetLanes.Add(Lane);
     }
-    for (int32 i = 0; i < Lanes.Num() - 1; ++i) {
-        OutRightWay->AppendBack2LineString(Lanes[i]->RightWay);
+    if (TargetLanes.IsEmpty())
+        return false;
+
+    auto LeftLane = TargetLanes[0];
+    OutLeftWay = IsLeftLane(LeftLane) ? LeftLane->LeftWay : LeftLane->RightWay->ReversedWay();
+    if(LeftLane)
+    {
+        if (IsLeftLane(LeftLane))
+            OutLeftWay = LeftLane->LeftWay;
+        else if (LeftLane->RightWay)
+            OutRightWay = LeftLane->RightWay->ReversedWay();
     }
+
+    auto RightLane = TargetLanes[TargetLanes.Num() - 1];
+    if(RightLane)
+    {
+        if(IsLeftLane(RightLane))
+        {
+            OutRightWay = RightLane->RightWay;
+        }
+        else if (RightLane->LeftWay) {
+            OutRightWay = RightLane->LeftWay->ReversedWay();
+        }
+    }
+
     return true;
 }
 
