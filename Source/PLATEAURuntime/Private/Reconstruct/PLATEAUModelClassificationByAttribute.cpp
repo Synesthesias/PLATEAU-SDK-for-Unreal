@@ -6,6 +6,7 @@
 #include <Reconstruct/PLATEAUMeshLoaderForClassification.h>
 #include "CityGML/PLATEAUAttributeValue.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "Util/PLATEAUGmlUtil.h"
 
 using namespace plateau::granularityConvert;
 
@@ -29,11 +30,18 @@ FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(A
     ClassificationMaterials = Materials;
     bDivideGrid = false;
 
-    //属性の値ごとにMaterial ID生成
+    //マテリアルごとにMaterial ID生成
+    TMap<UMaterialInterface*, int> Material_MaterialIDMap;
     int ID = 0;
+    for (const auto& KV : ClassificationMaterials) { //同一Materialを共通Material IDに
+        if (!Material_MaterialIDMap.Contains(KV.Value)) {
+            Material_MaterialIDMap.Add(KV.Value, ID);
+            ID++;
+        }
+    }
+    //属性の値ごとにMaterial IDをセット
     for (const auto& KV : ClassificationMaterials) {
-        MaterialIDMap.Add(KV.Key, ID);
-        ID++;
+        MaterialIDMap.Add(KV.Key, Material_MaterialIDMap[KV.Value]);
     }
 }
 
@@ -54,6 +62,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
 
             const auto GmlId = cityobj.second;
             const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()));
+
             if (AttrInfoPtr) {
                 TArray<FPLATEAUAttributeValue> AttributeValues = UPLATEAUAttributeValueBlueprintLibrary::GetAttributesByKey(ClassificationAttributeKey, AttrInfoPtr->Attributes);
                 TSet<FString> AttributeStringValues = ConvertAttributeValuesToUniqueStringValues(AttributeValues);
@@ -65,9 +74,10 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                         Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
                         Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
 
+                        UE_LOG(LogTemp, Log, TEXT("Register Mat: %s %s %d"), *FString(GmlId.c_str()), *Value, MaterialID);
+
                         const auto AttrInfo = *AttrInfoPtr;
-                        TSet<FString> Children;
-                        GetChildrenGmlIds(AttrInfo, Children);
+                        TSet<FString> Children = FPLATEAUGmlUtil::GetChildrenGmlIds(AttrInfo);
                         for (auto ChildId : Children) {
                             Adjuster.registerAttribute(TCHAR_TO_UTF8(*ChildId), TCHAR_TO_UTF8(*Value));
                         }

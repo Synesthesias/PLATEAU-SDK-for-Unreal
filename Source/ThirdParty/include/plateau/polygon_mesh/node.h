@@ -54,6 +54,16 @@ namespace plateau::polygonMesh {
         Node& getChildAt(unsigned int index);
         const Node& getChildAt(unsigned int index) const;
 
+        /// Parent Node設定
+        void setParentNode(Node* node);
+        const Node& getParentNode() const;
+        const bool hasParentNode() const;
+
+        /// Root Node設定
+        void setRootNode(Node* node);
+        const Node& getRootNode() const;
+        const bool hasRootNode() const;
+
         /**
          * 子のうち、子もなくメッシュもないノードを削除します。再帰的に行われます。
          */
@@ -76,6 +86,8 @@ namespace plateau::polygonMesh {
     private:
         std::string name_;
         std::vector<Node> child_nodes_;
+        Node* parent_node_;
+        Node* root_node_;
         std::unique_ptr<Mesh> mesh_;
         bool is_primary_; // GranularityConverterでのみ利用します。
 

@@ -8,6 +8,7 @@
 
 struct FPLATEAULandscapeParam;
 
+//地形をLandscapeに変換します
 class PLATEAURUNTIME_API FPLATEAUModelLandscape : public FPLATEAUModelReconstruct {
 
 public:
@@ -24,6 +25,7 @@ public:
     ALandscape* CreateLandScape(UWorld* World, const int32 NumSubsections, const int32 SubsectionSizeQuads, const int32 ComponentCountX, const int32 ComponentCountY, const int32 SizeX, const int32 SizeY,
         const TVec3d Min, const TVec3d Max, const TVec2f MinUV, const TVec2f MaxUV, const FString TexturePath, TArray<uint16> HeightData, const FString ActorName);
 
+    //LandscapeのReference Componentを元のDemの階層に生成します
     void CreateLandScapeReference(ALandscape* Landscape, AActor* Actor, const FString ActorName);
 
 protected:

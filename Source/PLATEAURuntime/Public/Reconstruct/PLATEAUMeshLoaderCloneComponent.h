@@ -16,17 +16,15 @@ public:
     FPLATEAUMeshLoaderCloneComponent();
     FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest);
 
-    /**
-     * @brief 元のComponentを記憶します
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: Component Name(GmlID), Value: Component の Map
-     */
-    static TMap<FString, UPLATEAUCityObjectGroup*> CreateComponentsMap(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    void ReloadComponentFromModel(
+        std::shared_ptr<plateau::polygonMesh::Model> Model,
+        TMap<FString, UPLATEAUCityObjectGroup*> Components,
+        AActor& InActor);     
 
     void ReloadComponentFromNode(
         const plateau::polygonMesh::Node& InNode,
         TMap<FString, UPLATEAUCityObjectGroup*> Components,
-        AActor& InActor);     
+        AActor& InActor);
 
     USceneComponent* ReloadNode(
         USceneComponent* ParentComponent,
@@ -34,17 +32,18 @@ public:
         ConvertGranularity Granularity,
         AActor& Actor) override;
 
+    //Meshを結合しSmoothnessを有効にします
     void SetSmoothing(bool bSmooth);
 
 protected:
 
-    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
+    UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
 
-    UPLATEAUCityObjectGroup* GetOriginalComponent(FString Name);
+    UPLATEAUCityObjectGroup* GetOriginalComponent(FString NodePathString);
 
     bool UseCachedMaterial() override;
     bool MergeTriangles() override;

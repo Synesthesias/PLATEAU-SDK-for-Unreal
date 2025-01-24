@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
+#include "Util/PLATEAUReconstructUtil.h"
 
-using ConvertGranularity = plateau::granularityConvert::ConvertGranularity;
-
+//結合分離処理
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:
@@ -37,11 +37,6 @@ public:
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
-    /**
-     * @brief EPLATEAUMeshGranularityをplateau::granularityConvert::ConvertGranularityに変換します
-     */
-    static ConvertGranularity GetConvertGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType);
-
 protected:
     
     APLATEAUInstancedCityModel* CityModelActor;
@@ -54,7 +49,7 @@ protected:
      * @brief CityObjectのChildrenのidリストを返します
      * @param
      */
-    void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
+    //void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
 
     /**
      * @brief 指定したMeshLoaderで、生成されたModelからStaticMeshコンポーネントを再生成します

@@ -1,7 +1,7 @@
 // Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 #include <Reconstruct/PLATEAUModelLandscape.h>
-#include <Reconstruct/PLATEAUMeshLoaderForLandscape.h>
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
 #include "UObject/SavePackage.h"
@@ -23,7 +23,7 @@ FPLATEAUModelLandscape::FPLATEAUModelLandscape(APLATEAUInstancedCityModel* Actor
 }
 
 TArray<HeightmapCreationResult> FPLATEAUModelLandscape::CreateHeightMap(std::shared_ptr<plateau::polygonMesh::Model> Model, FPLATEAULandscapeParam Param) {
-    FPLATEAUMeshLoaderForLandscape HMap = FPLATEAUMeshLoaderForLandscape(false);
+    FPLATEAUMeshLoaderForHeightmap HMap = FPLATEAUMeshLoaderForHeightmap(false);
     return HMap.CreateHeightMap(CityModelActor, Model, Param);
 }
 
@@ -153,6 +153,6 @@ ALandscape* FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 N
 }
 
 void FPLATEAUModelLandscape::CreateLandScapeReference(ALandscape* Landscape, AActor* Actor, const FString ActorName) {
-    FPLATEAUMeshLoaderForLandscape MeshLoader = FPLATEAUMeshLoaderForLandscape(false);
+    FPLATEAUMeshLoaderForHeightmap MeshLoader = FPLATEAUMeshLoaderForHeightmap(false);
     MeshLoader.CreateReference(Landscape, Actor, ActorName);
 }

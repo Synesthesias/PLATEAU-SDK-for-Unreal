@@ -6,6 +6,7 @@
 #include "Reconstruct/PLATEAUModelClassification.h"
 #include <plateau/material_adjust/material_adjuster_by_attr.h>
 
+//マテリアル分け（属性）
 class PLATEAURUNTIME_API FPLATEAUModelClassificationByAttribute : public FPLATEAUModelClassification {
 
 public:

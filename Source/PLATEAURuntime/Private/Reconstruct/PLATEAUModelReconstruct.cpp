@@ -4,6 +4,7 @@
 #include <plateau/granularity_convert/granularity_converter.h>
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUExportSettings.h>
+#include "Util/PLATEAUReconstructUtil.h"
 
 using namespace plateau::granularityConvert;
 
@@ -67,13 +68,13 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     GranularityConverter Converter;
 
     //属性情報を覚えておきます。
-    CityObjMap = FPLATEAUMeshLoaderForReconstruct::CreateMapFromCityObjectGroups(TargetCityObjects);
+    CityObjMap = FPLATEAUReconstructUtil::CreateMapFromCityObjectGroups(TargetCityObjects);
 
     check(CityModelActor != nullptr);
 
-    std::shared_ptr<plateau::polygonMesh::Model> smodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+    std::shared_ptr<plateau::polygonMesh::Model> basemodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
 
-    std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*smodel, ConvOption));
+    std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*basemodel, ConvOption));
 
     ConvGranularity = OriginalGranularity;
 
@@ -86,30 +87,9 @@ TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel
 }
 
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model) {
+
     for (int i = 0; i < Model->getRootNodeCount(); i++) {
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), ConvGranularity, CityObjMap, *CityModelActor);
     }
     return MeshLoader.GetLastCreatedComponents();
-}
-
-ConvertGranularity FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType) {
-    switch (ReconstructType) {
-    case EPLATEAUMeshGranularity::PerAtomicFeatureObject:
-        return ConvertGranularity::PerAtomicFeatureObject;
-    case EPLATEAUMeshGranularity::PerPrimaryFeatureObject:
-        return ConvertGranularity::PerPrimaryFeatureObject;
-    case EPLATEAUMeshGranularity::PerCityModelArea:
-        return ConvertGranularity::PerCityModelArea;
-    case EPLATEAUMeshGranularity::PerMaterialInPrimary:
-        return ConvertGranularity::MaterialInPrimary;
-    default:
-        return ConvertGranularity::PerPrimaryFeatureObject;
-    }
-}
-
-void FPLATEAUModelReconstruct::GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList) {
-    for (auto child : CityObj.Children) {
-        IdList.Add(child.GmlID);
-        GetChildrenGmlIds(child, IdList);
-    }
 }

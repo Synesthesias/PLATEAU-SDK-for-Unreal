@@ -56,6 +56,7 @@ enum class EPLATEAUCityObjectsType : uint8 {
 
 namespace plateau::CityObject {
     static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType);
+    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType);
 }
 
 
