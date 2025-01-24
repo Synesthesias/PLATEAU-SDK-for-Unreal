@@ -92,7 +92,7 @@ struct FRoadNetworkFactoryEx
 
     static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
-    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
+    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
 
 private:
     // 最小地物に分解する

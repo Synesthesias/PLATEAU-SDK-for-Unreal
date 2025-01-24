@@ -14,6 +14,9 @@ URnSideWalk::URnSideWalk()
 void URnSideWalk::Init()
 {}
 
+TRnRef_T<URnRoadBase> URnSideWalk::GetParentRoad() const
+{ return RnFrom(ParentRoad); }
+
 TArray<TRnRef_T<URnWay>> URnSideWalk::GetSideWays() const {
     TArray<TRnRef_T<URnWay>> Ways;
     if (OutsideWay) Ways.Add(OutsideWay);
@@ -47,13 +50,13 @@ ERnSideWalkWayTypeMask URnSideWalk::GetValidWayTypeMask() const {
     return Mask;
 }
 
-void URnSideWalk::SetParent(const TRnRef_T<URnRoadBase>& Parent) {
-    ParentRoad = Parent;
+void URnSideWalk::SetParent(const TRnRef_T<URnRoadBase>& InParent) {
+    ParentRoad = InParent;
 }
 
 void URnSideWalk::UnLinkFromParent() {
-    if (ParentRoad) {
-        ParentRoad->RemoveSideWalk(TRnRef_T<URnSideWalk>(this));
+    if (GetParentRoad()) {
+        GetParentRoad()->RemoveSideWalk(TRnRef_T<URnSideWalk>(this));
     }
 }
 

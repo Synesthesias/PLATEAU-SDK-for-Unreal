@@ -10,7 +10,9 @@ class URnRoad;
 UCLASS()
 class URnLane : public UObject
 {
+private:
     GENERATED_BODY()
+
 public:
     URnLane();
     URnLane(const TRnRef_T<URnWay>& LeftWay, const TRnRef_T<URnWay>& RightWay,
@@ -28,13 +30,25 @@ public:
     // Border/Side両方合わせた全てのWayを返す
     TArray<TRnRef_T<URnWay>> GetAllWays() const;
 
-    auto&& GetLeftWay() const { return LeftWay; }
+    TRnRef_T<URnRoad> GetParent() const;
 
-    auto&& GetRightWay() const { return RightWay; }
+    void SetParent(TRnRef_T<URnRoad> InParent);
 
-    auto&& GetPrevBorder() const { return PrevBorder; }
+    [[nodiscard]] bool GetIsReverse() const {
+        return bIsReverse;
+    }
 
-    auto&& GetNextBorder() const { return NextBorder; }
+    void SetIsReverse(bool bReverse) {
+        bIsReverse = bReverse;
+    }
+
+    TRnRef_T<URnWay> GetLeftWay() const;
+
+    TRnRef_T<URnWay> GetRightWay() const;
+
+    TRnRef_T<URnWay> GetPrevBorder() const;
+
+    TRnRef_T<URnWay> GetNextBorder() const;
 
     // 有効なレーンかどうか
     // Left/Rightどっちも有効ならtrue
@@ -132,10 +146,10 @@ public:
     /// <returns></returns>
     static TRnRef_T<URnLane> CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URnWay> centerWay);
 
-public:
+private:
     // 親リンク
     UPROPERTY()
-    TObjectPtr<URnRoad> Parent;
+    TWeakObjectPtr<URnRoad> Parent;
 
     // 境界線(下流)
     UPROPERTY()
@@ -155,7 +169,7 @@ public:
 
     // 親Roadと逆方向(右車線等)
     UPROPERTY()
-    bool IsReverse;
+    bool bIsReverse;
 
     // 内部的に持つだけ. 中心線
     UPROPERTY()

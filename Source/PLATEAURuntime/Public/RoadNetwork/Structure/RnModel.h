@@ -31,7 +31,14 @@ public:
 UCLASS()
 class URnModel : public UObject
 {
+public:
+    const FString& GetFactoryVersion() const;
+
+    void SetFactoryVersion(const FString& InFactoryVersion);
+
+private:
     GENERATED_BODY()
+
 public:
     static constexpr float Epsilon = SMALL_NUMBER;
     static constexpr EAxisPlane Plane = EAxisPlane::Xz;
@@ -115,7 +122,8 @@ public:
     // 指定したRoadBaseに接続されているRoadBaseを取得
     TArray<TRnRef_T<URnRoadBase>> GetConnectedRoadBasesRecursive(const TRnRef_T<URnRoadBase>& RoadBase) const;
 
-public:
+
+private:
 
     // 自動生成で作成されたときのバージョン
     FString FactoryVersion;

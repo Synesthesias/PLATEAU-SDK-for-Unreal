@@ -19,7 +19,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PLATEAU")
     FRoadNetworkFactory Factory;
 
-    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     TObjectPtr<URnModel> Model;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
@@ -37,7 +37,13 @@ public:
      * @param
      */
     UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelAsync(APLATEAUInstancedCityModel* TargetActor);
+    virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
+    virtual void PostInitProperties() override;
+
+    virtual void PostActorCreated() override;
+
+    virtual void PostInitializeComponents() override;
 public:
     virtual void Tick(float DeltaTime) override;
 };

@@ -16,7 +16,7 @@ public:
     URnSideWalk();
     void Init();
     // 自分が所属するRoadNetworkModel
-    TRnRef_T<URnRoadBase> GetParentRoad() const { return ParentRoad; }
+    TRnRef_T<URnRoadBase> GetParentRoad() const;
 
     // 道路と反対側のWay
     TRnRef_T<URnWay> GetOutsideWay() const { return OutsideWay; }
@@ -87,7 +87,7 @@ public:
 
 private:
     UPROPERTY()
-    TObjectPtr<URnRoadBase> ParentRoad;
+    TWeakObjectPtr<URnRoadBase> ParentRoad;
 
     UPROPERTY()
     TObjectPtr<URnWay> OutsideWay;

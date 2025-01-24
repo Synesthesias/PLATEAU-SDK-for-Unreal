@@ -12,9 +12,8 @@ class UPLATEAUCityObjectGroup;
 
 UCLASS()
 class URnRoad : public URnRoadBase {
+private:
     GENERATED_BODY()
-public:
-    using Super = URnRoadBase;
 public:
     URnRoad();
     explicit URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
@@ -46,6 +45,19 @@ public:
 
     // 交差点間に挿入された空Roadかどうか
     bool IsEmptyRoad() const;
+
+    void SetNext(TRnRef_T<URnRoadBase> InNext);
+
+    void SetPrev(TRnRef_T<URnRoadBase> InPrev);
+
+
+    void SetMedianLane1(TRnRef_T<URnLane> InMedianLane);
+
+    TRnRef_T<URnRoadBase> GetNext() const;
+
+    TRnRef_T<URnRoadBase> GetPrev() const;
+
+    TRnRef_T<URnLane> GetMedianLane() const;
 
     // 指定方向のレーンを取得
     TArray<TRnRef_T<URnLane>> GetLanes(ERnDir Dir) const;
@@ -174,11 +186,11 @@ private:
 public:
     // 接続先(nullの場合は接続なし)
     UPROPERTY()
-    TObjectPtr<URnRoadBase> Next;
+    TWeakObjectPtr<URnRoadBase> Next;
 
     // 接続元(nullの場合は接続なし)
     UPROPERTY()
-    TObjectPtr<URnRoadBase> Prev;
+    TWeakObjectPtr<URnRoadBase> Prev;
 
     // レーンリスト
     UPROPERTY()

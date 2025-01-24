@@ -5,6 +5,16 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnWay.h"
 
+const FString& URnModel::GetFactoryVersion() const
+{
+    return FactoryVersion;
+}
+
+void URnModel::SetFactoryVersion(const FString& InFactoryVersion)
+{
+    this->FactoryVersion = InFactoryVersion;
+}
+
 URnModel::URnModel() {
 }
 

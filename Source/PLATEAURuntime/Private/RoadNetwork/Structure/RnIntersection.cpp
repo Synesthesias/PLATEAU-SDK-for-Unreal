@@ -62,10 +62,10 @@ TArray<TRnRef_T<URnLane>> URnIntersectionEdge::GetConnectedLanes() const {
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Border)) {
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(Border)) {
                 Lanes.Add(Lane);
             }
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Border)) {
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(Border)) {
                 Lanes.Add(Lane);
             }
         }
@@ -81,10 +81,10 @@ TRnRef_T<URnLane> URnIntersectionEdge::GetConnectedLane(const TRnRef_T<URnWay>& 
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(BorderWay)) {
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(BorderWay)) {
                 return Lane;
             }
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(BorderWay)) {
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(BorderWay)) {
                 return Lane;
             }
         }
@@ -162,9 +162,9 @@ void URnIntersection::RemoveEdge(const TRnRef_T<URnRoad>& Road, const TRnRef_T<U
         {
             if (Edge->GetRoad() != Road)
                 return false;
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Edge->GetBorder()))
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(Edge->GetBorder()))
                 return true;
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Edge->GetBorder()))
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(Edge->GetBorder()))
                 return true;
             return false;
         });
