@@ -39,10 +39,5 @@ public:
     UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelAsync(APLATEAUInstancedCityModel* TargetActor);
 
 public:
-
-    UFUNCTION(BlueprintCallable, Category = "PLATEAU")
-    void CreateRnModel(APLATEAUInstancedCityModel* Actor);
-
-
     virtual void Tick(float DeltaTime) override;
 };
