@@ -23,6 +23,9 @@ public:
     void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
     void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
+    // メインレーンすべて取得
+    const auto& GetMainLanes() const { return MainLanes; }
+
     // 全レーン
     const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
 
@@ -98,7 +101,9 @@ public:
     // 指定した方向のWayを取得する
     virtual TRnRef_T<URnWay> GetMergedSideWay(ERnDir Dir) const override;
 
-    // 指定した方向のWayを取得する
+    // dirで指定した側の全レーンの左右のWayを返す
+    // dir==nullの時は全レーン共通で返す
+    // 例) 左２車線でdir==RnDir.Leftの場合, 一番左の車線の左側のWayと左から２番目の車線の右側のWayを返す
     bool TryGetMergedSideWay(std::optional<ERnDir> Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const;
 
     // 指定したLineStringまでの最短距離を取得する

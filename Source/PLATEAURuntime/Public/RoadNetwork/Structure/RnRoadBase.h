@@ -39,7 +39,9 @@ public:
 
     // 対象のTargetTranを追加
     void AddTargetTran(UPLATEAUCityObjectGroup* TargetTran);
+    void AddTargetTran(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
     void AddTargetTrans(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans);
+    void AddTargetTrans(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans);
 
     // 所属するすべてのWayを取得(重複の可能性あり)
     virtual TArray<TRnRef_T<URnWay>> GetAllWays() const;
@@ -66,14 +68,14 @@ public:
     TSet<TRnRef_T<URnLineString>> GetAllLineStringsDistinct() const;
 
     // 歩道を取得
-    const TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() const { return SideWalks; }
-    TArray<TRnRef_T<URnSideWalk>>& GetSideWalks() { return SideWalks; }
+    const auto& GetSideWalks() const { return SideWalks; }
+    auto& GetSideWalks() { return SideWalks; }
 
-    const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& GetTargetTrans() const { return TargetTrans; }
-    TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& GetTargetTrans() { return TargetTrans; }
+    const auto& GetTargetTrans() const { return TargetTrans; }
+    auto& GetTargetTrans() { return TargetTrans; }
 
-    TRnRef_T<URnModel> GetParentModel() const { return ParentModel; }
-    void SetParentModel(const TRnRef_T<URnModel>& InParentModel) { ParentModel = InParentModel; }
+    TRnRef_T<URnModel> GetParentModel() const;
+    void SetParentModel(const TRnRef_T<URnModel>& InParentModel);
 
     // 指定した方向の境界線を取得する
     virtual TRnRef_T<URnWay> GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const { return nullptr; }
@@ -119,7 +121,7 @@ private:
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
     UPROPERTY()
-    TArray<TObjectPtr<UPLATEAUCityObjectGroup>> TargetTrans;
+    TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> TargetTrans;
 
     // 歩道情報
     UPROPERTY()

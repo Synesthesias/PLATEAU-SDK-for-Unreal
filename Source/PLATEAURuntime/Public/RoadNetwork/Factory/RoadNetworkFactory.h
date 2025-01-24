@@ -58,7 +58,7 @@ public:
     bool bAddTrafficSignalLights = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
-    bool bSaveTmpData = true;
+    bool bSaveTmpData = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bUseContourMesh = true;

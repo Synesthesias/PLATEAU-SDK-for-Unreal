@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
 #include "../RnDef.h"
+#include "RoadNetwork/Util/RnEx.h"
 #include "RnIntersection.generated.h"
 
 class URnWay;
@@ -112,6 +113,10 @@ public:
     // 指定したRoadに接続されているかどうか
     bool HasEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) const;
 
+    // Edgesの順番を整列する
+    // 各Edgeが連結かつ時計回りになるように整列する
+    void Align();
+
     // 隣接するRoadを取得
     virtual TArray<TRnRef_T<URnRoadBase>> GetNeighborRoads() const override;
 
@@ -148,9 +153,36 @@ public:
     static TRnRef_T<URnIntersection> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
     static TRnRef_T<URnIntersection> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
+    /// <summary>
+    /// 輪郭線の法線方向を外側向くように整える
+    /// </summary>
+    /// <param name="edge"></param>
+    static void AlignEdgeNormal(TRnRef_T<URnIntersectionEdge> edge);
+
 private:
 
     // 交差点の外形情報
     UPROPERTY()
     TArray<TObjectPtr<URnIntersectionEdge>> Edges;
+};
+
+struct FRnIntersectionEx
+{
+    struct FEdgeGroup : public FRnEx::FKeyEdgeGroup<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>
+    {
+    public:
+        bool IsBorder() const
+        {
+            return (bool)Key;
+        }
+
+        bool IsValid() const;
+
+
+
+        FEdgeGroup* RightSide = nullptr;
+        FEdgeGroup* LeftSide = nullptr;
+    };
+
+    static TArray<FEdgeGroup> CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection);
 };

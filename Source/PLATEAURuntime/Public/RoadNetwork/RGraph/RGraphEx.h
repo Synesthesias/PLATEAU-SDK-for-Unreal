@@ -6,6 +6,8 @@
 #include <memory>
 #include <functional>
 
+#include "RoadNetwork/Util/RnEx.h"
+
 
 class FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
@@ -33,4 +35,36 @@ public:
     static TSet<RGraphRef_t<URVertex>> CreateVertexSet(RGraphRef_t<URFace> Face);
     static void RemoveIsolatedEdgeFromFace(RGraphRef_t<URGraph> Self);
     static TSet<RGraphRef_t<UREdge>> RemoveIsolatedEdge(RGraphRef_t<URFace> Self);
+
+    // Edgesで表現された線分を頂点配列に分解
+    // OutIsLoopはEdgesがループしているかどうかを返す
+    static bool SegmentEdge2VertexArray(const TArray<RGraphRef_t<UREdge>>& Edges, TArray<RGraphRef_t<URVertex>>& OutVertices, bool& OutIsLoop);
+
+    // Verticesで表されるポリゴン情報をEdge表現に変換
+    // Verticesの隣接情報に基づくので生成できない場合もある
+    static bool OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices, TArray<RGraphRef_t<UREdge>>& OutlineEdges);
+
+    static bool CreateSideWalk(
+        RGraphRef_t<URFace> Face
+        , TArray<RGraphRef_t<UREdge>>& OutsideEdges
+        , TArray<RGraphRef_t<UREdge>>& InsideEdges
+        , TArray<RGraphRef_t<UREdge>>& StartEdges
+        , TArray<RGraphRef_t<UREdge>>& EndEdges
+    );
+
+    // EdgesをKeyでグループ化したもの
+    template<typename TKey>
+    using FOutlineBorderGroup = FRnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;
+
+    // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
+    // ただし, 飛び飛びの辺はグループ化されない
+    // 例: OutlineEdges = {A, A, B, B, A, A, C, C, A}
+    //   => {B, (2,3)}, {A, (4,5)}, {C, (6,7)}, {A, (8,0, 1)}のようにグループ化される
+    template<typename T>
+    static TArray<FOutlineBorderGroup<T>> CreateOutlineBorderGroup(
+        const TArray<RGraphRef_t<UREdge>>& OutlineEdges
+        , TFunction<T(RGraphRef_t<UREdge>)> KeySelector)
+    {
+        return FRnEx::GroupByOutlineEdges<T, RGraphRef_t<UREdge>>(OutlineEdges, KeySelector);
+    }
 };

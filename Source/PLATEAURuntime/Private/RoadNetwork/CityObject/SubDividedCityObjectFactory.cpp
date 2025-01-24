@@ -8,6 +8,7 @@
 
 #include "CityGML/PLATEAUCityObject.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
+#include "Util/PLATEAUReconstructUtil.h"
 
 namespace
 {
@@ -34,7 +35,7 @@ FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
     bool UseContourMesh)
 {
     auto Result = MakeShared<FConvertCityObjectResult>();
-    auto Granularity = FPLATEAUModelReconstruct::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
+    auto Granularity = FPLATEAUReconstructUtil::GetConvertGranularityFromReconstructType(EPLATEAUMeshGranularity::PerAtomicFeatureObject);
     ::TmpLoader Loader(Actor, Granularity);
 
     for (auto CityObjectGroup : CityObjectGroups) 

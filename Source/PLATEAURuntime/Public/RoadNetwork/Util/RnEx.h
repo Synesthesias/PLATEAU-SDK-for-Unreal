@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
+#include "RoadNetwork/RGraph/RGraphDef.h"
 
 class UPLATEAUCityObjectGroup;
 class URnIntersection;
@@ -70,8 +71,9 @@ public:
         return Result;
     }
 
-    template<typename T, typename F>
-    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
+private:
+    template<typename T>
+    static bool TryFirstOrDefaultImpl(const TSet<T>& Set, TFunction<bool(const T&)> Predicate, T& OutV) {
         for (auto& S : Set) {
             if (Predicate(S)) {
                 OutV = S;
@@ -79,6 +81,11 @@ public:
             }
         }
         return false;
+    }
+public:
+    template<typename T, typename F>
+    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
+        return TryFirstOrDefaultImpl<T>(Set, Predicate, OutV);
     }
 
     template<typename T, typename F>
@@ -145,6 +152,53 @@ public:
             AddChildInstanceComponent(Actor, Actor->GetRootComponent(), Component);
         }
         return Cast<T>(Component);
+    }
+
+
+    template<typename TKey, typename TEdge>
+    struct FKeyEdgeGroup
+    {
+        TKey Key;
+        TArray<TEdge> Edges;
+    };
+
+    // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
+   // ただし, 飛び飛びの辺はグループ化されない
+   // 例: OutlineEdges = {A, A, B, B, A, A, C, C, A}
+   //   => {B, (2,3)}, {A, (4,5)}, {C, (6,7)}, {A, (8,0, 1)}のようにグループ化される
+    template<typename TKey, typename TEdge>
+    static TArray<FKeyEdgeGroup<TKey, TEdge>> GroupByOutlineEdges(
+        const TArray<TEdge>& OutlineEdges
+        , TFunction<TKey(TEdge)> KeySelector)
+    {
+        TKey LastKey = TKey();
+        TArray<TEdge> Edges;
+        TArray<FKeyEdgeGroup<TKey, TEdge>> Ret;
+        for (auto i = 0; i < OutlineEdges.Num(); ++i) 
+        {
+            auto&& e = OutlineEdges[i];
+            auto key = KeySelector(e);
+            if (i == 0 || LastKey != key) {
+                if (Edges.IsEmpty() == false)
+                    Ret.Add(FKeyEdgeGroup<TKey, TEdge>{ LastKey, Edges });
+
+                Edges = TArray<TEdge>();
+                LastKey = key;
+            }
+            Edges.Add(e);
+        }
+
+        if (Edges.IsEmpty() == false)
+            Ret.Add(FKeyEdgeGroup<TKey, TEdge>{ LastKey, Edges });
+
+        // Waysの最初と最後が同じKeyの場合は結合
+        if (Ret.Num() > 1 && Ret[0].Key == Ret[Ret.Num() - 1].Key) {
+            for (auto&& E : Ret[0].Edges)
+                Ret[Ret.Num() - 1].Edges.Add(E);
+            Ret.RemoveAt(0);
+        }
+
+        return Ret;
     }
 };
 template<typename T>

@@ -76,6 +76,18 @@ float URnWay::SwitchIndex(float Index) const {
     return IsReversed ? Count() - 1 - Index : Index;
 }
 
+float FRnWayEx::CalcLengthOrDefault(const URnWay* Self)
+{
+    if (!Self)
+        return 0.f;
+    return Self->CalcLength();
+}
+
+bool FRnWayEx::IsValidWayOrDefault(const URnWay* Self)
+{
+    return Self && Self->IsValid();
+}
+
 // Add implementations:
 TArray<FLineSegment2D> URnWay::GetEdges2D() const {
     TArray<FLineSegment2D> Edges;

@@ -91,17 +91,44 @@ void URnLane::SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way) {
 }
 
 float URnLane::CalcWidth() const {
-    if (!IsValidWay()) return 0.0f;
+    return FMath::Min(CalcPrevBorderWidth(), CalcNextBorderWidth());
+}
+float URnLane::CalcPrevBorderWidth() const {
+    return FRnWayEx::CalcLengthOrDefault(PrevBorder);
+}
 
-    float TotalWidth = 0.0f;
-    int32 Count = 0;
+/// <summary>
+/// NextBorderの長さを返す
+/// </summary>
+/// <param name="self"></param>
+/// <returns></returns>
+float URnLane::CalcNextBorderWidth() const {
+    return FRnWayEx::CalcLengthOrDefault(NextBorder);
+}
+float URnLane::CalcMinWidth() const
+{
+    if (!FRnWayEx::IsValidWayOrDefault(LeftWay))
+        return 0.f;
+    if (!FRnWayEx::IsValidWayOrDefault(RightWay))
+        return 0.f;
 
-    for (int32 i = 0; i < LeftWay->Count(); ++i) {
-        TotalWidth += (RightWay->GetPoint(i)->Vertex - LeftWay->GetPoint(i)->Vertex).Size();
-        Count++;
+    float MinW = MAX_FLT;
+    for(auto V : LeftWay->GetVertices())
+    {
+        FVector OutNearest;
+        float OutPointIndex;
+        float OutDistance;
+        RightWay->GetNearestPoint(V, OutNearest, OutPointIndex, OutDistance);
+        MinW = FMath::Min(MinW, OutDistance);
     }
-
-    return Count > 0 ? TotalWidth / Count : 0.0f;
+    for (auto V : RightWay->GetVertices()) {
+        FVector OutNearest;
+        float OutPointIndex;
+        float OutDistance;
+        LeftWay->GetNearestPoint(V, OutNearest, OutPointIndex, OutDistance);
+        MinW = FMath::Min(MinW, OutDistance);
+    }
+    return MinW;
 }
 
 void URnLane::Reverse() {

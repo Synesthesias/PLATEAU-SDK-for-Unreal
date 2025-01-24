@@ -28,6 +28,14 @@ public:
     // Border/Side両方合わせた全てのWayを返す
     TArray<TRnRef_T<URnWay>> GetAllWays() const;
 
+    auto&& GetLeftWay() const { return LeftWay; }
+
+    auto&& GetRightWay() const { return RightWay; }
+
+    auto&& GetPrevBorder() const { return PrevBorder; }
+
+    auto&& GetNextBorder() const { return NextBorder; }
+
     // 有効なレーンかどうか
     // Left/Rightどっちも有効ならtrue
     bool IsValidWay() const;
@@ -59,8 +67,21 @@ public:
     // 指定した側のWayを設定する
     void SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way);
 
-    // 車線の幅を計算する
+    // 単純な車線の幅を計算する
+    // Next/PrevBorderの短い方
     float CalcWidth() const;
+
+    // PrevBorderの長さを返す
+    float CalcPrevBorderWidth() const;
+
+    // NextBorderの長さを返す
+    float CalcNextBorderWidth() const;
+
+    // このレーンのうち最も狭くなる場所の幅を返す.
+    // 頂点ごとに計算するため割と重い
+    // 左右のレーンが不正の場合は0を返す
+    float CalcMinWidth() const;
+
 
     // 反転する
     void Reverse();
