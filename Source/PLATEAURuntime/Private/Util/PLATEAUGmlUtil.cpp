@@ -99,7 +99,7 @@ TMap<FString, FPLATEAUCityObject> FPLATEAUGmlUtil::CreateMapFromCityModel(const 
 
 void FPLATEAUGmlUtil::ConvertCityObject(const citygml::CityObject* InCityObject, FPLATEAUCityObject& OutCityObject) {
     OutCityObject.SetGmlID(UTF8_TO_TCHAR(InCityObject->getId().c_str()));
-    OutCityObject.SetCityObjectsType(plateau::CityObject::CityObjectsTypeToString(InCityObject->getType()));
+    OutCityObject.SetCityObjectsType(FPLATEAUCityObject::CityObjectsTypeToString(InCityObject->getType()));
 
     FPLATEAUAttributeMap AttributeMap;
     for (const auto& [key, value] : InCityObject->getAttributes()) {

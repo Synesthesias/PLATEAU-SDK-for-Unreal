@@ -6,7 +6,6 @@
 #include <citygml/cityobject.h>
 #include "PLATEAUCityObject.generated.h"
 
-
 UENUM(BlueprintType, meta = (Bitflags))
 enum class EPLATEAUCityObjectsType : uint8 {
     COT_GenericCityObject           = 0,
@@ -54,12 +53,6 @@ enum class EPLATEAUCityObjectsType : uint8 {
     COT_All                         = 63
 };
 
-namespace plateau::CityObject {
-    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType);
-    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType);
-}
-
-
 USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
 struct FPLATEAUCityObjectIndex {
     GENERATED_USTRUCT_BODY()
@@ -95,6 +88,9 @@ struct PLATEAURUNTIME_API FPLATEAUCityObject {
     void SetCityObjectIndex(const plateau::polygonMesh::CityObjectIndex& InIndex);
     void SetCityObjectsType(const FString& InType);
     void SetAttribute(const TMap<FString, FPLATEAUAttributeValue>& InAttributes);
+
+    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType);
+    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType);
 };
 
 UCLASS()

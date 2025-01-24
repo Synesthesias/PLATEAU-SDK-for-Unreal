@@ -1,7 +1,6 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 #include "CityGML/PLATEAUCityObject.h"
 
-
 namespace {
     TArray<FString> EPLATEAUCityObjectsTypeNameArray = {
         "GenericCityObject",
@@ -82,19 +81,17 @@ namespace {
     }
 }
 
-namespace plateau::CityObject {
-    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType) {
-        int32 TypeMsbBit;
-        MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
-        return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
-    }
+FString FPLATEAUCityObject::CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType) {
+    int32 TypeMsbBit;
+    MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
+    return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
+}
 
-    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
-        int32 index = static_cast<int32>(InType);
-        if(EPLATEAUCityObjectsTypeNameArray.IsValidIndex(index))
-            return EPLATEAUCityObjectsTypeNameArray[index];
-        return FString::FromInt(index);
-    }
+FString FPLATEAUCityObject::CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
+    int32 index = static_cast<int32>(InType);
+    if (EPLATEAUCityObjectsTypeNameArray.IsValidIndex(index))
+        return EPLATEAUCityObjectsTypeNameArray[index];
+    return FString::FromInt(index);
 }
 
 void FPLATEAUCityObject::SetGmlID(const FString& InGmlID) {
