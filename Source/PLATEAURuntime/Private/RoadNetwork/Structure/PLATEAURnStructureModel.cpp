@@ -1,9 +1,11 @@
 #include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
 #include "PLATEAUInstancedCityModel.h"
+#include "Component/PLATEAUSceneComponent.h"
 
 APLATEAURnStructureModel::APLATEAURnStructureModel()
 {
     PrimaryActorTick.bCanEverTick = true;
+    RootComponent = CreateDefaultSubobject<UPLATEAUSceneComponent>(USceneComponent::GetDefaultSceneRootVariableName());
 }
 
 void APLATEAURnStructureModel::Tick(float DeltaTime)
@@ -29,3 +31,21 @@ UE::Tasks::TTask<APLATEAURnStructureModel*> APLATEAURnStructureModel::CreateRnMo
     return CreateRnModelTask;
 }
 
+void APLATEAURnStructureModel::EndPlay(const EEndPlayReason::Type EndPlayReason) {
+    Super::EndPlay(EndPlayReason);
+}
+
+void APLATEAURnStructureModel::PostInitProperties()
+{
+    Super::PostInitProperties();
+}
+
+void APLATEAURnStructureModel::PostActorCreated()
+{
+    Super::PostActorCreated();
+}
+
+void APLATEAURnStructureModel::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+}

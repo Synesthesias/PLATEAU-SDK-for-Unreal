@@ -294,10 +294,10 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     private:
         virtual bool DrawImpl(RnModelDrawWork& Work, URnLane& Self) override
         {
-            Way(Option.ShowLeftWay).Draw(Work, Self.LeftWay, Work.visibleType);
-            Way(Option.ShowRightWay).Draw(Work, Self.RightWay, Work.visibleType);
-            Way(Option.ShowNextBorder).Draw(Work, Self.NextBorder, Work.visibleType);
-            Way(Option.ShowPrevBorder).Draw(Work, Self.PrevBorder, Work.visibleType);
+            Way(Option.ShowLeftWay).Draw(Work, Self.GetLeftWay(), Work.visibleType);
+            Way(Option.ShowRightWay).Draw(Work, Self.GetRightWay(), Work.visibleType);
+            Way(Option.ShowNextBorder).Draw(Work, Self.GetNextBorder(), Work.visibleType);
+            Way(Option.ShowPrevBorder).Draw(Work, Self.GetPrevBorder(), Work.visibleType);
 
             return true;
         }

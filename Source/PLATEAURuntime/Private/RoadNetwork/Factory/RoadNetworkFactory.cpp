@@ -548,13 +548,13 @@ namespace
             auto Prev =Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
                 if (!L->IsBorder() || !L->Way)
                     return false;
-                return lane->PrevBorder && lane->PrevBorder->IsSameLineReference(L->Way);
+                return lane->GetPrevBorder() && lane->GetPrevBorder()->IsSameLineReference(L->Way);
                 });
 
             auto Next = Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
                 if (!L->IsBorder() || !L->Way)
                     return false;
-                return lane->NextBorder && lane->NextBorder->IsSameLineReference(L->Way);
+                return lane->GetNextBorder() && lane->GetNextBorder()->IsSameLineReference(L->Way);
                 });
 
             auto GetNode = [](TSharedPtr<FTranLine> L)-> TRnRef_T<URnRoadBase>
@@ -662,26 +662,21 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor,
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
-    if(DestActor->GetRootComponent() == nullptr)
-    {
-        auto DefaultSceneRoot = NewObject<USceneComponent>(DestActor, TEXT("DefaultSceneRoot"));
-        DestActor->AddOwnedComponent(DefaultSceneRoot);
-        DestActor->SetRootComponent(DefaultSceneRoot);
-        DefaultSceneRoot->RegisterComponent();
-    }
-
-    const auto Root = DestActor->GetRootComponent();
+#if WITH_EDITOR
+    const auto Root = Actor->GetRootComponent();
     TArray<FSubDividedCityObject> SubDividedCityObjects;
-    CreateSubDividedCityObjects(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
+    CreateSubDividedCityObjects(Self, TargetCityModel, Actor, Root, CityObjectGroups, SubDividedCityObjects);
 
     RGraphRef_t<URGraph> Graph;
-    CreateRGraph(Self, Actor, DestActor, Root, SubDividedCityObjects, Graph);
-
-    DestActor->Model = CreateRnModel(Self, Graph);
+    CreateRGraph(Self, TargetCityModel, Actor, Root, SubDividedCityObjects, Graph);
+    Actor->Model = CreateRnModel(Self, Graph);
+    return Actor->Model;
+#else
     return nullptr;
+#endif
 }
 
 TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
@@ -698,7 +693,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
             return M0 == M1;
             });
 
-        Model->FactoryVersion = Self.FactoryVersion;
+        Model->SetFactoryVersion(Self.FactoryVersion);
 
         FWork work;
         work.TerminateAllowEdgeAngle = Self.TerminateAllowEdgeAngle;
