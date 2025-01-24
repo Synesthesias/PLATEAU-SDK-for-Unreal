@@ -12,7 +12,7 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "Component/PLATEAUSceneComponent.h"
 
 
@@ -203,7 +203,6 @@ namespace {
 
     void CreateRootComponent(AActor& Actor) {
 #if WITH_EDITOR
-        //USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
         USceneComponent* ActorRootComponent = NewObject<UPLATEAUSceneComponent>(&Actor,
             USceneComponent::GetDefaultSceneRootVariableName());
 

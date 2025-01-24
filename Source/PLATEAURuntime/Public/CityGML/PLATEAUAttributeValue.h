@@ -2,6 +2,7 @@
 #pragma once
 #include "Dom/JsonObject.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include <citygml/citygml.h>
 #include "PLATEAUAttributeValue.generated.h"
 
 
@@ -31,6 +32,7 @@ struct PLATEAURUNTIME_API FPLATEAUAttributeValue {
     void SetValue(const EPLATEAUAttributeType&, const TSharedPtr<FJsonObject>& InValue);
     void SetValue(const EPLATEAUAttributeType&, const FString& InValue);
     void SetValue(const TArray<TSharedPtr<FJsonValue>>& InValue);
+    void SetAttributeValue(const citygml::AttributeValue& Value);
 };
 
 USTRUCT(BlueprintType, Category = "PLATEAU|CityGML")
@@ -70,4 +72,6 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PLATEAU|CityGML")
     static TArray<FPLATEAUAttributeValue> GetAttributesByKey(UPARAM(ref) const FString& Key, UPARAM(ref) const FPLATEAUAttributeMap& AttributeMap);
+
+    static FString AttributeTypeToString(const citygml::AttributeType InType);
 };

@@ -16,4 +16,5 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|Util")
     static TArray<EPLATEAUCityModelPackage> GetAllCityModelPackages();
+
 };
