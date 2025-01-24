@@ -264,6 +264,9 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     if (bVisible == false)
         return;
 
+    if (!Model)
+        return;
+
     RnModelDrawWork Work(this, Model);
 
 
