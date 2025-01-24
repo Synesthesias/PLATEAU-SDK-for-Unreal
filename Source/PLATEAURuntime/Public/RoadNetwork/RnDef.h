@@ -102,6 +102,16 @@ struct TRnRef
         Ret->Init(Forward<Args>(args)...);
         return Ret;
     }
+
+    static Type From(TWeakObjectPtr<T> Ptr) {
+        return Ptr.Get();
+    }
+    static Type From(T* Ptr) {
+        return Ptr;
+    }
+    static Type From(TObjectPtr<T> Ptr) {
+        return Ptr.Get();
+    }
 };
 
 // もしかしたらRn~はUObjectになるかもしれないので念のためラップしておく
@@ -117,6 +127,19 @@ inline TRnRef_T<T> RnNew(TArgs&&... Args)
     return TRnRef<T>::New(Forward<TArgs>(Args)...);
 }
 
+template<class T>
+inline TRnRef_T<T> RnFrom(TWeakObjectPtr<T> Ptr) {
+    return TRnRef<T>::From(Ptr);
+}
+
+template<class T>
+inline TRnRef_T<T> RnFrom(T* Ptr) {
+    return TRnRef<T>::From(Ptr);
+}
+template<class T>
+inline TRnRef_T<T> RnFrom(TObjectPtr<T> Ptr) {
+    return TRnRef<T>::From(Ptr);
+}
 struct FRnPartsBase
 {
 public:

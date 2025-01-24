@@ -30,7 +30,21 @@ void URnRoadBase::AddTargetTran(UPLATEAUCityObjectGroup* TargetTran) {
     }
 }
 
+void URnRoadBase::AddTargetTran(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
+{
+    if (!TargetTrans.Contains(TargetTran)) {
+        TargetTrans.Add(TargetTran);
+    }
+}
+
 void URnRoadBase::AddTargetTrans(const TArray<UPLATEAUCityObjectGroup*>& InTargetTrans) {
+    for (const auto& Tran : InTargetTrans) {
+        AddTargetTran(Tran);
+    }
+}
+
+void URnRoadBase::AddTargetTrans(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
+{
     for (const auto& Tran : InTargetTrans) {
         AddTargetTran(Tran);
     }
@@ -66,7 +80,8 @@ FString URnRoadBase::GetTargetTransName() const {
         return TEXT("null");
 
     TArray<FString> Names;
-    for (const auto& Trans : TargetTrans) {
+    for (const auto& Tr : TargetTrans) {
+        auto Trans = RnFrom(Tr);
         Names.Add(Trans ? Trans->GetName() : TEXT("null"));
     }
     return FString::Join(Names, TEXT(","));
@@ -83,3 +98,11 @@ TSet<TRnRef_T<URnLineString>> URnRoadBase::GetAllLineStringsDistinct() const {
     }
     return LineStrings;
 }
+
+TRnRef_T<URnModel> URnRoadBase::GetParentModel() const
+{
+    return RnFrom(ParentModel);
+}
+
+void URnRoadBase::SetParentModel(const TRnRef_T<URnModel>& InParentModel)
+{ ParentModel = InParentModel; }
