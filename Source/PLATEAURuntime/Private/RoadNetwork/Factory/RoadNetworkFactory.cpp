@@ -830,9 +830,8 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //    }
         //}
 
-        //// 連続した道路を一つにまとめる
-        //if (MergeRoadGroup)
-        //    ret.MergeRoadGroup();
+        // 連続した道路を一つにまとめる
+        Model->MergeRoadGroup();
 
 
         //// 交差点との境界線が垂直になるようにする
@@ -895,10 +894,6 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
     if(Self.bSaveTmpData)
     {
         auto SubDividedCityObjectGroup = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
-        if (SubDividedCityObjectGroup == nullptr) {
-            SubDividedCityObjectGroup = NewObject<UPLATEAUSubDividedCityObjectGroup>(DestActor, SubDividedObjectName);
-            FRnEx::AddChildInstanceComponent(DestActor, Root, SubDividedCityObjectGroup);
-        }
 
         // 現在の子は削除する
         auto SubDividedCityObjects = SubDividedCityObjectGroup->GetCityObjects();
@@ -909,7 +904,8 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
 
         for (auto& So : OutSubDividedCityObjects) 
         {
-            auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, FName(So.Name));
+            auto UniqueName = MakeUniqueObjectName(Actor, UPLATEAUSubDividedCityObject::StaticClass(), FName(So.Name));
+            auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, UniqueName);
             NewCityObject->CityObject = So;
             FRnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
         }
