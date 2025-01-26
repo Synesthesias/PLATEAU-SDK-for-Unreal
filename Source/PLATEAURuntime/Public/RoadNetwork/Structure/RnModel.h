@@ -127,6 +127,9 @@ public:
     /// </summary>
     void MergeRoadGroup();
 
+    // roadWidthの道路幅を基準にレーンを分割する
+    void SplitLaneByWidth(float RoadWidth, bool rebuildTrack, TArray<FString>& failedRoads);
+
 private:
 
     // 自動生成で作成されたときのバージョン
