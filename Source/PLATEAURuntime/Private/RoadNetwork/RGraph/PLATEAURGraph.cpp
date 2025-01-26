@@ -14,14 +14,15 @@ struct FDrawWork {
 
 UPLATEAURGraph::UPLATEAURGraph() {
     bShowNormal = true;
-    ShowFaceType = ERRoadTypeMask::All;
-    RemoveFaceType = ERRoadTypeMask::Empty;
+    ShowFaceType = (int32)FRRoadTypeMaskEx::All();
+    RemoveFaceType = (int32)ERRoadTypeMask::Empty;
     ShowId = ERPartsFlag::None;
     RoadColor = FLinearColor::White;
     HighWayColor = FLinearColor::Blue;
     SideWalkColor = FLinearColor::Green;
     UndefinedColor = FLinearColor::Red;
     VertexOption.bVisible = false;
+    EdgeOption.ShowTypeMask = (int32)FRRoadTypeMaskEx::All();
 }
 
 FLinearColor UPLATEAURGraph::GetColor(ERRoadTypeMask RoadType) {
@@ -71,27 +72,32 @@ void UPLATEAURGraph::Draw(const FRGraphDrawEdgeOption& Op, RGraphRef_t<UREdge> E
 
     if (Op.bVisible) {
 
+        auto TypeMask = Edge->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor);
+        if (TypeMask != ERRoadTypeMask::Road)
+            TypeMask &= ~ERRoadTypeMask::Road;
 
-        if (Op.bShowNeighborCount) {
-            const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
-            TSet<UPLATEAUCityObjectGroup*> NeighborCityObjectGroups;
-            for (auto&& Face : Edge->GetFaces()) {
-                if (Face->GetCityObjectGroup().IsValid())
-                    NeighborCityObjectGroups.Add(Face->GetCityObjectGroup().Get());
-            }
-            if (NeighborCityObjectGroups.Num() <= 1)
-                return;
+        if( (Op.ShowTypeMask & (int32)TypeMask) != 0)
+        {
+            if (Op.bShowNeighborCount) {
+                const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
+                TSet<UPLATEAUCityObjectGroup*> NeighborCityObjectGroups;
+                for (auto&& Face : Edge->GetFaces()) {
+                    if (Face->GetCityObjectGroup().IsValid())
+                        NeighborCityObjectGroups.Add(Face->GetCityObjectGroup().Get());
+                }
+                if (NeighborCityObjectGroups.Num() <= 1)
+                    return;
                 //FRnDebugEx::DrawString(FString::Printf(TEXT("%d"), Edge->GetFaces().Num()), MidPoint);
+            }
+
+            const FLinearColor Color = GetColor(TypeMask);
+            FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(), Edge->GetV1()->GetPosition(), Color);
+
+            if (EnumHasAnyFlags(ShowId, ERPartsFlag::Edge)) {
+                const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
+                FRnDebugEx::DrawString(FString::Printf(TEXT("E[%s]"), *Edge->GetName()), MidPoint);
+            }
         }
-
-        const FLinearColor Color = GetColor(Edge->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor));
-        FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(), Edge->GetV1()->GetPosition(), Color);
-
-        if (EnumHasAnyFlags(ShowId, ERPartsFlag::Edge)) {
-            const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
-            FRnDebugEx::DrawString(FString::Printf(TEXT("E[%s]"), *Edge->GetName()), MidPoint);
-        }
-
     }
 
     Draw(VertexOption, Edge->GetV0(), Work);
@@ -103,10 +109,10 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
     if (!Op.bVisible)
         return;
 
-    if (!EnumHasAnyFlags(Face->GetRoadTypes(), ShowFaceType))
+    if (!EnumHasAnyFlags(Face->GetRoadTypes(), (ERRoadTypeMask) ShowFaceType))
         return;
 
-    if (EnumHasAnyFlags(Face->GetRoadTypes(), RemoveFaceType))
+    if (EnumHasAnyFlags(Face->GetRoadTypes(), (ERRoadTypeMask)RemoveFaceType))
         return;
 
     if (Work.VisitedFaces.Contains(Face))
@@ -158,7 +164,7 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
     }
 }
 void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
-    /*auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FDrawOption& Option) {
+    auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FRnDrawOption& Option) {
         if (!Option.bVisible)
             return;
 
@@ -170,20 +176,23 @@ void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
             );
         }
         };
-
-    for (const auto& Face : Graph->GetFaces()) {
-        if (!Face->GetRoadTypes().IsSideWalk())
+    if (SideWalkOption.bVisible == false)
+        return;
+    for (const auto& Face : Graph->GetFaces()) 
+    {
+        auto RoadType = Face->GetRoadTypes();
+        if (!FRRoadTypeMaskEx::IsSideWalk(RoadType))
             continue;
 
         TArray<UREdge*> OutsideEdges, InsideEdges, StartEdges, EndEdges;
-        if (!Face->CreateSideWalk(OutsideEdges, InsideEdges, StartEdges, EndEdges))
+        if (!FRGraphEx::CreateSideWalk(Face, OutsideEdges, InsideEdges, StartEdges, EndEdges))
             continue;
 
-        DrawEdges(OutsideEdges, DrawSideWalkOption.OutsideColor);
-        DrawEdges(InsideEdges, DrawSideWalkOption.InsideColor);
-        DrawEdges(StartEdges, DrawSideWalkOption.StartColor);
-        DrawEdges(EndEdges, DrawSideWalkOption.EndColor);
-    }*/
+        DrawEdges(OutsideEdges, SideWalkOption.OutsideWay);
+        DrawEdges(InsideEdges, SideWalkOption.InsideWay);
+        DrawEdges(StartEdges, SideWalkOption.StartEdgeWay);
+        DrawEdges(EndEdges, SideWalkOption.EndEdgeWay);
+    }
 }
 
 void UPLATEAURGraph::DrawNormal(URGraph* Graph, FDrawWork& Work)
