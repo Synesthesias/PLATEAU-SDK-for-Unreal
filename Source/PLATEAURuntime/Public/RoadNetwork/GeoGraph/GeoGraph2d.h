@@ -6,8 +6,8 @@
 #include "Math/Vector.h"
 #include "Containers/Array.h"
 #include "RoadNetwork/RnDef.h"
-#include "RoadNetwork/Util/RnEx.h"
-#include "RoadNetwork/Util/Vector2DEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
 class PLATEAURUNTIME_API FGeoGraph2D {
 public:
@@ -39,7 +39,7 @@ public:
         for (int32 i = 0; i < Vertices.Num(); ++i) {
             const FVector2D& V1 = ToVec2(Vertices[i]);
             const FVector2D& V2 = ToVec2(Vertices[(i + 1) % Vertices.Num()]);            
-            Sum += FVector2DEx::Cross(V1, V2);
+            Sum += FPLATEAUVector2DEx::Cross(V1, V2);
         }
 
         return Sum < 0;
@@ -287,7 +287,7 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         TArray<T> ret = { Start };
         auto hasCrossing = false;
         auto Eval = [](FVector2D axis, FVector2D a) -> EvalValue {
-            auto ang = FVector2DEx::SignedAngle(axis, a);
+            auto ang = FPLATEAUVector2DEx::SignedAngle(axis, a);
             if (ang < 0.f)
                 ang += 360.f;
             auto sqrLen = a.SquaredLength();
@@ -356,9 +356,9 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         , -FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) 
         {
-            auto x = -FRnEx::Compare(A.Angle, B.Angle);
+            auto x = -FPLATEAURnEx::Compare(A.Angle, B.Angle);
             if(x == 0)
-                x = FRnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FPLATEAURnEx::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
     // 見つかったらそれでおしまい
@@ -371,9 +371,9 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         Keys[0]
         , FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) {
-            auto x = FRnEx::Compare(A.Angle, B.Angle);
+            auto x = FPLATEAURnEx::Compare(A.Angle, B.Angle);
             if (x == 0)
-                x = FRnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FPLATEAURnEx::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
 

@@ -1,7 +1,6 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 
-#include "RoadNetwork/Util/IntVector2Ex.h"
-#include "RoadNetwork/Util/IntVectorEx.h"
+#include "RoadNetwork/Util/PLATEAUIntVectorEx.h"
 
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,
@@ -134,7 +133,7 @@ TMap<FVector, FVector> FGeoGraphEx::MergeVertices(const TArray<FVector>& Vertice
                     continue;
                 }
                 
-                if (FIntVectorEx::Sum(FIntVectorEx::Abs(K - N)) > MergeLen)
+                if (FPLATEAUIntVectorEx::Sum(FPLATEAUIntVectorEx::Abs(K - N)) > MergeLen)
                     continue;
                 for (auto& V : Cells[N])
                     Cells[K].Add(V);

@@ -589,7 +589,7 @@ namespace
             auto V1 = Vertices[(i + 1) % Vertices.Num()];
 
             TObjectPtr<UREdge> E;                
-            if(FRnEx::TryFirstOrDefault(
+            if(FPLATEAURnEx::TryFirstOrDefault(
                 V0->GetEdges()
                 , [V0, V1](TObjectPtr<UREdge> E)-> bool {
                     return E->IsSameVertex(V0, V1);
@@ -893,7 +893,7 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
     
     if(Self.bSaveTmpData)
     {
-        auto SubDividedCityObjectGroup = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
+        auto SubDividedCityObjectGroup = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
 
         // 現在の子は削除する
         auto SubDividedCityObjects = SubDividedCityObjectGroup->GetCityObjects();
@@ -907,7 +907,7 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
             auto UniqueName = MakeUniqueObjectName(Actor, UPLATEAUSubDividedCityObject::StaticClass(), FName(So.Name));
             auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, UniqueName);
             NewCityObject->CityObject = So;
-            FRnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
+            FPLATEAURnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
         }
     }
     else
@@ -928,10 +928,10 @@ void FRoadNetworkFactoryEx::CreateRGraph(const FRoadNetworkFactory& Self, APLATE
     const auto RGraphName = TEXT("RGaph");
     if(Self.bSaveTmpData)
     {
-        auto RGraphObject = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
+        auto RGraphObject = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
         if (RGraphObject == nullptr) {
             RGraphObject = NewObject<UPLATEAURGraph>(DestActor, RGraphName);
-            FRnEx::AddChildInstanceComponent(DestActor, Root, RGraphObject);
+            FPLATEAURnEx::AddChildInstanceComponent(DestActor, Root, RGraphObject);
         }
         RGraphObject->RGraph = OutGraph;
     }

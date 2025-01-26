@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "DrawDebugHelpers.h"
-#include "RnDebugEx.generated.h"
+#include "PLATEAURnDebugEx.generated.h"
 
 USTRUCT()
-struct PLATEAURUNTIME_API FRnDrawOption
+struct PLATEAURUNTIME_API FPLATEAURnDrawOption
 {
     GENERATED_BODY()
 
@@ -16,7 +16,7 @@ struct PLATEAURUNTIME_API FRnDrawOption
     FLinearColor Color = FLinearColor::White;
 };
 
-struct PLATEAURUNTIME_API FRnDebugEx
+struct PLATEAURUNTIME_API FPLATEAURnDebugEx
 {
 public:
     static FVector ToVec3(const FVector2D& Self, bool bShowXZ);

@@ -4,8 +4,8 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnRoad.h"
-#include "RoadNetwork/Util/Vector2DEx.h"
-#include "RoadNetwork/Util/VectorEx.h"
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 URnSideWalk::URnSideWalk()
     : LaneType(ERnSideWalkLaneType::Undefined) {
@@ -156,7 +156,7 @@ FVector URnSideWalk::GetCentralVertex() const {
     for (const auto& Way : GetSideWays()) {
         Points.Add(Way->GetLerpPoint(0.5f));
     }
-    return FVectorEx::Centroid(Points);
+    return FPLATEAUVectorEx::Centroid(Points);
 }
 
 bool URnSideWalk::IsNeighboring(const TRnRef_T<URnSideWalk>& Other) const {

@@ -10,7 +10,7 @@
 
 #include "CoreMinimal.h"
 
-class PLATEAURUNTIME_API FIntVectorEx
+class PLATEAURUNTIME_API FPLATEAUIntVectorEx
 {
 public:
     static FIntVector Clamp(const FIntVector& Vec, float Min, float Max);

@@ -1,6 +1,6 @@
 #include "RoadNetwork/RnDef.h"
 
-#include "RoadNetwork/Util/VectorEx.h"
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 ERnLaneBorderType FRnLaneBorderTypeEx::GetOpposite(ERnLaneBorderType dir)
 {

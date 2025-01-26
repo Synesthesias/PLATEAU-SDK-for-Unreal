@@ -7,8 +7,8 @@
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnWay.h"
-#include "RoadNetwork/Util/RnDebugEx.h"
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 
 
 namespace
@@ -50,35 +50,35 @@ namespace
         }
 
         void DrawLine(const FVector& Start, const FVector& End, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f) {
-            FRnDebugEx::DrawLine(Start, End, Color, Duration, Thickness);
+            FPLATEAURnDebugEx::DrawLine(Start, End, Color, Duration, Thickness);
         }
         void DrawArrow(const FVector& Start, const FVector& End, float ArrowSize = 0.5f, const FVector& ArrowUp = FVector::UpVector, const FLinearColor& BodyColor = FLinearColor::White, const FLinearColor& ArrowColor = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f) {
-            FRnDebugEx::DrawArrow(Start, End, ArrowSize, ArrowUp, BodyColor, ArrowColor, Duration, Thickness);
+            FPLATEAURnDebugEx::DrawArrow(Start, End, ArrowSize, ArrowUp, BodyColor, ArrowColor, Duration, Thickness);
         }
         void DrawArrows(const TArray<FVector>& Vertices, bool bIsLoop = false, float ArrowSize = 0.5f, const FVector& ArrowUp = FVector::UpVector, const FLinearColor& Color = FLinearColor::White, const FLinearColor& ArrowColor = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f) {
-            FRnDebugEx::DrawArrows(Vertices, bIsLoop, ArrowSize, ArrowUp, Color, ArrowColor, Duration, Thickness);
+            FPLATEAURnDebugEx::DrawArrows(Vertices, bIsLoop, ArrowSize, ArrowUp, Color, ArrowColor, Duration, Thickness);
         }
         void DrawLines(const TArray<FVector>& Vertices, bool bIsLoop = false, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f) {
-            FRnDebugEx::DrawLines(Vertices, bIsLoop, Color, Duration, Thickness);
+            FPLATEAURnDebugEx::DrawLines(Vertices, bIsLoop, Color, Duration, Thickness);
         }
         void DrawSphere(const FVector& Center, float Radius, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f) {
-            FRnDebugEx::DrawSphere(Center, Radius, Color, Duration);
+            FPLATEAURnDebugEx::DrawSphere(Center, Radius, Color, Duration);
         }
         void DrawRegularPolygon(const FVector& Center, float Radius, int32 Sides = 5, const FVector& Up = FVector::UpVector, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f) {
-            FRnDebugEx::DrawRegularPolygon(Center, Radius, Sides, Up, Color, Duration);
+            FPLATEAURnDebugEx::DrawRegularPolygon(Center, Radius, Sides, Up, Color, Duration);
         }
         void DrawDashedLine(const FVector& Start, const FVector& End, const FLinearColor& Color = FLinearColor::White, float LineLength = 1.0f, float SpaceLength = 0.2f, float Duration = 0.0f) {
-            FRnDebugEx::DrawDashedLine(Start, End, Color, LineLength, SpaceLength, Duration);
+            FPLATEAURnDebugEx::DrawDashedLine(Start, End, Color, LineLength, SpaceLength, Duration);
         }
 
         void DrawDashedArrow(const FVector& Start, const FVector& End, const FLinearColor& Color = FLinearColor::White, float LineLength = 1.0f, float SpaceLength = 0.2f, float Duration = 0.0f, float ArrowSize = 0.5f, const FVector& ArrowUp = FVector::UpVector) {
-            FRnDebugEx::DrawDashedArrow(Start, End, Color, LineLength, SpaceLength, Duration, ArrowSize, ArrowUp);
+            FPLATEAURnDebugEx::DrawDashedArrow(Start, End, Color, LineLength, SpaceLength, Duration, ArrowSize, ArrowUp);
         }
         void DrawDashedLines(const TArray<FVector>& Vertices, bool bIsLoop = false, const FLinearColor& Color = FLinearColor::White, float LineLength = 3.0f, float SpaceLength = 1.0f, float Duration = 0.0f) {
-            FRnDebugEx::DrawDashedLines(Vertices, bIsLoop, Color, LineLength, SpaceLength, Duration);
+            FPLATEAURnDebugEx::DrawDashedLines(Vertices, bIsLoop, Color, LineLength, SpaceLength, Duration);
         }
         void DrawDashedArrows(const TArray<FVector>& Vertices, bool bIsLoop = false, const FLinearColor& Color = FLinearColor::White, float LineLength = 3.0f, float SpaceLength = 1.0f, float Duration = 0.0f) {
-            FRnDebugEx::DrawDashedArrows(Vertices, bIsLoop, Color, LineLength, SpaceLength, Duration);
+            FPLATEAURnDebugEx::DrawDashedArrows(Vertices, bIsLoop, Color, LineLength, SpaceLength, Duration);
         }
 
     };
@@ -237,7 +237,7 @@ FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
 //    if (bChangeArrowColor)
 //        arrowColor = way.IsReversed ? ReverseWayArrowColor : NormalWayArrowColor;
 //
-//    auto Vertices = FRnEx::SelectWithIndex(
+//    auto Vertices = FPLATEAURnEx::SelectWithIndex(
 //        way.GetVertices()
 //        , [&](FVector v, int32 i) {
 //            return v - work.Self->EdgeOffset * way.GetVertexNormal(i);
@@ -254,7 +254,7 @@ FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
 //    {
 //        FVector p;
 //        way.GetLerpPoint(0.5f, p);
-//        FRnDebugEx::DrawString(FString::Printf(TEXT("%s"), *way.GetName()), p);
+//        FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *way.GetName()), p);
 //    }
 //
 //    return true;

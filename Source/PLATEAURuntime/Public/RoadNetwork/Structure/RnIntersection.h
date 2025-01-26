@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
 #include "../RnDef.h"
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RnIntersection.generated.h"
 
 class URnWay;
@@ -168,7 +168,7 @@ private:
 
 struct FRnIntersectionEx
 {
-    struct FEdgeGroup : public FRnEx::FKeyEdgeGroup<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>
+    struct FEdgeGroup : public FPLATEAURnEx::FKeyEdgeGroup<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>
     {
     public:
         bool IsBorder() const

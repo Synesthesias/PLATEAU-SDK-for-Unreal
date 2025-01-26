@@ -14,25 +14,25 @@ class URnWay;
 class URnPoint;
 class URnLane;
 
-
-class FLineCrossPointResult {
-public:
-    class FTargetLineInfo {
-    public:
-        TRnRef_T<URnLineString> LineString;
-        TArray<TTuple<float, FVector>> Intersections;
-    };
-
-    TArray<FTargetLineInfo> TargetLines;
-    FLineSegment3D LineSegment;
-};
-
-struct FRnEx
+struct FPLATEAURnEx
 {
 
     class Vector3Comparer {
     public:
         int32 operator()(const FVector& A, const FVector& B) const;
+    };
+
+
+    class FLineCrossPointResult {
+    public:
+        class FTargetLineInfo {
+        public:
+            TRnRef_T<URnLineString> LineString;
+            TArray<TTuple<float, FVector>> Intersections;
+        };
+
+        TArray<FTargetLineInfo> TargetLines;
+        FLineSegment3D LineSegment;
     };
 
 
@@ -196,7 +196,7 @@ public:
     }
 };
 template<typename T>
-void FRnEx::Replace(TArray<T>& Self, T Before, T After) {
+void FPLATEAURnEx::Replace(TArray<T>& Self, T Before, T After) {
     for (int32 i = 0; i < Self.Num(); i++) {
         if (Self[i] == Before) {
             Self[i] = After;

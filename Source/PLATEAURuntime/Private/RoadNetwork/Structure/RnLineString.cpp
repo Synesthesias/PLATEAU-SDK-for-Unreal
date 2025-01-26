@@ -4,7 +4,7 @@
 
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
-#include "RoadNetwork/Util/Vector2DEx.h"
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
 URnLineString::URnLineString() {
 }
@@ -202,7 +202,7 @@ float URnLineString::CalcTotalAngle2D() const {
         auto Dir = FLineSegment3D(e.P0->Vertex, e.P1->Vertex).To2D(FRnDef::Plane).GetDirection();
         if(Last.has_value())
         {
-            TotalAngle += FVector2DEx::Angle((*Last), Dir);
+            TotalAngle += FPLATEAUVector2DEx::Angle((*Last), Dir);
         }
         Last = Dir;
     }

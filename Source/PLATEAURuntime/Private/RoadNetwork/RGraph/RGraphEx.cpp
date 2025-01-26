@@ -8,7 +8,7 @@
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 #include "Algo/AnyOf.h"
-#include "RoadNetwork/Util/RnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 
 namespace
 {
@@ -272,7 +272,7 @@ void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Toleran
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
-    constexpr auto Comp = FRnEx::Vector3Comparer();
+    constexpr auto Comp = FPLATEAURnEx::Vector3Comparer();
 
     auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
         return Comp(A->Position, B->Position);
@@ -338,7 +338,7 @@ void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, flo
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
-    constexpr auto Comp = FRnEx::Vector3Comparer();
+    constexpr auto Comp = FPLATEAURnEx::Vector3Comparer();
 
     auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
         return Comp(A->Position, B->Position);
@@ -771,7 +771,7 @@ bool FRGraphEx::OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices
         auto V0 = Vertices[i % Vertices.Num()];
         auto V1 = Vertices[(i + 1) % Vertices.Num()];
         TObjectPtr<UREdge> E;
-        if (FRnEx::TryFirstOrDefault(
+        if (FPLATEAURnEx::TryFirstOrDefault(
             V0->GetEdges()
             , [V0, V1](RGraphRef_t<UREdge> E) { return E->GetOppositeVertex(V0) == V1; }
             , E) == false)

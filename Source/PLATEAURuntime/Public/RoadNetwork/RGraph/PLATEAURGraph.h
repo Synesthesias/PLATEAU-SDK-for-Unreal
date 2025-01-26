@@ -2,7 +2,7 @@
 #include <memory>
 #include "../../Component/PLATEAUSceneComponent.h"
 #include "RGraph.h"
-#include "RoadNetwork/Util/RnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "PLATEAURGraph.generated.h"
 
 struct FActorComponentTickFunction;
@@ -18,7 +18,7 @@ enum class ERPartsFlag : uint8 {
 ENUM_CLASS_FLAGS(ERPartsFlag);
 
 USTRUCT()
-struct FRGraphDrawFaceOption : public FRnDrawOption {
+struct FRGraphDrawFaceOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
@@ -47,7 +47,7 @@ struct FRGraphDrawFaceOption : public FRnDrawOption {
 };
 
 USTRUCT()
-struct FRGraphDrawEdgeOption : public FRnDrawOption {
+struct FRGraphDrawEdgeOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
@@ -61,14 +61,14 @@ struct FRGraphDrawEdgeOption : public FRnDrawOption {
 };
 
 USTRUCT()
-struct FRGraphDrawVertexOption : public FRnDrawOption {
+struct FRGraphDrawVertexOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
     int32 Size = 10;
 
     UPROPERTY(EditAnywhere)
-    FRnDrawOption NeighborOption;
+    FPLATEAURnDrawOption NeighborOption;
 
     UPROPERTY(EditAnywhere)
     bool bShowPos = false;
@@ -80,20 +80,20 @@ struct FRGraphDrawVertexOption : public FRnDrawOption {
     bool bUseAnyFaceVertexColor = false;
 };
 USTRUCT()
-struct FRGraphDrawSideWalkOption : public FRnDrawOption {
+struct FRGraphDrawSideWalkOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 public:
     UPROPERTY(EditAnywhere)
-    FRnDrawOption OutsideWay;
+    FPLATEAURnDrawOption OutsideWay;
 
     UPROPERTY(EditAnywhere)
-    FRnDrawOption InsideWay;
+    FPLATEAURnDrawOption InsideWay;
 
     UPROPERTY(EditAnywhere)
-    FRnDrawOption StartEdgeWay;
+    FPLATEAURnDrawOption StartEdgeWay;
 
     UPROPERTY(EditAnywhere)
-    FRnDrawOption EndEdgeWay;
+    FPLATEAURnDrawOption EndEdgeWay;
 
 };
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))

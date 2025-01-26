@@ -6,7 +6,7 @@
 #include <memory>
 #include <functional>
 
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 
 
 class FSubDividedCityObject;
@@ -54,7 +54,7 @@ public:
 
     // EdgesをKeyでグループ化したもの
     template<typename TKey>
-    using FOutlineBorderGroup = FRnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;
+    using FOutlineBorderGroup = FPLATEAURnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;
 
     // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
     // ただし, 飛び飛びの辺はグループ化されない
@@ -65,6 +65,6 @@ public:
         const TArray<RGraphRef_t<UREdge>>& OutlineEdges
         , TFunction<T(RGraphRef_t<UREdge>)> KeySelector)
     {
-        return FRnEx::GroupByOutlineEdges<T, RGraphRef_t<UREdge>>(OutlineEdges, KeySelector);
+        return FPLATEAURnEx::GroupByOutlineEdges<T, RGraphRef_t<UREdge>>(OutlineEdges, KeySelector);
     }
 };

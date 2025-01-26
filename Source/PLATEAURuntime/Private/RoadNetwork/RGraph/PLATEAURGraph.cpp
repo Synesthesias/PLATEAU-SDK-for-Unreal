@@ -2,7 +2,7 @@
 
 #include "Algo/Count.h"
 #include "RoadNetwork/RGraph/RGraphEx.h"
-#include "RoadNetwork/Util/RnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 
 
 struct FDrawWork {
@@ -53,11 +53,11 @@ void UPLATEAURGraph::Draw(const FRGraphDrawVertexOption& Op, RGraphRef_t<URVerte
         Text += FString::Printf(TEXT("(%.2f,%.2f)"), Vertex->GetPosition().X, Vertex->GetPosition().Z);
 
     // Draw vertex visualization
-    FRnDebugEx::DrawString(Text, Vertex->GetPosition(),   GetColor(Vertex->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor)));
+    FPLATEAURnDebugEx::DrawString(Text, Vertex->GetPosition(),   GetColor(Vertex->GetTypeMaskOrDefault(Op.bUseAnyFaceVertexColor)));
 
     //if (TargetVertices.Contains(Vertex) && Op.NeighborOption.bVisible) {
     //    for (const auto& Edge : Vertex->GetEdges()) {
-    //        FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(),
+    //        FPLATEAURnDebugEx::DrawLine(Edge->GetV0()->GetPosition(),
     //            Edge->GetV1()->GetPosition(), Op.NeighborOption.Color);
     //    }
     //}
@@ -87,15 +87,15 @@ void UPLATEAURGraph::Draw(const FRGraphDrawEdgeOption& Op, RGraphRef_t<UREdge> E
                 }
                 if (NeighborCityObjectGroups.Num() <= 1)
                     return;
-                //FRnDebugEx::DrawString(FString::Printf(TEXT("%d"), Edge->GetFaces().Num()), MidPoint);
+                //FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%d"), Edge->GetFaces().Num()), MidPoint);
             }
 
             const FLinearColor Color = GetColor(TypeMask);
-            FRnDebugEx::DrawLine(Edge->GetV0()->GetPosition(), Edge->GetV1()->GetPosition(), Color);
+            FPLATEAURnDebugEx::DrawLine(Edge->GetV0()->GetPosition(), Edge->GetV1()->GetPosition(), Color);
 
             if (EnumHasAnyFlags(ShowId, ERPartsFlag::Edge)) {
                 const FVector MidPoint = (Edge->GetV0()->GetPosition() + Edge->GetV1()->GetPosition()) * 0.5f;
-                FRnDebugEx::DrawString(FString::Printf(TEXT("E[%s]"), *Edge->GetName()), MidPoint);
+                FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("E[%s]"), *Edge->GetName()), MidPoint);
             }
         }
     }
@@ -143,7 +143,7 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
             Center += Vertex->GetPosition();
         }
         Center /= Vertices.Num();
-        FRnDebugEx::DrawString(FString::Printf(TEXT("F[%s]"), *Face->GetName()), Center, FLinearColor::White, 0.f, FontScale );
+        FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("F[%s]"), *Face->GetName()), Center, FLinearColor::White, 0.f, FontScale );
     }
 
     if (Op.bShowOutline) {
@@ -154,7 +154,7 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
 
             auto Mask = V0->GetTypeMaskOrDefault(false) | V1->GetTypeMaskOrDefault(false);
             const FLinearColor Color = GetColor(Mask);
-            FRnDebugEx::DrawLine(V0->GetPosition(), V1->GetPosition(), Color);
+            FPLATEAURnDebugEx::DrawLine(V0->GetPosition(), V1->GetPosition(), Color);
         }
     }
     else {
@@ -164,12 +164,12 @@ void UPLATEAURGraph::Draw(const FRGraphDrawFaceOption& Op, RGraphRef_t<URFace> F
     }
 }
 void UPLATEAURGraph::DrawSideWalk(URGraph* Graph, FDrawWork& Work) {
-    auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FRnDrawOption& Option) {
+    auto DrawEdges = [this](const TArray<UREdge*>& Edges, const FPLATEAURnDrawOption& Option) {
         if (!Option.bVisible)
             return;
 
         for (const auto& Edge : Edges) {
-            FRnDebugEx::DrawLine(
+            FPLATEAURnDebugEx::DrawLine(
                 Edge->GetV0()->GetPosition(),
                 Edge->GetV1()->GetPosition(),
                 Option.Color

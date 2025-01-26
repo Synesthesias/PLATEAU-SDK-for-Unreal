@@ -6,7 +6,7 @@
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnLane.h"
-#include "RoadNetwork/Util/VectorEx.h"
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 
 URnIntersectionEdge::URnIntersectionEdge()
@@ -293,7 +293,7 @@ FVector URnIntersection::GetCentralVertex() const {
             Points.Add(Edge->GetBorder()->GetLerpPoint(0.5f));
         }
     }
-    return FVectorEx::Centroid(Points);
+    return FPLATEAUVectorEx::Centroid(Points);
 }
 
 TArray<TRnRef_T<URnWay>> URnIntersection::GetAllWays() const {
@@ -336,7 +336,7 @@ bool FRnIntersectionEx::FEdgeGroup::IsValid() const
 TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection)
 {
     auto CopiedEdges = Intersection->GetEdges();
-    auto Groups = FRnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
+    auto Groups = FPLATEAURnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
         CopiedEdges
         , [](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad(); }
     );

@@ -5,7 +5,7 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnModel.h"
-#include "RoadNetwork/Util/VectorEx.h"
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 void URnRoad::SetNext(TRnRef_T<URnRoadBase> InNext)
 {
@@ -336,7 +336,7 @@ FVector URnRoad::GetCentralVertex() const {
         Points.Add(LeftWay->GetLerpPoint(0.5f));
         Points.Add(RightWay->GetLerpPoint(0.5f));
     }
-    return FVectorEx::Centroid(Points);
+    return FPLATEAUVectorEx::Centroid(Points);
 }
 
 TArray<TRnRef_T<URnWay>> URnRoad::GetAllWays() const {

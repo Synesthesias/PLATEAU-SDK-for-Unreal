@@ -6,7 +6,7 @@
 #include "Math/IntVector.h"
 #include "Kismet/KismetMathLibrary.h"
 
-class PLATEAURUNTIME_API FIntVector2Ex {
+class PLATEAURUNTIME_API FPLATEAUIntVector2Ex {
 public:
     // Absolute value of vector components
     static FIntVector2 Abs(const FIntVector2& Vec);

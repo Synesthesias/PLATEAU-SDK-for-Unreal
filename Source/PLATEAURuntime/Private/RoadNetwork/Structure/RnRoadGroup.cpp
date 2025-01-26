@@ -7,7 +7,7 @@
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnLineString.h"
 #include "RoadNetwork/Structure/RnPoint.h"
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 
 URnRoadGroup::URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
                          TRnRef_T<URnIntersection> InNextIntersection,
@@ -552,13 +552,13 @@ void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, 
         auto& Lanes = AfterLanes[Road];
 
         if (i == Roads.Num() - 1) {
-            NextIntersection->ReplaceEdges(Road, FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
-            NewNextBorders.Append(FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
+            NewNextBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
-            NewPrevBorders.Append(FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
+            NewPrevBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }
 
         for (int32 j = LeftCount; j < Lanes.Num(); ++j) {
@@ -624,13 +624,13 @@ void URnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, flo
 
         if (i == Roads.Num() - 1) 
         {
-            NextIntersection->ReplaceEdges(Road, FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>( Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
-            NewNextBorders.Append( FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>( Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
+            NewNextBorders.Append( FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
-            NewPrevBorders.Append(FRnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
+            NewPrevBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }
 
         for (int32 j = LeftCount + 1; j < Lanes.Num(); ++j) {
@@ -688,7 +688,7 @@ TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
 
     auto Result = TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
 
-    auto MergedBorders = FRnEx::Map<TRnRef_T<URnRoad>, TRnRef_T<URnWay>>(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
+    auto MergedBorders = FPLATEAURnEx::Map<TRnRef_T<URnRoad>, TRnRef_T<URnWay>>(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
         return Road->GetMergedBorder(ERnLaneBorderType::Prev, Dir);
         });
     MergedBorders.Add((Roads)[Roads.Num() - 1]->GetMergedBorder(ERnLaneBorderType::Next, Dir));
@@ -722,7 +722,7 @@ TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
                 Rate += GetSplitRate ? GetSplitRate(N) : (1.0f / Num);
                 auto PrevBorder = PrevBorders[N];
                 auto NextBorder = NextBorders[N];
-                auto Line = FRnEx::CreateInnerLerpLineString(
+                auto Line = FPLATEAURnEx::CreateInnerLerpLineString(
                     LeftVertices,
                     RightVertices,
                     PrevBorder->GetPoint(-1),

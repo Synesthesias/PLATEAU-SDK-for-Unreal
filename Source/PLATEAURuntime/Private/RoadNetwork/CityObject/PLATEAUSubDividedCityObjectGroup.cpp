@@ -1,8 +1,8 @@
 #include "RoadNetwork/CityObject/PLATEAUSubDividedCityObjectGroup.h"
 
-#include "RoadNetwork/Util/RnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "Component/PLATEAUCityObjectGroup.h"
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 
 UPLATEAUSubDividedCityObjectGroup::UPLATEAUSubDividedCityObjectGroup()
 {
@@ -20,7 +20,7 @@ void UPLATEAUSubDividedCityObjectGroup::DrawMesh(const FSubDividedCityObjectMesh
         FVector V2 = Mat.TransformPosition(Mesh.Vertices[SubMesh.Triangles[j + 2]]);
 
         TArray<FVector> Vertices = { V0, V1, V2 };
-        FRnDebugEx::DrawLines(Vertices, true, Color, Duration);
+        FPLATEAURnDebugEx::DrawLines(Vertices, true, Color, Duration);
     }
 }
 
@@ -52,8 +52,8 @@ void UPLATEAUSubDividedCityObjectGroup::DrawCityObjects() {
                             FVector V0 = Mesh.Vertices[Indices[i]];
                             FVector V1 = Mesh.Vertices[Indices[(i + 1) % Indices.Num()]];
 
-                            FRnDebugEx::DrawLine(V0, V1,
-                                FRnDebugEx::GetDebugColor(Index, MeshColorNum));
+                            FPLATEAURnDebugEx::DrawLine(V0, V1,
+                                FPLATEAURnDebugEx::GetDebugColor(Index, MeshColorNum));
                         }
                     }
                     Index++;
@@ -70,7 +70,7 @@ void UPLATEAUSubDividedCityObjectGroup::DrawCityObjects() {
             for (const auto& SubMesh : Mesh.SubMeshes) {
                 FMatrix Mat = Item.CityObjectGroup->GetComponentTransform().ToMatrixWithScale();
                 DrawMesh(Mesh, SubMesh, Mat,
-                    FRnDebugEx::GetDebugColor(Index, MeshColorNum));
+                    FPLATEAURnDebugEx::GetDebugColor(Index, MeshColorNum));
                 Index++;
             }
         }
@@ -87,5 +87,5 @@ void UPLATEAUSubDividedCityObjectGroup::TickComponent(float DeltaTime, ELevelTic
 
 TArray<UPLATEAUSubDividedCityObject*> UPLATEAUSubDividedCityObjectGroup::GetCityObjects()
 {
-    return FRnEx::GetChildrenComponents<UPLATEAUSubDividedCityObject>(this, true, false);
+    return FPLATEAURnEx::GetChildrenComponents<UPLATEAUSubDividedCityObject>(this, true, false);
 }

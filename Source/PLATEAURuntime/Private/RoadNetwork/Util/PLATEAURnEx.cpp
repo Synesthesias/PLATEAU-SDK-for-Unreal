@@ -1,4 +1,4 @@
-#include "RoadNetwork/Util/RnEx.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
@@ -8,7 +8,7 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
 
-int32 FRnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) const
+int32 FPLATEAURnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) const
 {
     auto X = Compare(A.X, B.X);
     if (X != 0)
@@ -19,12 +19,12 @@ int32 FRnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) con
     return X = Compare(A.Z, B.Z);
 }
 
-void FRnEx::ReplaceLane(TArray<TRnRef_T<URnLane>>& Self, TRnRef_T<URnLane> Before, TRnRef_T<URnLane> After) {
+void FPLATEAURnEx::ReplaceLane(TArray<TRnRef_T<URnLane>>& Self, TRnRef_T<URnLane> Before, TRnRef_T<URnLane> After) {
     Replace(Self, Before, After);
 }
 
 
-TRnRef_T<URnLineString> FRnEx::CreateInnerLerpLineString(
+TRnRef_T<URnLineString> FPLATEAURnEx::CreateInnerLerpLineString(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,
     TRnRef_T<URnPoint> Start,
@@ -71,7 +71,7 @@ TRnRef_T<URnLineString> FRnEx::CreateInnerLerpLineString(
     return Line;
 }
 
-FLineCrossPointResult FRnEx::GetLineIntersections(
+FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLineIntersections(
     const FLineSegment3D& LineSegment,
     const TArray<TRnRef_T<URnWay>>& Ways)
 {
@@ -99,7 +99,7 @@ FLineCrossPointResult FRnEx::GetLineIntersections(
     return Result;
 }
 
-void FRnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child,
+void FPLATEAURnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child,
     FAttachmentTransformRules TransformRule)
 {
     if (!Parent || !Child || !Actor)
