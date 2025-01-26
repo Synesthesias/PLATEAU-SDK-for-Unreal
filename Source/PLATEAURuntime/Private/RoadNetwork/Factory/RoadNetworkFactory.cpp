@@ -18,6 +18,7 @@
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLineString.h"
 #include "RoadNetwork/Structure/RnWay.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 
 const FString FRoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
@@ -589,7 +590,7 @@ namespace
             auto V1 = Vertices[(i + 1) % Vertices.Num()];
 
             TObjectPtr<UREdge> E;                
-            if(FPLATEAURnEx::TryFirstOrDefault(
+            if(FPLATEAURnLinq::TryFirstOrDefault(
                 V0->GetEdges()
                 , [V0, V1](TObjectPtr<UREdge> E)-> bool {
                     return E->IsSameVertex(V0, V1);
@@ -839,9 +840,9 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //    ret.CalibrateIntersectionBorderForAllRoad(CalibrateIntersectionOption);
         //}
 
-        //// 道路を分割する
-        //ret->SplitLaneByWidth(RoadSize, false, out auto&& failedLinks);
-        //ret->ReBuildIntersectionTracks();
+        // 道路を分割する
+        TArray<FString> FailedRoads;
+        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
 
         //// 信号制御器をデフォ値で配置する
         //if (AddTrafficSignalLights)

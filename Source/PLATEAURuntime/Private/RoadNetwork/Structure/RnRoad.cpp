@@ -199,17 +199,17 @@ TRnRef_T<URnWay> URnRoad::GetMergedBorder(EPLATEAURnLaneBorderType BorderType, s
     auto Lanes = Dir.has_value() == false ? GetAllLanesWithMedian() : GetLanes(*Dir);
     if (Lanes.Num() == 0) return nullptr;
 
-    auto Border = Lanes[0]->GetBorder(BorderType);
-    if (!Border) return nullptr;
-
-    auto MergedWay = Border->Clone(true);
-    for (int32 i = 1; i < Lanes.Num(); ++i) {
-        auto NextBorder = Lanes[i]->GetBorder(BorderType);
-        if (!NextBorder) continue;
-
-        MergedWay->AppendBack2LineString(NextBorder);
+    auto Ls = RnNew<URnLineString>();
+    for(auto&& Lane : Lanes)
+    {
+        auto Way = GetBorderWay(Lane, BorderType, EPLATEAURnLaneBorderDir::Left2Right);
+        if (!Way)
+            continue;
+        for (auto&& Point : Way->GetPoints()) {
+            Ls->AddPointOrSkip(Point);
+        }
     }
-    return MergedWay;
+    return RnNew<URnWay>(Ls);
 }
 
 TRnRef_T<URnWay> URnRoad::GetMergedSideWay(EPLATEAURnDir Dir) const {

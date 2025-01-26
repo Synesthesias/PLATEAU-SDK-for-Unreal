@@ -110,10 +110,10 @@ public:
     void AddMainLane(TRnRef_T<URnLane> Lane);
 
 
-    // 指定した方向の境界線を取得する
+    // 指定した方向の境界線を取得する(全レーンマージした状態で取得する)
     virtual TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const override;
 
-    // 指定した方向のWayを取得する
+    // 指定した方向のWayを取得する(全レーンマージした状態で取得する)
     virtual TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const override;
 
     // dirで指定した側の全レーンの左右のWayを返す

@@ -80,7 +80,7 @@ float URnLineString::CalcLength() const {
 
     float Length = 0.0f;
     for (int32 i = 0; i < Points.Num() - 1; ++i) {
-        Length += ((Points)[i + 1]->Vertex - (Points)[i]->Vertex).Size();
+        Length += (Points[i + 1]->Vertex - Points[i]->Vertex).Size();
     }
     return Length;
 }
@@ -89,49 +89,75 @@ TArray<TRnRef_T<URnLineString>> URnLineString::Split(int32 Num, bool InsertNewPo
     TArray<TRnRef_T<URnLineString>> Result;
     if (!IsValid() || Num <= 0) return Result;
 
-    TArray<float> Rates;
-    float Rate = 0.0f;
-    for (int32 i = 0; i < Num - 1; i++) {
-        Rate += RateSelector ? RateSelector(i) : 1.0f / Num;
-        Rates.Add(Rate);
-    }
+    if (!RateSelector)
+        RateSelector = [Num](int32) { return 1.f / Num; };
 
-    TArray<int32> SplitIndices;
+    TArray<TRnRef_T<URnLineString>> Ret;
+
     const float TotalLength = CalcLength();
-    float CurrentLength = 0.0f;
-    int32 CurrentIndex = 0;
+    float len = 0.0f;
+    TArray<TRnRef_T<URnPoint>> SubVertices = { Points[0]};
 
-    for (int32 i = 0; i < Points.Num() - 1; i++) {
-        const float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
-        const float NextLength = CurrentLength + SegmentLength;
+    auto GetLength = [&](int32 Index) -> float {
+        return TotalLength * RateSelector(Index);
+        };
+    for (int32 i = 1; i < Points.Num(); i++) 
+    {
+        auto p0 = SubVertices.Last();
+        auto p1 = Points[i];
+        auto l = (p1->Vertex - p0->Vertex).Length();
+        len += l;
 
-        while (CurrentIndex < Rates.Num() &&
-            CurrentLength <= Rates[CurrentIndex] * TotalLength &&
-            Rates[CurrentIndex] * TotalLength < NextLength) {
-            float T = (Rates[CurrentIndex] * TotalLength - CurrentLength) / SegmentLength;
-            if (InsertNewPoint) {
-                auto p = RnNew<URnPoint>(FMath::Lerp(GetVertex(i), GetVertex(i+1), T));
-                Points.Insert(p, i + 1);
-                i++;
+        auto length = GetLength(Ret.Num());
+        // lenがlengthを超えたら分割線分を追加
+        // ただし、最後の線は全部追加する
+        while (len >= length && l >= FGeoGraph2D::Eps && Ret.Num() < (Num - 1)) {
+            // #TODO : マジックナンバー
+            //       : 分割点が隣り合う点とこれ以下の場合は新規で作らず使いまわす
+            auto mergeLength = FMath::Min( FPLATEAURnDef::Meter2Unit * 0.1f, length * 0.5f);
+            auto threshold = mergeLength * mergeLength;
+            auto f = 1.f - (len - length) / l;
+            auto end = RnNew<URnPoint>(FMath::Lerp(p0->Vertex, p1->Vertex, f));
+
+            // もし,p0/p1とほぼ同じ点ならそっちを使う
+            // ただし、その結果subVerticesが線分にならない場合は無視する
+            if (SubVertices.Num() > 1) {
+                if ((p1->Vertex - end->Vertex).SquaredLength() < threshold) {
+                    end = p1;
+                }
+                else if ((p0->Vertex - end->Vertex).SquaredLength() < threshold) {
+                    end = p0;
+                }
             }
-            SplitIndices.Add(i);
-            CurrentIndex++;
+
+            // 同一頂点が複数あった場合は無視する
+            if (f >= FLT_EPSILON) {
+                SubVertices.Add(end);
+                // 自分自身にも追加する場合
+                if (InsertNewPoint && p1 != end && p0 != end) {
+                    Points.Insert(end, i);
+                    i += 1;
+                }
+            }
+
+            Ret.Add( RnNew<URnLineString>(SubVertices));
+            SubVertices = { end };
+            len -= length;
+            // 次の長さを更新
+            length = GetLength(Ret.Num());
         }
-        CurrentLength = NextLength;
+        if (SubVertices.IsEmpty() == false && SubVertices.Last() != p1)
+            SubVertices.Add(p1);
     }
 
-    SplitIndices.Add(Points.Num() - 1);
-    int32 StartIndex = 0;
-    for (const int32 EndIndex : SplitIndices) {
-        auto SplitPoints = TArray<TRnRef_T<URnPoint>>();
-        for (int32 i = StartIndex; i <= EndIndex; i++) {
-            SplitPoints.Add(GetPoint(i));
-        }
-        Result.Add(RnNew<URnLineString>(SplitPoints));
-        StartIndex = EndIndex;
+    // 最後の要素は無条件で返す
+    if (Ret.Num() < Num && SubVertices.IsEmpty() == false) {
+        if (SubVertices.Last() != Points.Last())
+            SubVertices.Add(Points.Last());
+        if (SubVertices.Num() > 1)
+            Ret.Add(RnNew<URnLineString>(SubVertices));
     }
-
-    return Result;
+    return Ret;
 }
 
 TArray<TRnRef_T<URnLineString>> URnLineString::SplitByIndex(const TArray<int32>& Indices, bool InsertNewPoint) const {

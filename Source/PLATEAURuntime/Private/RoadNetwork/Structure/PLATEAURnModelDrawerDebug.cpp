@@ -237,7 +237,7 @@ FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
 //    if (bChangeArrowColor)
 //        arrowColor = way.IsReversed ? ReverseWayArrowColor : NormalWayArrowColor;
 //
-//    auto Vertices = FPLATEAURnEx::SelectWithIndex(
+//    auto Vertices = FPLATEAURnLinq::SelectWithIndex(
 //        way.GetVertices()
 //        , [&](FVector v, int32 i) {
 //            return v - work.Self->EdgeOffset * way.GetVertexNormal(i);
