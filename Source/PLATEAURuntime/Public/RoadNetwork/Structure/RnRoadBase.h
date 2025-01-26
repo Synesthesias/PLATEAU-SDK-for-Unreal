@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
 #include "RnRoadBase.generated.h"
@@ -78,13 +78,13 @@ public:
     void SetParentModel(const TRnRef_T<URnModel>& InParentModel);
 
     // 指定した方向の境界線を取得する
-    virtual TRnRef_T<URnWay> GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const { return nullptr; }
+    virtual TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const { return nullptr; }
 
     // 指定した方向のWayを取得する
-    virtual TRnRef_T<URnWay> GetMergedSideWay(ERnDir Dir) const { return nullptr; }
+    virtual TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const { return nullptr; }
 
     // 指定した方向のWayを取得する
-    virtual bool TryGetMergedSideWay(ERnDir Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const { return false; }
+    virtual bool TryGetMergedSideWay(EPLATEAURnDir Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const { return false; }
 
     // 指定したLineStringまでの最短距離を取得する
     virtual bool TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& LineString, float& OutDistance) const { return false; }
@@ -93,13 +93,13 @@ public:
     virtual void AlignLaneBorder() {}
 
     // 境界線を調整するための線分を取得する
-    virtual bool TryGetAdjustBorderSegment(ERnLaneBorderType BorderType, FLineSegment3D& OutSegment) const { return false; }
+    virtual bool TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const { return false; }
 
     // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, ERnLaneBorderType BorderType, ERnLaneBorderDir Dir) const { return nullptr; }
+    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir Dir) const { return nullptr; }
 
     // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, ERnLaneBorderType BorderType) const { return nullptr; }
+    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType) const { return nullptr; }
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad()

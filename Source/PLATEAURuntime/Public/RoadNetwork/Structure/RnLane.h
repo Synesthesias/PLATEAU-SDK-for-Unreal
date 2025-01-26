@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "RnWay.h"
 #include "RnRoad.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RnLane.generated.h"
 
 class URnRoad;
@@ -67,19 +67,19 @@ public:
     bool IsMedianLane() const;
 
     // 境界線の方向を取得する
-    ERnLaneBorderDir GetBorderDir(ERnLaneBorderType Type) const;
+    EPLATEAURnLaneBorderDir GetBorderDir(EPLATEAURnLaneBorderType Type) const;
 
     // 境界線を取得する
-    TRnRef_T<URnWay> GetBorder(ERnLaneBorderType Type) const;
+    TRnRef_T<URnWay> GetBorder(EPLATEAURnLaneBorderType Type) const;
 
     // 境界線を設定する
-    void SetBorder(ERnLaneBorderType Type, const TRnRef_T<URnWay>& Border);
+    void SetBorder(EPLATEAURnLaneBorderType Type, const TRnRef_T<URnWay>& Border);
 
     // 指定した側のWayを取得する
-    TRnRef_T<URnWay> GetSideWay(ERnDir Dir) const;
+    TRnRef_T<URnWay> GetSideWay(EPLATEAURnDir Dir) const;
 
     // 指定した側のWayを設定する
-    void SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way);
+    void SetSideWay(EPLATEAURnDir Dir, const TRnRef_T<URnWay>& Way);
 
     // 単純な車線の幅を計算する
     // Next/PrevBorderの短い方
@@ -113,7 +113,7 @@ public:
     float GetCenterLength() const;
 
     // 中心線の2D平面における長さを取得する
-    float GetCenterLength2D(EAxisPlane Plane = FRnDef::Plane) const;
+    float GetCenterLength2D(EAxisPlane Plane = FPLATEAURnDef::Plane) const;
 
     // 中心線の2D平面における角度の合計を取得する
     float GetCenterTotalAngle2D() const;

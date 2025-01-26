@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RnIntersection.generated.h"
 

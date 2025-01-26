@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include <optional>
 
 #include "RnRoad.h"
@@ -44,7 +44,7 @@ public:
     TArray<TRnRef_T<URnLane>> GetLeftLanes() const;
 public:
     // RnDirで指定した側のレーンを取得
-    TArray<TRnRef_T<URnLane>> GetLanes(ERnDir Dir) const;
+    TArray<TRnRef_T<URnLane>> GetLanes(EPLATEAURnDir Dir) const;
 
     // 中央分離帯を取得
     void GetMedians(TArray<TRnRef_T<URnWay>>& OutLeft, TArray<TRnRef_T<URnWay>>& OutRight) const;
@@ -126,12 +126,12 @@ private:
 
     TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
-        std::optional<ERnDir> Dir,
+        std::optional<EPLATEAURnDir> Dir,
         // #TODO : nullptr入れられるのか確認
         TFunction<float(int32)> GetSplitRate = nullptr);
 
     // レーン分割する
-    void SetLaneCountImpl(int32 Count, ERnDir Dir, bool RebuildTrack);
+    void SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool RebuildTrack);
 
     // レーン数を変更する
     void SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, bool RebuildTrack);
@@ -147,7 +147,7 @@ public:
     void SetRightLaneCount(int32 Count, bool RebuildTrack = true);
 
     // 指定した側のレーン数を設定する
-    void SetLaneCount(ERnDir Dir, int32 Count, bool RebuildTrack = true);
+    void SetLaneCount(EPLATEAURnDir Dir, int32 Count, bool RebuildTrack = true);
 
     // 中央分離帯を考慮したレーン分割
     void SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, float MedianWidthRate);

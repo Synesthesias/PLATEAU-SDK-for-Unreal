@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 
 #include "RnSideWalk.generated.h"
 // Forward declarations
@@ -30,8 +30,8 @@ public:
     // outsideWayとinsideWayの終点を繋ぐWay
     TRnRef_T<URnWay> GetEndEdgeWay() const { return EndEdgeWay; }
 
-    ERnSideWalkLaneType GetLaneType() const { return LaneType; }
-    void SetLaneType(ERnSideWalkLaneType Type) { LaneType = Type; }
+    EPLATEAURnSideWalkLaneType GetLaneType() const { return LaneType; }
+    void SetLaneType(EPLATEAURnSideWalkLaneType Type) { LaneType = Type; }
 
     // 左右のWay(OutsideWay, InsideWay)を列挙
     TArray<TRnRef_T<URnWay>> GetSideWays() const;
@@ -45,7 +45,7 @@ public:
     // Inside/OutsideのWayが両方ともValidかどうか
     bool IsValid() const;
 
-    ERnSideWalkWayTypeMask GetValidWayTypeMask() const;
+    EPLATEAURnSideWalkWayTypeMask GetValidWayTypeMask() const;
 
     // 強制的に親を変更する. 構造壊れるので扱い注意
     void SetParent(const TRnRef_T<URnRoadBase>& Parent);
@@ -74,7 +74,7 @@ public:
         const TRnRef_T<URnWay>& InsideWay,
         const TRnRef_T<URnWay>& StartEdgeWay,
         const TRnRef_T<URnWay>& EndEdgeWay,
-        ERnSideWalkLaneType LaneType = ERnSideWalkLaneType::Undefined);
+        EPLATEAURnSideWalkLaneType LaneType = EPLATEAURnSideWalkLaneType::Undefined);
 
     // 代表点を取得
     FVector GetCentralVertex() const;
@@ -98,5 +98,5 @@ private:
     UPROPERTY()
     TObjectPtr<URnWay> EndEdgeWay;
     UPROPERTY()
-    ERnSideWalkLaneType LaneType;
+    EPLATEAURnSideWalkLaneType LaneType;
 };

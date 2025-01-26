@@ -225,7 +225,7 @@ void URnIntersection::Align()
     if (FGeoGraph2D::IsClockwise<TRnRef_T<URnIntersectionEdge>>(Edges
         , [](TRnRef_T<URnIntersectionEdge> E)
         {
-            return FRnDef::To2D(E->GetBorder()->GetVertex(0));
+            return FPLATEAURnDef::To2D(E->GetBorder()->GetVertex(0));
         }) == false) 
     {
         for(auto&& e : Edges)

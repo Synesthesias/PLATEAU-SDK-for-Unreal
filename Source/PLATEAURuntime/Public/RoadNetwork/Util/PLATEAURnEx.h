@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include <optional>
 
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"

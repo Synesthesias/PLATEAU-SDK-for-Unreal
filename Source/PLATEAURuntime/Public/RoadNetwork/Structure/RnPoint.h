@@ -4,7 +4,7 @@
 #include "UObject/NoExportTypes.h"
 #include <memory>
 
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RnPoint.generated.h"
 
 UCLASS()

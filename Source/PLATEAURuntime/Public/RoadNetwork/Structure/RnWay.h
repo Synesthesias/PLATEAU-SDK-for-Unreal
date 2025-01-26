@@ -4,14 +4,14 @@
 #include "RnPoint.h"
 #include "Containers/Array.h"
 #include "Math/Vector.h"
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/GeoGraph/AxisPlane.h"
 #include "RoadNetwork/GeoGraph/LineSegment2D.h"
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
 #include "CoreMinimal.h"
 #include "RnLineString.h"
 #include "RnPoint.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RnWay.generated.h"
 UCLASS()
 class URnWay : public UObject
@@ -161,7 +161,7 @@ public:
     FVector GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPoint(float Offset, bool Reverse) const;
-    float GetDistance2D(const TRnRef_T<URnWay>& Other, EAxisPlane Plane = FRnDef::Plane) const;
+    float GetDistance2D(const TRnRef_T<URnWay>& Other, EAxisPlane Plane = FPLATEAURnDef::Plane) const;
 
     // 線分の距離をp : (1-p)で分割した点を返す
     FVector GetLerpPoint(float P) const;

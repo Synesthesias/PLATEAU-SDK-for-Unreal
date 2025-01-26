@@ -84,29 +84,29 @@ bool URnLane::IsEmptyLane() const {
 bool URnLane::IsMedianLane() const {
     return GetParent() ? GetParent()->IsMedianLane(RnFrom(this)) : false;
 }
-ERnLaneBorderDir URnLane::GetBorderDir(ERnLaneBorderType Type) const {
+EPLATEAURnLaneBorderDir URnLane::GetBorderDir(EPLATEAURnLaneBorderType Type) const {
     return bIsReverse ?
-        (Type == ERnLaneBorderType::Prev ? ERnLaneBorderDir::Right2Left : ERnLaneBorderDir::Left2Right) :
-        (Type == ERnLaneBorderType::Prev ? ERnLaneBorderDir::Left2Right : ERnLaneBorderDir::Right2Left);
+        (Type == EPLATEAURnLaneBorderType::Prev ? EPLATEAURnLaneBorderDir::Right2Left : EPLATEAURnLaneBorderDir::Left2Right) :
+        (Type == EPLATEAURnLaneBorderType::Prev ? EPLATEAURnLaneBorderDir::Left2Right : EPLATEAURnLaneBorderDir::Right2Left);
 }
 
-TRnRef_T<URnWay> URnLane::GetBorder(ERnLaneBorderType Type) const {
-    return Type == ERnLaneBorderType::Prev ? PrevBorder : NextBorder;
+TRnRef_T<URnWay> URnLane::GetBorder(EPLATEAURnLaneBorderType Type) const {
+    return Type == EPLATEAURnLaneBorderType::Prev ? PrevBorder : NextBorder;
 }
 
-void URnLane::SetBorder(ERnLaneBorderType Type, const TRnRef_T<URnWay>& Border) {
-    if (Type == ERnLaneBorderType::Prev)
+void URnLane::SetBorder(EPLATEAURnLaneBorderType Type, const TRnRef_T<URnWay>& Border) {
+    if (Type == EPLATEAURnLaneBorderType::Prev)
         PrevBorder = Border;
     else
         NextBorder = Border;
 }
 
-TRnRef_T<URnWay> URnLane::GetSideWay(ERnDir Dir) const {
-    return Dir == ERnDir::Left ? LeftWay : RightWay;
+TRnRef_T<URnWay> URnLane::GetSideWay(EPLATEAURnDir Dir) const {
+    return Dir == EPLATEAURnDir::Left ? LeftWay : RightWay;
 }
 
-void URnLane::SetSideWay(ERnDir Dir, const TRnRef_T<URnWay>& Way) {
-    if (Dir == ERnDir::Left)
+void URnLane::SetSideWay(EPLATEAURnDir Dir, const TRnRef_T<URnWay>& Way) {
+    if (Dir == EPLATEAURnDir::Left)
         LeftWay = Way;
     else
         RightWay = Way;
@@ -196,8 +196,8 @@ float URnLane::GetCenterLength2D(EAxisPlane Plane) const {
 
     float Length = 0.0f;
     for (int32 i = 0; i < CenterWay->Count() - 1; ++i) {
-        FVector2D Start = FRnDef::To2D(CenterWay->GetPoint(i)->Vertex);
-        FVector2D End = FRnDef::To2D(CenterWay->GetPoint(i + 1)->Vertex);
+        FVector2D Start = FPLATEAURnDef::To2D(CenterWay->GetPoint(i)->Vertex);
+        FVector2D End = FPLATEAURnDef::To2D(CenterWay->GetPoint(i + 1)->Vertex);
         Length += FVector2D::Distance(Start, End);
     }
     return Length;

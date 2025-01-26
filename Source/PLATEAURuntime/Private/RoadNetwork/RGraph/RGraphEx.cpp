@@ -48,11 +48,11 @@ TSet<RGraphRef_t<URVertex>> FRGraphEx::AdjustSmallLodHeight(
     TSet<RGraphRef_t<URVertex>> Result;
     auto&& Vertices = Graph->GetAllVertices();
 
-    auto MergeCellSize = MergeCellSizeMeter * FRnDef::Meter2Unit;
-    auto HeightTolerance = HeightToleranceMeter * FRnDef::Meter2Unit;
+    auto MergeCellSize = MergeCellSizeMeter * FPLATEAURnDef::Meter2Unit;
+    auto HeightTolerance = HeightToleranceMeter * FPLATEAURnDef::Meter2Unit;
     TMap<FIntVector2, TArray<RGraphRef_t<URVertex>>> Grid;
     for (auto Vertex : Vertices) {
-        FVector2D Pos2D = FRnDef::To2D(Vertex->Position);
+        FVector2D Pos2D = FPLATEAURnDef::To2D(Vertex->Position);
         FIntVector2 GridPos(
             FMath::FloorToInt(Pos2D.X / MergeCellSize),
             FMath::FloorToInt(Pos2D.Y / MergeCellSize)
@@ -104,8 +104,8 @@ void FRGraphEx::VertexReduction(
     //auto&& Vertices = Graph->GetAllVertices();
     TMap<FIntVector2, TArray<RGraphRef_t<URVertex>>> Grid;
 
-    auto MergeCellSize = MergeCellSizeMeter * FRnDef::Meter2Unit;
-    auto MidPointTolerance = MidPointToleranceMeter * FRnDef::Meter2Unit;
+    auto MergeCellSize = MergeCellSizeMeter * FPLATEAURnDef::Meter2Unit;
+    auto MidPointTolerance = MidPointToleranceMeter * FPLATEAURnDef::Meter2Unit;
     while(true)
     {
         auto Vertices = Graph->GetAllVertices();
@@ -268,7 +268,7 @@ void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Toleran
 {
     if (!Graph) 
         return;
-    auto Tolerance = ToleranceMeter * FRnDef::Meter2Unit;
+    auto Tolerance = ToleranceMeter * FPLATEAURnDef::Meter2Unit;
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
@@ -334,7 +334,7 @@ void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Toleran
 void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, float HeightToleranceMeter) {
     if (!Graph) return;
 
-    auto HeightTolerance = HeightToleranceMeter * FRnDef::Meter2Unit;
+    auto HeightTolerance = HeightToleranceMeter * FPLATEAURnDef::Meter2Unit;
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
@@ -404,7 +404,7 @@ void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, flo
                 FVector intersection;
                 float t1;
                 float t2;
-                if (s0.TrySegmentIntersectionBy2D(s1, FRnDef::Plane, HeightTolerance, intersection, t1, t2)) 
+                if (s0.TrySegmentIntersectionBy2D(s1, FPLATEAURnDef::Plane, HeightTolerance, intersection, t1, t2)) 
                 {
                     // お互いの端点で交差している場合は無視
                     if ((NearlyEqual(t1, 0) || NearlyEqual(t1, 1)) && (NearlyEqual(t2, 0) || NearlyEqual(t2, 1)))
@@ -542,7 +542,7 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeOutlineVertices(const TArray<RGr
     auto Result = FGeoGraph2D::ComputeOutline<TObjectPtr<URVertex>>(
         VerticesArray
         , [](const TObjectPtr<URVertex>& V) {return V->Position; }
-        , FRnDef::Plane
+        , FPLATEAURnDef::Plane
         , [&](const TObjectPtr<URVertex>& V)
         {
             TArray<TObjectPtr<URVertex>> Res;
@@ -604,8 +604,8 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeConvexHullVertices(RGraphRef_t<U
 
     TArray<FVector2D> Points;
     for (auto Edge : Face->GetEdges()) {
-        Points.Add(FRnDef::To2D(Edge->GetV0()->Position));
-        Points.Add(FRnDef::To2D(Edge->GetV1()->Position));
+        Points.Add(FPLATEAURnDef::To2D(Edge->GetV0()->Position));
+        Points.Add(FPLATEAURnDef::To2D(Edge->GetV1()->Position));
     }
     TArray<RGraphRef_t<URVertex>> Vertices;
     for(auto v : CreateVertexSet(Face))
@@ -613,7 +613,7 @@ TArray<RGraphRef_t<URVertex>> FRGraphEx::ComputeConvexHullVertices(RGraphRef_t<U
     return FGeoGraph2D::ComputeConvexVolume<RGraphRef_t<URVertex>>(
         Vertices
         , [](RGraphRef_t<URVertex> V) {return V->Position; }
-        , FRnDef::Plane
+        , FPLATEAURnDef::Plane
         , 1e-3f);
 }
 

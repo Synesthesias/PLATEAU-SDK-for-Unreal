@@ -8,7 +8,7 @@
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 URnSideWalk::URnSideWalk()
-    : LaneType(ERnSideWalkLaneType::Undefined) {
+    : LaneType(EPLATEAURnSideWalkLaneType::Undefined) {
 }
 
 void URnSideWalk::Init()
@@ -41,12 +41,12 @@ bool URnSideWalk::IsValid() const {
     return InsideWay && InsideWay->IsValid() && OutsideWay && OutsideWay->IsValid();
 }
 
-ERnSideWalkWayTypeMask URnSideWalk::GetValidWayTypeMask() const {
-    ERnSideWalkWayTypeMask Mask = ERnSideWalkWayTypeMask::None;
-    if (OutsideWay) Mask |= ERnSideWalkWayTypeMask::Outside;
-    if (InsideWay) Mask |= ERnSideWalkWayTypeMask::Inside;
-    if (StartEdgeWay) Mask |= ERnSideWalkWayTypeMask::StartEdge;
-    if (EndEdgeWay) Mask |= ERnSideWalkWayTypeMask::EndEdge;
+EPLATEAURnSideWalkWayTypeMask URnSideWalk::GetValidWayTypeMask() const {
+    EPLATEAURnSideWalkWayTypeMask Mask = EPLATEAURnSideWalkWayTypeMask::None;
+    if (OutsideWay) Mask |= EPLATEAURnSideWalkWayTypeMask::Outside;
+    if (InsideWay) Mask |= EPLATEAURnSideWalkWayTypeMask::Inside;
+    if (StartEdgeWay) Mask |= EPLATEAURnSideWalkWayTypeMask::StartEdge;
+    if (EndEdgeWay) Mask |= EPLATEAURnSideWalkWayTypeMask::EndEdge;
     return Mask;
 }
 
@@ -81,10 +81,10 @@ void URnSideWalk::SetEndEdgeWay(const TRnRef_T<URnWay>& EndWay) {
 }
 
 void URnSideWalk::ReverseLaneType() {
-    if (LaneType == ERnSideWalkLaneType::LeftLane)
-        LaneType = ERnSideWalkLaneType::RightLane;
-    else if (LaneType == ERnSideWalkLaneType::RightLane)
-        LaneType = ERnSideWalkLaneType::LeftLane;
+    if (LaneType == EPLATEAURnSideWalkLaneType::LeftLane)
+        LaneType = EPLATEAURnSideWalkLaneType::RightLane;
+    else if (LaneType == EPLATEAURnSideWalkLaneType::RightLane)
+        LaneType = EPLATEAURnSideWalkLaneType::LeftLane;
 }
 
 void URnSideWalk::TryAlign() {
@@ -132,7 +132,7 @@ TRnRef_T<URnSideWalk> URnSideWalk::Create(
     const TRnRef_T<URnWay>& InsideWay,
     const TRnRef_T<URnWay>& StartEdgeWay,
     const TRnRef_T<URnWay>& EndEdgeWay,
-    ERnSideWalkLaneType LaneType) {
+    EPLATEAURnSideWalkLaneType LaneType) {
     auto SideWalk = RnNew<URnSideWalk>();
     SideWalk->ParentRoad = Parent;
     SideWalk->OutsideWay = OutsideWay;

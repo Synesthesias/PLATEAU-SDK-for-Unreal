@@ -199,7 +199,7 @@ float URnLineString::CalcTotalAngle2D() const {
     for (auto It = Edges.begin(); It != Edges.end(); ++It)
     {
         const auto e = *It;
-        auto Dir = FLineSegment3D(e.P0->Vertex, e.P1->Vertex).To2D(FRnDef::Plane).GetDirection();
+        auto Dir = FLineSegment3D(e.P0->Vertex, e.P1->Vertex).To2D(FPLATEAURnDef::Plane).GetDirection();
         if(Last.has_value())
         {
             TotalAngle += FPLATEAUVector2DEx::Angle((*Last), Dir);

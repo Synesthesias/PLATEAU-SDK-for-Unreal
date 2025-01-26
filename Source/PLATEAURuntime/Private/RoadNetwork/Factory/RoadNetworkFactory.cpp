@@ -108,7 +108,7 @@ namespace
 
             if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
             {
-                    return FRnDef::To2D(v->Position);
+                    return FPLATEAURnDef::To2D(v->Position);
             })) {
                 Algo::Reverse(Vertices);
             }
@@ -262,7 +262,7 @@ namespace
             TMap<TRnRef_T<URnRoad>, float> AddedRoads;
 
             TArray<TRnRef_T<URnSideWalk>> ReturnSideWalks;
-            auto MoveWay = [&](URnWay* Way, URnRoadBase* Parent, ERnSideWalkLaneType LaneType, float SideWalkSize)
+            auto MoveWay = [&](URnWay* Way, URnRoadBase* Parent, EPLATEAURnSideWalkLaneType LaneType, float SideWalkSize)
             {
                 if (!Way || SideWalkSize <= 0.0f) {
                     return false;
@@ -370,8 +370,8 @@ namespace
                     URnLane* LeftLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes()[0] : nullptr;
                     URnLane* RightLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes().Last() : nullptr;
 
-                    MoveWay(LeftLane ? LeftLane->GetLeftWay() : nullptr, Road, ERnSideWalkLaneType::LeftLane, SideWalkSize);
-                    MoveWay(RightLane ? RightLane->GetRightWay() : nullptr, Road, ERnSideWalkLaneType::RightLane, SideWalkSize);
+                    MoveWay(LeftLane ? LeftLane->GetLeftWay() : nullptr, Road, EPLATEAURnSideWalkLaneType::LeftLane, SideWalkSize);
+                    MoveWay(RightLane ? RightLane->GetRightWay() : nullptr, Road, EPLATEAURnSideWalkLaneType::RightLane, SideWalkSize);
                 }
                 else if (URnIntersection* Intersection = Cast<URnIntersection>(Tran->Node)) 
                 {
@@ -414,7 +414,7 @@ namespace
                         }
 
                         for (const auto& Edge : Eg.Edges) {
-                            MoveWay(Edge->GetBorder(), Intersection, ERnSideWalkLaneType::Undefined, SideWalkSize);
+                            MoveWay(Edge->GetBorder(), Intersection, EPLATEAURnSideWalkLaneType::Undefined, SideWalkSize);
                         }
                     }
                 }
@@ -770,7 +770,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     auto ParentPair = Algo::FindByPredicate(work.TranMap, [&](const TTuple<RGraphRef_t<URFaceGroup>, TSharedPtr<FTran>>& X) {
                         return X.Value->FaceGroup->CityObjectGroup == sideWalkFace->GetCityObjectGroup() && X.Value->Node != nullptr;
                         });
-                    ERnSideWalkLaneType laneType = ERnSideWalkLaneType::Undefined;
+                    EPLATEAURnSideWalkLaneType laneType = EPLATEAURnSideWalkLaneType::Undefined;
 
                     TRnRef_T<URnRoadBase> Parent = nullptr;
                     if (ParentPair != nullptr && ParentPair->Value && ParentPair->Value->Node)
@@ -779,16 +779,16 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     }
 
                     if (auto road = Parent->CastToRoad()) {
-                        auto&& way = road->GetMergedSideWay(ERnDir::Left);
+                        auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
                         if (insideWay != nullptr) {
                             // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
                             // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
                             if (way == nullptr)
-                                laneType = ERnSideWalkLaneType::Undefined;
+                                laneType = EPLATEAURnSideWalkLaneType::Undefined;
                             else if (insideWay->IsSameLineReference(way))
-                                laneType = ERnSideWalkLaneType::LeftLane;
+                                laneType = EPLATEAURnSideWalkLaneType::LeftLane;
                             else
-                                laneType = ERnSideWalkLaneType::RightLane;
+                                laneType = EPLATEAURnSideWalkLaneType::RightLane;
                         }
                     }
 

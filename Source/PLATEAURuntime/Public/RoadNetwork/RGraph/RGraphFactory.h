@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
 #include <memory>
 
 #include "RGraph.h"

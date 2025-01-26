@@ -5,7 +5,7 @@
 #include "Math/Vector2D.h"
 #include "Math/Vector.h"
 #include "Containers/Array.h"
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 

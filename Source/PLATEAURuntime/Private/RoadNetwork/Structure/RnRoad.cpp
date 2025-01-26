@@ -99,8 +99,8 @@ bool URnRoad::IsEmptyRoad() const {
     return std::all_of(MainLanes.begin(), MainLanes.end(), [](const TRnRef_T<URnLane>& Lane) { return Lane->IsEmptyLane(); });
 }
 
-TArray<TRnRef_T<URnLane>> URnRoad::GetLanes(ERnDir Dir) const {
-    return Dir == ERnDir::Left ? GetLeftLanes() : GetRightLanes();
+TArray<TRnRef_T<URnLane>> URnRoad::GetLanes(EPLATEAURnDir Dir) const {
+    return Dir == EPLATEAURnDir::Left ? GetLeftLanes() : GetRightLanes();
 }
 
 bool URnRoad::IsLeftLane(const TRnRef_T<URnLane>& Lane) const {
@@ -111,8 +111,8 @@ bool URnRoad::IsRightLane(const TRnRef_T<URnLane>& Lane) const {
     return Lane && Lane->GetIsReverse();
 }
 
-ERnDir URnRoad::GetLaneDir(const TRnRef_T<URnLane>& Lane) const {
-    return IsLeftLane(Lane) ? ERnDir::Left : ERnDir::Right;
+EPLATEAURnDir URnRoad::GetLaneDir(const TRnRef_T<URnLane>& Lane) const {
+    return IsLeftLane(Lane) ? EPLATEAURnDir::Left : EPLATEAURnDir::Right;
 }
 
 TArray<TRnRef_T<URnWay>> URnRoad::GetBorders() const
@@ -175,7 +175,7 @@ void URnRoad::AddMainLane(TRnRef_T<URnLane> Lane)
     MainLanes.Add(Lane);
 }
 
-TRnRef_T<URnWay> URnRoad::GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const {
+TRnRef_T<URnWay> URnRoad::GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const {
     auto Lanes = Dir.has_value() == false ? GetAllLanesWithMedian() : GetLanes(*Dir);
     if (Lanes.Num() == 0) return nullptr;
 
@@ -192,15 +192,15 @@ TRnRef_T<URnWay> URnRoad::GetMergedBorder(ERnLaneBorderType BorderType, std::opt
     return MergedWay;
 }
 
-TRnRef_T<URnWay> URnRoad::GetMergedSideWay(ERnDir Dir) const {
+TRnRef_T<URnWay> URnRoad::GetMergedSideWay(EPLATEAURnDir Dir) const {
     TRnRef_T<URnWay> LeftWay, RightWay;
     if (!TryGetMergedSideWay(Dir, LeftWay, RightWay)) {
         return nullptr;
     }
-    return Dir == ERnDir::Left ? LeftWay : RightWay;
+    return Dir == EPLATEAURnDir::Left ? LeftWay : RightWay;
 }
 
-bool URnRoad::TryGetMergedSideWay(std::optional<ERnDir>  Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const
+bool URnRoad::TryGetMergedSideWay(std::optional<EPLATEAURnDir>  Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const
 {
     OutLeftWay = OutRightWay = nullptr;
     if (IsValid() == false)
@@ -275,29 +275,29 @@ void URnRoad::AlignLaneBorder() {
         }
     }
 }
-bool URnRoad::TryGetAdjustBorderSegment(ERnLaneBorderType BorderType, FLineSegment3D& OutSegment) const {
+bool URnRoad::TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const {
     TRnRef_T<URnWay> LeftWay, RightWay;
     if (!TryGetMergedSideWay(std::nullopt, LeftWay, RightWay)) return false;
 
-    int32 Index = BorderType == ERnLaneBorderType::Prev ? 0 : -1;
+    int32 Index = BorderType == EPLATEAURnLaneBorderType::Prev ? 0 : -1;
     OutSegment = FLineSegment3D(LeftWay->GetPoint(Index)->Vertex, RightWay->GetPoint(Index)->Vertex);
     return true;
 }
 
-TRnRef_T<URnWay> URnRoad::GetBorderWay(const TRnRef_T<URnLane>& Lane, ERnLaneBorderType BorderType, ERnLaneBorderDir Dir) const {
+TRnRef_T<URnWay> URnRoad::GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir Dir) const {
     if (!Lane) return nullptr;
 
     auto Border = Lane->GetBorder(BorderType);
     if (!Border) return nullptr;
 
-    return Dir == ERnLaneBorderDir::Left2Right ? Border : Border->ReversedWay();
+    return Dir == EPLATEAURnLaneBorderDir::Left2Right ? Border : Border->ReversedWay();
 }
 
-void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, ERnDir Dir) {
+void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir) {
     auto OldLanes = GetLanes(Dir);
     MainLanes.Reset();
 
-    for (const auto& Lane : GetLanes( FRnDirEx::GetOpposite(Dir))) {
+    for (const auto& Lane : GetLanes( FPLATEAURnDirEx::GetOpposite(Dir))) {
         MainLanes.Add(Lane);
     }
 
