@@ -92,7 +92,7 @@ bool FRnWayEx::IsValidWayOrDefault(const URnWay* Self)
 TArray<FLineSegment2D> URnWay::GetEdges2D() const {
     TArray<FLineSegment2D> Edges;
     for (int32 i = 0; i < Count() - 1; i++) {
-        Edges.Add(FLineSegment3D(GetPoint(i)->Vertex, GetPoint(i+1)->Vertex).To2D(FRnDef::Plane));
+        Edges.Add(FLineSegment3D(GetPoint(i)->Vertex, GetPoint(i+1)->Vertex).To2D(FPLATEAURnDef::Plane));
     }
     return Edges;
 }
@@ -170,7 +170,7 @@ bool URnWay::IsOutSide(const FVector& V, FVector& OutNearest, float& OutDistance
     FVector Delta = V - OutNearest;
     for(auto I : IndexSet)
     {
-        if (FVector2D::DotProduct( FRnDef::To2D(GetEdgeNormal(I)), FRnDef::To2D(Delta)) >= 0.0f)
+        if (FVector2D::DotProduct( FPLATEAURnDef::To2D(GetEdgeNormal(I)), FPLATEAURnDef::To2D(Delta)) >= 0.0f)
             return true;
     }
     return false;

@@ -3,10 +3,10 @@
 #include "CoreMinimal.h"
 
 // グラフ構造用
-UENUM(Meta = (Flags))
+UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class ERRoadTypeMask : uint8 {
     // 何もなし
-    Empty = 0,
+    Empty = 0 UMETA(Hidden),
 
     // 車道
     Road = 1 << 0,
@@ -24,12 +24,16 @@ enum class ERRoadTypeMask : uint8 {
     Undefined = 1 << 4,
 
     // 全ての値
-    All = ~0
+    //All = ~0
 };
 ENUM_CLASS_FLAGS(ERRoadTypeMask);
 
 class FRRoadTypeMaskEx {
 public:
+    static ERRoadTypeMask All() {
+        return (ERRoadTypeMask)(((int32)ERRoadTypeMask::Undefined << 1) - 1);
+    }
+
     // 車道部分
     static bool IsRoad(ERRoadTypeMask Self) {
         return EnumHasAnyFlags(Self, ERRoadTypeMask::Road);

@@ -6,7 +6,7 @@
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnLane.h"
-#include "RoadNetwork/Util/VectorEx.h"
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 
 URnIntersectionEdge::URnIntersectionEdge()
@@ -62,10 +62,10 @@ TArray<TRnRef_T<URnLane>> URnIntersectionEdge::GetConnectedLanes() const {
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Border)) {
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(Border)) {
                 Lanes.Add(Lane);
             }
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Border)) {
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(Border)) {
                 Lanes.Add(Lane);
             }
         }
@@ -81,10 +81,10 @@ TRnRef_T<URnLane> URnIntersectionEdge::GetConnectedLane(const TRnRef_T<URnWay>& 
     {
         auto RoadLanes = R->GetAllLanesWithMedian();
         for (const auto& Lane : RoadLanes) {
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(BorderWay)) {
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(BorderWay)) {
                 return Lane;
             }
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(BorderWay)) {
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(BorderWay)) {
                 return Lane;
             }
         }
@@ -162,9 +162,9 @@ void URnIntersection::RemoveEdge(const TRnRef_T<URnRoad>& Road, const TRnRef_T<U
         {
             if (Edge->GetRoad() != Road)
                 return false;
-            if (Lane->PrevBorder && Lane->PrevBorder->IsSameLineReference(Edge->GetBorder()))
+            if (Lane->GetPrevBorder() && Lane->GetPrevBorder()->IsSameLineReference(Edge->GetBorder()))
                 return true;
-            if (Lane->NextBorder && Lane->NextBorder->IsSameLineReference(Edge->GetBorder()))
+            if (Lane->GetNextBorder() && Lane->GetNextBorder()->IsSameLineReference(Edge->GetBorder()))
                 return true;
             return false;
         });
@@ -225,7 +225,7 @@ void URnIntersection::Align()
     if (FGeoGraph2D::IsClockwise<TRnRef_T<URnIntersectionEdge>>(Edges
         , [](TRnRef_T<URnIntersectionEdge> E)
         {
-            return FRnDef::To2D(E->GetBorder()->GetVertex(0));
+            return FPLATEAURnDef::To2D(E->GetBorder()->GetVertex(0));
         }) == false) 
     {
         for(auto&& e : Edges)
@@ -293,7 +293,7 @@ FVector URnIntersection::GetCentralVertex() const {
             Points.Add(Edge->GetBorder()->GetLerpPoint(0.5f));
         }
     }
-    return FVectorEx::Centroid(Points);
+    return FPLATEAUVectorEx::Centroid(Points);
 }
 
 TArray<TRnRef_T<URnWay>> URnIntersection::GetAllWays() const {
@@ -336,7 +336,7 @@ bool FRnIntersectionEx::FEdgeGroup::IsValid() const
 TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection)
 {
     auto CopiedEdges = Intersection->GetEdges();
-    auto Groups = FRnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
+    auto Groups = FPLATEAURnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
         CopiedEdges
         , [](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad(); }
     );

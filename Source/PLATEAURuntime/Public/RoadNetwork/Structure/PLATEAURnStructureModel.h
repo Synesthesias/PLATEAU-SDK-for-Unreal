@@ -31,13 +31,11 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnCreateRnModelFinishedDelegate OnCreateRnModelFinished;
 
-
     /**
      * @brief 道路構造の生成を行います
      * @param
      */
     UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelAsync(APLATEAUInstancedCityModel* TargetActor);
-
 public:
     virtual void Tick(float DeltaTime) override;
 };

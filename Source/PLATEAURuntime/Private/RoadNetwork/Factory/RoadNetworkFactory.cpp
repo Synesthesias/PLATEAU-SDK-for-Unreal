@@ -108,7 +108,7 @@ namespace
 
             if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
             {
-                    return FRnDef::To2D(v->Position);
+                    return FPLATEAURnDef::To2D(v->Position);
             })) {
                 Algo::Reverse(Vertices);
             }
@@ -262,7 +262,7 @@ namespace
             TMap<TRnRef_T<URnRoad>, float> AddedRoads;
 
             TArray<TRnRef_T<URnSideWalk>> ReturnSideWalks;
-            auto MoveWay = [&](URnWay* Way, URnRoadBase* Parent, ERnSideWalkLaneType LaneType, float SideWalkSize)
+            auto MoveWay = [&](URnWay* Way, URnRoadBase* Parent, EPLATEAURnSideWalkLaneType LaneType, float SideWalkSize)
             {
                 if (!Way || SideWalkSize <= 0.0f) {
                     return false;
@@ -370,8 +370,8 @@ namespace
                     URnLane* LeftLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes()[0] : nullptr;
                     URnLane* RightLane = Road->GetMainLanes().Num() > 0 ? Road->GetMainLanes().Last() : nullptr;
 
-                    MoveWay(LeftLane ? LeftLane->GetLeftWay() : nullptr, Road, ERnSideWalkLaneType::LeftLane, SideWalkSize);
-                    MoveWay(RightLane ? RightLane->GetRightWay() : nullptr, Road, ERnSideWalkLaneType::RightLane, SideWalkSize);
+                    MoveWay(LeftLane ? LeftLane->GetLeftWay() : nullptr, Road, EPLATEAURnSideWalkLaneType::LeftLane, SideWalkSize);
+                    MoveWay(RightLane ? RightLane->GetRightWay() : nullptr, Road, EPLATEAURnSideWalkLaneType::RightLane, SideWalkSize);
                 }
                 else if (URnIntersection* Intersection = Cast<URnIntersection>(Tran->Node)) 
                 {
@@ -414,7 +414,7 @@ namespace
                         }
 
                         for (const auto& Edge : Eg.Edges) {
-                            MoveWay(Edge->GetBorder(), Intersection, ERnSideWalkLaneType::Undefined, SideWalkSize);
+                            MoveWay(Edge->GetBorder(), Intersection, EPLATEAURnSideWalkLaneType::Undefined, SideWalkSize);
                         }
                     }
                 }
@@ -548,13 +548,13 @@ namespace
             auto Prev =Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
                 if (!L->IsBorder() || !L->Way)
                     return false;
-                return lane->PrevBorder && lane->PrevBorder->IsSameLineReference(L->Way);
+                return lane->GetPrevBorder() && lane->GetPrevBorder()->IsSameLineReference(L->Way);
                 });
 
             auto Next = Lines.FindByPredicate([lane](TSharedPtr<FTranLine> L) {
                 if (!L->IsBorder() || !L->Way)
                     return false;
-                return lane->NextBorder && lane->NextBorder->IsSameLineReference(L->Way);
+                return lane->GetNextBorder() && lane->GetNextBorder()->IsSameLineReference(L->Way);
                 });
 
             auto GetNode = [](TSharedPtr<FTranLine> L)-> TRnRef_T<URnRoadBase>
@@ -589,7 +589,7 @@ namespace
             auto V1 = Vertices[(i + 1) % Vertices.Num()];
 
             TObjectPtr<UREdge> E;                
-            if(FRnEx::TryFirstOrDefault(
+            if(FPLATEAURnEx::TryFirstOrDefault(
                 V0->GetEdges()
                 , [V0, V1](TObjectPtr<UREdge> E)-> bool {
                     return E->IsSameVertex(V0, V1);
@@ -662,26 +662,21 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor,
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor,
                                                         TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
-    if(DestActor->GetRootComponent() == nullptr)
-    {
-        auto DefaultSceneRoot = NewObject<USceneComponent>(DestActor, TEXT("DefaultSceneRoot"));
-        DestActor->AddOwnedComponent(DefaultSceneRoot);
-        DestActor->SetRootComponent(DefaultSceneRoot);
-        DefaultSceneRoot->RegisterComponent();
-    }
-
-    const auto Root = DestActor->GetRootComponent();
+#if WITH_EDITOR
+    const auto Root = Actor->GetRootComponent();
     TArray<FSubDividedCityObject> SubDividedCityObjects;
-    CreateSubDividedCityObjects(Self, Actor, DestActor, Root, CityObjectGroups, SubDividedCityObjects);
+    CreateSubDividedCityObjects(Self, TargetCityModel, Actor, Root, CityObjectGroups, SubDividedCityObjects);
 
     RGraphRef_t<URGraph> Graph;
-    CreateRGraph(Self, Actor, DestActor, Root, SubDividedCityObjects, Graph);
-
-    DestActor->Model = CreateRnModel(Self, Graph);
+    CreateRGraph(Self, TargetCityModel, Actor, Root, SubDividedCityObjects, Graph);
+    Actor->Model = CreateRnModel(Self, Graph);
+    return Actor->Model;
+#else
     return nullptr;
+#endif
 }
 
 TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
@@ -698,7 +693,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
             return M0 == M1;
             });
 
-        Model->FactoryVersion = Self.FactoryVersion;
+        Model->SetFactoryVersion(Self.FactoryVersion);
 
         FWork work;
         work.TerminateAllowEdgeAngle = Self.TerminateAllowEdgeAngle;
@@ -775,7 +770,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     auto ParentPair = Algo::FindByPredicate(work.TranMap, [&](const TTuple<RGraphRef_t<URFaceGroup>, TSharedPtr<FTran>>& X) {
                         return X.Value->FaceGroup->CityObjectGroup == sideWalkFace->GetCityObjectGroup() && X.Value->Node != nullptr;
                         });
-                    ERnSideWalkLaneType laneType = ERnSideWalkLaneType::Undefined;
+                    EPLATEAURnSideWalkLaneType laneType = EPLATEAURnSideWalkLaneType::Undefined;
 
                     TRnRef_T<URnRoadBase> Parent = nullptr;
                     if (ParentPair != nullptr && ParentPair->Value && ParentPair->Value->Node)
@@ -784,16 +779,16 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     }
 
                     if (auto road = Parent->CastToRoad()) {
-                        auto&& way = road->GetMergedSideWay(ERnDir::Left);
+                        auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
                         if (insideWay != nullptr) {
                             // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
                             // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
                             if (way == nullptr)
-                                laneType = ERnSideWalkLaneType::Undefined;
+                                laneType = EPLATEAURnSideWalkLaneType::Undefined;
                             else if (insideWay->IsSameLineReference(way))
-                                laneType = ERnSideWalkLaneType::LeftLane;
+                                laneType = EPLATEAURnSideWalkLaneType::LeftLane;
                             else
-                                laneType = ERnSideWalkLaneType::RightLane;
+                                laneType = EPLATEAURnSideWalkLaneType::RightLane;
                         }
                     }
 
@@ -835,9 +830,8 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //    }
         //}
 
-        //// 連続した道路を一つにまとめる
-        //if (MergeRoadGroup)
-        //    ret.MergeRoadGroup();
+        // 連続した道路を一つにまとめる
+        Model->MergeRoadGroup();
 
 
         //// 交差点との境界線が垂直になるようにする
@@ -899,11 +893,7 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
     
     if(Self.bSaveTmpData)
     {
-        auto SubDividedCityObjectGroup = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
-        if (SubDividedCityObjectGroup == nullptr) {
-            SubDividedCityObjectGroup = NewObject<UPLATEAUSubDividedCityObjectGroup>(DestActor, SubDividedObjectName);
-            FRnEx::AddChildInstanceComponent(DestActor, Root, SubDividedCityObjectGroup);
-        }
+        auto SubDividedCityObjectGroup = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<UPLATEAUSubDividedCityObjectGroup>(DestActor, Root, SubDividedObjectName);
 
         // 現在の子は削除する
         auto SubDividedCityObjects = SubDividedCityObjectGroup->GetCityObjects();
@@ -914,9 +904,10 @@ void FRoadNetworkFactoryEx::CreateSubDividedCityObjects(
 
         for (auto& So : OutSubDividedCityObjects) 
         {
-            auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, FName(So.Name));
+            auto UniqueName = MakeUniqueObjectName(Actor, UPLATEAUSubDividedCityObject::StaticClass(), FName(So.Name));
+            auto NewCityObject = NewObject<UPLATEAUSubDividedCityObject>(DestActor, UniqueName);
             NewCityObject->CityObject = So;
-            FRnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
+            FPLATEAURnEx::AddChildInstanceComponent(DestActor, SubDividedCityObjectGroup, NewCityObject);
         }
     }
     else
@@ -937,10 +928,10 @@ void FRoadNetworkFactoryEx::CreateRGraph(const FRoadNetworkFactory& Self, APLATE
     const auto RGraphName = TEXT("RGaph");
     if(Self.bSaveTmpData)
     {
-        auto RGraphObject = FRnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
+        auto RGraphObject = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<UPLATEAURGraph>(DestActor, Root, RGraphName);
         if (RGraphObject == nullptr) {
             RGraphObject = NewObject<UPLATEAURGraph>(DestActor, RGraphName);
-            FRnEx::AddChildInstanceComponent(DestActor, Root, RGraphObject);
+            FPLATEAURnEx::AddChildInstanceComponent(DestActor, Root, RGraphObject);
         }
         RGraphObject->RGraph = OutGraph;
     }

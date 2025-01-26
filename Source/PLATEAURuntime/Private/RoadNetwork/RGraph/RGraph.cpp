@@ -149,7 +149,7 @@ ERRoadTypeMask URVertex::GetAnyFaceTypeMask() const
 
 ERRoadTypeMask URVertex::GetAllFaceTypeMask() const
 {
-    ERRoadTypeMask Mask = ERRoadTypeMask::All;
+    ERRoadTypeMask Mask = FRRoadTypeMaskEx::All();
     for (const auto& Edge : GetEdges()) {
         for (const auto& Face : Edge->GetFaces()) {
             Mask &= Face->GetRoadTypes();
@@ -362,7 +362,7 @@ ERRoadTypeMask UREdge::GetAnyFaceTypeMask() const
 
 ERRoadTypeMask UREdge::GetAllFaceTypeMask() const
 {
-    ERRoadTypeMask Mask = ERRoadTypeMask::All;
+    ERRoadTypeMask Mask = FRRoadTypeMaskEx::All();
     for (const auto& Face : GetFaces()) {
         Mask &= Face->GetRoadTypes();
     }

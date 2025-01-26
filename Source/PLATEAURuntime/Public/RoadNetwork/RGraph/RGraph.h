@@ -6,7 +6,7 @@
 #include "RGraphDef.h"
 #include <memory>
 
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RGraph.generated.h"
 
 class UPLATEAUCityObjectGroup;

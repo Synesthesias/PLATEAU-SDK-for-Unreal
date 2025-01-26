@@ -4,7 +4,7 @@
 #include "RnPoint.h"
 #include "Containers/Array.h"
 #include "Math/Vector.h"
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/GeoGraph/AxisPlane.h"
 #include "RoadNetwork/GeoGraph/LineSegment2D.h"
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
@@ -63,7 +63,7 @@ public:
 
 
 
-    TArray<FLineSegment2D> GetEdges2D(EAxisPlane axis = FRnDef::Plane) const;
+    TArray<FLineSegment2D> GetEdges2D(EAxisPlane axis = FPLATEAURnDef::Plane) const;
     TArray<FLineSegment3D> GetEdges() const;
 
     static TRnRef_T<URnLineString> Create(const TArray<TRnRef_T<URnPoint>>& Vertices, bool RemoveDuplicate = true);

@@ -2,7 +2,7 @@
 #include <memory>
 #include "../../Component/PLATEAUSceneComponent.h"
 #include "RGraph.h"
-#include "RoadNetwork/Util/RnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "PLATEAURGraph.generated.h"
 
 struct FActorComponentTickFunction;
@@ -18,7 +18,7 @@ enum class ERPartsFlag : uint8 {
 ENUM_CLASS_FLAGS(ERPartsFlag);
 
 USTRUCT()
-struct FRGraphDrawFaceOption : public FRnDrawOption {
+struct FRGraphDrawFaceOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
@@ -47,7 +47,7 @@ struct FRGraphDrawFaceOption : public FRnDrawOption {
 };
 
 USTRUCT()
-struct FRGraphDrawEdgeOption : public FRnDrawOption {
+struct FRGraphDrawEdgeOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
@@ -55,17 +55,20 @@ struct FRGraphDrawEdgeOption : public FRnDrawOption {
 
     UPROPERTY(EditAnywhere)
     bool bShowNeighborCount = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
+    int32 ShowTypeMask = 0;
 };
 
 USTRUCT()
-struct FRGraphDrawVertexOption : public FRnDrawOption {
+struct FRGraphDrawVertexOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere)
     int32 Size = 10;
 
     UPROPERTY(EditAnywhere)
-    FRnDrawOption NeighborOption;
+    FPLATEAURnDrawOption NeighborOption;
 
     UPROPERTY(EditAnywhere)
     bool bShowPos = false;
@@ -76,7 +79,23 @@ struct FRGraphDrawVertexOption : public FRnDrawOption {
     UPROPERTY(EditAnywhere)
     bool bUseAnyFaceVertexColor = false;
 };
+USTRUCT()
+struct FRGraphDrawSideWalkOption : public FPLATEAURnDrawOption {
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    FPLATEAURnDrawOption OutsideWay;
 
+    UPROPERTY(EditAnywhere)
+    FPLATEAURnDrawOption InsideWay;
+
+    UPROPERTY(EditAnywhere)
+    FPLATEAURnDrawOption StartEdgeWay;
+
+    UPROPERTY(EditAnywhere)
+    FPLATEAURnDrawOption EndEdgeWay;
+
+};
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class PLATEAURUNTIME_API UPLATEAURGraph : public UPLATEAUSceneComponent {
     GENERATED_BODY()
@@ -98,10 +117,10 @@ public:
     bool bShowNormal;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
-    ERRoadTypeMask ShowFaceType;
+    int32 ShowFaceType;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum= ERRoadTypeMask))
-    ERRoadTypeMask RemoveFaceType;
+    int32 RemoveFaceType;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERPartsFlag))
     ERPartsFlag ShowId;
@@ -130,6 +149,8 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor UndefinedColor;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    FRGraphDrawSideWalkOption SideWalkOption;
 
     UPROPERTY(VisibleAnywhere, Category="PLATEAU")
     URGraph* RGraph;

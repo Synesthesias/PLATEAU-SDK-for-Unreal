@@ -10,7 +10,7 @@
 
 #include "CoreMinimal.h"
 
-class PLATEAURUNTIME_API FVectorEx
+class PLATEAURUNTIME_API FPLATEAUVectorEx
 {
 public:
     static FVector Clamp(const FVector& Vec, float Min, float Max);

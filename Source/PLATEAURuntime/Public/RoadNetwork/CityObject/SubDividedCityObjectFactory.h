@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "SubDividedCityObject.h"
 

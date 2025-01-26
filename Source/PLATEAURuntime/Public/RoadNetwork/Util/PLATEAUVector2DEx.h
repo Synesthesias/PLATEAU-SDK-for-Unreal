@@ -5,7 +5,7 @@
 #include "Math/Vector.h"
 #include "Kismet/KismetMathLibrary.h"
 
-class PLATEAURUNTIME_API FVector2DEx {
+class PLATEAURUNTIME_API FPLATEAUVector2DEx {
 public:
     // Absolute value of vector components
     static FVector2D Abs(const FVector2D& Vec);

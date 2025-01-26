@@ -1,8 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include <optional>
+
+#include "RnRoad.h"
+#include "RnRoadBase.h"
 #include "RnRoadGroup.generated.h"
 class URnIntersection;
 class URnRoad;
@@ -16,14 +19,6 @@ class URnRoadGroup : public UObject
 {
     GENERATED_BODY()
 public:
-    // 開始ノード
-    TRnRef_T<URnIntersection> PrevIntersection;
-
-    // 終了ノード
-    TRnRef_T<URnIntersection> NextIntersection;
-
-    // 道路リスト
-    TArray<TRnRef_T<URnRoad>> Roads;
     URnRoadGroup() = default;
     URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
         TRnRef_T<URnIntersection> InNextIntersection,
@@ -49,7 +44,7 @@ public:
     TArray<TRnRef_T<URnLane>> GetLeftLanes() const;
 public:
     // RnDirで指定した側のレーンを取得
-    TArray<TRnRef_T<URnLane>> GetLanes(ERnDir Dir) const;
+    TArray<TRnRef_T<URnLane>> GetLanes(EPLATEAURnDir Dir) const;
 
     // 中央分離帯を取得
     void GetMedians(TArray<TRnRef_T<URnWay>>& OutLeft, TArray<TRnRef_T<URnWay>>& OutRight) const;
@@ -85,17 +80,58 @@ public:
     static TRnRef_T<URnRoadGroup> CreateRoadGroupOrDefault(TRnRef_T<URnIntersection> PrevIntersection, TRnRef_T<URnIntersection> NextIntersection);
     static bool IsSameRoadGroup(TRnRef_T<URnRoadGroup> A, TRnRef_T<URnRoadGroup> B);
 
+    static TRnRef_T<URnRoadGroup> CreateRoadGroupOrDefault(TRnRef_T<URnRoad> Road)
+    {
+        if (!Road)
+            return nullptr;
+        TArray roads{ Road };
+
+        auto GetOppositeRoad = [](TRnRef_T<URnRoad> Self, TRnRef_T<URnRoadBase> Other) -> TRnRef_T<URnRoadBase>
+        {
+            auto Prev = Self->GetPrev();
+            auto Next = Self->GetNext();
+            if (Prev == Other)
+                return Next == Other ? nullptr : Next;
+            if (Next == Other)
+                return Prev == Other ? nullptr : Prev;
+            return nullptr;
+        };
+
+        auto Search = [&](TRnRef_T<URnRoadBase> src, TRnRef_T<URnRoadBase> target, bool isPrev) -> TRnRef_T<URnIntersection> {
+            while (target && target->CastToRoad()) {
+                auto road = target->CastToRoad();
+                // ループしていたら終了
+                if (roads.Contains(road))
+                    break;
+                if (isPrev)
+                    roads.Insert(road, 0);
+                else
+                    roads.Add(road);
+                // roadの接続先でselfじゃない方
+                target = GetOppositeRoad(road, src);
+                src = road;
+
+            }
+            if (!target)
+                return nullptr;
+            return target->CastToIntersection();
+            };
+        auto prevIntersection = Search(Road, Road->GetPrev(), true);
+        auto nextIntersection = Search(Road, Road->GetNext(), false);
+        return RnNew<URnRoadGroup>(prevIntersection, nextIntersection, roads);
+    }
+
 private:
 
 
     TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
-        std::optional<ERnDir> Dir,
+        std::optional<EPLATEAURnDir> Dir,
         // #TODO : nullptr入れられるのか確認
         TFunction<float(int32)> GetSplitRate = nullptr);
 
     // レーン分割する
-    void SetLaneCountImpl(int32 Count, ERnDir Dir, bool RebuildTrack);
+    void SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool RebuildTrack);
 
     // レーン数を変更する
     void SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, bool RebuildTrack);
@@ -111,9 +147,18 @@ public:
     void SetRightLaneCount(int32 Count, bool RebuildTrack = true);
 
     // 指定した側のレーン数を設定する
-    void SetLaneCount(ERnDir Dir, int32 Count, bool RebuildTrack = true);
+    void SetLaneCount(EPLATEAURnDir Dir, int32 Count, bool RebuildTrack = true);
 
     // 中央分離帯を考慮したレーン分割
     void SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, float MedianWidthRate);
 
+public:
+    // 開始ノード
+    TRnRef_T<URnIntersection> PrevIntersection;
+
+    // 終了ノード
+    TRnRef_T<URnIntersection> NextIntersection;
+
+    // 道路リスト
+    TArray<TRnRef_T<URnRoad>> Roads;
 };

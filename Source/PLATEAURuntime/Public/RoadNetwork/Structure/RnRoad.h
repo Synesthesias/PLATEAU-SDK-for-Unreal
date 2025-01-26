@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
-#include "../RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RnRoad.generated.h"
 
 class URnLane;
@@ -12,9 +12,8 @@ class UPLATEAUCityObjectGroup;
 
 UCLASS()
 class URnRoad : public URnRoadBase {
+private:
     GENERATED_BODY()
-public:
-    using Super = URnRoadBase;
 public:
     URnRoad();
     explicit URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
@@ -47,8 +46,21 @@ public:
     // 交差点間に挿入された空Roadかどうか
     bool IsEmptyRoad() const;
 
+    void SetNext(TRnRef_T<URnRoadBase> InNext);
+
+    void SetPrev(TRnRef_T<URnRoadBase> InPrev);
+
+
+    void SetMedianLane1(TRnRef_T<URnLane> InMedianLane);
+
+    TRnRef_T<URnRoadBase> GetNext() const;
+
+    TRnRef_T<URnRoadBase> GetPrev() const;
+
+    TRnRef_T<URnLane> GetMedianLane() const;
+
     // 指定方向のレーンを取得
-    TArray<TRnRef_T<URnLane>> GetLanes(ERnDir Dir) const;
+    TArray<TRnRef_T<URnLane>> GetLanes(EPLATEAURnDir Dir) const;
 
     // レーンが左車線かどうか
     bool IsLeftLane(const TRnRef_T<URnLane>& Lane) const;
@@ -57,7 +69,7 @@ public:
     bool IsRightLane(const TRnRef_T<URnLane>& Lane) const;
 
     // レーンの方向を取得
-    ERnDir GetLaneDir(const TRnRef_T<URnLane>& Lane) const;
+    EPLATEAURnDir GetLaneDir(const TRnRef_T<URnLane>& Lane) const;
 
     // 境界線情報を取得
     virtual TArray<TRnRef_T<URnWay>> GetBorders() const override;
@@ -96,15 +108,15 @@ public:
 
 
     // 指定した方向の境界線を取得する
-    virtual TRnRef_T<URnWay> GetMergedBorder(ERnLaneBorderType BorderType, std::optional<ERnDir> Dir) const override;
+    virtual TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const override;
 
     // 指定した方向のWayを取得する
-    virtual TRnRef_T<URnWay> GetMergedSideWay(ERnDir Dir) const override;
+    virtual TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const override;
 
     // dirで指定した側の全レーンの左右のWayを返す
     // dir==nullの時は全レーン共通で返す
     // 例) 左２車線でdir==RnDir.Leftの場合, 一番左の車線の左側のWayと左から２番目の車線の右側のWayを返す
-    bool TryGetMergedSideWay(std::optional<ERnDir> Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const;
+    bool TryGetMergedSideWay(std::optional<EPLATEAURnDir> Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const;
 
     // 指定したLineStringまでの最短距離を取得する
     virtual bool TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& LineString, float& OutDistance) const override;
@@ -113,13 +125,13 @@ public:
     virtual void AlignLaneBorder() override;
 
     // 境界線を調整するための線分を取得する
-    virtual bool TryGetAdjustBorderSegment(ERnLaneBorderType BorderType, FLineSegment3D& OutSegment) const override;
+    virtual bool TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const override;
 
     // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, ERnLaneBorderType BorderType, ERnLaneBorderDir Dir) const override;
+    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir Dir) const override;
 
     // レーンを置き換える
-    void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, ERnDir Dir);
+    void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir);
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes);
 
     // 前後の接続を設定する
@@ -174,11 +186,11 @@ private:
 public:
     // 接続先(nullの場合は接続なし)
     UPROPERTY()
-    TObjectPtr<URnRoadBase> Next;
+    TWeakObjectPtr<URnRoadBase> Next;
 
     // 接続元(nullの場合は接続なし)
     UPROPERTY()
-    TObjectPtr<URnRoadBase> Prev;
+    TWeakObjectPtr<URnRoadBase> Prev;
 
     // レーンリスト
     UPROPERTY()

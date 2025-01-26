@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "RnWay.h"
 #include "GameFramework/Actor.h"
-#include "RoadNetwork/RnDef.h"
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "PLATEAURnModelDrawerDebug.generated.h"
 
 class URnModel;
