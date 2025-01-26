@@ -18,6 +18,18 @@ void APLATEAURnStructureModel::Tick(float DeltaTime)
 
 UE::Tasks::TTask<APLATEAURnStructureModel*> APLATEAURnStructureModel::CreateRnModelAsync(APLATEAUInstancedCityModel* TargetActor)
 {
+#if true
+    // 別スレッドで呼び出すとSubDivided周りでアクター生成時にエラーになるので一旦同期タスクにする
+    FRoadNetworkFactoryEx::CreateRnModel(Factory, TargetActor, this);
+    //終了イベント通知
+    OnCreateRnModelFinished.Broadcast();
+    UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelTask = UE::Tasks::Launch(
+        TEXT("CreateRnModelTask")
+        , [this, TargetActor]() {           
+            return this;
+        });
+    return CreateRnModelTask;
+#else
     UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelTask = UE::Tasks::Launch(
         TEXT("CreateRnModelTask")
         , [this, TargetActor]() {
@@ -29,4 +41,5 @@ UE::Tasks::TTask<APLATEAURnStructureModel*> APLATEAURnStructureModel::CreateRnMo
             return this;
         });
     return CreateRnModelTask;
+#endif
 }
