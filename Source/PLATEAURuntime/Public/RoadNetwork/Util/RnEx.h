@@ -160,6 +160,8 @@ public:
     {
         TKey Key;
         TArray<TEdge> Edges;
+        FKeyEdgeGroup(){}
+        FKeyEdgeGroup(TKey InKey):Key(InKey){}
     };
 
     // OutlineEdgesで表現される多角形の各辺をKeySelectorでグループ化
@@ -171,30 +173,22 @@ public:
         const TArray<TEdge>& OutlineEdges
         , TFunction<TKey(TEdge)> KeySelector)
     {
-        TKey LastKey = TKey();
-        TArray<TEdge> Edges;
         TArray<FKeyEdgeGroup<TKey, TEdge>> Ret;
         for (auto i = 0; i < OutlineEdges.Num(); ++i) 
         {
             auto&& e = OutlineEdges[i];
             auto key = KeySelector(e);
-            if (i == 0 || LastKey != key) {
-                if (Edges.IsEmpty() == false)
-                    Ret.Add(FKeyEdgeGroup<TKey, TEdge>{ LastKey, Edges });
-
-                Edges = TArray<TEdge>();
-                LastKey = key;
+            if (i == 0 || Ret.Last().Key != key) 
+            {
+                Ret.Add(FKeyEdgeGroup<TKey, TEdge>(key));
             }
-            Edges.Add(e);
+            Ret.Last().Edges.Add(e);
         }
 
-        if (Edges.IsEmpty() == false)
-            Ret.Add(FKeyEdgeGroup<TKey, TEdge>{ LastKey, Edges });
-
         // Waysの最初と最後が同じKeyの場合は結合
-        if (Ret.Num() > 1 && Ret[0].Key == Ret[Ret.Num() - 1].Key) {
+        if (Ret.Num() > 1 && Ret[0].Key == Ret.Last().Key) {
             for (auto&& E : Ret[0].Edges)
-                Ret[Ret.Num() - 1].Edges.Add(E);
+                Ret.Last().Edges.Add(E);
             Ret.RemoveAt(0);
         }
 
