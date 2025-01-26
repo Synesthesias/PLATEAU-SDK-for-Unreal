@@ -3,6 +3,7 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLane.h"
+#include "RoadNetwork/Structure/RnRoadGroup.h"
 #include "RoadNetwork/Structure/RnWay.h"
 
 const FString& URnModel::GetFactoryVersion() const
@@ -229,4 +230,22 @@ TArray<TRnRef_T<URnRoadBase>> URnModel::GetConnectedRoadBasesRecursive(const TRn
     }
 
     return Result;
+}
+
+void URnModel::MergeRoadGroup()
+{
+    TSet<TRnRef_T<URnRoad>> visitedRoads;
+    auto CopiedRoads = Roads;
+    for(auto&& road : CopiedRoads)
+    {
+        if (visitedRoads.Contains(road))
+            continue;
+
+        auto roadGroup = URnRoadGroup::CreateRoadGroupOrDefault(road);
+        for(auto Road : roadGroup->Roads)
+        {
+            visitedRoads.Add(Road);
+        }
+        roadGroup->MergeRoads();
+    }
 }

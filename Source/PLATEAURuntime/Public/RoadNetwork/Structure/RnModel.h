@@ -122,6 +122,10 @@ public:
     // 指定したRoadBaseに接続されているRoadBaseを取得
     TArray<TRnRef_T<URnRoadBase>> GetConnectedRoadBasesRecursive(const TRnRef_T<URnRoadBase>& RoadBase) const;
 
+    /// <summary>
+    /// 連続した道路を一つのRoadにまとめる
+    /// </summary>
+    void MergeRoadGroup();
 
 private:
 
