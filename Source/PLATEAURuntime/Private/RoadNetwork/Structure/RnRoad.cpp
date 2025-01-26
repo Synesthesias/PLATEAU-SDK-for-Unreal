@@ -202,9 +202,6 @@ TRnRef_T<URnWay> URnRoad::GetMergedSideWay(ERnDir Dir) const {
 
 bool URnRoad::TryGetMergedSideWay(std::optional<ERnDir>  Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const
 {
-    auto Lanes = Dir.has_value() == false ? GetAllLanesWithMedian() : GetLanes(*Dir);
-    if (Lanes.Num() == 0) return false;
-
     OutLeftWay = OutRightWay = nullptr;
     if (IsValid() == false)
         return false;

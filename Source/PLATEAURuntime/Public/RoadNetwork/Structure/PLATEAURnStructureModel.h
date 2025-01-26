@@ -19,7 +19,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PLATEAU")
     FRoadNetworkFactory Factory;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TObjectPtr<URnModel> Model;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
@@ -31,19 +31,11 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnCreateRnModelFinishedDelegate OnCreateRnModelFinished;
 
-
     /**
      * @brief 道路構造の生成を行います
      * @param
      */
     UE::Tasks::TTask<APLATEAURnStructureModel*> CreateRnModelAsync(APLATEAUInstancedCityModel* TargetActor);
-    virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
-
-    virtual void PostInitProperties() override;
-
-    virtual void PostActorCreated() override;
-
-    virtual void PostInitializeComponents() override;
 public:
     virtual void Tick(float DeltaTime) override;
 };
