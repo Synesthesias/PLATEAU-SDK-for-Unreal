@@ -1,5 +1,8 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 
+#include "RoadNetwork/Util/IntVector2Ex.h"
+#include "RoadNetwork/Util/IntVectorEx.h"
+
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,
@@ -97,8 +100,49 @@ TMap<FVector, FVector> FGeoGraphEx::MergeVertices(const TArray<FVector>& Vertice
         Min.Z = FMath::Min(Min.Z, C.Z);
     }
 
+    TArray<FIntVector> Keys;
+    Cells.GetKeys(Keys);
+    Keys.Sort([](const FIntVector& A, const FIntVector& B) {
+        auto d = A.X - B.X;
+        if (d != 0) return d < 0;
+        d = A.Y - B.Y;
+        if (d != 0) return d < 0;
+        return A.Z < B.Z;
+        });
     TMap<FVector, FVector> Result;
     const auto Del1 = GetNeighborDistance3D(1);
+
+    for(auto& K : Keys)
+    {
+        if (Cells.Contains(K) == false) {
+            continue;
+        }
+
+        TQueue<FIntVector> Queue;
+        Queue.Enqueue(K);
+        while(Queue.IsEmpty() == false)
+        {
+            FIntVector C;
+            Queue.Dequeue(C);
+
+            for(auto D : Del1)
+            {
+                auto N = C + D;
+                if (N == K)
+                    continue;
+                if (Cells.Contains(N) == false) {
+                    continue;
+                }
+                
+                if (FIntVectorEx::Sum(FIntVectorEx::Abs(K - N)) > MergeLen)
+                    continue;
+                for (auto& V : Cells[N])
+                    Cells[K].Add(V);
+                Cells.Remove(N);
+                Queue.Enqueue(N);
+            }
+        }
+    }
 
     for (auto& Cell : Cells) {
         if (Cell.Value.Num() == 1) continue;
@@ -108,7 +152,6 @@ TMap<FVector, FVector> FGeoGraphEx::MergeVertices(const TArray<FVector>& Vertice
             Center += V;
         }
         Center /= Cell.Value.Num();
-
         for (const auto& V : Cell.Value) {
             Result.Add(V, Center);
         }
