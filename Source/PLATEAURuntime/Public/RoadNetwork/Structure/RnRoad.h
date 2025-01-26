@@ -62,6 +62,9 @@ public:
     // 指定方向のレーンを取得
     TArray<TRnRef_T<URnLane>> GetLanes(EPLATEAURnDir Dir) const;
 
+    // 指定方向のレーンを取得. Dirが指定されていない場合はMainLanes全体を返す
+    bool TryGetLanes(TOptional<EPLATEAURnDir> Dir, TArray<TRnRef_T<URnLane>>& OutLanes) const;
+
     // レーンが左車線かどうか
     bool IsLeftLane(const TRnRef_T<URnLane>& Lane) const;
 

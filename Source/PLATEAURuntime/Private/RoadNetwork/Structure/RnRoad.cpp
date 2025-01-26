@@ -103,6 +103,26 @@ TArray<TRnRef_T<URnLane>> URnRoad::GetLanes(EPLATEAURnDir Dir) const {
     return Dir == EPLATEAURnDir::Left ? GetLeftLanes() : GetRightLanes();
 }
 
+bool URnRoad::TryGetLanes(TOptional<EPLATEAURnDir> Dir, TArray<TRnRef_T<URnLane>>& OutLanes) const
+{
+    if (Dir.IsSet() == false) {
+        OutLanes = MainLanes;
+        return true;
+    }
+
+    if (EPLATEAURnDir::Left == *Dir) {
+        OutLanes = GetLeftLanes();
+        return true;
+    }
+
+    if (EPLATEAURnDir::Right == *Dir) {
+        OutLanes = GetRightLanes();
+        return true;
+    }
+    return false;
+}
+
+
 bool URnRoad::IsLeftLane(const TRnRef_T<URnLane>& Lane) const {
     return Lane && !Lane->GetIsReverse();
 }

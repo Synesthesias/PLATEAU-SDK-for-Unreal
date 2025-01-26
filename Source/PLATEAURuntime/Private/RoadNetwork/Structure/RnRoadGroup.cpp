@@ -7,6 +7,7 @@
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnLineString.h"
 #include "RoadNetwork/Structure/RnPoint.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 
 URnRoadGroup::URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
@@ -21,12 +22,20 @@ void URnRoadGroup::Init(TRnRef_T<URnIntersection> InPrevIntersection, TRnRef_T<U
 {
     PrevIntersection = InPrevIntersection;
     NextIntersection = InNextIntersection;
+    Roads = InRoads;
     Align();
 }
 
 bool URnRoadGroup::IsValid() const
 {
-    return Roads.Num() > 0 && std::all_of(Roads.begin(), Roads.end(), [](const TRnRef_T<URnRoad>& Road) { return Road->IsValid(); });
+    if (Roads.IsEmpty())
+        return false;
+    // すべてのRoadが有効かどうか
+    for (auto&& Road : Roads) {
+        if (!Road->IsValid())
+            return false;
+    }
+    return true;
 }
 
 int32 URnRoadGroup::GetLeftLaneCount() const {
@@ -220,7 +229,8 @@ bool URnRoadGroup::MergeRoads() {
     // マージ先の道路
     auto DstRoad = (Roads)[0];
     auto DstLanes = DstRoad->GetAllLanesWithMedian();
-    auto& DstSideWalks = DstRoad->GetSideWalks();
+    // 配列はコピーして持つ
+    auto DstSideWalks = DstRoad->GetSideWalks();
 
     for (int32 i = 1; i < Roads.Num(); i++) {
         // マージ元の道路. DstRoadに統合されて消える
@@ -336,10 +346,14 @@ bool URnRoadGroup::MergeRoads() {
         // DstSideWalksの中でマージされなかった(元の形状から変更されない)ものは
         // レーンと共通のLineStringを持っている場合に勝手に形状変わっているかもしれないので明示的に元に戻す
         for (const auto& Sw : OriginalDstSideWalks) {
-            if (!MergedDstSideWalks.Contains(Sw)) {
+            if (!MergedDstSideWalks.Contains(Sw)) 
+            {
+                auto OutsideWay = Sw->GetOutsideWay();
+                auto InsideWay = Sw->GetInsideWay();
+                // 必ず辞書に存在するはず. 無い場合は例外で良い
                 Sw->SetSideWays(
-                    Sw->GetOutsideWay() ? Original[Sw->GetOutsideWay()] : nullptr,
-                    Sw->GetInsideWay() ? Original[Sw->GetInsideWay()] : nullptr);
+                    Sw->GetOutsideWay() ? Original[OutsideWay] : nullptr,
+                    Sw->GetInsideWay() ? Original[InsideWay] : nullptr);
             }
         }
         DstRoad->AddTargetTrans(SrcRoad->GetTargetTrans());
