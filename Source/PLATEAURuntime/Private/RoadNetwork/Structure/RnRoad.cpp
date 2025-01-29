@@ -207,9 +207,13 @@ void URnRoad::AddMainLane(TRnRef_T<URnLane> Lane)
     MainLanes.Add(Lane);
 }
 
-TRnRef_T<URnWay> URnRoad::GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const {
-    auto Lanes = Dir.IsSet() == false ? GetAllLanesWithMedian() : GetLanes(*Dir);
-    if (Lanes.Num() == 0) return nullptr;
+TRnRef_T<URnWay> URnRoad::GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const
+{
+    TArray<TRnRef_T<URnLane>> Lanes;
+    if (TryGetLanes(Dir, Lanes) == false)
+        return nullptr;
+    if (Lanes.Num() == 0)
+        return nullptr;
 
     auto Ls = RnNew<URnLineString>();
     for(auto&& Lane : Lanes)
@@ -321,7 +325,8 @@ TRnRef_T<URnWay> URnRoad::GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURn
     }
 
     auto Border = Lane->GetBorder(BorderType);
-    if (!Border) return nullptr;
+    if (!Border) 
+        return nullptr;
 
     if (Lane->GetBorderDir(BorderType) != BorderDir)
         Border = Border->ReversedWay();

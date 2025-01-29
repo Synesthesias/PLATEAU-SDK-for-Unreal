@@ -86,27 +86,33 @@ bool URnLane::IsEmptyLane() const {
 bool URnLane::IsMedianLane() const {
     return GetParent() ? GetParent()->IsMedianLane(RnFrom(this)) : false;
 }
-TOptional<EPLATEAURnLaneBorderDir> URnLane::GetBorderDir(EPLATEAURnLaneBorderType Type) const
+TOptional<EPLATEAURnLaneBorderDir> URnLane::GetBorderDir(EPLATEAURnLaneBorderType BorderType) const
 {
-    auto Border = GetBorder(Type);
+    const auto Border = GetBorder(BorderType);
     if (!Border)
         return NullOpt;
     if (!IsValidWay())
         return NullOpt;
 
-    // とりあえず重なるかで判定
-    // borderの0番目の点がLeftWayの0番目の点と同じならLeft2Right
-    if(Border->GetPoint(0) == LeftWay->GetPoint(0))
-        return EPLATEAURnLaneBorderDir::Left2Right;
-
-    if (Border->GetPoint(0) == RightWay->GetPoint(0))
-        return EPLATEAURnLaneBorderDir::Right2Left;
-
-    if (!Border->IsValid())
+    if (Border->IsValid() == false)
         return NullOpt;
 
-    auto D = Border->GetPoint(1)->Vertex - Border->GetPoint(0)->Vertex;
-    auto Index = Type == EPLATEAURnLaneBorderType::Prev ? 0 : 1;
+    // とりあえず重なるかで判定
+    // LeftWay/RightWayの端点とボーダーの開始点が一致するかで判定
+    const auto Start = Border->GetPoint(0);
+    for(const auto Ind : { 0, -1 })
+    {
+        if (Start == LeftWay->GetPoint(Ind))
+            return EPLATEAURnLaneBorderDir::Left2Right;
+
+        if (Start == RightWay->GetPoint(Ind))
+            return EPLATEAURnLaneBorderDir::Right2Left;
+    }
+
+    // 一致しない場合はベクトルの向きで大体で判定
+    const auto D = Border->GetPoint(1)->Vertex - Border->GetPoint(0)->Vertex;
+    const auto Index = BorderType == EPLATEAURnLaneBorderType::Prev ? 0 : -1;
+    // 左->右の方向ベクトルとボーダーの方向ベクトルの内積が正ならLeft2Right
     auto D2 = RightWay->GetPoint(Index)->Vertex - LeftWay->GetPoint(Index)->Vertex;
     if (FVector2d::DotProduct(FPLATEAURnDef::To2D(D), FPLATEAURnDef::To2D(D2)) > 0.f)
         return EPLATEAURnLaneBorderDir::Left2Right;

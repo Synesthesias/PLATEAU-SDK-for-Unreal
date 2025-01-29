@@ -1,5 +1,6 @@
 #include "RoadNetwork/Structure/RnRoadGroup.h"
 
+#include "Algo/AllOf.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
@@ -547,16 +548,25 @@ void URnRoadGroup::SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool Rebuild
 }
 
 void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, bool RebuildTrack) {
-    if (std::all_of(Roads.begin(), Roads.end(), [LeftCount, RightCount](const TRnRef_T<URnRoad>& Road) {
+
+    if (IsValid() == false)
+        return;
+
+    // 既に指定の数になっている場合は何もしない
+    if(Algo::AllOf(Roads, [LeftCount, RightCount](const TRnRef_T<URnRoad>& Road) {
         return Road->GetLeftLaneCount() == LeftCount && Road->GetRightLaneCount() == RightCount;
-        })) {
+        }))
+    {
         return;
     }
 
+    // 向きをそろえる
     Align();
 
     auto Num = LeftCount + RightCount;
     auto AfterLanes = SplitLane(Num, NullOpt);
+    if (AfterLanes.IsEmpty())
+        return;
 
     TArray<TRnRef_T<URnLineString>> NewNextBorders;
     TArray<TRnRef_T<URnLineString>> NewPrevBorders;
@@ -696,11 +706,11 @@ void URnRoadGroup::SetLaneCount(EPLATEAURnDir Dir, int32 Count, bool RebuildTrac
 TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
     int32 Num,
     TOptional<EPLATEAURnDir> Dir,
-    TFunction<float(int32)> GetSplitRate) {
+    const TFunction<float(int32)>& GetSplitRate) {
     if (Num <= 0) 
         return TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
 
-
+    // 各Roadの境界線をLeft->Rightの方向で取得
     TArray<TRnRef_T<URnWay>> MergedBorders = FPLATEAURnLinq::Select(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
         return Road->GetMergedBorder(EPLATEAURnLaneBorderType::Prev, Dir);
         });

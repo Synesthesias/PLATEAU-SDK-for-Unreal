@@ -49,7 +49,7 @@ TRnRef_T<URnLineString> FPLATEAURnEx::CreateInnerLerpLineString(
         };
 
     AddPoint(Start);
-    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, URnModel::Plane, T);
+    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, FPLATEAURnDef::Plane, T);
 
     // 1つ目の点はボーダーと重複するのでスキップ
     for (int32 i = 1; i < Segments.Num(); ++i) {
