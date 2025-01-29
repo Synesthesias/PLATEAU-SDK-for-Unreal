@@ -127,8 +127,7 @@ private:
     TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
         TOptional<EPLATEAURnDir> Dir,
-        // #TODO : nullptr入れられるのか確認
-        TFunction<float(int32)> GetSplitRate = nullptr);
+        const TFunction<float(int32)>& GetSplitRate = nullptr);
 
     // レーン分割する
     void SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool RebuildTrack);

@@ -51,21 +51,30 @@ TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
         }
     }
 
-    auto IsInInnerSide = [&](TOptional<FLineSegment3D> e, FVector d, bool reverse, bool isPrev) -> bool {
-        if (!e)
+    auto IsInInnerSide = [&](
+        TOptional<FLineSegment3D> BaseEdge
+        , const FLineSegment3D& TargetSeg
+        , const bool InSideIsLeftSide
+        , const bool bIsPrev) -> bool {
+        if (!BaseEdge)
             return true;
-        auto ed2 = FAxisPlaneEx::ToVector2D(e->GetDirection(), Plane);
-        auto d2 = FAxisPlaneEx::ToVector2D(d, Plane);
-        auto cross = FPLATEAUVector2DEx::Cross(ed2, d2);
-        if (reverse == false)
-            cross = -cross;
-        if (cross > 0)
-            return false;
-        if (cross == 0.f) {
-            auto dot = ed2.Dot(d2);
-            if (isPrev)
-                dot = -dot;
-            return dot < 0.f;
+        const auto BaseEdge2D = BaseEdge->To2D(Plane);
+        const auto TargetSeg2D = TargetSeg.To2D(Plane);
+        const auto Sign = BaseEdge2D.Sign(TargetSeg2D.GetEnd());
+        if (Sign == 1 && InSideIsLeftSide)
+            return true;
+
+        if (Sign == -1 && !InSideIsLeftSide)
+            return true;
+
+        // 同一線分上にある場合
+        // 同じ方向を向いているか逆方向を向いているかで判定する
+        if (Sign == 0) 
+        {
+            auto Dot = BaseEdge2D.GetDirection().Dot(TargetSeg2D.GetDirection());
+            if (bIsPrev)
+                Dot = -Dot;
+            return Dot < 0.f;
         }
 
         return true;
@@ -107,9 +116,10 @@ TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
             auto dist = d.Length();
             if (dist >= minDist)
                 continue;
-            if (IsInInnerSide(prevEdge, d, false, true) == false)
+            auto Seg = FLineSegment3D(pos, nearPos);
+            if (IsInInnerSide(prevEdge, Seg, true, true) == false)
                 continue;
-            if (IsInInnerSide(nextEdge, d, false, false) == false)
+            if (IsInInnerSide(nextEdge, Seg, true, false) == false)
                 continue;
             if (CheckCollision(pos, nearPos, rightEdges, i))
                 continue;
@@ -158,11 +168,11 @@ TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
 
             if (dist >= minDist)
                 continue;
-            if (IsInInnerSide(prevEdge, d, true, true) == false)
+            auto Seg = FLineSegment3D(pos, nearPos);
+            if (IsInInnerSide(prevEdge, Seg, false, true) == false)
                 continue;
-            if (IsInInnerSide(nextEdge, d, true, false) == false)
+            if (IsInInnerSide(nextEdge, Seg, false, false) == false)
                 continue;
-
             if (CheckCollision(pos, nearPos, leftEdges, indexF))
                 continue;
             minDist = dist;

@@ -26,6 +26,10 @@ public:
     // Cross product of 2D vectors
     static float Cross(const FVector2D& A, const FVector2D& B);
 
+    // ToがFromの左側にあるかどうか
+    // 原点(O)に対してO -> Fromの方向ベクトルと, O -> Toの方向ベクトルの外積でチェック
+    static bool IsPointOnLeftSide(const FVector2D& From, const FVector2D& To);
+
     // Rotate vector towards target with max angle
     static FVector2D RotateTo(const FVector2D& From, const FVector2D& To, float MaxRad);
 

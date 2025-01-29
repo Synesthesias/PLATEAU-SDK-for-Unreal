@@ -67,7 +67,7 @@ public:
     bool IsMedianLane() const;
 
     // 境界線の方向を取得する
-    TOptional<EPLATEAURnLaneBorderDir> GetBorderDir(EPLATEAURnLaneBorderType Type) const;
+    TOptional<EPLATEAURnLaneBorderDir> GetBorderDir(EPLATEAURnLaneBorderType BorderType) const;
 
     // 境界線を取得する
     TRnRef_T<URnWay> GetBorder(EPLATEAURnLaneBorderType Type) const;

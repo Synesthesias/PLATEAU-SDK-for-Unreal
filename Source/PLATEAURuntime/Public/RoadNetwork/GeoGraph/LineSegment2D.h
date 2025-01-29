@@ -29,8 +29,12 @@ struct PLATEAURUNTIME_API FLineSegment2D {
     bool TrySegmentIntersection(const FLineSegment2D& Other) const;
 
     float GetDistance(const FLineSegment2D& Other) const;
+
+    // Pointが線分の左側にあれば1, 右側にあれば-1, 線分上にあれば0を返す
     int32 Sign(const FVector2D& Point) const;
 
+    // Pointが線分の左側にあるかどうか
+    bool IsPointOnLeftSide(const FVector2D& Point) const;
 private:
     FVector2D Start;
     FVector2D End;

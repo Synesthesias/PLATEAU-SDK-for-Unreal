@@ -41,6 +41,7 @@ TRnRef_T<URnLineString> FPLATEAURnEx::CreateInnerLerpLineString(
         return RnNew<URnLineString>(Points);
     }
 
+    auto Plane = FPLATEAURnDef::Plane;
     auto Line = RnNew<URnLineString>();
 
     auto AddPoint = [&](TRnRef_T<URnPoint> P) {
@@ -49,7 +50,7 @@ TRnRef_T<URnLineString> FPLATEAURnEx::CreateInnerLerpLineString(
         };
 
     AddPoint(Start);
-    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, FPLATEAURnDef::Plane, T);
+    auto Segments = FGeoGraphEx::GetInnerLerpSegments(LeftVertices, RightVertices, Plane, T);
 
     // 1つ目の点はボーダーと重複するのでスキップ
     for (int32 i = 1; i < Segments.Num(); ++i) {
@@ -59,10 +60,9 @@ TRnRef_T<URnLineString> FPLATEAURnEx::CreateInnerLerpLineString(
     AddPoint(End);
 
     // 自己交差があれば削除する
-    auto Plane = URnModel::Plane;
     FGeoGraph2D::RemoveSelfCrossing<TRnRef_T<URnPoint>>(
         Line->GetPoints(),
-        [Plane](TRnRef_T<URnPoint> T) { return FAxisPlaneEx::GetTangent(T->Vertex, Plane); },
+        [Plane](TRnRef_T<URnPoint> T) { return FAxisPlaneEx::ToVector2D(T->Vertex, Plane); },
         [](TRnRef_T<URnPoint> P1, TRnRef_T<URnPoint> P2, TRnRef_T<URnPoint> P3, TRnRef_T<URnPoint> P4,
             const FVector2D& Inter, float F1, float F2) {
                 return RnNew<URnPoint>(FMath::Lerp(P1->Vertex, P2->Vertex, F1));

@@ -35,7 +35,12 @@ float FPLATEAUVector2DEx::SignedAngle(const FVector2D& From, const FVector2D& To
 }
 
 float FPLATEAUVector2DEx::Cross(const FVector2D& A, const FVector2D& B) {
-    return A.X * B.Y - A.Y * B.X;
+    return FVector2D::CrossProduct(A, B);
+}
+
+bool FPLATEAUVector2DEx::IsPointOnLeftSide(const FVector2D& From, const FVector2D& To)
+{
+    return Cross(From, To) > 0;
 }
 
 FVector2D FPLATEAUVector2DEx::RotateTo(const FVector2D& From, const FVector2D& To, float MaxRad) {
