@@ -5,6 +5,7 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnRoad.h"
+#include "RoadNetwork/Structure/RnRoadGroup.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Util/PLATEAURnDebugEx.h"
@@ -299,26 +300,151 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             Way(Option.ShowNextBorder).Draw(Work, Self.GetNextBorder(), Work.visibleType);
             Way(Option.ShowPrevBorder).Draw(Work, Self.GetPrevBorder(), Work.visibleType);
 
+            auto Center = Self.GetCentralVertex();
+            auto DrawNeighborConnection = [&](bool Enable, TRnRef_T<URnWay> Border, FColor Color)
+            {
+                    if (!Enable || !Border)
+                        return;
+                Work.DrawArrow(Center, Border->GetLerpPoint(0.5f), 50, FVector::UpVector, Color);
+            };
+
+            if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::Lane) != 0)
+                FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Center);
+
+            DrawNeighborConnection(Option.bShowPrevRoad, Self.GetPrevBorder(), FColor::Red);
+            DrawNeighborConnection(Option.bShowNextRoad, Self.GetNextBorder(), FColor::Blue);
             return true;
         }
     };
 
     struct Road : public FRnModelRoadDrawer<FRnModelDrawRoadOption>
     {
+        struct MergeDrawer : public FRnModelRoadDrawer<FRnModelDrawRoadMergeOption>
+        {
+            MergeDrawer(Road& InParent, const FRnModelDrawRoadMergeOption& InOption)
+            : FRnModelRoadDrawer(InOption)
+            , Parent(InParent)
+            {
+                
+            }
+            virtual bool DrawImpl(RnModelDrawWork& Work, URnRoad& Self) override
+            {
+                Lane L(Work.Self->LaneOption);
+
+                TOptional<EPLATEAURnDir> Dir;
+                if (Option.bShowMergedBorderNoDir == false) {
+                    Dir = Option.ShowMergedBorderDir;
+                }
+                auto PrevBorder = Self.GetMergedBorder(EPLATEAURnLaneBorderType::Prev, Dir);
+                auto NextBorder = Self.GetMergedBorder(EPLATEAURnLaneBorderType::Next, Dir);
+                Way(L.Option.ShowPrevBorder).Draw(Work, PrevBorder, Work.visibleType);
+                Way(L.Option.ShowNextBorder).Draw(Work, NextBorder, Work.visibleType);
+
+                auto Draw = [&](TRnRef_T<URnWay> Border, Way Drawer)
+                {
+                    if (Border) {
+                        auto Splits = Border->Split(Option.SplitBorderNum, false);
+                        for (auto&& Split : Splits) {
+                            Drawer.Draw(Work, Split, Work.visibleType);
+                        }
+                    }
+                };
+                Draw(PrevBorder, Way( L.Option.ShowPrevBorder));
+                Draw(NextBorder, Way(L.Option.ShowNextBorder));
+                return true;
+            }
+            Road& Parent;
+        };
+
+        struct NormalDrawer : public FRnModelRoadDrawer<FRnModelDrawRoadNormalOption> {
+            NormalDrawer(Road& InParent, const FRnModelDrawRoadNormalOption& InOption)
+                : FRnModelRoadDrawer(InOption)
+                , Parent(InParent) {
+
+            }
+            virtual bool DrawImpl(RnModelDrawWork& Work, URnRoad& Self) override
+            {
+                Lane L(Work.Self->LaneOption);
+                for (auto i = 0; i < Self.MainLanes.Num(); ++i) {
+                    if (Option.ShowLaneIndex >= 0 && Option.ShowLaneIndex != i)
+                        continue;
+                    L.Draw(Work, Self.MainLanes[i], Work.visibleType);
+                }
+
+
+                return true;
+            }
+            Road& Parent;
+        };
+
+        struct GroupDrawer : public FRnModelRoadDrawer< FRnModelDrawRoadGroupOption>
+        {
+            GroupDrawer(Road& InParent, const FRnModelDrawRoadGroupOption& InOption)
+                : FRnModelRoadDrawer(InOption)
+                , Parent(InParent) {
+
+            }
+            virtual bool DrawImpl(RnModelDrawWork& Work, URnRoad& Self) override
+            {
+                auto RoadGroup = URnRoadGroup::CreateRoadGroupOrDefault(&Self);
+                // 2重実行しないように入れておく
+                for (auto R : RoadGroup->Roads)
+                    Work.Visited.Add(R);
+                NormalDrawer drawer{ Parent, Work.Self->RoadOption.NormalDrawer };
+
+                auto IsAligned = RoadGroup->IsAligned();
+                auto Color = IsAligned ? FColor::White : FColor::Red;
+                for(auto i = 0; i < RoadGroup->Roads.Num(); ++i)
+                {
+                    auto R = RoadGroup->Roads[i];
+                    auto V= R->GetCentralVertex();
+                    auto GroupName = RoadGroup->Roads[0]->GetName();
+                    FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s[%d]_%s"), *GroupName, i, *R->GetName()),  V, Color);
+
+                    drawer.DrawImpl(Work, *R);
+
+                    
+                }
+
+                return true;
+            }
+            Road& Parent;
+        };
+
         Road(const FRnModelDrawRoadOption& InOption)
-            :FRnModelRoadDrawer(InOption)
+            : FRnModelRoadDrawer(InOption)
+            , Merge(*this, InOption.MergeDrawer)
+            , Normal(*this, InOption.NormalDrawer)
+        , Group(*this, InOption.GroupDrawer)
         {
 
         }
+        MergeDrawer Merge;
+        NormalDrawer Normal;
+        GroupDrawer Group;
     private:
         virtual bool DrawImpl(RnModelDrawWork& Work, URnRoad& Self) override
         {
-            Lane L(Work.Self->LaneOption);
-            for(auto&& Lane : Self.MainLanes)
+            if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::Road) != 0)
+                FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
+
+            for (auto BorderType : { EPLATEAURnLaneBorderType::Prev , EPLATEAURnLaneBorderType::Next }) 
             {
-                L.Draw(Work, Lane, Work.visibleType);
+
+                if(FRnRoadEx::IsValidBorderAdjacentNeighbor(RnFrom(&Self), BorderType, true) == false)
+                {
+                    FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("Invalid %s"), *Self.GetName()), Self.GetCentralVertex());
+                }
             }
             return true;
+        }
+        virtual TArray<FRnModelDrawerOf<URnRoad>*> GetChildDrawers() override {
+            return TArray<FRnModelDrawerOf<URnRoad>*>
+            {
+                &Group,
+                &Merge,
+                &Normal
+            };
         }
     };
 
@@ -346,6 +472,9 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
                     NonBorder.Draw(Work, Edge->GetBorder(), Work.visibleType);
                 }
             }
+
+            if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::Intersection) != 0)
+                FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
             return true;
         }
     };
@@ -362,7 +491,9 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             Way(Option.ShowOutsideWay).Draw(Work, Self.GetOutsideWay(), Work.visibleType);
             Way(Option.ShowStartEdgeWay).Draw(Work, Self.GetStartEdgeWay(), Work.visibleType);
             Way(Option.ShowEndEdgeWay).Draw(Work, Self.GetEndEdgeWay(), Work.visibleType);
-          
+
+            if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::SideWalk) != 0)
+                FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
             return true;
         }
     };

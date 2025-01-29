@@ -36,13 +36,20 @@ namespace
         Isolated
     };
 
+    // 輪郭線分構造
     class FTranLine {
     public:
+        // 隣接している道路
         FTran* Neighbor;
+        // 線分リスト
         TArray<RGraphRef_t<UREdge>> Edges;
+        // 頂点リスト
         TArray<RGraphRef_t<URVertex>> Vertices;
+        // 線分リストをRnWayに変換したもの
         TRnRef_T<URnWay> Way;
+        // 次の輪郭線分
         TSharedPtr<FTranLine> Next;
+        // ひとつ前の輪郭線分
         TSharedPtr<FTranLine> Prev;
 
         bool IsBorder() const {
@@ -50,13 +57,16 @@ namespace
         }
     };
 
+    // 道路構造に対応
     class FTran {
     public:
         FWork& Work;
         RGraphRef_t<URGraph> Graph;
         TSet<RGraphRef_t<URFace>> Roads;
         RGraphRef_t<URFaceGroup> FaceGroup;
+        // 輪郭の頂点配列
         TArray<RGraphRef_t<URVertex>> Vertices;
+        // 輪郭の線分配列
         TArray<TSharedPtr<FTranLine>> Lines;
         TRnRef_T<URnRoadBase> Node;
         TArray<TRnRef_T<URnLane>> Lanes;
@@ -832,7 +842,9 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //}
 
         // 連続した道路を一つにまとめる
-        Model->MergeRoadGroup();
+        if (Self.bMergeRoadGroup) {
+            Model->MergeRoadGroup();
+        }
 
 
         //// 交差点との境界線が垂直になるようにする
@@ -842,12 +854,7 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
 
         // 道路を分割する
         TArray<FString> FailedRoads;
-        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
-
-        //// 信号制御器をデフォ値で配置する
-        //if (AddTrafficSignalLights)
-        //    ret.AddDefaultTrafficSignalLights();
-        
+        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);        
     }
     catch(std::exception e)
     {

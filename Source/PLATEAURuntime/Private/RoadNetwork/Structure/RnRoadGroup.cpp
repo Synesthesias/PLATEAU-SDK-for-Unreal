@@ -232,7 +232,6 @@ bool URnRoadGroup::MergeRoads() {
     auto DstLanes = DstRoad->GetAllLanesWithMedian();
     // 配列はコピーして持つ
     auto DstSideWalks = DstRoad->GetSideWalks();
-
     for (int32 i = 1; i < Roads.Num(); i++) {
         // マージ元の道路. DstRoadに統合されて消える
         auto SrcRoad = (Roads)[i];
@@ -357,6 +356,7 @@ bool URnRoadGroup::MergeRoads() {
                     Sw->GetInsideWay() ? Original[InsideWay] : nullptr);
             }
         }
+
         DstRoad->AddTargetTrans(SrcRoad->GetTargetTrans());
         SrcRoad->DisConnect(true);
     }
@@ -367,7 +367,6 @@ bool URnRoadGroup::MergeRoads() {
             NextIntersection->AddEdge(DstRoad, DstRoad->GetBorderWay(Lane, EPLATEAURnLaneBorderType::Next, EPLATEAURnLaneBorderDir::Left2Right));
         }
     }
-
     DstRoad->SetPrevNext(PrevIntersection, NextIntersection);
 
     Roads.Reset();
@@ -557,7 +556,7 @@ void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, 
     Align();
 
     auto Num = LeftCount + RightCount;
-    auto AfterLanes = SplitLane(Num, std::nullopt);
+    auto AfterLanes = SplitLane(Num, NullOpt);
 
     TArray<TRnRef_T<URnLineString>> NewNextBorders;
     TArray<TRnRef_T<URnLineString>> NewPrevBorders;
@@ -624,7 +623,7 @@ void URnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, flo
     auto Num = LeftCount + RightCount + 1;
     auto LaneRate = (1.0f - MedianWidthRate) / (Num - 1);
 
-    auto AfterLanes = SplitLane(Num, std::nullopt, [LeftCount, LaneRate, MedianWidthRate](int32 I) {
+    auto AfterLanes = SplitLane(Num, NullOpt, [LeftCount, LaneRate, MedianWidthRate](int32 I) {
         if (I == LeftCount)
             return MedianWidthRate;
         return LaneRate;
@@ -696,12 +695,11 @@ void URnRoadGroup::SetLaneCount(EPLATEAURnDir Dir, int32 Count, bool RebuildTrac
 }
 TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
     int32 Num,
-    std::optional<EPLATEAURnDir> Dir,
+    TOptional<EPLATEAURnDir> Dir,
     TFunction<float(int32)> GetSplitRate) {
     if (Num <= 0) 
         return TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
 
-    auto Result = TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
 
     TArray<TRnRef_T<URnWay>> MergedBorders = FPLATEAURnLinq::Select(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
         return Road->GetMergedBorder(EPLATEAURnLaneBorderType::Prev, Dir);
@@ -716,6 +714,7 @@ TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
         BorderWays.Add(Split);
     }
 
+    auto Result = TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
     for (int32 i = 0; i < Roads.Num(); ++i) {
         auto Road = (Roads)[i];
         auto PrevBorders = BorderWays[i];

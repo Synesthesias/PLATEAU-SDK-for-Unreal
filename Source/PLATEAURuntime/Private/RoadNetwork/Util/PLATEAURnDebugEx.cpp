@@ -18,13 +18,15 @@ void FPLATEAURnDebugEx::DrawLine(const FVector& Start, const FVector& End, const
 void FPLATEAURnDebugEx::DrawArrow(const FVector& Start, const FVector& End, float ArrowSize, const FVector& ArrowUp, const FLinearColor& BodyColor, const FLinearColor& ArrowColor, float Duration, float Thickness) {
     DrawLine(Start, End, BodyColor, Duration, Thickness);
 
-    if (ArrowSize > 0.0f) {
+    if (ArrowSize > 0.0f)
+    {
+        auto Up = FVector::CrossProduct(End - Start, FVector::CrossProduct(End - Start, ArrowUp)).GetSafeNormal();
         const FVector Direction = (End - Start).GetSafeNormal();
         const FVector Right = FVector::CrossProduct(Direction, ArrowUp).GetSafeNormal();
-        const FVector Up = FVector::CrossProduct(Right, Direction).GetSafeNormal();
-
-        const FVector Arrow1 = End - Direction * ArrowSize + Right * ArrowSize;
-        const FVector Arrow2 = End - Direction * ArrowSize - Right * ArrowSize;
+        auto A1 = FQuat(Up, FMath::DegreesToRadians(45.0f)) * (Start - End);
+        auto A2 = FQuat(Up, FMath::DegreesToRadians(-45.0f)) * (Start - End);
+        const FVector Arrow1 = End+ A1.GetSafeNormal() * ArrowSize;
+        const FVector Arrow2 = End+ A2.GetSafeNormal() * ArrowSize;
 
         DrawLine(Arrow1, End, ArrowColor, Duration, Thickness);
         DrawLine(Arrow2, End, ArrowColor, Duration, Thickness);

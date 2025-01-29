@@ -85,6 +85,10 @@ public:
     // 近接スコア計算
     float CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) const;
 
+    bool Check() const
+    {
+        return true;
+    }
 private:
     UPROPERTY()
     TWeakObjectPtr<URnRoadBase> ParentRoad;

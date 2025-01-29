@@ -1,5 +1,7 @@
 #include "RoadNetwork/Structure/RnLane.h"
 
+#include "RoadNetwork/Util/PLATEAUVectorEx.h"
+
 URnLane::URnLane()
     : bIsReverse(false) {
 }
@@ -84,10 +86,32 @@ bool URnLane::IsEmptyLane() const {
 bool URnLane::IsMedianLane() const {
     return GetParent() ? GetParent()->IsMedianLane(RnFrom(this)) : false;
 }
-EPLATEAURnLaneBorderDir URnLane::GetBorderDir(EPLATEAURnLaneBorderType Type) const {
-    return bIsReverse ?
-        (Type == EPLATEAURnLaneBorderType::Prev ? EPLATEAURnLaneBorderDir::Right2Left : EPLATEAURnLaneBorderDir::Left2Right) :
-        (Type == EPLATEAURnLaneBorderType::Prev ? EPLATEAURnLaneBorderDir::Left2Right : EPLATEAURnLaneBorderDir::Right2Left);
+TOptional<EPLATEAURnLaneBorderDir> URnLane::GetBorderDir(EPLATEAURnLaneBorderType Type) const
+{
+    auto Border = GetBorder(Type);
+    if (!Border)
+        return NullOpt;
+    if (!IsValidWay())
+        return NullOpt;
+
+    // とりあえず重なるかで判定
+    // borderの0番目の点がLeftWayの0番目の点と同じならLeft2Right
+    if(Border->GetPoint(0) == LeftWay->GetPoint(0))
+        return EPLATEAURnLaneBorderDir::Left2Right;
+
+    if (Border->GetPoint(0) == RightWay->GetPoint(0))
+        return EPLATEAURnLaneBorderDir::Right2Left;
+
+    if (!Border->IsValid())
+        return NullOpt;
+
+    auto D = Border->GetPoint(1)->Vertex - Border->GetPoint(0)->Vertex;
+    auto Index = Type == EPLATEAURnLaneBorderType::Prev ? 0 : 1;
+    auto D2 = RightWay->GetPoint(Index)->Vertex - LeftWay->GetPoint(Index)->Vertex;
+    if (FVector2d::DotProduct(FPLATEAURnDef::To2D(D), FPLATEAURnDef::To2D(D2)) > 0.f)
+        return EPLATEAURnLaneBorderDir::Left2Right;
+
+    return EPLATEAURnLaneBorderDir::Right2Left;
 }
 
 TRnRef_T<URnWay> URnLane::GetBorder(EPLATEAURnLaneBorderType Type) const {
@@ -156,8 +180,15 @@ float URnLane::CalcMinWidth() const
 void URnLane::Reverse() {
     bIsReverse = !bIsReverse;
     Swap(PrevBorder, NextBorder);
-    if (LeftWay) LeftWay->Reverse(true);
-    if (RightWay) RightWay->Reverse(true);
+    Swap(LeftWay, RightWay);
+    for (auto Way : GetAllWays())
+        Way->Reverse(true);
+}
+
+void URnLane::AlignBorder(EPLATEAURnLaneBorderDir borderDir)
+{
+    AlignBorder(EPLATEAURnLaneBorderType::Prev, borderDir);
+    AlignBorder(EPLATEAURnLaneBorderType::Next, borderDir);
 }
 
 void URnLane::BuildCenterWay() {
@@ -191,36 +222,6 @@ float URnLane::GetCenterLength() const {
     return CenterWay ? CenterWay->CalcLength() : 0.0f;
 }
 
-float URnLane::GetCenterLength2D(EAxisPlane Plane) const {
-    if (!CenterWay) return 0.0f;
-
-    float Length = 0.0f;
-    for (int32 i = 0; i < CenterWay->Count() - 1; ++i) {
-        FVector2D Start = FPLATEAURnDef::To2D(CenterWay->GetPoint(i)->Vertex);
-        FVector2D End = FPLATEAURnDef::To2D(CenterWay->GetPoint(i + 1)->Vertex);
-        Length += FVector2D::Distance(Start, End);
-    }
-    return Length;
-}
-
-float URnLane::GetCenterTotalAngle2D() const {
-    return CenterWay ? CenterWay->LineString->CalcTotalAngle2D() : 0.0f;
-}
-
-float URnLane::GetCenterCurvature2D() const {
-    float Length = GetCenterLength2D();
-    return Length > 0.0f ? GetCenterTotalAngle2D() / Length : 0.0f;
-}
-
-float URnLane::GetCenterRadius2D() const {
-    float Curvature = GetCenterCurvature2D();
-    return Curvature > 0.0f ? 1.0f / Curvature : MAX_FLT;
-}
-
-float URnLane::GetCenterInverseRadius2D() const {
-    return GetCenterCurvature2D();
-}
-
 float URnLane::GetDistanceFrom(const FVector& Point) const {
     if (!IsValidWay()) return MAX_FLT;
 
@@ -238,6 +239,18 @@ bool URnLane::IsInside(const FVector& Point) const {
     return !LeftWay->IsOutSide(Point, Nearest, Distance) &&
         !RightWay->IsOutSide(Point, Nearest, Distance);
 }
+
+
+FVector URnLane::GetCentralVertex() const {
+    TArray<FVector> Points;
+    if (GetLeftWay())
+        Points.Add(GetLeftWay()->GetLerpPoint(0.5f));
+    if (GetRightWay())
+        Points.Add(GetRightWay()->GetLerpPoint(0.5f));
+    return FPLATEAUVectorEx::Centroid(Points);
+}
+
+
 
 TRnRef_T<URnLane> URnLane::Clone() const {
     auto NewLane = RnNew<URnLane>();
@@ -262,3 +275,13 @@ TRnRef_T<URnLane> URnLane::CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URn
     return ret;
 }
 
+void URnLane::AlignBorder(EPLATEAURnLaneBorderType type, EPLATEAURnLaneBorderDir borderDir)
+{
+    auto border = GetBorder(type);
+    if (!border)
+        return;
+    auto dir = GetBorderDir(type);
+    if (dir != borderDir) {
+        border->Reverse(true);
+    }
+}

@@ -158,7 +158,7 @@ void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBo
             // 道路の長さを取得
             float RoadLength = 0.0f;
             TRnRef_T<URnWay> LeftWay, RightWay;
-            if (Road->TryGetMergedSideWay(std::nullopt, LeftWay, RightWay)) {
+            if (Road->TryGetMergedSideWay(NullOpt, LeftWay, RightWay)) {
                 RoadLength = (LeftWay->CalcLength() + RightWay->CalcLength()) * 0.5f;
             }
 
@@ -236,7 +236,7 @@ void URnModel::MergeRoadGroup()
 {
     TSet<TRnRef_T<URnRoad>> visitedRoads;
     auto CopiedRoads = Roads;
-    for(auto&& road : CopiedRoads)
+    for(auto& road : CopiedRoads)
     {
         if (visitedRoads.Contains(road))
             continue;
@@ -314,4 +314,21 @@ void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<
             failedRoads.Add(Road->GetName());
         }
     }
+}
+
+bool URnModel::Check() const
+{
+    for (auto&& Road : Roads) {
+        if (Road->Check() == false)
+            return false;
+    }
+    for (auto&& Intersection : Intersections) {
+        if (Intersection->Check() == false)
+            return false;
+    }
+    for (auto&& SideWalk : SideWalks) {
+        if (SideWalk->Check() == false)
+            return false;
+    }
+    return true;
 }

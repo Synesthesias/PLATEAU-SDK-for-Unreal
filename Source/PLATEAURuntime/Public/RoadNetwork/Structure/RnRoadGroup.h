@@ -126,7 +126,7 @@ private:
 
     TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
-        std::optional<EPLATEAURnDir> Dir,
+        TOptional<EPLATEAURnDir> Dir,
         // #TODO : nullptr入れられるのか確認
         TFunction<float(int32)> GetSplitRate = nullptr);
 

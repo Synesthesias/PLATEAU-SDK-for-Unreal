@@ -130,6 +130,8 @@ public:
     // roadWidthの道路幅を基準にレーンを分割する
     void SplitLaneByWidth(float RoadWidth, bool rebuildTrack, TArray<FString>& failedRoads);
 
+    // 不正チェック
+    bool Check() const;
 private:
 
     // 自動生成で作成されたときのバージョン

@@ -1,27 +1,185 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 
+#include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAUIntVectorEx.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,
     const TArray<FVector>& RightVertices,
     EAxisPlane Plane,
-    float P) {
-    P = FMath::Clamp(P, 0.0f, 1.0f);
+    float P,
+    float CheckMeter
+) {
+    P = FMath::Clamp(P, 0.f, 1.f);
 
-    auto LeftEdges  = GetEdges(LeftVertices, false);
-    auto RightEdges = GetEdges(RightVertices, false);
+    // 線分になっていない場合は無視する
+    if (LeftVertices.Num() < 2 || RightVertices.Num() < 2)
+        return TArray<FVector>();
 
-    TArray<float> Indices;
-    for (int32 i = 0; i < LeftVertices.Num(); ++i) {
-        Indices.Add(static_cast<float>(i));
+    // それぞれ直線の場合は高速化の特別処理入れる
+    if (LeftVertices.Num() == 2 && RightVertices.Num() == 2) {
+        return TArray<FVector> {
+            FMath::Lerp(LeftVertices[0], RightVertices[0], P),
+                FMath::Lerp(LeftVertices[1], RightVertices[1], P)
+        };
     }
 
-    // Rest of the implementation...
-    TArray<FVector> Result;
-    // Implementation details...
+    auto leftEdges = GetEdgeSegments(LeftVertices, false);
+    auto rightEdges = GetEdgeSegments(RightVertices, false);
 
-    return Result;
+    TArray<float> indices;
+
+    auto CheckLength = FMath::Max(CheckMeter, 1.f) * FPLATEAURnDef::Meter2Unit;
+
+    // 左の線分の頂点をイベントポイントとして登録
+    // ただし、線分がCheckLength以上の場合はCheckLength間隔でイベントポイントを追加する
+    for (auto i = 0; i < LeftVertices.Num(); i++) {
+        indices.Add(i);
+        // 最後の頂点はチェックしない
+        if (i == LeftVertices.Num() - 1)
+            break;
+        const auto& p0 = LeftVertices[i];
+        const auto& p1 = LeftVertices[i + 1];
+        auto sqrLen = (p1 - p0).SizeSquared();
+        if (sqrLen > CheckLength * CheckLength) {
+            auto len = FMath::Sqrt(sqrLen);
+            auto num = len / CheckLength;
+            for (auto j = 0; j < num - 1; ++j)
+                indices.Add(i + (j + 1.f) / num);
+        }
+    }
+
+    auto IsInInnerSide = [&](TOptional<FLineSegment3D> e, FVector d, bool reverse, bool isPrev) -> bool {
+        if (!e)
+            return true;
+        auto ed2 = FAxisPlaneEx::ToVector2D(e->GetDirection(), Plane);
+        auto d2 = FAxisPlaneEx::ToVector2D(d, Plane);
+        auto cross = FPLATEAUVector2DEx::Cross(ed2, d2);
+        if (reverse == false)
+            cross = -cross;
+        if (cross > 0)
+            return false;
+        if (cross == 0.f) {
+            auto dot = ed2.Dot(d2);
+            if (isPrev)
+                dot = -dot;
+            return dot < 0.f;
+        }
+
+        return true;
+        };
+
+    auto CheckCollision = [&](FVector a, FVector b, const TArray<FLineSegment3D>& edges, float indexF) -> bool {
+        auto a2 = FAxisPlaneEx::ToVector2D(a, Plane);
+        auto b2 = FAxisPlaneEx::ToVector2D(b, Plane);
+        auto index = (int)indexF;
+        auto f = indexF - index;
+        auto prevIndex = f > 0 ? index : index - 1;
+        for (auto i = 0; i < edges.Num(); ++i) {
+            if (i == index || i == prevIndex)
+                continue;
+            const auto& e = edges[i];
+            auto e2 = e.To2D(Plane);
+            FVector2D inter;
+            if (e2.TrySegmentIntersection( FLineSegment2D(a2, b2), inter))
+                return true;
+        }
+
+        return false;
+        };
+
+    for (auto i = 0; i < RightVertices.Num(); ++i) {
+        const auto& pos = RightVertices[i];
+
+        TOptional<FLineSegment3D> prevEdge = i > 0 ? rightEdges[i - 1] : (TOptional<FLineSegment3D>)NullOpt;
+        TOptional<FLineSegment3D> nextEdge = i < rightEdges.Num() ? rightEdges[i] : (TOptional<FLineSegment3D>)NullOpt;
+
+        float minIndexF = -1;
+        float minDist = FLT_MAX;
+        for (auto edgeIndex = 0; edgeIndex < leftEdges.Num(); ++edgeIndex) {
+            const auto& e = leftEdges[edgeIndex];
+            float distanceFromStart;
+            auto nearPos = e.GetNearestPoint(pos, distanceFromStart);
+            auto d = nearPos - pos;
+
+            auto dist = d.Length();
+            if (dist >= minDist)
+                continue;
+            if (IsInInnerSide(prevEdge, d, false, true) == false)
+                continue;
+            if (IsInInnerSide(nextEdge, d, false, false) == false)
+                continue;
+            if (CheckCollision(pos, nearPos, rightEdges, i))
+                continue;
+            minDist = dist;
+            minIndexF = edgeIndex + distanceFromStart / e.GetMagnitude();
+        }
+
+        if (minIndexF < 0)
+            continue;
+        indices.Add(minIndexF);
+    }
+
+    indices.Sort();
+
+    auto searchRightIndex = 0;
+    TArray<FVector> ret;
+    ret.Reserve(indices.Num());
+    for(auto indexF : indices) {
+        auto i = FMath::Clamp((int)indexF, 0, leftEdges.Num() - 1);
+        const auto& e1 = leftEdges[i];
+        auto f = FMath::Clamp(indexF - i, 0.f, 1.f);
+        auto pos = FMath::Lerp(e1.GetStart(), e1.GetEnd(), f);
+
+        TOptional<FLineSegment3D> prevEdge = NullOpt;
+        TOptional<FLineSegment3D> nextEdge = NullOpt;
+        if (f > 0.f && f < 1.f) {
+            prevEdge = FLineSegment3D(e1.GetStart(), pos);
+            nextEdge = FLineSegment3D(pos, e1.GetEnd());
+        }
+        else {
+            if (i > 0)
+                prevEdge = leftEdges[i - 1];
+            if (i < leftEdges.Num())
+                nextEdge = leftEdges[i];
+        }
+
+        float minIndexF = -1;
+        float minDist = FLT_MAX;
+        FVector minPos = FVector::Zero();
+        for (auto edgeIndex = searchRightIndex; edgeIndex < rightEdges.Num(); ++edgeIndex) {
+            const auto& e2 = rightEdges[edgeIndex];
+            float t;
+            auto nearPos = e2.GetNearestPoint(pos, t);
+            auto d = nearPos - pos;
+            auto dist = d.Length();
+
+            if (dist >= minDist)
+                continue;
+            if (IsInInnerSide(prevEdge, d, true, true) == false)
+                continue;
+            if (IsInInnerSide(nextEdge, d, true, false) == false)
+                continue;
+
+            if (CheckCollision(pos, nearPos, leftEdges, indexF))
+                continue;
+            minDist = dist;
+            minIndexF = edgeIndex + t;
+            minPos = nearPos;
+        }
+
+        if (minIndexF < 0)
+            continue;
+        // #TODO : やってみたらおかしくなったので毎回最初から探す
+        // 高速化のため. 戻ることは無いはずなので見つかったindexから探索でよいはず
+        //searchRightIndex = (int)minIndexF;
+
+        ret.Add(FMath::Lerp(pos, minPos, P));
+    }
+
+    return ret;
 }
 
 TArray<FIntVector> FGeoGraphEx::GetNeighborDistance3D(int32 D) {
