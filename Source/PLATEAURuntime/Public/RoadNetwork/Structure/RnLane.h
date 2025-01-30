@@ -143,23 +143,23 @@ private:
 private:
     // 親リンク
     UPROPERTY()
-    TWeakObjectPtr<URnRoad> Parent;
+    URnRoad* Parent;
 
     // 境界線(下流)
     UPROPERTY()
-    TObjectPtr<URnWay> PrevBorder;
+    URnWay* PrevBorder;
 
     // 境界線(上流)
     UPROPERTY()
-    TObjectPtr<URnWay> NextBorder;
+    URnWay* NextBorder;
 
     // 車線(左)
     UPROPERTY()
-    TObjectPtr<URnWay> LeftWay;
+    URnWay* LeftWay;
 
     // 車線(右)
     UPROPERTY()
-    TObjectPtr<URnWay> RightWay;
+    URnWay* RightWay;
 
     // 親Roadと逆方向(右車線等)
     UPROPERTY()
@@ -167,7 +167,7 @@ private:
 
     // 内部的に持つだけ. 中心線
     UPROPERTY()
-    TObjectPtr<URnWay> CenterWay;
+    URnWay* CenterWay;
 
 };
 

@@ -51,11 +51,11 @@ private:
 
     // 接続先の道路
     UPROPERTY()
-    TObjectPtr<URnRoadBase> Road;
+    URnRoadBase* Road;
 
     // 境界線
     UPROPERTY()
-    TObjectPtr<URnWay> Border;
+    URnWay* Border;
 };
 
 UCLASS()
@@ -163,7 +163,7 @@ private:
 
     // 交差点の外形情報
     UPROPERTY()
-    TArray<TObjectPtr<URnIntersectionEdge>> Edges;
+    TArray<URnIntersectionEdge*> Edges;
 };
 
 struct FRnIntersectionEx

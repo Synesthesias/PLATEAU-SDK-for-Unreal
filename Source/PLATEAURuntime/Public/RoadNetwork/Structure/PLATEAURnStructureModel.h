@@ -20,7 +20,7 @@ public:
     FRoadNetworkFactory Factory;
 
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
-    TObjectPtr<URnModel> Model;
+    URnModel* Model;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnModelDrawerDebug Debug;

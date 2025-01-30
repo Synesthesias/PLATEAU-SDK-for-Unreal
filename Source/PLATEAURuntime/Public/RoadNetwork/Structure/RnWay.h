@@ -189,7 +189,7 @@ public:
     bool IsReverseNormal;
 
     UPROPERTY()
-    TObjectPtr<URnLineString> LineString;
+    URnLineString* LineString;
 };
 
 struct FRnWayEx

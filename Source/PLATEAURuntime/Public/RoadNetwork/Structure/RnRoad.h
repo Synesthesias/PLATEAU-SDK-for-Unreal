@@ -195,19 +195,19 @@ private:
 public:
     // 接続先(nullの場合は接続なし)
     UPROPERTY()
-    TWeakObjectPtr<URnRoadBase> Next;
+    URnRoadBase* Next;
 
     // 接続元(nullの場合は接続なし)
     UPROPERTY()
-    TWeakObjectPtr<URnRoadBase> Prev;
+    URnRoadBase* Prev;
 
     // レーンリスト
     UPROPERTY()
-    TArray<TObjectPtr<URnLane>> MainLanes;
+    TArray<URnLane*> MainLanes;
 
     // 中央分離帯
     UPROPERTY()
-    TObjectPtr<URnLane> MedianLane;
+    URnLane* MedianLane;
 
 };
 

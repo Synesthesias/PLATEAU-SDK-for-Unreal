@@ -139,14 +139,14 @@ private:
 
     // 道路リスト
     UPROPERTY()
-    TArray<TObjectPtr<URnRoad>> Roads;
+    TArray<URnRoad*> Roads;
 
     // 交差点リスト
     UPROPERTY()
-    TArray< TObjectPtr<URnIntersection>> Intersections;
+    TArray<URnIntersection*> Intersections;
 
     // 歩道リスト
     UPROPERTY()
-    TArray< TObjectPtr<URnSideWalk>> SideWalks;
+    TArray<URnSideWalk*> SideWalks;
 
 };

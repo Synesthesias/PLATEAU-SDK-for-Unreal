@@ -99,7 +99,7 @@ private:
 
     // 自分が所属するRoadNetworkModel
     UPROPERTY()
-    TObjectPtr<URnModel> ParentModel;
+    URnModel* ParentModel;
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
     UPROPERTY()
@@ -107,6 +107,6 @@ private:
 
     // 歩道情報
     UPROPERTY()
-    TArray<TObjectPtr<URnSideWalk>> SideWalks;
+    TArray<URnSideWalk*> SideWalks;
 
 };

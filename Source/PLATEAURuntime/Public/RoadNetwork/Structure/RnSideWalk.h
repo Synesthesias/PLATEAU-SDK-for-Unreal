@@ -94,13 +94,13 @@ private:
     TWeakObjectPtr<URnRoadBase> ParentRoad;
 
     UPROPERTY()
-    TObjectPtr<URnWay> OutsideWay;
+    URnWay* OutsideWay;
     UPROPERTY()
-    TObjectPtr<URnWay> InsideWay;
+    URnWay* InsideWay;
     UPROPERTY()
-    TObjectPtr<URnWay> StartEdgeWay;
+    URnWay* StartEdgeWay;
     UPROPERTY()
-    TObjectPtr<URnWay> EndEdgeWay;
+    URnWay* EndEdgeWay;
     UPROPERTY()
     EPLATEAURnSideWalkLaneType LaneType;
 };
