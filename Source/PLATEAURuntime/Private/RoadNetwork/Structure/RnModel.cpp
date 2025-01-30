@@ -270,6 +270,9 @@ void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<
             if (RoadGroup->IsValid() == false)
                 continue;
 
+            if (RoadGroup->IsAllLaneValid() == false)
+                continue;
+
             if (RoadGroup->Roads.ContainsByPredicate([](TRnRef_T<URnRoad> l) { return l->MainLanes[0]->HasBothBorder() == false; }))
                 continue;
             auto&& leftCount = RoadGroup->GetLeftLaneCount();

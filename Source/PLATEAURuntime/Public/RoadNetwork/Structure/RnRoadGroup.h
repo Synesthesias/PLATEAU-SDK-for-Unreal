@@ -31,6 +31,9 @@ public:
     // 有効なRoadGroupかどうか
     bool IsValid() const;
 
+    // 全レーンが有効かどうか
+    bool IsAllLaneValid() const;
+
     // 左側のレーン数を取得
     int32 GetLeftLaneCount() const;
 

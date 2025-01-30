@@ -1,5 +1,6 @@
 #include "RoadNetwork/Structure/RnRoad.h"
 
+#include "Algo/AllOf.h"
 #include "Algo/AnyOf.h"
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnWay.h"
@@ -92,7 +93,7 @@ TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const {
 }
 
 bool URnRoad::IsValid() const {
-    return MainLanes.Num() > 0;
+    return MainLanes.Num() > 0 && Algo::AllOf( MainLanes,[](TObjectPtr<URnLane> Lane) { return Lane && Lane->HasBothBorder(); });
 }
 
 bool URnRoad::IsAllBothConnectedLane() const {
@@ -496,7 +497,6 @@ bool FRnRoadEx::IsValidBorderAdjacentNeighbor(const URnRoad* Self, EPLATEAURnLan
         }
 
         auto OppositeLaneBorder = Self->GetBorderWay(Lane, OppositeBorderType, EPLATEAURnLaneBorderDir::Left2Right);
-
 
         // 隣接する道路に共通の境界線を持たない場合はfalse
         if (!Algo::AnyOf(Ways, [LaneBorder](const TRnRef_T<URnWay>& Way) { return Way->IsSameLineReference(LaneBorder); })) 

@@ -117,10 +117,12 @@ namespace
                     return FRRoadTypeMaskEx::HasAnyFlag(Face->GetRoadTypes(), ERRoadTypeMask::SideWalk) == false;
             });
 
-            if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
-            {
+            if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(
+                Vertices
+                , [](RGraphRef_t<URVertex> v){
                     return FPLATEAURnDef::To2D(v->Position);
-            })) {
+            }) == false) 
+            {
                 Algo::Reverse(Vertices);
             }
         }

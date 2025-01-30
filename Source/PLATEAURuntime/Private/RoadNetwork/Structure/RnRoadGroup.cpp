@@ -40,6 +40,16 @@ bool URnRoadGroup::IsValid() const
     return true;
 }
 
+bool URnRoadGroup::IsAllLaneValid() const
+{
+    for(auto Road : Roads)
+    {
+        if (!Road->IsAllLaneValid())
+            return false;
+    }
+    return true;
+}
+
 int32 URnRoadGroup::GetLeftLaneCount() const {
     Align();
     if (Roads.Num() == 0) return 0;
