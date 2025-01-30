@@ -788,18 +788,20 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     {
                         Parent = ParentPair->Value->Node;
                     }
-
-                    if (auto road = Parent->CastToRoad()) {
-                        auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
-                        if (insideWay != nullptr) {
-                            // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
-                            // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
-                            if (way == nullptr)
-                                laneType = EPLATEAURnSideWalkLaneType::Undefined;
-                            else if (insideWay->IsSameLineReference(way))
-                                laneType = EPLATEAURnSideWalkLaneType::LeftLane;
-                            else
-                                laneType = EPLATEAURnSideWalkLaneType::RightLane;
+                    if(Parent)
+                    {
+                        if (auto road = Parent->CastToRoad()) {
+                            auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
+                            if (insideWay != nullptr) {
+                                // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
+                                // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
+                                if (way == nullptr)
+                                    laneType = EPLATEAURnSideWalkLaneType::Undefined;
+                                else if (insideWay->IsSameLineReference(way))
+                                    laneType = EPLATEAURnSideWalkLaneType::LeftLane;
+                                else
+                                    laneType = EPLATEAURnSideWalkLaneType::RightLane;
+                            }
                         }
                     }
 

@@ -259,22 +259,32 @@ bool URnRoadGroup::MergeRoads() {
 
             // 順方向(左車線)
             if (SrcRoad->IsLeftLane(SrcLane)) {
-                DstLane->GetLeftWay()->AppendBack2LineString(SrcLane->GetLeftWay());
-                Visited.Add(DstLane->GetLeftWay()->LineString);
+                if(DstLane->GetLeftWay())
+                {
+                    DstLane->GetLeftWay()->AppendBack2LineString(SrcLane->GetLeftWay());
+                    Visited.Add(DstLane->GetLeftWay()->LineString);                    
+                }
                 if (j == SrcLanes.Num() - 1) {
-                    DstLane->GetRightWay()->AppendBack2LineString(SrcLane->GetRightWay());
-                    Visited.Add(DstLane->GetRightWay()->LineString);
+                    if (DstLane->GetRightWay()) {
+                        DstLane->GetRightWay()->AppendBack2LineString(SrcLane->GetRightWay());
+                        Visited.Add(DstLane->GetRightWay()->LineString);
+                    }
                 }
 
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Next, SrcLane->GetNextBorder());
             }
             // 逆方向(右車線)
             else {
-                DstLane->GetRightWay()->AppendFront2LineString(SrcLane->GetRightWay());
-                Visited.Add(DstLane->GetRightWay()->LineString);
+                if(DstLane->GetRightWay())
+                {
+                    DstLane->GetRightWay()->AppendFront2LineString(SrcLane->GetRightWay());
+                    Visited.Add(DstLane->GetRightWay()->LineString);                    
+                }
                 if (j == SrcLanes.Num() - 1) {
-                    DstLane->GetLeftWay()->AppendFront2LineString(SrcLane->GetLeftWay());
-                    Visited.Add(DstLane->GetLeftWay()->LineString);
+                    if (DstLane->GetLeftWay()) {
+                        DstLane->GetLeftWay()->AppendFront2LineString(SrcLane->GetLeftWay());
+                        Visited.Add(DstLane->GetLeftWay()->LineString);
+                    }
                 }
 
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Prev, SrcLane->GetPrevBorder());
