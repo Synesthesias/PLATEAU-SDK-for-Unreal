@@ -12,6 +12,8 @@ void APLATEAURnStructureModel::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     if (Debug.bVisible) {
+        if(!Model)
+            Model = GetComponentByClass<URnModel>();
         Debug.Draw(Model);
     }
 }

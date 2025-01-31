@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Component/PLATEAUSceneComponent.h"
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RnModel.generated.h"
 class URnRoad;
@@ -29,7 +30,7 @@ public:
 };
 
 UCLASS()
-class URnModel : public UObject
+class URnModel : public UPLATEAUSceneComponent
 {
 public:
     const FString& GetFactoryVersion() const;
@@ -45,7 +46,7 @@ public:
 
     URnModel();
 
-    void Init(){}
+    void Init();
 
     // 道路を追加
     void AddRoadBase(const TRnRef_T<URnRoadBase>& RoadBase);
@@ -138,15 +139,15 @@ private:
     FString FactoryVersion;
 
     // 道路リスト
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnRoad*> Roads;
 
     // 交差点リスト
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnIntersection*> Intersections;
 
     // 歩道リスト
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnSideWalk*> SideWalks;
 
 };

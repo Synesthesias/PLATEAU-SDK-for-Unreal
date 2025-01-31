@@ -19,6 +19,13 @@ void URnModel::SetFactoryVersion(const FString& InFactoryVersion)
 URnModel::URnModel() {
 }
 
+void URnModel::Init()
+{
+    Roads.Reset();
+    Intersections.Reset();
+    SideWalks.Reset();
+}
+
 void URnModel::AddRoadBase(const TRnRef_T<URnRoadBase>& RoadBase)
 {
     if (!RoadBase) 

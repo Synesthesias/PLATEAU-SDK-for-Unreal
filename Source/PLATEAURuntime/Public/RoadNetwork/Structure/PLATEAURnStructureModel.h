@@ -19,7 +19,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PLATEAU")
     FRoadNetworkFactory Factory;
 
-    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU|Model")
     URnModel* Model;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")

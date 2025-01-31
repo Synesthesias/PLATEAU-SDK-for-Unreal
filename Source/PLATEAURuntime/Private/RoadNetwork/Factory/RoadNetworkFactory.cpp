@@ -675,8 +675,11 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor,
-                                                        TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
+    const FRoadNetworkFactory& Self
+    , APLATEAUInstancedCityModel* TargetCityModel
+    , APLATEAURnStructureModel* Actor
+    , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
 #if WITH_EDITOR
     const auto Root = Actor->GetRootComponent();
@@ -685,7 +688,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
 
     RGraphRef_t<URGraph> Graph;
     CreateRGraph(Self, TargetCityModel, Actor, Root, SubDividedCityObjects, Graph);
-    Actor->Model = CreateRnModel(Self, Graph);
+
+    const auto RnModelObjectName = TEXT("RnModel");
+
+    auto Model
+    = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<URnModel>(Actor, Root, RnModelObjectName);
+    
+    Actor->Model = CreateRnModel(Self, Graph, Model);
     return Actor->Model;
 #else
     return nullptr;
@@ -694,9 +703,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
 
 TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
     const FRoadNetworkFactory& Self
-    , RGraphRef_t<URGraph> Graph)
+    , RGraphRef_t<URGraph> Graph
+    , URnModel* Model
+)
 {
-    auto Model = RnNew<URnModel>();
+    if (!Model)
+        return Model;
+    Model->Init();
     try {
         // 道路/中央分離帯は一つのfaceGroupとしてまとめる
         auto&& mask = ~(ERRoadTypeMask::Road | ERRoadTypeMask::Median);
