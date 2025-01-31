@@ -126,7 +126,7 @@ public:
     static TArray<FLineSegment3D> GetEdgeSegments(const TArray<FVector>& Vertices, bool bIsLoop)
     {
         TArray<FLineSegment3D> Segments;
-        for (auto& Edge : GetEdges(Vertices, bIsLoop)) {
+        for (auto&& Edge : GetEdges(Vertices, bIsLoop)) {
             Segments.Add(FLineSegment3D(Edge.P0, Edge.P1));
         }
         return Segments;    
@@ -134,7 +134,7 @@ public:
 
     static TArray<FLineSegment2D> GetEdgeSegments(const TArray<FVector2D>& Vertices, bool bIsLoop) {
         TArray<FLineSegment2D> Segments;
-        for (auto& Edge : GetEdges(Vertices, bIsLoop)) {
+        for (auto&& Edge : GetEdges(Vertices, bIsLoop)) {
             Segments.Add(FLineSegment2D(Edge.P0, Edge.P1));
         }
         return Segments;
