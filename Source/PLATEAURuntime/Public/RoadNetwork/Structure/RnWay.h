@@ -54,7 +54,7 @@ public:
         }
 
         PointIterator end() const {
-            return PointIterator(Way, Way->Count());
+            return PointIterator(Way,  Way ?Way->Count() : 0);
         }
 
         const URnWay* Way;
@@ -93,13 +93,15 @@ public:
         }
 
         VertexIterator end() const {
-            return VertexIterator(Way, Way->Count());
+            return VertexIterator(Way,  Way ?Way->Count() : 0);
         }
 
         TArray<FVector> ToArray() const {
             TArray<FVector> Result;
-            for (int32 i = 0; i < Way->Count(); ++i) {
-                Result.Add(Way->GetVertex(i));
+            if (Way) {
+                for (int32 i = 0; i < Way->Count(); ++i) {
+                    Result.Add(Way->GetVertex(i));
+                }
             }
             return Result;
         }
@@ -189,7 +191,7 @@ public:
     bool IsReverseNormal;
 
     UPROPERTY()
-    TObjectPtr<URnLineString> LineString;
+    URnLineString* LineString;
 };
 
 struct FRnWayEx

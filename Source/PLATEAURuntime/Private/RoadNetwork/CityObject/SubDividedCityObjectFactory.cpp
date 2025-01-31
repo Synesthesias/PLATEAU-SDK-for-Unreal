@@ -1,11 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 #include "RoadNetwork/CityObject/SubDividedCityObjectFactory.h"
-#include "BlueprintActionDatabase.h"
 #include "PLATEAUExportSettings.h"
 #include "PLATEAUMeshExporter.h"
-#include "UObject/FastReferenceCollector.h"
-#include <plateau/granularity_convert/granularity_converter.h>
-
 #include "CityGML/PLATEAUCityObject.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include "Util/PLATEAUReconstructUtil.h"

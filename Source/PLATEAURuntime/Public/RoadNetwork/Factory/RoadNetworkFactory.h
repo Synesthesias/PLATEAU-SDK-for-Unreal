@@ -92,9 +92,15 @@ struct FRoadNetworkFactoryEx
 
     static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
-    static TRnRef_T<URnModel> CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor, TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups);
-
 private:
+
+    static TRnRef_T<URnModel> CreateRoadNetwork(
+        const FRoadNetworkFactory& Self
+        , APLATEAUInstancedCityModel* TargetCityModel
+        , APLATEAURnStructureModel* Actor
+        , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups
+    );
+
     // 最小地物に分解する
     static void CreateSubDividedCityObjects(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor
         , AActor* DestActor
@@ -112,5 +118,6 @@ private:
     // RnModelを作成する
     static  TRnRef_T<URnModel> CreateRnModel(
         const FRoadNetworkFactory& Self
-        , RGraphRef_t<URGraph> Graph);
+        , RGraphRef_t<URGraph> Graph
+        , URnModel* OutModel);
 };

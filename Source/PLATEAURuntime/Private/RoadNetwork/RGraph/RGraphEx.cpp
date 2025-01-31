@@ -9,6 +9,7 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 #include "Algo/AnyOf.h"
 #include "RoadNetwork/Util/PLATEAURnDebugEx.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 namespace
 {
@@ -771,7 +772,7 @@ bool FRGraphEx::OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices
         auto V0 = Vertices[i % Vertices.Num()];
         auto V1 = Vertices[(i + 1) % Vertices.Num()];
         TObjectPtr<UREdge> E;
-        if (FPLATEAURnEx::TryFirstOrDefault(
+        if (FPLATEAURnLinq::TryFirstOrDefault(
             V0->GetEdges()
             , [V0, V1](RGraphRef_t<UREdge> E) { return E->GetOppositeVertex(V0) == V1; }
             , E) == false)

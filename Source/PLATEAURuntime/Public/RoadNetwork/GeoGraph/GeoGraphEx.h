@@ -123,6 +123,23 @@ public:
         return EdgeEnumerator<T>(Vertices, bIsLoop);
     }
 
+    static TArray<FLineSegment3D> GetEdgeSegments(const TArray<FVector>& Vertices, bool bIsLoop)
+    {
+        TArray<FLineSegment3D> Segments;
+        for (auto& Edge : GetEdges(Vertices, bIsLoop)) {
+            Segments.Add(FLineSegment3D(Edge.P0, Edge.P1));
+        }
+        return Segments;    
+    }
+
+    static TArray<FLineSegment2D> GetEdgeSegments(const TArray<FVector2D>& Vertices, bool bIsLoop) {
+        TArray<FLineSegment2D> Segments;
+        for (auto& Edge : GetEdges(Vertices, bIsLoop)) {
+            Segments.Add(FLineSegment2D(Edge.P0, Edge.P1));
+        }
+        return Segments;
+    }
+
    /* template<typename T>
     static TArray<TTuple<T, T>> GetEdges(const TArray<T>& Vertices, bool bIsLoop);*/
 
@@ -130,7 +147,8 @@ public:
         const TArray<FVector>& LeftVertices,
         const TArray<FVector>& RightVertices,
         EAxisPlane Plane,
-        float P);
+        float P,
+        float CheckMeter = 3.f);
 
 
     static TArray<FIntVector> GetNeighborDistance3D(int32 D);

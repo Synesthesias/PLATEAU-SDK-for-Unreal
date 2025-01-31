@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Component/PLATEAUSceneComponent.h"
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RnModel.generated.h"
 class URnRoad;
@@ -29,7 +30,7 @@ public:
 };
 
 UCLASS()
-class URnModel : public UObject
+class URnModel : public UPLATEAUSceneComponent
 {
 public:
     const FString& GetFactoryVersion() const;
@@ -45,7 +46,7 @@ public:
 
     URnModel();
 
-    void Init(){}
+    void Init();
 
     // 道路を追加
     void AddRoadBase(const TRnRef_T<URnRoadBase>& RoadBase);
@@ -127,21 +128,26 @@ public:
     /// </summary>
     void MergeRoadGroup();
 
+    // roadWidthの道路幅を基準にレーンを分割する
+    void SplitLaneByWidth(float RoadWidth, bool rebuildTrack, TArray<FString>& failedRoads);
+
+    // 不正チェック
+    bool Check() const;
 private:
 
     // 自動生成で作成されたときのバージョン
     FString FactoryVersion;
 
     // 道路リスト
-    UPROPERTY()
-    TArray<TObjectPtr<URnRoad>> Roads;
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    TArray<URnRoad*> Roads;
 
     // 交差点リスト
-    UPROPERTY()
-    TArray< TObjectPtr<URnIntersection>> Intersections;
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    TArray<URnIntersection*> Intersections;
 
     // 歩道リスト
-    UPROPERTY()
-    TArray< TObjectPtr<URnSideWalk>> SideWalks;
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    TArray<URnSideWalk*> SideWalks;
 
 };

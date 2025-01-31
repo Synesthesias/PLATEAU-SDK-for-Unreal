@@ -72,7 +72,7 @@ public:
     FLinearColor ReverseWayArrowColor = FLinearColor::Blue;
 
     UPROPERTY(EditAnywhere)
-    float ArrowSize = 0.5f;
+    float ArrowSize = 50.f;
 };
 
 // Add these structures to the header file
@@ -113,6 +113,58 @@ public:
 
     UPROPERTY(EditAnywhere)
     bool bShowPrevRoad = false;
+
+    UPROPERTY(EditAnywhere)
+    bool bShowCenter2Next = false;
+
+};
+
+
+USTRUCT()
+struct FRnModelDrawRoadMergeOption : public FRnModelDrawOption {
+    GENERATED_BODY()
+public:
+    FRnModelDrawRoadMergeOption()
+    {
+        bVisible = false;
+    }
+    UPROPERTY(EditAnywhere)
+    bool bShowMergedBorderNoDir = false;
+
+    UPROPERTY(EditAnywhere)
+    EPLATEAURnDir ShowMergedBorderDir = EPLATEAURnDir::Left;
+
+    UPROPERTY(EditAnywhere)
+    int32 SplitBorderNum = 1;
+};
+USTRUCT()
+struct FRnModelDrawRoadNormalOption : public FRnModelDrawOption {
+    GENERATED_BODY()
+public:
+    UPROPERTY(EditAnywhere)
+    bool bShowSpline = true;
+
+    UPROPERTY(EditAnywhere)
+    int ShowLaneIndex = -1;
+
+    UPROPERTY(EditAnywhere)
+    FLinearColor GroupColor = FLinearColor::Green;
+};
+USTRUCT()
+struct FRnModelDrawRoadGroupOption : public FRnModelDrawOption {
+    GENERATED_BODY()
+public:
+    FRnModelDrawRoadGroupOption() {
+        bVisible = false;
+    }
+    UPROPERTY(EditAnywhere)
+    bool bShowMergedBorderNoDir = false;
+
+    UPROPERTY(EditAnywhere)
+    EPLATEAURnDir ShowMergedBorderDir = EPLATEAURnDir::Left;
+
+    UPROPERTY(EditAnywhere)
+    int32 SplitBorderNum = 1;
 };
 
 USTRUCT()
@@ -121,16 +173,16 @@ struct FRnModelDrawRoadOption : public FRnModelDrawOption {
 public:
 
     UPROPERTY(EditAnywhere)
-    FRnModelDrawLaneOption NormalDrawer;
+    FRnModelDrawRoadMergeOption MergeDrawer;
 
     UPROPERTY(EditAnywhere)
-    bool bShowGroupDrawer = false;
+    FRnModelDrawRoadNormalOption NormalDrawer;
 
     UPROPERTY(EditAnywhere)
-    bool bShowSpline = true;
+    FRnModelDrawRoadGroupOption GroupDrawer;
 
     UPROPERTY(EditAnywhere)
-    FLinearColor GroupColor = FLinearColor::Green;
+    bool bShowGroup = false;
 };
 
 USTRUCT()
@@ -216,9 +268,14 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawSideWalkOption SideWalkOption;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    ERnPartsTypeMask ShowPartsType;
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERnPartsTypeMask))
+    int32 ShowPartsType;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bShowOnlyTargets;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    TArray<FString> ShowTargetNames;
 
     void Draw(URnModel* Model);
 };

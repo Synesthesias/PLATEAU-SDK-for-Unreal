@@ -1,6 +1,7 @@
 #include "RoadNetwork/GeoGraph/LineSegment2D.h"
 
 #include "RoadNetwork/GeoGraph/LineUtil.h"
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
 FLineSegment2D::FLineSegment2D(const FVector2D& InStart, const FVector2D& InEnd)
     : Start(InStart)
@@ -89,6 +90,11 @@ float FLineSegment2D::GetDistance(const FLineSegment2D& Other) const {
 }
 
 int32 FLineSegment2D::Sign(const FVector2D& Point) const {
-    const float Cross = Direction.X * (Point.Y - Start.Y) - Direction.Y * (Point.X - Start.X);
+    const float Cross = FPLATEAUVector2DEx::Cross(Direction, Point - Start);
     return FMath::Sign(Cross);
+}
+
+bool FLineSegment2D::IsPointOnLeftSide(const FVector2D& Point) const
+{
+    return FPLATEAUVector2DEx::IsPointOnLeftSide(Direction, Point - Start);
 }

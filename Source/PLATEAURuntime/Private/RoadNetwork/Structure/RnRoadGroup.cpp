@@ -1,5 +1,6 @@
 #include "RoadNetwork/Structure/RnRoadGroup.h"
 
+#include "Algo/AllOf.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
@@ -7,11 +8,13 @@
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnLineString.h"
 #include "RoadNetwork/Structure/RnPoint.h"
+#include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 URnRoadGroup::URnRoadGroup(TRnRef_T<URnIntersection> InPrevIntersection,
-                         TRnRef_T<URnIntersection> InNextIntersection,
-                         const TArray<TRnRef_T<URnRoad>>& InRoads)
+                           TRnRef_T<URnIntersection> InNextIntersection,
+                           const TArray<TRnRef_T<URnRoad>>& InRoads)
 {
     Init(InPrevIntersection, InNextIntersection, InRoads);
 }
@@ -21,12 +24,30 @@ void URnRoadGroup::Init(TRnRef_T<URnIntersection> InPrevIntersection, TRnRef_T<U
 {
     PrevIntersection = InPrevIntersection;
     NextIntersection = InNextIntersection;
+    Roads = InRoads;
     Align();
 }
 
 bool URnRoadGroup::IsValid() const
 {
-    return Roads.Num() > 0 && std::all_of(Roads.begin(), Roads.end(), [](const TRnRef_T<URnRoad>& Road) { return Road->IsValid(); });
+    if (Roads.IsEmpty())
+        return false;
+    // すべてのRoadが有効かどうか
+    for (auto&& Road : Roads) {
+        if (!Road->IsValid())
+            return false;
+    }
+    return true;
+}
+
+bool URnRoadGroup::IsAllLaneValid() const
+{
+    for(auto Road : Roads)
+    {
+        if (!Road->IsAllLaneValid())
+            return false;
+    }
+    return true;
 }
 
 int32 URnRoadGroup::GetLeftLaneCount() const {
@@ -220,8 +241,8 @@ bool URnRoadGroup::MergeRoads() {
     // マージ先の道路
     auto DstRoad = (Roads)[0];
     auto DstLanes = DstRoad->GetAllLanesWithMedian();
-    auto& DstSideWalks = DstRoad->GetSideWalks();
-
+    // 配列はコピーして持つ
+    auto DstSideWalks = DstRoad->GetSideWalks();
     for (int32 i = 1; i < Roads.Num(); i++) {
         // マージ元の道路. DstRoadに統合されて消える
         auto SrcRoad = (Roads)[i];
@@ -248,22 +269,32 @@ bool URnRoadGroup::MergeRoads() {
 
             // 順方向(左車線)
             if (SrcRoad->IsLeftLane(SrcLane)) {
-                DstLane->GetLeftWay()->AppendBack2LineString(SrcLane->GetLeftWay());
-                Visited.Add(DstLane->GetLeftWay()->LineString);
+                if(DstLane->GetLeftWay())
+                {
+                    DstLane->GetLeftWay()->AppendBack2LineString(SrcLane->GetLeftWay());
+                    Visited.Add(DstLane->GetLeftWay()->LineString);                    
+                }
                 if (j == SrcLanes.Num() - 1) {
-                    DstLane->GetRightWay()->AppendBack2LineString(SrcLane->GetRightWay());
-                    Visited.Add(DstLane->GetRightWay()->LineString);
+                    if (DstLane->GetRightWay()) {
+                        DstLane->GetRightWay()->AppendBack2LineString(SrcLane->GetRightWay());
+                        Visited.Add(DstLane->GetRightWay()->LineString);
+                    }
                 }
 
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Next, SrcLane->GetNextBorder());
             }
             // 逆方向(右車線)
             else {
-                DstLane->GetRightWay()->AppendFront2LineString(SrcLane->GetRightWay());
-                Visited.Add(DstLane->GetRightWay()->LineString);
+                if(DstLane->GetRightWay())
+                {
+                    DstLane->GetRightWay()->AppendFront2LineString(SrcLane->GetRightWay());
+                    Visited.Add(DstLane->GetRightWay()->LineString);                    
+                }
                 if (j == SrcLanes.Num() - 1) {
-                    DstLane->GetLeftWay()->AppendFront2LineString(SrcLane->GetLeftWay());
-                    Visited.Add(DstLane->GetLeftWay()->LineString);
+                    if (DstLane->GetLeftWay()) {
+                        DstLane->GetLeftWay()->AppendFront2LineString(SrcLane->GetLeftWay());
+                        Visited.Add(DstLane->GetLeftWay()->LineString);
+                    }
                 }
 
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Prev, SrcLane->GetPrevBorder());
@@ -336,12 +367,17 @@ bool URnRoadGroup::MergeRoads() {
         // DstSideWalksの中でマージされなかった(元の形状から変更されない)ものは
         // レーンと共通のLineStringを持っている場合に勝手に形状変わっているかもしれないので明示的に元に戻す
         for (const auto& Sw : OriginalDstSideWalks) {
-            if (!MergedDstSideWalks.Contains(Sw)) {
+            if (!MergedDstSideWalks.Contains(Sw)) 
+            {
+                auto OutsideWay = Sw->GetOutsideWay();
+                auto InsideWay = Sw->GetInsideWay();
+                // 必ず辞書に存在するはず. 無い場合は例外で良い
                 Sw->SetSideWays(
-                    Sw->GetOutsideWay() ? Original[Sw->GetOutsideWay()] : nullptr,
-                    Sw->GetInsideWay() ? Original[Sw->GetInsideWay()] : nullptr);
+                    Sw->GetOutsideWay() ? Original[OutsideWay] : nullptr,
+                    Sw->GetInsideWay() ? Original[InsideWay] : nullptr);
             }
         }
+
         DstRoad->AddTargetTrans(SrcRoad->GetTargetTrans());
         SrcRoad->DisConnect(true);
     }
@@ -352,7 +388,6 @@ bool URnRoadGroup::MergeRoads() {
             NextIntersection->AddEdge(DstRoad, DstRoad->GetBorderWay(Lane, EPLATEAURnLaneBorderType::Next, EPLATEAURnLaneBorderDir::Left2Right));
         }
     }
-
     DstRoad->SetPrevNext(PrevIntersection, NextIntersection);
 
     Roads.Reset();
@@ -533,16 +568,25 @@ void URnRoadGroup::SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool Rebuild
 }
 
 void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, bool RebuildTrack) {
-    if (std::all_of(Roads.begin(), Roads.end(), [LeftCount, RightCount](const TRnRef_T<URnRoad>& Road) {
+
+    if (IsValid() == false)
+        return;
+
+    // 既に指定の数になっている場合は何もしない
+    if(Algo::AllOf(Roads, [LeftCount, RightCount](const TRnRef_T<URnRoad>& Road) {
         return Road->GetLeftLaneCount() == LeftCount && Road->GetRightLaneCount() == RightCount;
-        })) {
+        }))
+    {
         return;
     }
 
+    // 向きをそろえる
     Align();
 
     auto Num = LeftCount + RightCount;
-    auto AfterLanes = SplitLane(Num, std::nullopt);
+    auto AfterLanes = SplitLane(Num, NullOpt);
+    if (AfterLanes.IsEmpty())
+        return;
 
     TArray<TRnRef_T<URnLineString>> NewNextBorders;
     TArray<TRnRef_T<URnLineString>> NewPrevBorders;
@@ -552,13 +596,13 @@ void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, 
         auto& Lanes = AfterLanes[Road];
 
         if (i == Roads.Num() - 1) {
-            NextIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
-            NewNextBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
+            NewNextBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
-            NewPrevBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
+            NewPrevBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }
 
         for (int32 j = LeftCount; j < Lanes.Num(); ++j) {
@@ -609,7 +653,7 @@ void URnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, flo
     auto Num = LeftCount + RightCount + 1;
     auto LaneRate = (1.0f - MedianWidthRate) / (Num - 1);
 
-    auto AfterLanes = SplitLane(Num, std::nullopt, [LeftCount, LaneRate, MedianWidthRate](int32 I) {
+    auto AfterLanes = SplitLane(Num, NullOpt, [LeftCount, LaneRate, MedianWidthRate](int32 I) {
         if (I == LeftCount)
             return MedianWidthRate;
         return LaneRate;
@@ -624,13 +668,13 @@ void URnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, flo
 
         if (i == Roads.Num() - 1) 
         {
-            NextIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>( Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
-            NewNextBorders.Append( FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
+            NextIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select( Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
+            NewNextBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnWay>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
-            NewPrevBorders.Append(FPLATEAURnEx::Map<TRnRef_T<URnLane>, TRnRef_T<URnLineString>>(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
+            PrevIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
+            NewPrevBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }
 
         for (int32 j = LeftCount + 1; j < Lanes.Num(); ++j) {
@@ -681,17 +725,16 @@ void URnRoadGroup::SetLaneCount(EPLATEAURnDir Dir, int32 Count, bool RebuildTrac
 }
 TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
     int32 Num,
-    std::optional<EPLATEAURnDir> Dir,
-    TFunction<float(int32)> GetSplitRate) {
+    TOptional<EPLATEAURnDir> Dir,
+    const TFunction<float(int32)>& GetSplitRate) {
     if (Num <= 0) 
         return TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
 
-    auto Result = TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
-
-    auto MergedBorders = FPLATEAURnEx::Map<TRnRef_T<URnRoad>, TRnRef_T<URnWay>>(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
+    // 各Roadの境界線をLeft->Rightの方向で取得
+    TArray<TRnRef_T<URnWay>> MergedBorders = FPLATEAURnLinq::Select(Roads, [Dir](const TRnRef_T<URnRoad>& Road) {
         return Road->GetMergedBorder(EPLATEAURnLaneBorderType::Prev, Dir);
         });
-    MergedBorders.Add((Roads)[Roads.Num() - 1]->GetMergedBorder(EPLATEAURnLaneBorderType::Next, Dir));
+    MergedBorders.Add(Roads.Last()->GetMergedBorder(EPLATEAURnLaneBorderType::Next, Dir));
 
     TArray<TArray<TRnRef_T<URnWay>>> BorderWays;
     BorderWays.Reserve(Roads.Num() + 1);
@@ -701,6 +744,7 @@ TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> URnRoadGroup::SplitLane(
         BorderWays.Add(Split);
     }
 
+    auto Result = TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>>();
     for (int32 i = 0; i < Roads.Num(); ++i) {
         auto Road = (Roads)[i];
         auto PrevBorders = BorderWays[i];

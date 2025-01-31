@@ -1,5 +1,7 @@
 #include "RoadNetwork/GeoGraph/LineUtil.h"
 
+#include "RoadNetwork/Util/PLATEAUVector2DEx.h"
+
 FLine::FLine(const FVector& InP0, const FVector& InP1)
     : P0(InP0), P1(InP1) {
 }
@@ -21,16 +23,13 @@ bool FLineUtil::LineIntersection(const FVector2D& A, const FVector2D& B, const F
     OutT1 = OutT2 = 0.0f;
     OutIntersection = FVector2D::ZeroVector;
 
-    const FVector2D Deno = FVector2D(B.X - A.X, B.Y - A.Y);
-    const FVector2D DenoPerp = FVector2D(-Deno.Y, Deno.X);
-    const float Cross = FVector2D::DotProduct(D - C, DenoPerp);
-
-    if (FMath::Abs(Cross) < Epsilon) {
+    const auto Deno = FPLATEAUVector2DEx::Cross(B - A, D - C);
+    if (FMath::Abs(Deno) < Epsilon) {
         return false;
     }
 
-    OutT1 = FVector2D::DotProduct(C - A, D - C) / Cross;
-    OutT2 = FVector2D::DotProduct(B - A, A - C) / Cross;
+    OutT1 = FPLATEAUVector2DEx::Cross(C - A, D - C) / Deno;
+    OutT2 = FPLATEAUVector2DEx::Cross(B - A, A - C) / Deno;
     OutIntersection = FMath::Lerp(A, B, OutT1);
     return true;
 }

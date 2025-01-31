@@ -19,6 +19,13 @@ void URnModel::SetFactoryVersion(const FString& InFactoryVersion)
 URnModel::URnModel() {
 }
 
+void URnModel::Init()
+{
+    Roads.Reset();
+    Intersections.Reset();
+    SideWalks.Reset();
+}
+
 void URnModel::AddRoadBase(const TRnRef_T<URnRoadBase>& RoadBase)
 {
     if (!RoadBase) 
@@ -158,7 +165,7 @@ void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBo
             // 道路の長さを取得
             float RoadLength = 0.0f;
             TRnRef_T<URnWay> LeftWay, RightWay;
-            if (Road->TryGetMergedSideWay(std::nullopt, LeftWay, RightWay)) {
+            if (Road->TryGetMergedSideWay(NullOpt, LeftWay, RightWay)) {
                 RoadLength = (LeftWay->CalcLength() + RightWay->CalcLength()) * 0.5f;
             }
 
@@ -236,7 +243,7 @@ void URnModel::MergeRoadGroup()
 {
     TSet<TRnRef_T<URnRoad>> visitedRoads;
     auto CopiedRoads = Roads;
-    for(auto&& road : CopiedRoads)
+    for(auto& road : CopiedRoads)
     {
         if (visitedRoads.Contains(road))
             continue;
@@ -248,4 +255,90 @@ void URnModel::MergeRoadGroup()
         }
         roadGroup->MergeRoads();
     }
+}
+
+void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<FString>& failedRoads)
+{
+    failedRoads.Reset();
+    TSet<TRnRef_T<URnRoad>> visitedRoads;
+    // メートルをユニットに変換
+    const auto RoadWidth = FPLATEAURnDef::Meter2Unit * RoadWidthMeter;
+    for(auto&& Road : Roads) 
+    {
+        if (visitedRoads.Contains(Road))
+            continue;
+
+        try {
+            auto&& RoadGroup = URnRoadGroup::CreateRoadGroupOrDefault(Road);
+            for(auto&& l : RoadGroup->Roads)
+                visitedRoads.Add(l);
+
+            RoadGroup->Align();
+            if (RoadGroup->IsValid() == false)
+                continue;
+
+            if (RoadGroup->IsAllLaneValid() == false)
+                continue;
+
+            if (RoadGroup->Roads.ContainsByPredicate([](TRnRef_T<URnRoad> l) { return l->MainLanes[0]->HasBothBorder() == false; }))
+                continue;
+            auto&& leftCount = RoadGroup->GetLeftLaneCount();
+            auto&& rightCount = RoadGroup->GetRightLaneCount();
+            // すでにレーンが分かれている場合、左右で独立して分割を行う
+            auto GetWidth = [&](TOptional<EPLATEAURnDir> Dir)
+            {
+                auto Width = FLT_MAX;
+                for (auto&& Road : RoadGroup->Roads) {
+                    auto&& WidthSum = 0.f;
+                    TArray<TRnRef_T<URnLane>> OutLanes;
+                    Road->TryGetLanes(Dir, OutLanes);
+                    for (auto&& l : OutLanes)
+                        WidthSum += l->CalcWidth();
+                    Width = FMath::Min(Width, WidthSum);
+                }
+                return Width;
+            };
+            if (leftCount > 0 && rightCount > 0) 
+            {
+                for(auto&& dir : { EPLATEAURnDir::Left, EPLATEAURnDir::Right }) 
+                {
+                    auto Width = GetWidth(dir);
+                    auto&& Num = (int)(Width / RoadWidth);                   
+                    RoadGroup->SetLaneCount(dir, Num, rebuildTrack);
+                }
+            }
+            // 
+            else {
+                auto&& Width = GetWidth(NullOpt);
+                auto&& Num = (int)(Width / RoadWidth);
+                if (Num <= 1)
+                    continue;
+
+                auto&& LeftLaneCount = (Num + 1) / 2;
+                auto&& RightLaneCount = Num - LeftLaneCount;
+                RoadGroup->SetLaneCount(LeftLaneCount, RightLaneCount, rebuildTrack);
+            }
+
+        }
+        catch (std::exception e) {
+            failedRoads.Add(Road->GetName());
+        }
+    }
+}
+
+bool URnModel::Check() const
+{
+    for (auto&& Road : Roads) {
+        if (Road->Check() == false)
+            return false;
+    }
+    for (auto&& Intersection : Intersections) {
+        if (Intersection->Check() == false)
+            return false;
+    }
+    for (auto&& SideWalk : SideWalks) {
+        if (SideWalk->Check() == false)
+            return false;
+    }
+    return true;
 }

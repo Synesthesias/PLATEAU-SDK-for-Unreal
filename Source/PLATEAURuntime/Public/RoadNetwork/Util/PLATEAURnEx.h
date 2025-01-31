@@ -59,49 +59,7 @@ public:
         const FLineSegment3D& LineSegment,
         const TArray<TRnRef_T<URnWay>>& Ways);
 
-
-    template<typename T, typename U>
-    static TArray<U> Map(const TArray<T>& Src, TFunction< U(const T&)> Selector)
-    {
-        TArray<U> Result;
-        Result.Reserve(Src.Num());
-        for (const auto& S : Src) {
-            Result.Add(Selector(S));
-        }
-        return Result;
-    }
-
-private:
-    template<typename T>
-    static bool TryFirstOrDefaultImpl(const TSet<T>& Set, TFunction<bool(const T&)> Predicate, T& OutV) {
-        for (auto& S : Set) {
-            if (Predicate(S)) {
-                OutV = S;
-                return true;
-            }
-        }
-        return false;
-    }
 public:
-    template<typename T, typename F>
-    static bool TryFirstOrDefault(const TSet<T>& Set, F&& Predicate, T& OutV) {
-        return TryFirstOrDefaultImpl<T>(Set, Predicate, OutV);
-    }
-
-    template<typename T, typename F>
-    static auto SelectWithIndex(T&& Src, F&& Selector)
-    {
-        using U = decltype(Selector(Src[0], 0));
-        TArray<U> Result;
-        auto Index = 0;
-        for (auto&& E : Src) 
-        {
-            Result.Add(Selector(E, Index));
-            Index++;
-        }
-        return Result;
-    }
-
     template<typename T>
     static int32 Compare(T A, T B)
     {
@@ -111,8 +69,6 @@ public:
             return 1;
         return 0;
     }
-
-
 
 
     // ParentにChildを追加する

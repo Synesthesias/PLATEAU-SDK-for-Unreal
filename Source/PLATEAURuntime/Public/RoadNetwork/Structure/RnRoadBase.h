@@ -77,29 +77,11 @@ public:
     TRnRef_T<URnModel> GetParentModel() const;
     void SetParentModel(const TRnRef_T<URnModel>& InParentModel);
 
-    // 指定した方向の境界線を取得する
-    virtual TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const { return nullptr; }
-
-    // 指定した方向のWayを取得する
-    virtual TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const { return nullptr; }
-
-    // 指定した方向のWayを取得する
-    virtual bool TryGetMergedSideWay(EPLATEAURnDir Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const { return false; }
-
-    // 指定したLineStringまでの最短距離を取得する
-    virtual bool TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& LineString, float& OutDistance) const { return false; }
-
-    // 境界線の向きをそろえる
-    virtual void AlignLaneBorder() {}
-
-    // 境界線を調整するための線分を取得する
-    virtual bool TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const { return false; }
-
-    // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir Dir) const { return nullptr; }
-
-    // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType) const { return nullptr; }
+    // 構造的に正しいかどうかチェック
+    virtual bool Check() const
+    {
+        return true;
+    }
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad()
@@ -117,7 +99,7 @@ private:
 
     // 自分が所属するRoadNetworkModel
     UPROPERTY()
-    TObjectPtr<URnModel> ParentModel;
+    URnModel* ParentModel;
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
     UPROPERTY()
@@ -125,6 +107,6 @@ private:
 
     // 歩道情報
     UPROPERTY()
-    TArray<TObjectPtr<URnSideWalk>> SideWalks;
+    TArray<URnSideWalk*> SideWalks;
 
 };

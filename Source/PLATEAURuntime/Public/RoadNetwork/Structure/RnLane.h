@@ -34,7 +34,7 @@ public:
 
     void SetParent(TRnRef_T<URnRoad> InParent);
 
-    [[nodiscard]] bool GetIsReverse() const {
+    bool GetIsReverse() const {
         return bIsReverse;
     }
 
@@ -67,7 +67,7 @@ public:
     bool IsMedianLane() const;
 
     // 境界線の方向を取得する
-    EPLATEAURnLaneBorderDir GetBorderDir(EPLATEAURnLaneBorderType Type) const;
+    TOptional<EPLATEAURnLaneBorderDir> GetBorderDir(EPLATEAURnLaneBorderType BorderType) const;
 
     // 境界線を取得する
     TRnRef_T<URnWay> GetBorder(EPLATEAURnLaneBorderType Type) const;
@@ -96,9 +96,11 @@ public:
     // 左右のレーンが不正の場合は0を返す
     float CalcMinWidth() const;
 
-
     // 反転する
     void Reverse();
+
+    // Borderの向きをborderDirになるようにそろえる
+    void AlignBorder(EPLATEAURnLaneBorderDir borderDir = EPLATEAURnLaneBorderDir::Left2Right);
 
     // 中心線を生成する
     void BuildCenterWay();
@@ -112,26 +114,13 @@ public:
     // 中心線の長さを取得する
     float GetCenterLength() const;
 
-    // 中心線の2D平面における長さを取得する
-    float GetCenterLength2D(EAxisPlane Plane = FPLATEAURnDef::Plane) const;
-
-    // 中心線の2D平面における角度の合計を取得する
-    float GetCenterTotalAngle2D() const;
-
-    // 中心線の2D平面における曲率を取得する
-    float GetCenterCurvature2D() const;
-
-    // 中心線の2D平面における曲率半径を取得する
-    float GetCenterRadius2D() const;
-
-    // 中心線の2D平面における曲率半径の逆数を取得する
-    float GetCenterInverseRadius2D() const;
-
     // 指定した点からの距離を取得する
     float GetDistanceFrom(const FVector& Point) const;
 
     // 指定した点が車線の内側にあるかどうかを取得する
     bool IsInside(const FVector& Point) const;
+
+    FVector GetCentralVertex() const;
 
     // クローンを作成する
     TRnRef_T<URnLane> Clone() const;
@@ -147,25 +136,30 @@ public:
     static TRnRef_T<URnLane> CreateEmptyLane(TRnRef_T<URnWay> border, TRnRef_T<URnWay> centerWay);
 
 private:
+
+    // typeの境界線をborderDirにそろえる
+    void AlignBorder(EPLATEAURnLaneBorderType type, EPLATEAURnLaneBorderDir borderDir);
+
+private:
     // 親リンク
     UPROPERTY()
-    TWeakObjectPtr<URnRoad> Parent;
+    URnRoad* Parent;
 
     // 境界線(下流)
     UPROPERTY()
-    TObjectPtr<URnWay> PrevBorder;
+    URnWay* PrevBorder;
 
     // 境界線(上流)
     UPROPERTY()
-    TObjectPtr<URnWay> NextBorder;
+    URnWay* NextBorder;
 
     // 車線(左)
     UPROPERTY()
-    TObjectPtr<URnWay> LeftWay;
+    URnWay* LeftWay;
 
     // 車線(右)
     UPROPERTY()
-    TObjectPtr<URnWay> RightWay;
+    URnWay* RightWay;
 
     // 親Roadと逆方向(右車線等)
     UPROPERTY()
@@ -173,6 +167,10 @@ private:
 
     // 内部的に持つだけ. 中心線
     UPROPERTY()
-    TObjectPtr<URnWay> CenterWay;
+    URnWay* CenterWay;
 
+};
+
+struct FRnLaneEx
+{
 };

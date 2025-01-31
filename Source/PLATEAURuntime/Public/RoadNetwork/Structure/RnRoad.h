@@ -50,17 +50,21 @@ public:
 
     void SetPrev(TRnRef_T<URnRoadBase> InPrev);
 
-
     void SetMedianLane1(TRnRef_T<URnLane> InMedianLane);
 
     TRnRef_T<URnRoadBase> GetNext() const;
 
     TRnRef_T<URnRoadBase> GetPrev() const;
 
+    TRnRef_T<URnRoadBase> GetNeighborRoad(EPLATEAURnLaneBorderType BorderType) const;
+
     TRnRef_T<URnLane> GetMedianLane() const;
 
     // 指定方向のレーンを取得
     TArray<TRnRef_T<URnLane>> GetLanes(EPLATEAURnDir Dir) const;
+
+    // 指定方向のレーンを取得. Dirが指定されていない場合はMainLanes全体を返す
+    bool TryGetLanes(TOptional<EPLATEAURnDir> Dir, TArray<TRnRef_T<URnLane>>& OutLanes) const;
 
     // レーンが左車線かどうか
     bool IsLeftLane(const TRnRef_T<URnLane>& Lane) const;
@@ -107,28 +111,28 @@ public:
     void AddMainLane(TRnRef_T<URnLane> Lane);
 
 
-    // 指定した方向の境界線を取得する
-    virtual TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, std::optional<EPLATEAURnDir> Dir) const override;
+    // 指定した方向の境界線を取得する(全レーンマージした状態で取得する)
+    TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const;
 
-    // 指定した方向のWayを取得する
-    virtual TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const override;
+    // 指定した方向のWayを取得する(全レーンマージした状態で取得する)
+    TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const;
 
     // dirで指定した側の全レーンの左右のWayを返す
     // dir==nullの時は全レーン共通で返す
     // 例) 左２車線でdir==RnDir.Leftの場合, 一番左の車線の左側のWayと左から２番目の車線の右側のWayを返す
-    bool TryGetMergedSideWay(std::optional<EPLATEAURnDir> Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const;
+    bool TryGetMergedSideWay(TOptional<EPLATEAURnDir> Dir, TRnRef_T<URnWay>& OutLeftWay, TRnRef_T<URnWay>& OutRightWay) const;
 
     // 指定したLineStringまでの最短距離を取得する
-    virtual bool TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& LineString, float& OutDistance) const override;
+    bool TryGetNearestDistanceToSideWays(const TRnRef_T<URnLineString>& LineString, float& OutDistance) const;
 
     // 境界線の向きをそろえる
-    virtual void AlignLaneBorder() override;
+    void AlignLaneBorder(EPLATEAURnLaneBorderDir BorderDir = EPLATEAURnLaneBorderDir::Left2Right);
 
     // 境界線を調整するための線分を取得する
-    virtual bool TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const override;
+    bool TryGetAdjustBorderSegment(EPLATEAURnLaneBorderType BorderType, FLineSegment3D& OutSegment) const;
 
     // 指定したレーンの境界線を取得する
-    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir Dir) const override;
+    virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir BorderDir) const;
 
     // レーンを置き換える
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir);
@@ -138,7 +142,10 @@ public:
     void SetPrevNext(const TRnRef_T<URnRoadBase>& PrevRoad, const TRnRef_T<URnRoadBase>& NextRoad);
 
     // 反転する
-    void Reverse();
+    // Next,Prevを逆転する.
+    // その結果, レーンのIsReverseも逆転 / mainLanesの配列順も逆転する
+    // keepOneLaneIsLeftがtrueの場合, 1車線しか無い道路だとその1車線がRoadのPrev / Nextを同じ方向になるように(左車線扱い)する
+    void Reverse(bool KeepOneLaneIsLeft = true);
 
     // デバッグ用) その道路の中心を表す代表頂点を返す
     virtual FVector GetCentralVertex() const override;
@@ -170,6 +177,8 @@ public:
         return TRnRef_T<URnIntersection>(nullptr);
     }
 
+    // 構造的に正しいかどうかチェック
+    virtual bool Check() const override;
     // 道路を作成する
     static TRnRef_T<URnRoad> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
     static TRnRef_T<URnRoad> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
@@ -186,18 +195,25 @@ private:
 public:
     // 接続先(nullの場合は接続なし)
     UPROPERTY()
-    TWeakObjectPtr<URnRoadBase> Next;
+    URnRoadBase* Next;
 
     // 接続元(nullの場合は接続なし)
     UPROPERTY()
-    TWeakObjectPtr<URnRoadBase> Prev;
+    URnRoadBase* Prev;
 
     // レーンリスト
     UPROPERTY()
-    TArray<TObjectPtr<URnLane>> MainLanes;
+    TArray<URnLane*> MainLanes;
 
     // 中央分離帯
     UPROPERTY()
-    TObjectPtr<URnLane> MedianLane;
+    URnLane* MedianLane;
 
+};
+
+struct FRnRoadEx
+{
+
+    static auto IsValidBorderAdjacentNeighbor(const URnRoad* Self, EPLATEAURnLaneBorderType BorderType,
+                                              bool NoBorderIsTrue) -> bool;
 };

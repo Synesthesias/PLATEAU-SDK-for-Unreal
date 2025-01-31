@@ -31,6 +31,9 @@ public:
     // 有効なRoadGroupかどうか
     bool IsValid() const;
 
+    // 全レーンが有効かどうか
+    bool IsAllLaneValid() const;
+
     // 左側のレーン数を取得
     int32 GetLeftLaneCount() const;
 
@@ -126,9 +129,8 @@ private:
 
     TMap<TRnRef_T<URnRoad>, TArray<TRnRef_T<URnLane>>> SplitLane(
         int32 Num,
-        std::optional<EPLATEAURnDir> Dir,
-        // #TODO : nullptr入れられるのか確認
-        TFunction<float(int32)> GetSplitRate = nullptr);
+        TOptional<EPLATEAURnDir> Dir,
+        const TFunction<float(int32)>& GetSplitRate = nullptr);
 
     // レーン分割する
     void SetLaneCountImpl(int32 Count, EPLATEAURnDir Dir, bool RebuildTrack);

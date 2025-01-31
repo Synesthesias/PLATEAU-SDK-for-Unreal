@@ -8,7 +8,7 @@
 
 UENUM(BlueprintType)
 enum class EPLATEAURnDir : uint8 {
-    Left UMETA(DisplayName = "XLeft"),
+    Left UMETA(DisplayName = "Left"),
     Right UMETA(DisplayName = "Right"),
 };
 
@@ -17,20 +17,6 @@ UENUM(BlueprintType)
 enum class EPLATEAURnLaneBorderType {
     Prev UMETA(DisplayName = "Prev"),
     Next UMETA(DisplayName = "Next"),
-};
-
-
-USTRUCT()
-struct PLATEAURUNTIME_API FPLATEAURnLaneBorderTypeEx {
-    GENERATED_BODY()
-
-public:
-    /// <summary>
-    /// 反対を取得
-    /// </summary>
-    /// <param name="dir"></param>
-    /// <returns></returns>
-    static EPLATEAURnLaneBorderType GetOpposite(EPLATEAURnLaneBorderType dir);
 };
 
 UENUM(Meta = (Flags))
@@ -74,6 +60,33 @@ public:
     /// <param name="dir"></param>
     /// <returns></returns>
     static EPLATEAURnDir GetOpposite(EPLATEAURnDir dir);
+};
+
+USTRUCT()
+struct PLATEAURUNTIME_API FPLATEAURnLaneBorderDirEx {
+    GENERATED_BODY()
+
+public:
+    /// <summary>
+    /// 反対を取得
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    static EPLATEAURnLaneBorderDir GetOpposite(EPLATEAURnLaneBorderDir dir);
+};
+
+
+USTRUCT()
+struct PLATEAURUNTIME_API FPLATEAURnLaneBorderTypeEx {
+    GENERATED_BODY()
+
+public:
+    /// <summary>
+    /// 反対を取得
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    static EPLATEAURnLaneBorderType GetOpposite(EPLATEAURnLaneBorderType dir);
 };
 
 USTRUCT()

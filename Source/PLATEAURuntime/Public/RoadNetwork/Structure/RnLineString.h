@@ -87,5 +87,5 @@ public:
 
 private:
     UPROPERTY()
-    TArray<TObjectPtr<URnPoint>> Points;
+    TArray<URnPoint*> Points;
 };

@@ -2,7 +2,6 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
-#include "Editor.h"
 #include "Algo/Count.h"
 #include "RoadNetwork/CityObject/PLATEAUSubDividedCityObjectGroup.h"
 #include "RoadNetwork/CityObject/SubDividedCityObjectFactory.h"
@@ -18,6 +17,7 @@
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLineString.h"
 #include "RoadNetwork/Structure/RnWay.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 
 const FString FRoadNetworkFactory::FactoryVersion = TEXT("1.0.0");
@@ -35,13 +35,20 @@ namespace
         Isolated
     };
 
+    // 輪郭線分構造
     class FTranLine {
     public:
+        // 隣接している道路
         FTran* Neighbor;
+        // 線分リスト
         TArray<RGraphRef_t<UREdge>> Edges;
+        // 頂点リスト
         TArray<RGraphRef_t<URVertex>> Vertices;
+        // 線分リストをRnWayに変換したもの
         TRnRef_T<URnWay> Way;
+        // 次の輪郭線分
         TSharedPtr<FTranLine> Next;
+        // ひとつ前の輪郭線分
         TSharedPtr<FTranLine> Prev;
 
         bool IsBorder() const {
@@ -49,13 +56,16 @@ namespace
         }
     };
 
+    // 道路構造に対応
     class FTran {
     public:
         FWork& Work;
         RGraphRef_t<URGraph> Graph;
         TSet<RGraphRef_t<URFace>> Roads;
         RGraphRef_t<URFaceGroup> FaceGroup;
+        // 輪郭の頂点配列
         TArray<RGraphRef_t<URVertex>> Vertices;
+        // 輪郭の線分配列
         TArray<TSharedPtr<FTranLine>> Lines;
         TRnRef_T<URnRoadBase> Node;
         TArray<TRnRef_T<URnLane>> Lanes;
@@ -106,10 +116,12 @@ namespace
                     return FRRoadTypeMaskEx::HasAnyFlag(Face->GetRoadTypes(), ERRoadTypeMask::SideWalk) == false;
             });
 
-            if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(Vertices, [](RGraphRef_t<URVertex> v)
-            {
+            if (FGeoGraph2D::IsClockwise<RGraphRef_t<URVertex>>(
+                Vertices
+                , [](RGraphRef_t<URVertex> v){
                     return FPLATEAURnDef::To2D(v->Position);
-            })) {
+            }) == false) 
+            {
                 Algo::Reverse(Vertices);
             }
         }
@@ -589,7 +601,7 @@ namespace
             auto V1 = Vertices[(i + 1) % Vertices.Num()];
 
             TObjectPtr<UREdge> E;                
-            if(FPLATEAURnEx::TryFirstOrDefault(
+            if(FPLATEAURnLinq::TryFirstOrDefault(
                 V0->GetEdges()
                 , [V0, V1](TObjectPtr<UREdge> E)-> bool {
                     return E->IsSameVertex(V0, V1);
@@ -662,8 +674,11 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
-TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* Actor,
-                                                        TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
+TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
+    const FRoadNetworkFactory& Self
+    , APLATEAUInstancedCityModel* TargetCityModel
+    , APLATEAURnStructureModel* Actor
+    , TArray<UPLATEAUCityObjectGroup*>& CityObjectGroups)
 {
 #if WITH_EDITOR
     const auto Root = Actor->GetRootComponent();
@@ -672,7 +687,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
 
     RGraphRef_t<URGraph> Graph;
     CreateRGraph(Self, TargetCityModel, Actor, Root, SubDividedCityObjects, Graph);
-    Actor->Model = CreateRnModel(Self, Graph);
+
+    const auto RnModelObjectName = TEXT("RnModel");
+
+    auto Model
+    = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<URnModel>(Actor, Root, RnModelObjectName);
+    
+    Actor->Model = CreateRnModel(Self, Graph, Model);
     return Actor->Model;
 #else
     return nullptr;
@@ -681,9 +702,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(const FRoadNetworkFa
 
 TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
     const FRoadNetworkFactory& Self
-    , RGraphRef_t<URGraph> Graph)
+    , RGraphRef_t<URGraph> Graph
+    , URnModel* Model
+)
 {
-    auto Model = RnNew<URnModel>();
+    if (!Model)
+        return Model;
+    Model->Init();
     try {
         // 道路/中央分離帯は一つのfaceGroupとしてまとめる
         auto&& mask = ~(ERRoadTypeMask::Road | ERRoadTypeMask::Median);
@@ -777,18 +802,20 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
                     {
                         Parent = ParentPair->Value->Node;
                     }
-
-                    if (auto road = Parent->CastToRoad()) {
-                        auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
-                        if (insideWay != nullptr) {
-                            // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
-                            // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
-                            if (way == nullptr)
-                                laneType = EPLATEAURnSideWalkLaneType::Undefined;
-                            else if (insideWay->IsSameLineReference(way))
-                                laneType = EPLATEAURnSideWalkLaneType::LeftLane;
-                            else
-                                laneType = EPLATEAURnSideWalkLaneType::RightLane;
+                    if(Parent)
+                    {
+                        if (auto road = Parent->CastToRoad()) {
+                            auto&& way = road->GetMergedSideWay(EPLATEAURnDir::Left);
+                            if (insideWay != nullptr) {
+                                // #NOTE : 自動生成の段階だと線分共通なので同一判定でチェックする
+                                // #TODO : 自動生成の段階で分かれているケースが存在するならは点や法線方向で判定するように変える
+                                if (way == nullptr)
+                                    laneType = EPLATEAURnSideWalkLaneType::Undefined;
+                                else if (insideWay->IsSameLineReference(way))
+                                    laneType = EPLATEAURnSideWalkLaneType::LeftLane;
+                                else
+                                    laneType = EPLATEAURnSideWalkLaneType::RightLane;
+                            }
                         }
                     }
 
@@ -831,7 +858,9 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //}
 
         // 連続した道路を一つにまとめる
-        Model->MergeRoadGroup();
+        if (Self.bMergeRoadGroup) {
+            Model->MergeRoadGroup();
+        }
 
 
         //// 交差点との境界線が垂直になるようにする
@@ -839,14 +868,9 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         //    ret.CalibrateIntersectionBorderForAllRoad(CalibrateIntersectionOption);
         //}
 
-        //// 道路を分割する
-        //ret->SplitLaneByWidth(RoadSize, false, out auto&& failedLinks);
-        //ret->ReBuildIntersectionTracks();
-
-        //// 信号制御器をデフォ値で配置する
-        //if (AddTrafficSignalLights)
-        //    ret.AddDefaultTrafficSignalLights();
-        
+        // 道路を分割する
+        TArray<FString> FailedRoads;
+        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);        
     }
     catch(std::exception e)
     {

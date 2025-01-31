@@ -128,23 +128,32 @@ float URnWay::CalcLength(float StartIndex, float EndIndex) const {
 }
 
 void URnWay::AppendBack2LineString(const TRnRef_T<URnWay>& Back) {
-    if (!Back || Back->LineString == LineString) return;
+
+    if (!Back)
+        return;
+    // 自己代入は禁止
+    if (IsSameLineReference(Back))
+        return;
 
     if (IsReversed) {
-        for (const auto& P : Back->LineString->GetPoints()) {
+        for (const auto& P : Back->GetPoints()) {
             LineString->AddPointFrontOrSkip(P);
         }
     }
     else {
-        for (const auto& P : Back->LineString->GetPoints()) {
+        for (const auto& P : Back->GetPoints()) {
             LineString->AddPointOrSkip(P);
         }
     }
 }
 
 void URnWay::AppendFront2LineString(const TRnRef_T<URnWay>& Front) {
-    if (!Front || Front->LineString == LineString) return;
+    if (!Front) 
+        return;
 
+    // 自己代入は禁止
+    if (IsSameLineReference(Front))
+        return;
     if (IsReversed) {
         for (int32 i = 0; i < Front->Count(); ++i) {
             LineString->AddPointOrSkip(Front->GetPoint(Front->Count() - 1 - i));
@@ -381,9 +390,13 @@ bool URnWay::IsSameLineSequence(const TRnRef_T<URnWay>& Other) const {
 
 TArray<TRnRef_T<URnWay>> URnWay::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector)
 {
-    TArray<TRnRef_T<URnWay>> Result;
-    auto LineStrings = LineString->Split(Num, InsertNewPoint, RateSelector);
+    auto Selector = RateSelector;
+    if(IsReversed && RateSelector)
+        Selector = [RateSelector, Num](int32 Index) { return RateSelector(Num - 1 - Index); };
 
+    auto LineStrings = LineString->Split(Num, InsertNewPoint, Selector);
+
+    TArray<TRnRef_T<URnWay>> Result;
     for (auto& Ls : LineStrings) {
         Result.Add(RnNew<URnWay>(Ls, IsReversed, IsReverseNormal));
     }

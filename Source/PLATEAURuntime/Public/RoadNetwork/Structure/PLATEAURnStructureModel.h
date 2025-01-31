@@ -19,8 +19,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PLATEAU")
     FRoadNetworkFactory Factory;
 
-    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
-    TObjectPtr<URnModel> Model;
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU|Model")
+    URnModel* Model;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnModelDrawerDebug Debug;

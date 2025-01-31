@@ -85,18 +85,22 @@ public:
     // 近接スコア計算
     float CalcRoadProximityScore(const TRnRef_T<URnRoadBase>& Other) const;
 
+    bool Check() const
+    {
+        return true;
+    }
 private:
     UPROPERTY()
     TWeakObjectPtr<URnRoadBase> ParentRoad;
 
     UPROPERTY()
-    TObjectPtr<URnWay> OutsideWay;
+    URnWay* OutsideWay;
     UPROPERTY()
-    TObjectPtr<URnWay> InsideWay;
+    URnWay* InsideWay;
     UPROPERTY()
-    TObjectPtr<URnWay> StartEdgeWay;
+    URnWay* StartEdgeWay;
     UPROPERTY()
-    TObjectPtr<URnWay> EndEdgeWay;
+    URnWay* EndEdgeWay;
     UPROPERTY()
     EPLATEAURnSideWalkLaneType LaneType;
 };
