@@ -108,5 +108,7 @@ void FPLATEAURnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Par
     Child->SetupAttachment(Parent);
     Child->RegisterComponent();
     Child->AttachToComponent(Parent, TransformRule);
+#if WITH_EDITOR
     Actor->RerunConstructionScripts();
+#endif
 }

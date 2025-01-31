@@ -2,7 +2,6 @@
 
 #include <plateau/dataset/i_dataset_accessor.h>
 
-#include "Editor.h"
 #include "Algo/Count.h"
 #include "RoadNetwork/CityObject/PLATEAUSubDividedCityObjectGroup.h"
 #include "RoadNetwork/CityObject/SubDividedCityObjectFactory.h"
