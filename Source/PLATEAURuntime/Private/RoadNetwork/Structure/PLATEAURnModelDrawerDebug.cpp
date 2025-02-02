@@ -219,6 +219,7 @@ FRnModelDrawLaneOption::FRnModelDrawLaneOption()
     ShowPrevBorder.Color = FLinearColor::Blue;
     ShowNextBorder.Color = FLinearColor::Yellow;
     ShowCenterWay.Color = FLinearColor::White;
+    ShowCenterWay.bVisible = false;
 }
 
 FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
@@ -299,7 +300,7 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             Way(Option.ShowRightWay).Draw(Work, Self.GetRightWay(), Work.visibleType);
             Way(Option.ShowNextBorder).Draw(Work, Self.GetNextBorder(), Work.visibleType);
             Way(Option.ShowPrevBorder).Draw(Work, Self.GetPrevBorder(), Work.visibleType);
-
+            Way(Option.ShowCenterWay).Draw(Work, Self.GetCenterWay(), Work.visibleType);
             auto Center = Self.GetCentralVertex();
             auto DrawNeighborConnection = [&](bool Enable, TRnRef_T<URnWay> Border, FColor Color)
             {
