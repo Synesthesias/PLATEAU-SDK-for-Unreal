@@ -35,75 +35,6 @@ APLATEAUReproducedRoad::APLATEAUReproducedRoad() {
     LineTypeMap.Add(EPLATEAURoadLineType::Crossing, Crossing);
 }
 
-void APLATEAUReproducedRoad::CreateRoadFromAttr(APLATEAUInstancedCityModel* Model, const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials)
-{
-
-    const auto& SceneRoot = NewObject<USceneComponent>(this,
-        USceneComponent::GetDefaultSceneRootVariableName());
-    this->AddInstanceComponent(SceneRoot);
-    this->SetRootComponent(SceneRoot);
-    SceneRoot->RegisterComponent();
-    SceneRoot->SetMobility(EComponentMobility::Static);
-
-
-    FTask CreateRoadTask = Launch(TEXT("CreateRoadTask"), [this, SceneRoot, Model, TargetComponents, AttributeKey, Materials] {
-        auto InnerTask = Model->ClassifyModel(TargetComponents, AttributeKey, Materials, EPLATEAUMeshGranularity::DoNotChange, false);
-        InnerTask.Wait();
-
-
-        for (auto& TargetComponent : TargetComponents) {
-            TargetComponent->SetVisibility(true);
-        }
-
-        TArray<USceneComponent*> CreatedComponents = InnerTask.GetResult();
-
-
-
-        //Static Mesh生成まで待機したいが動作しない？？
-
-        int32 NumStaticMeshes = 0;
-        int32 NumStaticMeshBuilt = 0;
-
-        while (NumStaticMeshes > 0 && NumStaticMeshes != NumStaticMeshBuilt) 
-        {
-            for (auto& CreatedComponent : CreatedComponents) {
-                if (CreatedComponent->IsA(UStaticMeshComponent::StaticClass())) {
-
-                    NumStaticMeshes++;
-
-                    if (StaticCast<UStaticMeshComponent*>(CreatedComponent)->GetStaticMesh() == nullptr) {
-                        UE_LOG(LogTemp, Log, TEXT("StaticMesh is nullptr"));
-                        NumStaticMeshBuilt++;
-                    }
-
-                }
-            }
-        }
-
-
-        FFunctionGraphTask::CreateAndDispatchWhenReady([SceneRoot, CreatedComponents]() {
-
-            for (auto& CreatedComponent : CreatedComponents) {
-
-                UE_LOG(LogTemp, Log, TEXT("Created Comp: %s"), *CreatedComponent->GetName());
-
-                CreatedComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-                //this->AddInstanceComponent(CreatedComponent);
-                bool attached = CreatedComponent->AttachToComponent(SceneRoot, FAttachmentTransformRules::KeepWorldTransform);
-
-                CreatedComponent->RegisterComponent();
-
-                UE_LOG(LogTemp, Log, TEXT("Attach Success: %s , Parent : %s"), attached? TEXT("True") : TEXT("False"), *CreatedComponent->GetAttachmentRootActor()->GetName());
-
-                //なぜかAttachされない
-            }
-
-        }, TStatId(), NULL, ENamedThreads::GameThread)->Wait();
-
-
-    });
-}
-
 void APLATEAUReproducedRoad::GetVectors(TArray<FVector>& Vectors, URnWay* Way) const
 {
     const auto& VertsItr = Way->GetVertices();
@@ -115,7 +46,7 @@ void APLATEAUReproducedRoad::GetVectors(TArray<FVector>& Vectors, URnWay* Way) c
 }
 
 
-void APLATEAUReproducedRoad::CreateRoadMarks(URnModel* Model) {
+void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
 
     //const TCHAR* StaticMeshPath = TEXT("/PLATEAU-SDK-for-Unreal/RoadNetwork/simple_line");
     //const auto StaticMesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, StaticMeshPath));
@@ -128,7 +59,7 @@ void APLATEAUReproducedRoad::CreateRoadMarks(URnModel* Model) {
 
     int index = 0;
 
-    const auto& Roads = Model->GetRoads();
+    const auto& Roads = Model->Model->GetRoads();
 
     for (const auto& Road : Roads) {
 

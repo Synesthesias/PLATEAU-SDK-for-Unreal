@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUInstancedCityModel.h"
-#include "RoadNetwork/Structure/RnModel.h"
+#include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
 #include "RoadMarking/LineGeneratorComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
@@ -49,10 +49,7 @@ public:
     APLATEAUReproducedRoad();
 
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|RoadAdjust"))
-    void CreateRoadFromAttr(APLATEAUInstancedCityModel* Model, const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials);
-
-    UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|RoadAdjust"))
-    void CreateRoadMarks(URnModel* Model);
+    void CreateRoadMarks(APLATEAURnStructureModel* Model);
 
 
 protected:
