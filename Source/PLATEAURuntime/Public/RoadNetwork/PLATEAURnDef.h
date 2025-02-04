@@ -5,7 +5,7 @@
 #include "Containers/Array.h"
 #include "GeoGraph/AxisPlane.h"
 #include "PLATEAURnDef.generated.h"
-
+class UObject;
 UENUM(BlueprintType)
 enum class EPLATEAURnDir : uint8 {
     Left UMETA(DisplayName = "Left"),
@@ -99,8 +99,14 @@ public:
     // 1[m]のUnreal上での単位
     static constexpr float Meter2Unit = 100;
 
+    static UObject* GetNewObjectWorld();
+
+    static void SetNewObjectWorld(UObject* World);
 
     static FVector2D To2D(const FVector& Vector);
+
+private:
+    static inline UObject* NewObjectWorld = nullptr;
 };
 
 
@@ -111,7 +117,7 @@ struct TPLATEAURnRef
 
     template<class... Args>
     static Type New(Args&&... args) {
-        auto Ret = NewObject<T>();
+        auto Ret = NewObject<T>(FPLATEAURnDef::GetNewObjectWorld());
         Ret->Init(Forward<Args>(args)...);
         return Ret;
     }
