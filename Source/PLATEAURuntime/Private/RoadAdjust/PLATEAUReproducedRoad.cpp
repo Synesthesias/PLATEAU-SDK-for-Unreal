@@ -1,6 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "RoadAdjust/PLATEAUReproducedRoad.h"
+#include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnLane.h"
 
@@ -48,7 +49,8 @@ void APLATEAUReproducedRoad::CreateLineTypeMap() {
 
 void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
 
-    const auto& Roads = Model->Model->GetRoads();
+    const auto& RnModel = Model->Model;
+    const auto& Roads = RnModel->GetRoads();
 
     for (const auto& Road : Roads) {
 
@@ -116,7 +118,7 @@ void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type
     const auto& Component = NewObject<ULineGeneratorComponent>(this, FName(TEXT("LineGeneratorComponent_") + StaticEnum<EPLATEAURoadLineType>()->GetDisplayValueAsText(Type).ToString() + TEXT("_") + FString::FromInt(NumComponents)));
     Component->RegisterComponent();
     this->AddInstanceComponent(Component);
-    Component->AttachToComponent(this->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);  
+    Component->AttachToComponent(this->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);  
     Component->CreateSplineFromVectorArray(LinePoints);
     Component->CreateSplineMeshFromAssets(this, Param.LineMesh, Param.LineMaterial, Param.LineGap, Param.LineXScale, Param.LineLength);
     NumComponents++;
