@@ -596,12 +596,14 @@ void URnRoadGroup::SetLaneCountWithoutMedian(int32 LeftCount, int32 RightCount, 
         auto& Lanes = AfterLanes[Road];
 
         if (i == Roads.Num() - 1) {
-            NextIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
+            if(NextIntersection)
+                NextIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
             NewNextBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
         if (i == 0) {
-            PrevIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
+            if(PrevIntersection)
+                PrevIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
             NewPrevBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }
 

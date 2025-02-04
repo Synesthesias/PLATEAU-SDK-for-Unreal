@@ -1,5 +1,6 @@
 #include "RoadNetwork/Structure/RnLane.h"
 
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 URnLane::URnLane()
@@ -200,16 +201,29 @@ void URnLane::AlignBorder(EPLATEAURnLaneBorderDir borderDir)
 void URnLane::BuildCenterWay() {
     if (!IsValidWay()) return;
 
-    auto NewCenterWay = RnNew<URnWay>();
-    NewCenterWay->LineString = RnNew<URnLineString>();
 
-    for (int32 i = 0; i < LeftWay->Count(); ++i) {
-        auto NewPoint = RnNew<URnPoint>();
-        NewPoint->Vertex = (LeftWay->GetPoint(i)->Vertex + RightWay->GetPoint(i)->Vertex) * 0.5f;
-        NewCenterWay->LineString->GetPoints().Add(NewPoint);
-    }
 
-    CenterWay = NewCenterWay;
+    auto Prev = PrevBorder;
+    if (!Prev)
+        Prev = RnNew<URnWay>(URnLineString::Create({ LeftWay->GetPoint(0), RightWay->GetPoint(0) }));
+
+    auto Next = NextBorder;
+    if(!Next)
+        Next = RnNew<URnWay>(URnLineString::Create({ LeftWay->GetPoint(-1), RightWay->GetPoint(-1) }));
+
+    auto St = RnNew<URnPoint>(Prev->GetLerpPoint(0.5f));
+    auto En = RnNew<URnPoint>(Next->GetLerpPoint(0.5f));
+    auto Vertices = FPLATEAURnEx::CreateInnerLerpLineString(
+        LeftWay->GetVertices().ToArray()
+        , RightWay->GetVertices().ToArray()
+        , St
+        , En
+        , Prev
+        , Next
+        , 0.5f
+    );
+
+    CenterWay = RnNew<URnWay>(Vertices);
 }
 
 TRnRef_T<URnWay> URnLane::GetCenterWay() {
