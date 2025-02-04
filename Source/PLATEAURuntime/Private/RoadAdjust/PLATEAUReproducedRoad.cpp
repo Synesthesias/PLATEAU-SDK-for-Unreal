@@ -66,7 +66,7 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
                 for (auto it = itr.begin(); it != itr.end(); ++it) {
                     LinePoints.Add(*it);
                 }
-                CreateLineComponentByType(EPLATEAURoadLineType::DashedWhilteLine, LinePoints);
+                CreateLineComponentByType(EPLATEAURoadLineType::DashedWhilteLine, LinePoints, FVector2D(-50.0f, 0.f));
             }
 
             //Rightway
@@ -77,7 +77,7 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
                 for (auto it = itr.begin(); it != itr.end(); ++it) {
                     LinePoints.Add(*it);
                 }
-                CreateLineComponentByType(EPLATEAURoadLineType::WhiteLine, LinePoints);
+                CreateLineComponentByType(EPLATEAURoadLineType::WhiteLine, LinePoints, FVector2D(50.0f, 0.f));
             }
 
             //Centerway
@@ -113,13 +113,14 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
     }
 }
 
-void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type, TArray<FVector> LinePoints) {
+void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type, TArray<FVector> LinePoints, FVector2D Offset) {
     const auto& Param = LineTypeMap[Type];
     const auto& Component = NewObject<ULineGeneratorComponent>(this, FName(TEXT("LineGeneratorComponent_") + StaticEnum<EPLATEAURoadLineType>()->GetDisplayValueAsText(Type).ToString() + TEXT("_") + FString::FromInt(NumComponents)));
     Component->RegisterComponent();
     this->AddInstanceComponent(Component);
     Component->AttachToComponent(this->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);  
     Component->CreateSplineFromVectorArray(LinePoints);
+    Component->Offset = Offset;
     Component->CreateSplineMeshFromAssets(this, Param.LineMesh, Param.LineMaterial, Param.LineGap, Param.LineXScale, Param.LineLength);
     NumComponents++;
 }

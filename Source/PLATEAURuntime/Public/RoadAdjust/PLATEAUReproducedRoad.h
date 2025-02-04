@@ -72,5 +72,5 @@ private:
     TMap<EPLATEAURoadLineType, FPLATEAURoadLineParam> LineTypeMap;
 
     void CreateLineTypeMap();
-    void CreateLineComponentByType(EPLATEAURoadLineType Type, TArray<FVector> LinePoints);
+    void CreateLineComponentByType(EPLATEAURoadLineType Type, TArray<FVector> LinePoints, FVector2D Offset = FVector2D::Zero());
 };

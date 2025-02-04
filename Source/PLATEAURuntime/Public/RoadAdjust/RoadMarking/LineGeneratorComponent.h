@@ -33,6 +33,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
     float MeshLength;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+    FVector2D Offset;
+
 	UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
 	void CreateSplineFromVectorArray(TArray<FVector> Points);
 

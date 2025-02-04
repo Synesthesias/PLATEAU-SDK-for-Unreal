@@ -14,7 +14,7 @@ float ULineGeneratorComponent::GetMeshLength(bool includeGap) {
 		return 0.f;
 
     float Length = MeshLength != 0.f ? MeshLength : StaticMesh->GetBounds().SphereRadius;
-	//float Length = MeshLength != 0.f ? MeshLength : StaticMesh->GetBounds().BoxExtent.X;
+    //UE_LOG(LogTemp, Log, TEXT("Mesh BoxExtent : ( %f , %f , %f )"), StaticMesh->GetBounds().BoxExtent.X, StaticMesh->GetBounds().BoxExtent.Y, StaticMesh->GetBounds().BoxExtent.Z);
 
 	if (includeGap)
 	{
@@ -88,6 +88,8 @@ void ULineGeneratorComponent::CreateSplineMesh(AActor* Actor) {
 		SplineMeshComponent->SetStartAndEnd(startLocation, startTangent, endLocation, endTangent, true);
         SplineMeshComponent->SetStartScale(FVector2D(MeshXScale, 1.0f));
         SplineMeshComponent->SetEndScale(FVector2D(MeshXScale, 1.0f));
+        SplineMeshComponent->SetStartOffset(Offset);
+        SplineMeshComponent->SetEndOffset(Offset);
 	}
 }
 
