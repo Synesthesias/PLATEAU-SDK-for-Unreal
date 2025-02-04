@@ -15,7 +15,7 @@ class URnLane;
 class URnRoad;
 class URnIntersection;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnRoadBase : public UObject
 {
     GENERATED_BODY()
@@ -98,15 +98,15 @@ public:
 private:
 
     // 自分が所属するRoadNetworkModel
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnModel* ParentModel;
 
     // これに紐づくtranオブジェクトリスト(統合なので複数存在する場合がある)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>> TargetTrans;
 
     // 歩道情報
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnSideWalk*> SideWalks;
 
 };

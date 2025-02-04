@@ -13,7 +13,8 @@
 #include "RnPoint.h"
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RnWay.generated.h"
-UCLASS()
+
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnWay : public UObject
 {
     GENERATED_BODY()
@@ -184,13 +185,13 @@ private:
     float SwitchIndex(float Index) const;
 
 public:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     bool IsReversed;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     bool IsReverseNormal;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnLineString* LineString;
 };
 

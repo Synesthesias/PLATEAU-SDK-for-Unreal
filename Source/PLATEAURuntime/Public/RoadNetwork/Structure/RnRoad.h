@@ -10,7 +10,7 @@ class URnWay;
 class URnIntersection;
 class UPLATEAUCityObjectGroup;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnRoad : public URnRoadBase {
 private:
     GENERATED_BODY()
@@ -194,19 +194,19 @@ private:
 
 public:
     // 接続先(nullの場合は接続なし)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnRoadBase* Next;
 
     // 接続元(nullの場合は接続なし)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnRoadBase* Prev;
 
     // レーンリスト
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnLane*> MainLanes;
 
     // 中央分離帯
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnLane* MedianLane;
 
 };

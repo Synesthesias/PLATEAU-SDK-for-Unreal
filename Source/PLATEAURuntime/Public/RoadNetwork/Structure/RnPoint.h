@@ -7,7 +7,7 @@
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RnPoint.generated.h"
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnPoint : public UObject {
     GENERATED_BODY()
 public:
@@ -26,7 +26,7 @@ public:
     bool IsSamePoint(const TRnRef_T<URnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
 
 public:
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "PLATEAU")
     FVector Vertex;
 
 };

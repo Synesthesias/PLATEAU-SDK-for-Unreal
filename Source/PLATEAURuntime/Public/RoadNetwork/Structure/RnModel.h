@@ -29,7 +29,7 @@ public:
     float NeedRoadLengthMeter = 23.0f;
 };
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnModel : public UPLATEAUSceneComponent
 {
 public:

@@ -7,7 +7,7 @@
 #include "RnLane.generated.h"
 
 class URnRoad;
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnLane : public UObject
 {
 private:
@@ -142,31 +142,31 @@ private:
 
 private:
     // 親リンク
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnRoad* Parent;
 
     // 境界線(下流)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* PrevBorder;
 
     // 境界線(上流)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* NextBorder;
 
     // 車線(左)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* LeftWay;
 
     // 車線(右)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* RightWay;
 
     // 親Roadと逆方向(右車線等)
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     bool bIsReverse;
 
     // 内部的に持つだけ. 中心線
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* CenterWay;
 
 };

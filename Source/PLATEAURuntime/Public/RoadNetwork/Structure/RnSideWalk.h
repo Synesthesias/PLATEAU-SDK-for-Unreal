@@ -9,7 +9,7 @@ class URnRoadBase;
 class URnWay;
 class URnPoint;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnSideWalk : public UObject {
     GENERATED_BODY()
 public:
@@ -90,17 +90,17 @@ public:
         return true;
     }
 private:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TWeakObjectPtr<URnRoadBase> ParentRoad;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* OutsideWay;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* InsideWay;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* StartEdgeWay;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* EndEdgeWay;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     EPLATEAURnSideWalkLaneType LaneType;
 };

@@ -14,7 +14,7 @@ class URnWay;
 class URnLane;
 class URnLineString;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnRoadGroup : public UObject
 {
     GENERATED_BODY()
