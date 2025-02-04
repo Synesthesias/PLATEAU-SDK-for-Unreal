@@ -13,7 +13,7 @@ class URnRoadBase;
 class URnWay;
 class URnRoad;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnIntersectionEdge : public UObject
 {
     GENERATED_BODY()
@@ -50,15 +50,15 @@ public:
 private:
 
     // 接続先の道路
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnRoadBase* Road;
 
     // 境界線
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     URnWay* Border;
 };
 
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnIntersection : public URnRoadBase {
     GENERATED_BODY()
 public:
@@ -162,7 +162,7 @@ public:
 private:
 
     // 交差点の外形情報
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnIntersectionEdge*> Edges;
 };
 

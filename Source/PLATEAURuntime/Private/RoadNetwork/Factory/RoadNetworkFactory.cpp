@@ -690,10 +690,11 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
 
     const auto RnModelObjectName = TEXT("RnModel");
 
-    auto Model
+    FPLATEAURnDef::SetNewObjectWorld(Actor->GetWorld());
+    auto Model 
     = FPLATEAURnEx::GetOrCreateInstanceComponentWithName<URnModel>(Actor, Root, RnModelObjectName);
-    
     Actor->Model = CreateRnModel(Self, Graph, Model);
+    FPLATEAURnDef::SetNewObjectWorld(nullptr);
     return Actor->Model;
 #else
     return nullptr;

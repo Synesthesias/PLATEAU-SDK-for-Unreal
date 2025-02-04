@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "RnLineString.generated.h"
-UCLASS()
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnLineString : public UObject
 {
     GENERATED_BODY()
@@ -86,6 +86,6 @@ public:
         EAxisPlane Plane) const;
 
 private:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnPoint*> Points;
 };
