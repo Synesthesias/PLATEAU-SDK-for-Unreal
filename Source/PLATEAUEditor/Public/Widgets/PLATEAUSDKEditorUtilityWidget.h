@@ -134,4 +134,6 @@ private:
     FDelegateHandle SelectionChangedEventHandle;
     AActor* SelectionActor;
     USceneComponent* SelectionComponent;
+
+
 };

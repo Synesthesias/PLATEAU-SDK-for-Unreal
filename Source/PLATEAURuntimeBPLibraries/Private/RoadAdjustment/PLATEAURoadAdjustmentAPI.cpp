@@ -4,6 +4,8 @@
 #include "PLATEAURuntime/Public/PLATEAUInstancedCityModel.h"
 #include "PLATEAUImportSettings.h"
 #include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
+#include "RoadAdjustment/RoadReproducer.h"
+#include "RoadAdjustment/ICrosswalkPlacementRule.h"
 
 void UPLATEAURoadAdjustmentAPI::CreateRnModel(APLATEAUInstancedCityModel* TargetCityModel,
                                               APLATEAURnStructureModel* DestActor)
@@ -13,4 +15,14 @@ void UPLATEAURoadAdjustmentAPI::CreateRnModel(APLATEAUInstancedCityModel* Target
 #else
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif
+}
+
+void UPLATEAURoadAdjustmentAPI::GenerateRoadMarking() {
+#if WITH_EDITOR
+    TObjectPtr<URoadReproducer> RoadReproducerPtr = NewObject<URoadReproducer>();
+    RoadReproducerPtr->Generate(nullptr, ECrosswalkFrequency::None);
+#else
+    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
+#endif
+
 }

@@ -17,4 +17,8 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAURoadAdjustmentAPI : public UBlueprin
 public:
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|RoadAdjustmentAPI")
     static void CreateRnModel(APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* DestActor);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|RoadAdjustmentAPI")
+    static void GenerateRoadMarking();
+
 };
