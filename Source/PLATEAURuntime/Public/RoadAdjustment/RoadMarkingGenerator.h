@@ -7,7 +7,6 @@
 #include "ICrosswalkPlacementRule.h"
 #include "RoadMarkingGenerator.generated.h"
 
-class IRrTarget;
 class RoadReproduceSource;
 class RoadMarkingInstance;
 
@@ -19,11 +18,11 @@ class PLATEAURUNTIME_API URoadMarkingGenerator : public UObject
 public:
     URoadMarkingGenerator();
     
-    void Initialize(IRrTarget* Target, ECrosswalkFrequency CrosswalkFreq);
+    void Initialize(class IIRrTarget* Target, ECrosswalkFrequency CrosswalkFreq);
     void Generate();
 
 private:
-    TArray<TSharedPtr<RoadMarkingInstance>> GenerateRoadLines(IRrTarget* InnerTarget);
+    TArray<TSharedPtr<RoadMarkingInstance>> GenerateRoadLines(class IIRrTarget* InnerTarget);
     
     //void GenerateGameObj(UStaticMesh* Mesh, 
     //                    const TArray<UMaterialInterface*>& Materials, 
@@ -32,6 +31,6 @@ private:
     //                    EReproducedRoadType ReproducedType,
     //                    EReproducedRoadDirection Direction);
 
-    IRrTarget* TargetBeforeCopy;
+    class IIRrTarget* TargetBeforeCopy;
     ECrosswalkFrequency CrosswalkFrequency;
 };

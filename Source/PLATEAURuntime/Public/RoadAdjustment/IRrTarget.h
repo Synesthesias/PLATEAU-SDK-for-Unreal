@@ -29,7 +29,7 @@ public:
     
     virtual TArray<class URnIntersection*> Intersections() = 0;
     
-    virtual IIRrTarget* Copy() = 0;
+    virtual TScriptInterface<IIRrTarget> Copy() = 0;
     
-    virtual class URnModel* Network() = 0;
+    virtual TObjectPtr<class URnModel> Network() = 0;
 };

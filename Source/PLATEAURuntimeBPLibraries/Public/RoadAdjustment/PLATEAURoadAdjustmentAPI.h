@@ -19,6 +19,6 @@ public:
     static void CreateRnModel(APLATEAUInstancedCityModel* TargetCityModel, APLATEAURnStructureModel* DestActor);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|RoadAdjustmentAPI")
-    static void GenerateRoadMarking();
+    static void GenerateRoadMarking(APLATEAURnStructureModel* DestActor);
 
 };

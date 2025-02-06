@@ -14,7 +14,7 @@ URoadMarkingGenerator::URoadMarkingGenerator()
     CrosswalkFrequency = ECrosswalkFrequency::BigRoad;
 }
 
-void URoadMarkingGenerator::Initialize(IRrTarget* Target, ECrosswalkFrequency CrosswalkFreq)
+void URoadMarkingGenerator::Initialize(IIRrTarget* Target, ECrosswalkFrequency CrosswalkFreq)
 {
     if (Target != nullptr)
     {
@@ -79,7 +79,7 @@ void URoadMarkingGenerator::Generate()
     // Implement crosswalk generation...
 }
 
-TArray<TSharedPtr<RoadMarkingInstance>> URoadMarkingGenerator::GenerateRoadLines(IRrTarget* InnerTarget)
+TArray<TSharedPtr<RoadMarkingInstance>> URoadMarkingGenerator::GenerateRoadLines(class IIRrTarget* InnerTarget)
 {
     TArray<TSharedPtr<RoadMarkingInstance>> Results;
     

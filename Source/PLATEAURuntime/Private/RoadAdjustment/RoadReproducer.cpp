@@ -11,7 +11,7 @@ URoadReproducer::URoadReproducer()
 {
 }
 
-void URoadReproducer::Generate(class IRrTarget* Target, ECrosswalkFrequency CrosswalkFrequency)
+void URoadReproducer::Generate(class IIRrTarget* Target, ECrosswalkFrequency CrosswalkFrequency)
 {
     //// 道路ネットワークから道路メッシュを生成
     //URoadNetworkToMesh* Rnm = NewObject<URoadNetworkToMesh>();

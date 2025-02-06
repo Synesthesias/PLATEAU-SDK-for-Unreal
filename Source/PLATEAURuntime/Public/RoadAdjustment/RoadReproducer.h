@@ -24,7 +24,7 @@ public:
      */
     URoadReproducer();
 
-    void Generate(class IRrTarget* Target, ECrosswalkFrequency CrosswalkFrequency);
+    void Generate(class IIRrTarget* Target, ECrosswalkFrequency CrosswalkFrequency);
 
     static class USceneComponent* GenerateDstParent();
 };
