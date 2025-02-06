@@ -39,9 +39,12 @@ EPLATEAURoadLineType FPLATEAUMarkedWay::GetRoadLineType() const
         return EPLATEAURoadLineType::YellowLine;
     case EPLATEAUMarkedWayType::CenterLineUnder6MWidth:
         return EPLATEAURoadLineType::DashedWhilteLine;
+    case EPLATEAUMarkedWayType::StopLine:
+        return EPLATEAURoadLineType::StopLine;
     case EPLATEAUMarkedWayType::Crosswalk:
         return EPLATEAURoadLineType::Crossing;
     default:
+        UE_LOG(LogTemp, Error, TEXT("FPLATEAUMarkedWay::GetRoadLineType: Invalid MarkedWayType."));
         return EPLATEAURoadLineType::None;
     }
 }

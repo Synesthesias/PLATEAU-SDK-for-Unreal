@@ -6,6 +6,7 @@
 #include "RoadAdjust/RoadMarking/PLATEAUMCIntersection.h"
 #include "RoadAdjust/RoadMarking/PLATEAUMCLaneLine.h"
 #include "RoadAdjust/RoadMarking/PLATEAUMCShoulderLine.h"
+#include "RoadAdjust/RoadMarking/UPLATEAUStopLineComposer.h"
 
 
 FPLATEAUMarkedWayList UPLATEAUMarkedWayListComposerMain::ComposeFrom(const IPLATEAURrTarget* Target)
@@ -20,6 +21,7 @@ FPLATEAUMarkedWayList UPLATEAUMarkedWayListComposerMain::ComposeFrom(const IPLAT
     Composers.Add(NewObject<UPLATEAUMCShoulderLine>());  // 路側帯線、すなわち歩道と車道の間の線
     Composers.Add(NewObject<UPLATEAUMCCenterLine>());    // センターライン
     Composers.Add(NewObject<UPLATEAUMCIntersection>());  // 交差点の線
+    Composers.Add(NewObject<UPLATEAUStopLineComposer>()); // 停止線
     
 
     // 各コンポーザーの結果を収集し、高さオフセットを適用
