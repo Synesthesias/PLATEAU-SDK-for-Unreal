@@ -41,6 +41,8 @@ EPLATEAURoadLineType FPLATEAUMarkedWay::GetRoadLineType() const
         return EPLATEAURoadLineType::YellowLine;
     case EPLATEAUMarkedWayType::CenterLineUnder6MWidth:
         return EPLATEAURoadLineType::DashedWhilteLine;
+    case EPLATEAUMarkedWayType::Crosswalk:
+        return EPLATEAURoadLineType::Crossing;
     default:
         return EPLATEAURoadLineType::None;
     }

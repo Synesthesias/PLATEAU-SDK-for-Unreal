@@ -2,23 +2,9 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "PLATEAUInstancedCityModel.h"
-#include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
-#include "RoadMarking/LineGeneratorComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
-
-UENUM(BlueprintType)
-enum class EPLATEAURoadLineType : uint8 {
-    None UMETA(DisplayName = "None"),
-    WhiteLine UMETA(DisplayName = "WhiteLine"),
-    YellowLine UMETA(DisplayName = "YellowLine"),
-    DashedWhilteLine UMETA(DisplayName = "DashedWhilteLine"),
-    StopLine UMETA(DisplayName = "StopLine"),
-    Crossing UMETA(DisplayName = "Crossing"),
-};
-
+enum class EPLATEAURoadLineType;
 /**
 * @brief 道路の両端に配置される道路標示（横断歩道）において、道路のどちら側に配置されたかを示します。
 * どちらでもない道路標示はNoneとなります。

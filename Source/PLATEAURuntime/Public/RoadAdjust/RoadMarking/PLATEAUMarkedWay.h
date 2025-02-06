@@ -16,6 +16,7 @@ enum class EPLATEAUMarkedWayType : uint8
     LaneLine                   UMETA(DisplayName = "LaneLine"),
     ShoulderLine              UMETA(DisplayName = "ShoulderLine"),
     StopLine                  UMETA(DisplayName = "StopLine"),
+    Crosswalk              UMETA(DisplayName = "Crosswalk"),
     None                      UMETA(DisplayName = "None")
 };
 

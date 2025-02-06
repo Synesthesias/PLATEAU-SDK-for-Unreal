@@ -89,7 +89,7 @@ FPLATEAUMarkedWayList UPLATEAUCrosswalkComposer::GenerateCrosswalk(
 
     // 横断歩道を1本の破線として生成します。
     auto CrosswalkLine = FPLATEAUMWLine(CrosswalkPositions);
-    auto MarkedWay = FPLATEAUMarkedWay(CrosswalkLine, EPLATEAUMarkedWayType::ShoulderLine, false);
+    auto MarkedWay = FPLATEAUMarkedWay(CrosswalkLine, EPLATEAUMarkedWayType::Crosswalk, false);
     // auto Generator = FDashedLineMeshGenerator(ERoadMarkingMaterial::White, true, CrosslineWidth, CrosslineDashInterval);
     // const auto Crosswalk = Generator.GenerateMeshInstance(CrosswalkPositions);
     Result.Add(MarkedWay);
