@@ -2,12 +2,10 @@
 
 #include "RoadAdjust/RoadMarking/PLATEAUMarkedWay.h"
 
+#include "RoadAdjust/PLATEAURoadLineType.h"
+
 FPLATEAUMWLine::FPLATEAUMWLine(const URnWay::VertexEnumerator& InPoints) {
-    auto Vertices = TArray<FVector>();
-    for(const auto& Point : InPoints) {
-        Vertices.Add(Point);
-    }
-    Points = TArray<FVector>(Vertices);
+    Points = InPoints.ToArray();
 }
 
 float FPLATEAUMWLine::SumDistance() const {

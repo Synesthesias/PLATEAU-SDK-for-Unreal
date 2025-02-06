@@ -104,7 +104,7 @@ TArray<FVector> UPLATEAUCrosswalkComposer::ShiftStopLine(
 
     if (Border.Num() <= 1) return TArray<FVector>();
 
-    constexpr float Threshold = 10.0f; // 0.1m * 100 (Unreal units)
+    constexpr float Threshold = 10.0f; // 10cm
     const auto Stop1 = Border[0];
     const auto Stop2 = Border[Border.Num() - 1];
 
@@ -115,7 +115,7 @@ TArray<FVector> UPLATEAUCrosswalkComposer::ShiftStopLine(
     bool bShift2Found = false;
 
     for (const auto& Edge : Intersection->GetEdges()) {
-        if (Edge->GetRoad() == nullptr) continue;
+        if (Edge->GetRoad() != nullptr) continue;
 
         const auto& EWay = Edge->GetBorder();
         const auto& E = EWay->GetVertices().ToArray();

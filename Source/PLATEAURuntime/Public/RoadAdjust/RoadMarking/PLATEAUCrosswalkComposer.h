@@ -53,6 +53,9 @@ private:
                                             const TRnRef_T<URnRoadBase>& SrcRoad,
                                             EPLATEAUReproducedRoadDirection Direction);
 
+    /**
+     * 引数である道路のBorderを停止線とし、そこからPositionOffset分だけ移動した線を返します。
+     */
     TArray<FVector> ShiftStopLine(const FPLATEAUMWLine& Border,
                                   const TRnRef_T<URnIntersection>& Intersection,
                                   float PositionOffsetArg);
