@@ -2,20 +2,18 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "PLATEAUInstancedCityModel.h"
-#include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
-#include "RoadMarking/LineGeneratorComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
-
+enum class EPLATEAURoadLineType;
+/**
+* @brief 道路の両端に配置される道路標示（横断歩道）において、道路のどちら側に配置されたかを示します。
+* どちらでもない道路標示はNoneとなります。
+*/
 UENUM(BlueprintType)
-enum class EPLATEAURoadLineType : uint8 {
-    WhiteLine = 0 UMETA(DisplayName = "WhiteLine"),
-    YellowLine = 1 UMETA(DisplayName = "YellowLine"),
-    DashedWhilteLine = 2 UMETA(DisplayName = "DashedWhilteLine"),
-    StopLine = 3 UMETA(DisplayName = "StopLine"),
-    Crossing = 4 UMETA(DisplayName = "Crossing"),
+enum class EPLATEAUReproducedRoadDirection : uint8 {
+    None UMETA(DisplayName = "None"),
+    Prev UMETA(DisplayName = "Prev"),
+    Next UMETA(DisplayName = "Next"),
 };
 
 /**
@@ -48,13 +46,14 @@ struct PLATEAURUNTIME_API FPLATEAURoadLineParam {
     float LineLength;
 };
 
-
+/// 道路ネットワークを元に道路の見た目を生成します。
 UCLASS()
 class PLATEAURUNTIME_API APLATEAUReproducedRoad : public AActor {
     GENERATED_BODY()
 public:
     APLATEAUReproducedRoad();
 
+    /// 道路標示を生成します。
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|RoadAdjust"))
     void CreateRoadMarks(APLATEAURnStructureModel* Model);
 

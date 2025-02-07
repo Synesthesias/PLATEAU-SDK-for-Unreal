@@ -166,6 +166,15 @@ public:
     FVector GetAdvancedPoint(float Offset, bool Reverse) const;
     float GetDistance2D(const TRnRef_T<URnWay>& Other, EAxisPlane Plane = FPLATEAURnDef::Plane) const;
 
+    /**
+     * 線の端からDistanceメートル辿ったときの位置を返します。
+     * EndSideがtrueの場合、線を逆（配列のend側）から辿ります。
+     * @param Distance - 辿る距離（メートル）
+     * @param EndSide - trueの場合、線を逆から辿ります
+     * @return 指定した距離の位置
+     */
+    FVector PositionAtDistance(float Distance, bool EndSide) const;
+
     // 線分の距離をp : (1-p)で分割した点を返す
     FVector GetLerpPoint(float P) const;
     float GetLerpPoint(float P, FVector& OutMidPoint) const;

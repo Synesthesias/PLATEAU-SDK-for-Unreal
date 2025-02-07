@@ -388,6 +388,32 @@ bool URnWay::IsSameLineSequence(const TRnRef_T<URnWay>& Other) const {
     return true;
 }
 
+FVector URnWay::PositionAtDistance(float Distance, bool EndSide) const
+{
+    float Len = 0.0f;
+    int32 Index = EndSide ? Count() - 1 : 0;
+    FVector Pos = GetPoint(Index)->Vertex;
+
+    while (Len < Distance) // オフセットの分だけ線上を動かします。
+    {
+        Index += EndSide ? -1 : 1;
+        if (Index < 0 || Index >= Count()) break;
+
+        FVector NextPos = GetPoint(Index)->Vertex;
+        float LenDiff = FVector::Dist(NextPos, Pos);
+        if (Len + LenDiff >= Distance)
+        {
+            float T = (Len + LenDiff - Distance) / LenDiff; // オーバーした割合
+            return FMath::Lerp(Pos, NextPos, 1.0f - T);
+        }
+
+        Pos = NextPos;
+        Len += LenDiff;
+    }
+
+    return Pos;
+}
+
 TArray<TRnRef_T<URnWay>> URnWay::Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector)
 {
     auto Selector = RateSelector;
