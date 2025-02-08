@@ -59,6 +59,33 @@ public:
         return SelectWithIndexImpl<T, DstType>(Src, Forward<F>(Selector));
     }
 
+    // Enumerable.Range代わり
+    static TArray<int32> Range(int32 Start, int32 Count)
+    {
+        TArray<int32> Result;
+        Result.Reserve(Count);
+        for (int32 i = 0; i < Count; ++i) {
+            Result.Add(Start + i);
+        }
+        return Result;
+    }
+
+    template<typename T>
+    static bool TryFindMinElement(const TArray<T>& Src, TFunction<bool(const T& A, const T& B)> Comparer, T& Out)
+    {
+        auto MinIndex = -1;
+        for (auto i = 0; i < Src.Num(); i++) 
+        {
+            if (MinIndex < 0 || Comparer(Src[i], Src[MinIndex])) {
+                MinIndex = i;
+            }
+        }
+        if (MinIndex < 0) 
+            return false;
+        Out = Src[MinIndex];
+        return true;
+    }
+
 private:
     template<typename T>
     static bool TryFirstOrDefaultImpl(const TSet<T>& Set, TFunction<bool(const T&)> Predicate, T& OutV) {

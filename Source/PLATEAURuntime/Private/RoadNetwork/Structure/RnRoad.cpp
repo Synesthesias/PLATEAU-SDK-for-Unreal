@@ -54,27 +54,29 @@ URnRoad::URnRoad()
 {
 }
 
-URnRoad::URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
+URnRoad::URnRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
 {
+    Init(TargetTran);
 }
 
-URnRoad::URnRoad(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
+URnRoad::URnRoad(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
 {
+    Init(InTargetTrans);
 }
 
-void URnRoad::Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
+void URnRoad::Init(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran)
 {
     MainLanes.Reset();
-    if (TargetTran) {
+    if (TargetTran.IsValid()) {
         GetTargetTrans().Add(TargetTran);
     }
 }
 
-void URnRoad::Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
+void URnRoad::Init(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTargetTrans)
 {
     MainLanes.Reset();
     for (auto&& Trans : InTargetTrans) {
-        if (Trans) {
+        if (Trans.IsValid()) {
             GetTargetTrans().Add(Trans);
         }
     }
@@ -444,15 +446,15 @@ bool URnRoad::Check() const
     return Super::Check();
 }
 
-TRnRef_T<URnRoad> URnRoad::Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran) {
+TRnRef_T<URnRoad> URnRoad::Create(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran) {
     return RnNew<URnRoad>(TargetTran);
 }
 
-TRnRef_T<URnRoad> URnRoad::Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans) {
+TRnRef_T<URnRoad> URnRoad::Create(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans) {
     return RnNew<URnRoad>(TargetTrans);
 }
 
-TRnRef_T<URnRoad> URnRoad::CreateIsolatedRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way)
+TRnRef_T<URnRoad> URnRoad::CreateIsolatedRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way)
 {
     const auto Lane = URnLane::CreateOneWayLane(Way);
     auto Ret = RnNew<URnRoad>(TargetTran);
@@ -461,7 +463,7 @@ TRnRef_T<URnRoad> URnRoad::CreateIsolatedRoad(TObjectPtr<UPLATEAUCityObjectGroup
         
 }
 
-TRnRef_T<URnRoad> URnRoad::CreateOneLaneRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane)
+TRnRef_T<URnRoad> URnRoad::CreateOneLaneRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane)
 {
     auto Ret = RnNew<URnRoad>(TargetTran);
     Ret->AddMainLane(Lane);

@@ -44,9 +44,9 @@ bool FPLATEAUVector2DEx::IsPointOnLeftSide(const FVector2D& From, const FVector2
 }
 
 FVector2D FPLATEAUVector2DEx::RotateTo(const FVector2D& From, const FVector2D& To, float MaxRad) {
-    float Angle = FMath::Acos(FVector2D::DotProduct(From.GetSafeNormal(), To.GetSafeNormal()));
+    float Ang = Angle(From, To);
 
-    if (Angle < MaxRad)
+    if (Ang < MaxRad)
         return To;
 
     float Cross = From.X * To.Y - From.Y * To.X;

@@ -16,11 +16,11 @@ private:
     GENERATED_BODY()
 public:
     URnRoad();
-    explicit URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
-    explicit URnRoad(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    explicit URnRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    explicit URnRoad(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
-    void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
-    void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    void Init(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    void Init(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // メインレーンすべて取得
     const auto& GetMainLanes() const { return MainLanes; }
@@ -180,13 +180,13 @@ public:
     // 構造的に正しいかどうかチェック
     virtual bool Check() const override;
     // 道路を作成する
-    static TRnRef_T<URnRoad> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
-    static TRnRef_T<URnRoad> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    static TRnRef_T<URnRoad> Create(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
+    static TRnRef_T<URnRoad> Create(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // 孤立した道路を作成する
-    static TRnRef_T<URnRoad> CreateIsolatedRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way);
+    static TRnRef_T<URnRoad> CreateIsolatedRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way);
 
-    static TRnRef_T<URnRoad> CreateOneLaneRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane);
+    static TRnRef_T<URnRoad> CreateOneLaneRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane);
 
 private:
 
