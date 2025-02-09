@@ -77,3 +77,13 @@ bool FLineUtil::HalfLineSegmentIntersection(const FRay2D& HalfLine, const FVecto
     // p1,p2は線分なので0~1の範囲内ならOK
     return ret && T1 >= 0.f && T2 >= 0.f && T2 <= 1.f;
 }
+
+bool FLineUtil::LineSegmentIntersection(const FRay2D& line, FVector2D p1, FVector2D p2, FVector2D& Intersection,
+    float& T1, float& T2)
+{
+    auto ret = LineIntersection(line.Origin, line.Origin + line.Direction, p1, p2, Intersection, T1,
+        T2);
+    // p1,p2は線分なので0~1の範囲内ならOK
+    return ret && T2 >= 0.f && T2 <= 1.f;
+
+}

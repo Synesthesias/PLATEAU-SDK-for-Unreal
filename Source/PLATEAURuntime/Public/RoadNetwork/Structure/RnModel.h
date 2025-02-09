@@ -42,7 +42,6 @@ private:
 
 public:
     static constexpr float Epsilon = SMALL_NUMBER;
-    static constexpr EAxisPlane Plane = EAxisPlane::Xz;
 
     URnModel();
 
@@ -103,7 +102,10 @@ public:
     TArray<TRnRef_T<URnSideWalk>> GetNeighborSideWalks(const TRnRef_T<URnRoadBase>& RoadBase) const;
 
     // 交差点の境界線を調整する
-    void CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option);
+    void CalibrateIntersectionBorderForAllRoad(const FRnModelCalibrateIntersectionBorderOption& Option);
+    bool TrySliceRoadHorizontalNearByBorder(URnRoad* Road, const FRnModelCalibrateIntersectionBorderOption& Option,
+                                            URnRoad*& OutPrevSideRoad, URnRoad*& OutCenterSideRoad,
+                                            URnRoad*& OutNextSideRoad);
 
     // 道路ネットワークを作成する
     static TRnRef_T<URnModel> Create();
@@ -133,6 +135,47 @@ public:
 
     // 不正チェック
     bool Check() const;
+
+
+    enum ERoadCutResult {
+        Success,
+        // 道路自体が不正
+        InvalidRoad,
+        // 不正な歩道を持っている
+        InvalidSideWalk,
+        // 切断線が不正
+        InvalidCutLine,
+        // 分断できないレーンがあった
+        UnSlicedLaneExist,
+        // 一部だけ分断された歩道が存在
+        PartiallySlicedSideWalkExist,
+        // 切断線が端点と近すぎる(ほぼ分断しない状態)
+        TerminateCutLine,
+        // 切断線が交差している
+        CrossCutLine,
+
+        // 交差点自体が不正
+        InvalidIntersection,
+        // 交差点の境界線を切断
+        IntersectionBorderSliced,
+        // 交差点のEdgeが片側だけ切断された
+        IntersectionPartiallySlicedEdge,
+        // 交差点で複数の入口を切断するのはダメ
+        IntersectionMultipleEdgeSliced,
+        // 交差点で分断された入口が存在しなかった
+        IntersectionNoEdgeSliced,
+    };
+
+    struct FSliceRoadHorizontalResult {
+        ERoadCutResult Result;
+        URnRoad* PrevRoad;
+        URnRoad* NextRoad;
+    };
+
+    FSliceRoadHorizontalResult SliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment);
+
+    void SeparateContinuousBorder();
+
 private:
 
     // 自動生成で作成されたときのバージョン

@@ -337,6 +337,34 @@ TRnRef_T<URnWay> URnRoad::GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURn
     return Border;
 }
 
+TArray<URnWay*> URnRoad::GetBorderWays(EPLATEAURnLaneBorderType BorderType) const
+{
+    TArray<URnWay*> Result;
+
+    // Left -> Median -> Right order
+    for (URnLane* Lane : GetAllLanesWithMedian()) {
+        EPLATEAURnLaneBorderType LaneBorderType = BorderType;
+        EPLATEAURnLaneBorderDir LaneBorderDir = EPLATEAURnLaneBorderDir::Left2Right;
+
+        if (!IsLeftLane(Lane)) {
+            LaneBorderType = FPLATEAURnLaneBorderTypeEx::GetOpposite(LaneBorderType);
+            LaneBorderDir = FPLATEAURnLaneBorderDirEx::GetOpposite(LaneBorderDir);
+        }
+
+        URnWay* Way = Lane->GetBorder(LaneBorderType);
+        if (!Way) {
+            continue;
+        }
+
+        if (Lane->GetBorderDir(LaneBorderType) != LaneBorderDir) {
+            Way = Way->ReversedWay();
+        }
+
+        Result.Add(Way);
+    }
+    return Result;
+}
+
 void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir) {
     auto OldLanes = GetLanes(Dir);
     MainLanes.Reset();
@@ -446,6 +474,109 @@ bool URnRoad::Check() const
     return Super::Check();
 }
 
+bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, float BorderOffsetMeter,
+    FLineSegment3D& OutSegment)
+{
+    OutSegment = FLineSegment3D();
+
+    URnWay* LeftWay = nullptr;
+    URnWay* RightWay = nullptr;
+    if (!TryGetMergedSideWay(NullOpt, LeftWay, RightWay)) {
+        return false;
+    }
+
+    URnWay* PrevBorder = GetMergedBorder(EPLATEAURnLaneBorderType::Prev);
+    URnWay* NextBorder = GetMergedBorder(EPLATEAURnLaneBorderType::Next);
+
+    FVector Start = PrevBorder->GetLerpPoint(0.5f);
+    FVector End = NextBorder->GetLerpPoint(0.5f);
+
+
+    auto Vertices = FPLATEAURnEx::CreateInnerLerpLineString(
+        LeftWay->GetVertices().ToArray(),
+        RightWay->GetVertices().ToArray(),
+        RnNew<URnPoint>(Start),
+        RnNew<URnPoint>(End),
+        PrevBorder,
+        NextBorder,
+        0.5f);
+
+    URnWay* CenterWay = RnNew<URnWay>(Vertices);
+    int32 StartIndex = 0;
+    int32 EndIndex = 0;
+    FVector Position = FVector::ZeroVector;
+
+    URnWay* Border = (BorderSide == EPLATEAURnLaneBorderType::Prev) ? PrevBorder : NextBorder;
+
+    TArray<FVector> CheckBorderPoints;
+    CheckBorderPoints.Add(Border->GetVertex(0));
+    CheckBorderPoints.Add(Border->GetVertex(-1));
+
+    URnRoadBase* NeighborRoad = GetNeighborRoad(BorderSide);
+    if (NeighborRoad) {
+        for (URnSideWalk* SideWalk : GetSideWalks()) {
+            for (URnWay* Way : SideWalk->GetAllWays()) {
+                for (URnSideWalk* NeighborSideWalk : NeighborRoad->GetSideWalks()) 
+                {
+                    if (NeighborSideWalk->GetAllWays().Contains(Way)) {
+                        CheckBorderPoints.Add(Way->GetVertex(0));
+                        CheckBorderPoints.Add(Way->GetVertex(-1));
+                    }
+                }
+            }
+        }
+    }
+
+    for (const FVector& Point : CheckBorderPoints) {
+        float Index;
+        FVector Nearest;
+        float Distance;
+        CenterWay->GetNearestPoint(Point, Nearest, Index, Distance);
+
+        float Length;
+        if (BorderSide == EPLATEAURnLaneBorderType::Next) {
+            Length = CenterWay->CalcLength(Index, CenterWay->Count() - 1);
+        }
+        else {
+            Length = CenterWay->CalcLength(0, Index);
+        }
+
+        // Add 2.5m margin
+        BorderOffsetMeter = FMath::Max(BorderOffsetMeter, Length + 2.5f);
+    }
+
+    if (BorderSide == EPLATEAURnLaneBorderType::Next) {
+        Position = CenterWay->GetAdvancedPointFromBack(BorderOffsetMeter, StartIndex, EndIndex);
+    }
+    else if (BorderSide == EPLATEAURnLaneBorderType::Prev) {
+        Position = CenterWay->GetAdvancedPointFromFront(BorderOffsetMeter, StartIndex, EndIndex);
+    }
+    else {
+        return false;
+    }
+
+    FVector Direction = (CenterWay->GetVertex(EndIndex) - CenterWay->GetVertex(StartIndex)).GetSafeNormal();
+    Direction = FRotator(0.f, 90.f, 0.f).RotateVector(Direction);
+
+    FRay Ray(Position, Direction);
+
+    TTuple<float, FVector> LeftIntersection, RightIntersection;
+    if (!LeftWay->LineString->TryGetNearestIntersectionBy2D(Ray, LeftIntersection)) {
+        return false;
+    }
+
+    if (!RightWay->LineString->TryGetNearestIntersectionBy2D(Ray, RightIntersection)) {
+        return false;
+    }
+
+    FVector DirectionNormalized = (LeftIntersection.Value - Ray.Origin).GetSafeNormal();
+    OutSegment = FLineSegment3D(
+        LeftIntersection.Value + DirectionNormalized * 20.f * FPLATEAURnDef::Meter2Unit,
+        RightIntersection.Value - DirectionNormalized * 20.f * FPLATEAURnDef::Meter2Unit);
+
+    return true;
+}
+
 TRnRef_T<URnRoad> URnRoad::Create(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran) {
     return RnNew<URnRoad>(TargetTran);
 }
@@ -523,4 +654,233 @@ TArray<TRnRef_T<URnWay>> URnRoad::GetMergedSideWays() const {
         Ways.Add(RightWay);
     }
     return Ways;
+}
+
+bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType) {
+    URnRoadBase* Neighbor = GetNeighborRoad(BorderType);
+    URnIntersection* Intersection = Cast<URnIntersection>(Neighbor);
+    if (!Intersection) {
+        return false;
+    }
+
+    URnWay* LeftWay = nullptr;
+    URnWay* RightWay = nullptr;
+    TryGetMergedSideWay(NullOpt, LeftWay, RightWay);
+
+    auto EdgeGroups = FRnIntersectionEx::CreateEdgeGroup(Intersection);
+    auto EdgeGroup = EdgeGroups.FindByPredicate([&](const FRnIntersectionEx::FEdgeGroup& X) {
+        return X.Key == this;
+        });
+    if (!EdgeGroup) {
+        return false;
+    }
+
+    TSet<URnLineString*> Visited;
+
+    auto Merge = [&Visited](URnWay* Dst, URnWay* Src, TFunction<void(URnWay*, URnWay*)> Merger) {
+        if (!Dst || !Src) {
+            return;
+        }
+        if (Visited.Contains(Dst->GetLineString())) {
+            return;
+        }
+        Visited.Add(Dst->GetLineString());
+        Merger(Dst, Src);
+        };
+    
+    TArray<URnWay*> OppositeBorders =  GetBorderWays( FPLATEAURnLaneBorderTypeEx::GetOpposite(BorderType));
+    URnRoadBase* OppositeRoadBase = GetNeighborRoad(FPLATEAURnLaneBorderTypeEx::GetOpposite(BorderType));
+
+    if (BorderType == EPLATEAURnLaneBorderType::Prev) {
+        auto RightEdge = EdgeGroup->LeftSide->Edges[0];
+        auto LeftEdge = EdgeGroup->RightSide->Edges.Last();
+
+        Merge(RightEdge ? RightEdge->GetBorder() : nullptr, RightWay ? RightWay->ReversedWay() : nullptr,
+            [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
+
+        Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
+            [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
+
+        Next->ReplaceNeighbor(this, Intersection);
+    }
+    else if (BorderType == EPLATEAURnLaneBorderType::Next) {
+        auto RightEdge = EdgeGroup->RightSide->Edges.Last();
+        auto LeftEdge = EdgeGroup->LeftSide->Edges[0];
+
+        Merge(RightEdge ? RightEdge->GetBorder() : nullptr, RightWay ? RightWay->ReversedWay() : nullptr,
+            [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
+
+        Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
+            [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
+    }
+
+    Intersection->ReplaceEdges(this, OppositeBorders);
+    Intersection->ReplaceNeighbor(this, OppositeRoadBase);
+    OppositeRoadBase->ReplaceNeighbor(this, Intersection);
+
+    TArray<URnSideWalk*> DstSideWalks = Intersection->GetSideWalks();
+    TArray<URnSideWalk*> SrcSideWalks = GetSideWalks();
+
+    TArray<URnSideWalk*> OriginalDstSideWalks = DstSideWalks;
+    TMap<URnWay*, URnWay*> Original;
+
+    for (URnSideWalk* SideWalk : DstSideWalks) {
+        for (URnWay* Way : SideWalk->GetSideWays()) {
+            Original.Add(Way, Way->Clone(false));
+        }
+    }
+
+    TSet<URnSideWalk*> MergedDstSideWalks;
+
+    for (URnSideWalk* srcSw : SrcSideWalks) {
+        auto found = false;
+        for (URnSideWalk* dstSw : DstSideWalks) 
+        {
+
+            auto Merge2 = [&](URnWay* dst, URnWay* src, TFunction<void(URnWay*, URnWay*)> merger) {
+                if (!dst || !src)
+                    return;
+                if (Visited.Contains(dst->LineString))
+                    return;
+                Visited.Add(dst->LineString);
+
+                auto tolerance = 0.f;
+                if (FRnWayEx::TryMergePointsToLineString(dst, src, tolerance) == false) {
+                    merger(dst, src);
+                }
+                };
+
+            auto MergeSideWalk = [&](bool reverse, TFunction<void(URnWay*, URnWay*)> merger) mutable
+            {
+                auto insideWay = srcSw->GetInsideWay();
+                if(insideWay && reverse)
+                    insideWay = insideWay->ReversedWay();
+                auto outsideWay = srcSw->GetOutsideWay();
+                if(outsideWay && reverse)
+                    outsideWay = outsideWay->ReversedWay();
+
+                Merge2(dstSw->GetInsideWay(), insideWay, merger);
+                Merge2(dstSw->GetOutsideWay(), outsideWay, merger);
+                // もともとnullだった場合は置き換える
+                dstSw->SetSideWays(
+                    dstSw->GetOutsideWay() ? dstSw->GetOutsideWay() : outsideWay
+                    , dstSw->GetInsideWay() ?  dstSw->GetInsideWay() : insideWay
+                );
+                MergedDstSideWalks.Add(dstSw);
+                found = true;
+            };
+
+            // start - startで重なっている場合
+            if (dstSw->GetStartEdgeWay() && dstSw->GetStartEdgeWay()->IsSameLineReference(srcSw->GetStartEdgeWay())) {
+                MergeSideWalk(true, [](URnWay* self, URnWay* dst) {  self->AppendFront2LineString(dst); });
+                dstSw->SetStartEdgeWay(srcSw->GetEndEdgeWay());
+            }
+            // start - endで重なっている場合
+            else if (dstSw->GetStartEdgeWay() && dstSw->GetStartEdgeWay()->IsSameLineReference(srcSw->GetEndEdgeWay()) ) {
+                MergeSideWalk(false, [](URnWay* self, URnWay* dst) {  self->AppendFront2LineString(dst); });
+                dstSw->SetStartEdgeWay(srcSw->GetStartEdgeWay());
+            }
+            // end - endで重なっている場合
+            else if (dstSw->GetEndEdgeWay() && dstSw->GetEndEdgeWay()->IsSameLineReference(srcSw->GetEndEdgeWay()) ) {
+                MergeSideWalk(true, [](URnWay* self, URnWay* dst) {  self->AppendBack2LineString(dst); });
+                dstSw->SetEndEdgeWay(srcSw->GetStartEdgeWay());
+            }
+            // end - startで重なっている場合
+            else if (dstSw->GetEndEdgeWay() && dstSw->GetEndEdgeWay()->IsSameLineReference(srcSw->GetStartEdgeWay())) {
+                MergeSideWalk(false, [](URnWay* self, URnWay* dst) {  self->AppendBack2LineString(dst); });
+                dstSw->SetEndEdgeWay(srcSw->GetEndEdgeWay());
+            }
+
+            if (found)
+                break;
+        }
+
+        // マージできなかった歩道は直接追加
+        if (found == false) {
+            Intersection->AddSideWalk(srcSw);
+            DstSideWalks.Add(srcSw);
+        }       
+    }
+
+    // dstSideWalksの中でマージされなかった(元の形状から変更されない)ものは
+    // レーンと共通のLineStringを持っている場合に勝手に形状変わっているかもしれないので明示的に元に戻す
+    for (URnSideWalk* DstSideWalk : OriginalDstSideWalks) 
+    {
+        if (MergedDstSideWalks.Contains(DstSideWalk))
+            continue;
+        auto OutWay = DstSideWalk->GetOutsideWay();
+        if(OutWay)
+            OutWay = Original[OutWay];
+        auto InWay = DstSideWalk->GetInsideWay();
+        if(InWay)
+            InWay = Original[InWay];
+        DstSideWalk->SetSideWays(OutWay, InWay);
+    }
+
+    Intersection->AddTargetTrans(GetTargetTrans());
+    DisConnect(true);
+
+    return true;
+}
+void URnRoad::SeparateContinuousBorder() {
+    auto IsConnected = [](URnWay* A, URnWay* B, URnPoint*& OutNewA, URnPoint*& OutJointPoint, URnPoint*& OutNewB) -> bool {
+        OutNewA = nullptr;
+        OutNewB = nullptr;
+        OutJointPoint = nullptr;
+
+        TArray<int32> D = { 0, -1 };
+        for (int32 D1 : D) {
+            for (int32 D2 : D) {
+                if (A->GetPoint(D1) == B->GetPoint(D2)) {
+                    const float Offset = 0.01f;
+                    OutNewA = RnNew<URnPoint>(A->GetAdvancedPoint(Offset, D1 == -1));
+                    OutNewB = RnNew<URnPoint>(B->GetAdvancedPoint(Offset, D2 == -1));
+                    OutJointPoint = A->GetPoint(D1);
+                    return true;
+                }
+            }
+        }
+        return false;
+        };
+
+    auto Check = [&](URnLane* Lane) {
+        if (!Lane->GetPrevBorder() || !Lane->GetNextBorder()) {
+            return;
+        }
+
+        URnPoint* NewA;
+        URnPoint* JointPoint;
+        URnPoint* NewB;
+        if (!IsConnected(Lane->GetPrevBorder(), Lane->GetNextBorder(), NewA, JointPoint, NewB)) {
+            return;
+        }
+
+        TArray<URnPoint*> Points = { NewA, JointPoint, NewB };
+        URnLineString* NewLs = URnLineString::Create(Points);
+        URnRoadBase* PrevRoad = Lane->GetPrevRoad();
+        URnRoadBase* NextRoad = Lane->GetNextRoad();
+
+        Lane->GetPrevBorder()->GetLineString()->ReplacePoint(JointPoint, NewA);
+        Lane->GetNextBorder()->GetLineString()->ReplacePoint(JointPoint, NewB);
+
+        for (URnLineString* Ls : PrevRoad->GetAllLineStringsDistinct()) {
+            Ls->ReplacePoint(JointPoint, NewA);
+        }
+        for (URnLineString* Ls : NextRoad->GetAllLineStringsDistinct()) {
+            Ls->ReplacePoint(JointPoint, NewB);
+        }
+
+        if (!Lane->GetLeftWay()) {
+            URnWay* NewWay = RnNew<URnWay>(NewLs, false, false);
+            Lane->SetSideWay(EPLATEAURnDir::Left, NewWay);
+        }
+        else if (!Lane->GetRightWay()) {
+            URnWay* NewWay = RnNew<URnWay>(NewLs, false, true);
+            Lane->SetSideWay(EPLATEAURnDir::Right, NewWay);
+        }
+        };
+
+    for (URnLane* Lane : GetAllLanesWithMedian()) {
+        Check(Lane);
+    }
 }

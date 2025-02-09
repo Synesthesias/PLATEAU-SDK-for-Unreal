@@ -15,7 +15,7 @@ URnIntersectionEdge::URnIntersectionEdge()
 void URnIntersectionEdge::Init()
 {}
 
-void URnIntersectionEdge::Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder)
+void URnIntersectionEdge::Init(URnRoadBase* InRoad, URnWay* InBorder)
 {
     Road = InRoad;
     Border = InBorder;
@@ -353,5 +353,53 @@ TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_
     }
 
 
-    return {};
+    return Ret;
+}
+
+void URnIntersection::SeparateContinuousBorder() {
+    Align();
+
+    for (int32 i = 0; i < Edges.Num(); ++i) {
+        URnIntersectionEdge* E0 = Edges[i];
+        URnIntersectionEdge* E1 = Edges[(i + 1) % Edges.Num()];
+
+        if (E0->IsBorder() && E1->IsBorder() && E0->GetRoad() != E1->GetRoad()) {
+            URnPoint* P0 = E0->GetBorder()->GetPoint(-1);
+            URnPoint* P1 = E1->GetBorder()->GetPoint(0);
+
+            // Offset by 1cm
+            const float Offset = 0.01f;
+
+            if (E0->GetBorder()->Count() < 2 || E1->GetBorder()->Count() < 2) {
+                UE_LOG(LogTemp, Error, TEXT("Border line has less than 2 vertices"));
+                continue;
+            }
+
+            URnPoint* NewP0 = RnNew<URnPoint>(E0->GetBorder()->GetAdvancedPoint(Offset, true));
+            URnPoint* NewP1 = RnNew<URnPoint>(E1->GetBorder()->GetAdvancedPoint(Offset, false));
+
+            TArray<URnPoint*> Points = { NewP0, P0, NewP1 };
+            URnLineString* LineString = URnLineString::Create(Points);
+
+            auto AdjustPoint = [](URnIntersectionEdge* E, URnPoint* OldPoint, URnPoint* NewPoint) {
+                E->GetBorder()->LineString->ReplacePoint(OldPoint, NewPoint);
+
+                if (E->GetRoad()) {
+                    TSet<URnLineString*> LineStrings = E->GetRoad()->GetAllLineStringsDistinct();
+                    for (URnLineString* Ls : LineStrings) {
+                        Ls->ReplacePoint(OldPoint, NewPoint);
+                    }
+                }
+                };
+
+            AdjustPoint(E0, P0, NewP0);
+            AdjustPoint(E1, P1, NewP1);
+
+            URnWay* Way = RnNew<URnWay>(LineString, false, true);
+
+            URnIntersectionEdge* NewNeighbor = RnNew<URnIntersectionEdge>(nullptr, Way);
+            Edges.Insert(NewNeighbor, i + 1);
+            i++;
+        }
+    }
 }

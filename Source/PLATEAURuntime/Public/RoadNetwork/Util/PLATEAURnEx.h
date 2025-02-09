@@ -11,6 +11,7 @@
 #include "RoadNetwork/GeoGraph/LineUtil.h"
 #include "RoadNetwork/RGraph/RGraphDef.h"
 
+class URnRoad;
 class UPLATEAUCityObjectGroup;
 class URnIntersection;
 class URnLineString;
@@ -99,6 +100,8 @@ public:
     static FBorderEdgesResult FindBorderEdges(const TArray<FVector2D>& Vertices,
                                               float ToleranceAngleDegForMidEdge = 20.f,
                                               float SkipAngleDeg = 20.f);
+
+    static FLineCrossPointResult GetLaneCrossPoints(TRnRef_T<URnRoad> Road,  const FLineSegment3D& LineSegment);
 
 public:
     template<typename T>

@@ -7,6 +7,7 @@
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
+#include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 int32 FPLATEAURnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) const
@@ -89,7 +90,7 @@ FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLineIntersections(
         FLineCrossPointResult::FTargetLineInfo Elem;
         Elem.LineString = Way;
 
-        auto Intersections = Way->GetIntersectionBy2D(LineSegment, URnModel::Plane);
+        auto Intersections = Way->GetIntersectionBy2D(LineSegment, FPLATEAURnDef::Plane);
         for (const auto& R : Intersections) {
             Elem.Intersections.Add(MakeTuple(R.Key, R.Value));
         }
@@ -171,6 +172,27 @@ FPLATEAURnEx::FBorderEdgesResult FPLATEAURnEx::FindBorderEdges(const TArray<FVec
     Result.BorderVertexIndices = CollinearRange;
 
     return Result;
+}
+
+FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLaneCrossPoints(TRnRef_T<URnRoad> Road,
+    const FLineSegment3D& LineSegment)
+{
+    TArray<URnWay*> TargetLines;
+    // Get all lane ways
+    for (URnLane* Lane : Road->GetAllLanesWithMedian()) {
+        for (URnWay* Way : Lane->GetBothWays()) {
+            TargetLines.Add(Way);
+        }
+    }
+
+    // Get all sidewalk ways
+    for (URnSideWalk* SideWalk : Road->GetSideWalks()) {
+        for (URnWay* Way : SideWalk->GetSideWays()) {
+            TargetLines.Add(Way);
+        }
+    }
+
+    return GetLineIntersections(LineSegment, TargetLines);
 }
 
 TArray<FVector2D> FPLATEAURnEx::FBorderEdgesResult::GetReducedBorderVertices() const {

@@ -34,6 +34,29 @@ FVector FLineSegment3D::GetNearestPoint(const FVector& Point, float& OutDistance
     return Start + OutDistanceFromStart * Direction;
 }
 
+bool FLineSegment3D::TryLineIntersectionBy2D(const FVector& Origin, const FVector& Dir, EAxisPlane Plane,
+    float NormalTolerance, FVector& OutIntersection, float& OutT1, float& OutT2) const
+{
+    auto Self2D = To2D(Plane);
+    FVector2D Inter2D;
+    if (!Self2D.TryLineIntersection(
+        FAxisPlaneEx::ToVector2D(Origin, Plane)
+        , FAxisPlaneEx::ToVector2D(Dir, Plane)
+        , Inter2D, OutT1, OutT2)) {
+        return false;
+    }
+
+    const float Y1 = FMath::Lerp(FAxisPlaneEx::GetNormal(Start, Plane),
+        FAxisPlaneEx::GetNormal(End, Plane), OutT1);
+    const float Y2 = FAxisPlaneEx::GetNormal(Origin, Plane) + FAxisPlaneEx::GetNormal(Dir, Plane) * OutT2;
+    if (FMath::Abs(Y2 - Y1) > NormalTolerance && NormalTolerance >= 0.0f) {
+        return false;
+    }
+
+    OutIntersection = FAxisPlaneEx::ToVector3D(Inter2D, Plane, (Y1 + Y2) * 0.5f);
+    return true;
+}
+
 FVector FLineSegment3D::GetPoint(float Distance) const {
     return Start + Direction * Distance;
 }

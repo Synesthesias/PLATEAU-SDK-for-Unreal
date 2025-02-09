@@ -112,7 +112,7 @@ public:
 
 
     // 指定した方向の境界線を取得する(全レーンマージした状態で取得する)
-    TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const;
+    TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir = NullOpt) const;
 
     // 指定した方向のWayを取得する(全レーンマージした状態で取得する)
     TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const;
@@ -134,6 +134,8 @@ public:
     // 指定したレーンの境界線を取得する
     virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir BorderDir) const;
 
+    // 境界線の一覧を取得する. left->rightの順番
+    TArray<URnWay*> GetBorderWays(EPLATEAURnLaneBorderType BorderType) const;
     // レーンを置き換える
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir);
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes);
@@ -164,6 +166,8 @@ public:
 
     // 左右のWayを結合したものを取得
     TArray<TRnRef_T<URnWay>> GetMergedSideWays() const;
+    bool TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType);
+    void SeparateContinuousBorder();
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad() override
@@ -179,6 +183,13 @@ public:
 
     // 構造的に正しいかどうかチェック
     virtual bool Check() const override;
+
+
+    bool TryGetVerticalSliceSegment(
+        EPLATEAURnLaneBorderType BorderSide,
+        float BorderOffsetMeter,
+        FLineSegment3D& OutSegment);
+
     // 道路を作成する
     static TRnRef_T<URnRoad> Create(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
     static TRnRef_T<URnRoad> Create(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
@@ -216,4 +227,5 @@ struct FRnRoadEx
 
     static auto IsValidBorderAdjacentNeighbor(const URnRoad* Self, EPLATEAURnLaneBorderType BorderType,
                                               bool NoBorderIsTrue) -> bool;
+
 };

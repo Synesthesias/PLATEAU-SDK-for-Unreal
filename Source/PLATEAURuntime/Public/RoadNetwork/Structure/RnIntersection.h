@@ -20,7 +20,7 @@ class URnIntersectionEdge : public UObject
 public:
     URnIntersectionEdge();
     void Init();
-    void Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder);
+    void Init(URnRoadBase* InRoad, URnWay* InBorder);
 
     TRnRef_T<URnRoadBase> GetRoad() const { return Road; }
 
@@ -158,6 +158,7 @@ public:
     /// </summary>
     /// <param name="edge"></param>
     static void AlignEdgeNormal(TRnRef_T<URnIntersectionEdge> edge);
+    void SeparateContinuousBorder();
 
 private:
 

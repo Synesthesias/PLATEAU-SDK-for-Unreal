@@ -41,7 +41,7 @@ public:
 
     TArray<TRnRef_T<URnLineString>> Split(int32 Num, bool InsertNewPoint, TFunction<float(int32)> RateSelector = nullptr);
 
-    TArray<TRnRef_T<URnLineString>> SplitByIndex(const TArray<int32>& Indices, bool InsertNewPoint = false) const;
+    bool SplitByIndex(float Index,URnLineString*& OutFront, URnLineString*& OutBack, TFunction<URnPoint*(FVector)> CreatePoint = nullptr) const;
     void AddFrontPoint(TRnRef_T<URnPoint> Point);
 
     bool Contains(TRnRef_T<URnPoint> Point) const;
@@ -85,7 +85,19 @@ public:
         const FLineSegment3D& LineSegment,
         EAxisPlane Plane) const;
 
+    TArray<TTuple<float, FVector>> GetIntersectionBy2D(
+        const FRay& Ray,
+        EAxisPlane Plane) const;
+
+    bool TryGetNearestIntersectionBy2D(const FRay& Ray, TTuple<float, FVector>& Res, EAxisPlane Plane = FPLATEAURnDef::Plane) const;
+
+
+    // selfのotherに対する距離スコアを返す(線分同士の距離ではない).低いほど近い
+    // selfの各点に対して, otherとの距離を出して, その平均をスコアとする
+    TOptional<float> CalcProximityScore(const URnLineString* Other) const;
+
 private:
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnPoint*> Points;
 };
+

@@ -865,8 +865,8 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         }
 
         // 交差点の
-        //if (bSeparateContinuousBorder)
-        //    ret->SeparateContinuousBorder();
+        if (Self.bSeparateContinuousBorder)
+            Model->SeparateContinuousBorder();
 
         // 中央分離帯の幅で道路を分割する
         //{
@@ -902,10 +902,10 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         }
 
 
-        //// 交差点との境界線が垂直になるようにする
-        //if (CalibrateIntersection && CalibrateIntersectionOption != nullptr) {
-        //    ret.CalibrateIntersectionBorderForAllRoad(CalibrateIntersectionOption);
-        //}
+        // 交差点との境界線が垂直になるようにする
+        if (Self.bCalibrateIntersection) {
+            Model->CalibrateIntersectionBorderForAllRoad(Self.CalibrateIntersectionOption);
+        }
 
         // 道路を分割する
         TArray<FString> FailedRoads;

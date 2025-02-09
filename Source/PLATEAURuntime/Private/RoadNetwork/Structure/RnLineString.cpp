@@ -160,30 +160,45 @@ TArray<TRnRef_T<URnLineString>> URnLineString::Split(int32 Num, bool InsertNewPo
     return Ret;
 }
 
-TArray<TRnRef_T<URnLineString>> URnLineString::SplitByIndex(const TArray<int32>& Indices, bool InsertNewPoint) const {
-    TArray<TRnRef_T<URnLineString>> Result;
-    if (!IsValid() || Indices.Num() == 0) return Result;
+bool URnLineString::SplitByIndex(float Index, URnLineString*& OutFront, URnLineString*& OutBack, TFunction<URnPoint*(FVector)> CreatePoint) const
+{
+    auto IsInt = FMath::Abs(Index - FMath::RoundToFloat(Index)) < KINDA_SMALL_NUMBER;
 
-    TArray<int32> SortedIndices = Indices;
-    SortedIndices.Sort();
+    auto I = IsInt ? FMath::RoundToFloat(Index) : (int)Index;
 
-    int32 StartIndex = 0;
-    for (int32 EndIndex : SortedIndices) {
-        auto SplitPoints = TArray< TRnRef_T<URnPoint>>();
-        for (int32 i = StartIndex; i <= EndIndex; ++i) {
-            SplitPoints.Add(GetPoint(i));
-        }
+    // points = [v0, v1, v2, v3]の時
+    // index = 1で区切るときは, front = [v0, v1], back = [v1, v2, v3]
+    // -> i = 1, frontはTake(1), backはskip(2)にして、v1をお互いに追加
+    // index = 1.5で区切るときは,front = [v0, v1, v1.5], back = [v1.5, v2, v3]
+    // -> i = 1, frontはTake(2), backはskip(2)にして、v1.5を追加
 
-        if (SplitPoints.Num() >= 2) {
-            TRnRef_T<URnLineString> Split = RnNew<URnLineString>(SplitPoints);
-            Result.Add(Split);
-        }
-        StartIndex = EndIndex;
+    TArray<URnPoint*> FrontPoints;
+    TArray<URnPoint*> BackPoints;
+    for(auto i = 0; i <= FMath::Min(I, Count() - 1); ++i)
+        FrontPoints.Add(Points[i]);
+
+    // 整数の時はfrontの最後をbackの最初に追加
+    if (IsInt) {
+        BackPoints.Add(Points[I]);
+    }
+    else
+    {
+        // 少数の時は中間点をfontの最後とbackの最初に追加
+        auto V = FMath::Lerp(Points[I]->Vertex, Points[I + 1]->Vertex, 0.5f);
+        auto MidPoint = CreatePoint(V);
+        FrontPoints.Add(MidPoint);
+        BackPoints.Add(MidPoint);
     }
 
-    return Result;
-}
+    for (auto i = I + 1; i < Count(); ++i)
+        BackPoints.Add(Points[i]);
 
+
+    TArray<TRnRef_T<URnLineString>> Result;
+    OutFront = RnNew<URnLineString>(FrontPoints);
+    OutBack = RnNew<URnLineString>(BackPoints);
+    return true;
+}
 void URnLineString::AddFrontPoint(TRnRef_T<URnPoint> Point) {
     if (Point) {
         Points.Insert(Point, 0);
@@ -254,7 +269,7 @@ TArray<FLineSegment3D> URnLineString::GetEdges() const
     const auto Edges = FGeoGraphEx::GetEdges(Points, false);
     for (auto It = Edges.begin(); It != Edges.end(); ++It) {
         const auto e = *It;
-        Ret.Add(FLineSegment3D(e.P0->Vertex, e.P0->Vertex));
+        Ret.Add(FLineSegment3D(e.P0->Vertex, e.P1->Vertex));
     }
     return Ret;
 }
@@ -428,7 +443,7 @@ FVector URnLineString::GetAdvancedPointFromBack(float Offset, int32& OutStartInd
 }
 
 TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(
-    const FLineSegment3D& LineSegment,
+    const FLineSegment3D& Ray,
     EAxisPlane Plane) const {
     TArray<TTuple<float, FVector>> Result;
     auto Edges = GetEdges();
@@ -438,12 +453,62 @@ TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(
         FVector P;
         float T1;
         float T2;
-        if(E.TrySegmentIntersectionBy2D(LineSegment, Plane, -1.f, P, T1, T2))
+        if(E.TrySegmentIntersectionBy2D(Ray, Plane, -1.f, P, T1, T2))
         {
             auto V = E.Lerp(T1);
-            Result.Add(MakeTuple(i + T2, V));
+            Result.Add(MakeTuple(i + T1, V));
         }
     }
 
     return Result;
 }
+
+TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(const FRay& Ray, EAxisPlane Plane) const
+{
+    TArray<TTuple<float, FVector>> Result;
+    auto Edges = GetEdges();
+    for (auto i = 0; i < Edges.Num(); ++i) {
+        auto E = Edges[i];
+        FVector P;
+        float T1;
+        float T2;
+        if (E.TryLineIntersectionBy2D(Ray.Origin, Ray.Direction, Plane, -1.f, P, T1, T2)) {
+            Result.Add(MakeTuple(i + T1, P));
+        }
+    }
+
+    return Result;
+}
+
+bool URnLineString::TryGetNearestIntersectionBy2D(const FRay& Ray, TTuple<float, FVector>& Res,
+                                                  EAxisPlane Plane) const {
+    auto ret = GetIntersectionBy2D(Ray, Plane);
+    if (ret.IsEmpty()) {
+        return false;
+    }
+    return FPLATEAURnLinq::TryFindMinElement<TTuple<float, FVector>>(
+        ret,
+        [&](const TTuple<float, FVector>& X, const TTuple<float, FVector>& Y) {
+            auto A = (X.Value - Ray.Origin).SizeSquared();
+            auto B = (Y.Value - Ray.Origin).SizeSquared();
+            return A < B;
+        }
+    , Res);
+}
+
+TOptional<float> URnLineString::CalcProximityScore(const URnLineString* Other) const
+{
+    if (IsValid() == false || !Other || !Other->IsValid())
+        return NullOpt;
+
+    return FPLATEAURnLinq::Average<URnPoint*, float>(Points, [&](const TRnRef_T<URnPoint>& V) {
+        FVector Inter;
+        float Index;
+        float Distance;
+        Other->GetNearestPoint(V->Vertex, Inter, Index, Distance);
+        return Distance;
+        });
+}
+
+
+

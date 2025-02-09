@@ -430,3 +430,23 @@ TArray<TRnRef_T<URnWay>> URnWay::Split(int32 Num, bool InsertNewPoint, TFunction
         Algo::Reverse(Result);
     return Result;
 }
+
+bool FRnWayEx::TryMergePointsToLineString(URnWay* Self, URnWay* Src, float PointDistanceTolerance) {
+    if (Self->GetPoint(0)->IsSamePoint(Src->GetPoint(0), PointDistanceTolerance)) {
+        Self->AppendFront2LineString(Src->ReversedWay());
+    }
+    else if (Self->GetPoint(0)->IsSamePoint(Src->GetPoint(-1), PointDistanceTolerance)) {
+        Self->AppendFront2LineString(Src);
+    }
+    else if (Self->GetPoint(-1)->IsSamePoint(Src->GetPoint(0), PointDistanceTolerance)) {
+        Self->AppendBack2LineString(Src);
+    }
+    else if (Self->GetPoint(-1)->IsSamePoint(Src->GetPoint(-1), PointDistanceTolerance)) {
+        Self->AppendBack2LineString(Src->ReversedWay());
+    }
+    else {
+        return false;
+    }
+
+    return true;
+}

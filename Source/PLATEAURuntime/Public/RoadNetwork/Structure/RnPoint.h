@@ -25,6 +25,7 @@ public:
     bool IsSamePoint(const URnPoint* Other, float SqrMagnitudeTolerance = 0.0f) const;
     bool IsSamePoint(const TRnRef_T<URnPoint>& Other, float SqrMagnitudeTolerance = 0.0f) const;
 
+    FVector GetVertex() const { return Vertex; }
 public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU")
     FVector Vertex;

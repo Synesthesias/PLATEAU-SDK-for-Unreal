@@ -86,6 +86,15 @@ public:
         return true;
     }
 
+    template<typename T, typename U>
+    static U Average(const TArray<T>& Src, TFunction<U(const T&)> Selector) {
+        U Sum = 0;
+        for (auto&& S : Src) {
+            Sum += Selector(S);
+        }
+        return Sum / Src.Num();
+    }
+
 private:
     template<typename T>
     static bool TryFirstOrDefaultImpl(const TSet<T>& Set, TFunction<bool(const T&)> Predicate, T& OutV) {
