@@ -7,6 +7,11 @@
 #include "UObject/Interface.h"
 #include "IRrTarget.generated.h"
 
+class URnRoadBase;
+class URnRoad;
+class URnIntersection;
+class URnModel;
+
 UINTERFACE(MinimalAPI)
 class UIRrTarget : public UInterface
 {
