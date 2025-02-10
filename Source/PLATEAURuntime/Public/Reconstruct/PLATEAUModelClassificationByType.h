@@ -19,5 +19,5 @@ public:
 protected:
 
     TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials;
-    TMap<EPLATEAUCityObjectsType, int> MaterialIDMap;
+    // TMap<EPLATEAUCityObjectsType, int> MaterialIDMap;
 };
