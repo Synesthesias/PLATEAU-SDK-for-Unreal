@@ -189,6 +189,18 @@ void URnIntersection::ReplaceEdges(const TRnRef_T<URnRoadBase>& Road, const TArr
     }
 }
 
+int32 URnIntersection::ReplaceEdgeLink(TRnRef_T<URnWay> Border, TRnRef_T<URnRoadBase> AfterRoad)
+{
+    int32 Count = 0;
+    for (auto& Edge : Edges) {
+        if (Edge->GetBorder()->IsSameLineReference(Border)) {
+            Edge->SetRoad(AfterRoad);
+            Count++;
+        }
+    }
+    return Count;
+}
+
 void URnIntersection::AddEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) {
     auto NewEdge = RnNew<URnIntersectionEdge>(Road, Border);
     Edges.Add(NewEdge);
@@ -260,7 +272,10 @@ TArray<TRnRef_T<URnWay>> URnIntersection::GetBorders() const {
 }
 
 void URnIntersection::UnLink(const TRnRef_T<URnRoadBase>& Other) {
-    RemoveEdges(Other);
+    for (auto& E : Edges) {
+        if (E->GetRoad() == Other)
+            E->Road = nullptr;
+    }
 }
 
 void URnIntersection::DisConnect(bool RemoveFromModel) {

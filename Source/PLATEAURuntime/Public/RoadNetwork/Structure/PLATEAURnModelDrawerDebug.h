@@ -182,7 +182,8 @@ public:
     FRnModelDrawRoadGroupOption GroupDrawer;
 
     UPROPERTY(EditAnywhere)
-    bool bShowGroup = false;
+    bool bSliceHorizontal = false;
+
 };
 
 USTRUCT()

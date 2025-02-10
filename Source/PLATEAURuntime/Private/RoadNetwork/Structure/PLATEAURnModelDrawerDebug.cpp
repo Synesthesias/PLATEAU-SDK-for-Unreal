@@ -372,6 +372,7 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
                     L.Draw(Work, Self.MainLanes[i], Work.visibleType);
                 }
 
+                
 
                 return true;
             }
@@ -429,9 +430,17 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::Road) != 0)
                 FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
 
+            if(Option.bSliceHorizontal)
+            {
+                FRnModelCalibrateIntersectionBorderOption Op;
+                URnRoad* A;
+                URnRoad* B;
+                URnRoad* C;
+                Work.Model->TrySliceRoadHorizontalNearByBorder(&Self, Op, A, B, C);
+            }
+
             for (auto BorderType : { EPLATEAURnLaneBorderType::Prev , EPLATEAURnLaneBorderType::Next }) 
             {
-
                 if(FRnRoadEx::IsValidBorderAdjacentNeighbor(RnFrom(&Self), BorderType, true) == false)
                 {
                     FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("Invalid %s"), *Self.GetName()), Self.GetCentralVertex());
