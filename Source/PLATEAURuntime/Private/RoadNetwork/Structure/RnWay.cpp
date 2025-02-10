@@ -220,36 +220,18 @@ void URnWay::MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndO
 }
 
 FVector URnWay::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    if (IsReversed) {
-        auto Result = LineString->GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex);
-        OutStartIndex = SwitchIndex(OutStartIndex);
-        OutEndIndex = SwitchIndex(OutEndIndex);
-        return Result;
-    }
-
-    auto Result = LineString->GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
-    OutStartIndex = SwitchIndex(OutStartIndex);
-    return Result;
+    return GetAdvancedPoint(Offset, false, OutStartIndex, OutEndIndex);
 }
 
 FVector URnWay::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    if (IsReversed) {
-        auto Result = LineString->GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
-        OutStartIndex = SwitchIndex(OutStartIndex);
-        OutEndIndex = SwitchIndex(OutEndIndex);
-        return Result;
-    }
-
-    auto Result = LineString->GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex);
-    OutStartIndex = SwitchIndex(OutStartIndex);
-    OutEndIndex = SwitchIndex(OutEndIndex);
-    return Result;
+    return GetAdvancedPoint(Offset, true, OutStartIndex, OutEndIndex);
 }
 
 FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const {
-    return Reverse ?
-        GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex) :
-        GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
+    const auto Ret = LineString->GetAdvancedPoint(Offset, IsReversed != Reverse, OutStartIndex, OutEndIndex);
+    OutStartIndex = SwitchIndex(OutStartIndex);
+    OutEndIndex = SwitchIndex(OutEndIndex);
+    return Ret;
 }
 
 FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse) const {

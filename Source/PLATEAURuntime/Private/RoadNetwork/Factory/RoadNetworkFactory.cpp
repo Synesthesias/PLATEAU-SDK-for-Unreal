@@ -908,8 +908,10 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         }
 
         // 道路を分割する
-        TArray<FString> FailedRoads;
-        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);        
+        if (Self.bSplitLane) {
+            TArray<FString> FailedRoads;
+            Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
+        }
     }
     catch(std::exception e)
     {

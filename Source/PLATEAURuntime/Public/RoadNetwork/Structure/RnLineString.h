@@ -81,6 +81,8 @@ public:
     FVector GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
     FVector GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;
 
+    FVector GetAdvancedPoint(float Offset, bool bReverse, int32& OutStartIndex, int32& OutEndIndex) const;
+
     TArray<TTuple<float, FVector>> GetIntersectionBy2D(
         const FLineSegment3D& LineSegment,
         EAxisPlane Plane) const;

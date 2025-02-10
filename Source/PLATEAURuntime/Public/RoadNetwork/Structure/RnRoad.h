@@ -187,7 +187,7 @@ public:
 
     bool TryGetVerticalSliceSegment(
         EPLATEAURnLaneBorderType BorderSide,
-        float BorderOffsetMeter,
+        float BorderOffset,
         FLineSegment3D& OutSegment);
 
     // 道路を作成する

@@ -27,6 +27,11 @@ public:
     // 道路の長さがこれ以下にならないように交差点の移動量を減らす
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     float NeedRoadLengthMeter = 23.0f;
+
+    // デバッグ用. 切断のみ行い交差点へのマージ処理はスキップする
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    bool SkipMergeRoads = false;
+
 };
 
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))

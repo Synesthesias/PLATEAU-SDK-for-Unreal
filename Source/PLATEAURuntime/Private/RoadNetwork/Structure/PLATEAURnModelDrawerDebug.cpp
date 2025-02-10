@@ -504,10 +504,15 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     SideWalk SideWalkDrawer(SideWalkOption);
 
     for (auto road : Model->GetRoads()) {
+
+        if (bShowOnlyTargets && ShowTargetNames.Contains(road->GetName()) == false)
+            continue;
         RoadDrawer.Draw(Work, road, ERnModelDrawerVisibleType::NonSelected);
     }
 
     for (auto intersection : Model->GetIntersections()) {
+        if (bShowOnlyTargets && ShowTargetNames.Contains(intersection->GetName()) == false)
+            continue;
         IntersectionDrawer.Draw(Work, intersection, ERnModelDrawerVisibleType::NonSelected);
     }
 

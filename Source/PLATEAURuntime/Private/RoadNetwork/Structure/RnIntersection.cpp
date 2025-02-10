@@ -27,7 +27,7 @@ bool URnIntersectionEdge::IsValid() const {
 
 bool URnIntersectionEdge::IsBorder() const
 {
-    return static_cast<bool>(Border);
+    return Road != nullptr;
 }
 
 

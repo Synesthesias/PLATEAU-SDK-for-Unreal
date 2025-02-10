@@ -179,13 +179,16 @@ void URnModel::CalibrateIntersectionBorderForAllRoad(const FRnModelCalibrateInte
         }
     }
 
-    // Merge with neighboring intersections
-    for (URnRoad* Prev : Prevs) {
-        Prev->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Prev);
-    }
+    if(Option.SkipMergeRoads == false)
+    {
+        // Merge with neighboring intersections
+        for (URnRoad* Prev : Prevs) {
+            Prev->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Prev);
+        }
 
-    for (URnRoad* Next : Nexts) {
-        Next->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Next);
+        for (URnRoad* Next : Nexts) {
+            Next->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Next);
+        }        
     }
 }
 
@@ -654,7 +657,7 @@ URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road
             LineTable.Add(inter.LineString, { Front, Back, Mid });
         }
         else {
-            LineTable.Add(inter.LineString, { Front, Back, Mid });
+            LineTable.Add(inter.LineString, { Back, Front, Mid });
         }
     };
 
@@ -703,7 +706,7 @@ URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road
             LineTable.Add(inter->LineString, { Front, Back, Mid });
         }
         else {
-            LineTable.Add(inter->LineString, { Front, Back, Mid });
+            LineTable.Add(inter->LineString, { Back, Front, Mid });
         }
     }
 

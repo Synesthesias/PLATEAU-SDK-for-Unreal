@@ -474,7 +474,7 @@ bool URnRoad::Check() const
     return Super::Check();
 }
 
-bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, float BorderOffsetMeter,
+bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, float BorderOffset,
     FLineSegment3D& OutSegment)
 {
     OutSegment = FLineSegment3D();
@@ -518,7 +518,9 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
             for (URnWay* Way : SideWalk->GetAllWays()) {
                 for (URnSideWalk* NeighborSideWalk : NeighborRoad->GetSideWalks()) 
                 {
-                    if (NeighborSideWalk->GetAllWays().Contains(Way)) {
+                    auto AllWays = NeighborSideWalk->GetAllWays();
+                    if (Algo::AnyOf(AllWays, [Way](URnWay* W){ return W->IsSameLineReference(Way);})) 
+                    {
                         CheckBorderPoints.Add(Way->GetVertex(0));
                         CheckBorderPoints.Add(Way->GetVertex(-1));
                     }
@@ -542,14 +544,14 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
         }
 
         // Add 2.5m margin
-        BorderOffsetMeter = FMath::Max(BorderOffsetMeter, Length + 2.5f);
+        BorderOffset = FMath::Max(BorderOffset, Length + 2.5f * FPLATEAURnDef::Meter2Unit);
     }
 
     if (BorderSide == EPLATEAURnLaneBorderType::Next) {
-        Position = CenterWay->GetAdvancedPointFromBack(BorderOffsetMeter, StartIndex, EndIndex);
+        Position = CenterWay->GetAdvancedPointFromBack(BorderOffset, StartIndex, EndIndex);
     }
     else if (BorderSide == EPLATEAURnLaneBorderType::Prev) {
-        Position = CenterWay->GetAdvancedPointFromFront(BorderOffsetMeter, StartIndex, EndIndex);
+        Position = CenterWay->GetAdvancedPointFromFront(BorderOffset, StartIndex, EndIndex);
     }
     else {
         return false;

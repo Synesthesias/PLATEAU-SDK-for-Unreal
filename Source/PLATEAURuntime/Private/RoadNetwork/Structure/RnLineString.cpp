@@ -405,41 +405,42 @@ void URnLineString::SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point)
 }
 
 FVector URnLineString::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    float CurrentLength = 0.0f;
-    OutStartIndex = 0;
-    OutEndIndex = 0;
-
-    for (int32 i = 0; i < Points.Num() - 1; ++i) {
-        float SegmentLength = (GetVertex(i + 1) - GetVertex(i)).Size();
-        if (CurrentLength + SegmentLength >= Offset) {
-            OutStartIndex = i;
-            OutEndIndex = i + 1;
-            float T = (Offset - CurrentLength) / SegmentLength;
-            return FMath::Lerp(GetVertex(i), GetVertex(i + 1), T);
-        }
-        CurrentLength += SegmentLength;
-    }
-
-    return Points.Last()->Vertex;
+    return GetAdvancedPoint(Offset, false, OutStartIndex, OutEndIndex);
 }
 
 FVector URnLineString::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    float CurrentLength = 0.0f;
-    OutStartIndex = Points.Num() - 1;
-    OutEndIndex = Points.Num() - 1;
+    return GetAdvancedPoint(Offset, true, OutStartIndex, OutEndIndex);
+}
 
-    for (int32 i = Points.Num() - 1; i > 0; --i) {
-        float SegmentLength = (GetVertex(i) - GetVertex(i-1)).Size();
-        if (CurrentLength + SegmentLength >= Offset) {
-            OutStartIndex = i;
-            OutEndIndex = i - 1;
-            float T = (Offset - CurrentLength) / SegmentLength;
-            return FMath::Lerp(GetVertex(i), GetVertex(i-1), T);
-        }
-        CurrentLength += SegmentLength;
+FVector URnLineString::GetAdvancedPoint(float Offset, bool bReverse, int32& OutStartIndex, int32& OutEndIndex) const
+{
+    if (Count() == 0) {
+        OutStartIndex = OutEndIndex = -1;
+        return FVector::ZeroVector;
     }
 
-    return GetVertex(0);
+    int32 Delta = bReverse ? -1 : 1;
+    int32 BeginIndex = bReverse ? Count() - 1 : 0;
+
+    int32 Index = BeginIndex;
+    for (int32 i = 0; i < Count() - 1; ++i) {
+        int32 NextIndex = Index + Delta;
+        FVector P0 = (*this)[Index];
+        FVector P1 = (*this)[NextIndex];
+        float Len = (P0 - P1).Size();
+
+        if (Len >= Offset) {
+            OutStartIndex = Index;
+            OutEndIndex = Index + Delta;
+            return P0 + (P1 - P0).GetSafeNormal() * Offset;
+        }
+
+        Offset -= Len;
+        Index = NextIndex;
+    }
+
+    OutStartIndex = OutEndIndex = Count() - 1 - BeginIndex;
+    return (*this)[OutEndIndex];
 }
 
 TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(

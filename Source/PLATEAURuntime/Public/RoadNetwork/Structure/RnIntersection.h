@@ -33,6 +33,7 @@ public:
     // 有効なNeighborかどうか
     bool IsValid() const;
 
+    // 他の道路との境界線かどうか
     bool IsBorder() const;
 
     // 境界線の中点を取得

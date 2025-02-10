@@ -72,6 +72,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bSeparateContinuousBorder = true;
 
+    // 車線分割を行うかどうか
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    bool bSplitLane = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FRGraphFactory GraphFactory;
 
