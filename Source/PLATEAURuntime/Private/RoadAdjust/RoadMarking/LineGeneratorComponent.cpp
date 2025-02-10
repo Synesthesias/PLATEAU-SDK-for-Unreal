@@ -3,7 +3,13 @@
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-ULineGeneratorComponent::ULineGeneratorComponent() :SplinePointType(ESplinePointType::Linear), CoordinateSpace(ESplineCoordinateSpace::Local), SplineMeshRoot(nullptr){
+ULineGeneratorComponent::ULineGeneratorComponent() :
+    SplineMeshType(ESplineMeshType::LengthBased), 
+    SplinePointType(ESplinePointType::Linear), 
+    CoordinateSpace(ESplineCoordinateSpace::Local), 
+    SplineMeshRoot(nullptr),
+    FillEnd(false),
+    EnableShadow(false) {
     this->SetDrawDebug(false);
     this->bInputSplinePointsToConstructionScript = false;
     this->SetMobility(EComponentMobility::Static);
@@ -31,6 +37,10 @@ void ULineGeneratorComponent::CreateSplineFromVectorArray(TArray<FVector> Points
 		this->AddSplinePoint(Point, CoordinateSpace, true);
 	}
 
+    RefreshSplinePoints();
+}
+
+void ULineGeneratorComponent::RefreshSplinePoints() {
     for (int32 i = 0; i < this->GetNumberOfSplinePoints(); i++) {
         this->SetSplinePointType(i, SplinePointType, true);
     }
@@ -57,40 +67,69 @@ void ULineGeneratorComponent::CreateSplineMesh(AActor* Actor) {
 		Comp->DestroyComponent();
 	}
 
-	float SplineLength = this->GetSplineLength();
-	float Length = GetMeshLength(true);
+    if (SplineMeshType == ESplineMeshType::LengthBased)
+        CreateSplineMeshLengthBased(Actor);
+    else if (SplineMeshType == ESplineMeshType::SegmentBased)
+        CreateSplineMeshSegmentBased(Actor);
+}
 
-	int64 numLoop = (int64)(SplineLength / Length);
+void ULineGeneratorComponent::CreateSplineMeshLengthBased(AActor* Actor) {
+    float SplineLength = this->GetSplineLength();
+    float Length = GetMeshLength(true);
 
-	//Add Spline Mesh
-	for (int64 index = 0; index < numLoop; index++)
-	{
-		auto SplineMeshComponent = NewObject<USplineMeshComponent>(this, FName(TEXT("SplineMesh_") + FString::FromInt(index)));
-		SplineMeshComponent->SetMobility(EComponentMobility::Static);
-		SplineMeshComponent->RegisterComponent();
-		SplineMeshComponent->AttachToComponent(SplineMeshRoot, FAttachmentTransformRules::KeepWorldTransform);
-        Actor->AddInstanceComponent(SplineMeshComponent);
+    int64 numLoop = (int64)(SplineLength / Length);
+    //Add Spline Mesh
+    for (int64 index = 0; index < numLoop; index++) {
+        float startDistance = Length * index;
+        const auto& startLocation = this->GetLocationAtDistanceAlongSpline(startDistance, CoordinateSpace);
+        const auto& startTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(startDistance, CoordinateSpace));
 
-		SplineMeshComponent->SetStaticMesh(StaticMesh);
-		if (MaterialInterface != nullptr)
-		{
-			SplineMeshComponent->SetMaterial(0, MaterialInterface);
-		}
+        float endDistance = (Length * (index + 1)) - MeshGap;
 
-		float startDistance = Length * index;
-		const auto& startLocation = this->GetLocationAtDistanceAlongSpline(startDistance, CoordinateSpace);
-		const auto& startTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(startDistance, CoordinateSpace));
+        //Last Mesh & FillEnd 
+        if (index == numLoop - 1 && FillEnd) {
+            endDistance = this->GetSplineLength();
+        }
 
-		float endDistance = (Length * (index + 1)) - MeshGap;
-		const auto& endLocation = this->GetLocationAtDistanceAlongSpline(endDistance, CoordinateSpace);
-		const auto& endTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(endDistance, CoordinateSpace));
+        const auto& endLocation = this->GetLocationAtDistanceAlongSpline(endDistance, CoordinateSpace);
+        const auto& endTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(endDistance, CoordinateSpace));
 
-		SplineMeshComponent->SetStartAndEnd(startLocation, startTangent, endLocation, endTangent, true);
-        SplineMeshComponent->SetStartScale(FVector2D(MeshXScale, 1.0f));
-        SplineMeshComponent->SetEndScale(FVector2D(MeshXScale, 1.0f));
-        SplineMeshComponent->SetStartOffset(Offset);
-        SplineMeshComponent->SetEndOffset(Offset);
-	}
+        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, startLocation, startTangent, endLocation, endTangent);
+    }
+}
+
+void ULineGeneratorComponent::CreateSplineMeshSegmentBased(AActor* Actor) {
+
+    int64 numLoop = this->GetNumberOfSplinePoints() - 1;
+    //Add Spline Mesh
+    for (int64 index = 0; index < numLoop; index++) {
+        const auto& startLocation = this->GetLocationAtSplinePoint(index, CoordinateSpace);
+        const auto& startTangent = this->GetTangentAtSplinePoint(index, CoordinateSpace);
+        const auto& endLocation = this->GetLocationAtSplinePoint(index + 1, CoordinateSpace);
+        const auto& endTangent = this->GetTangentAtSplinePoint(index + 1, CoordinateSpace);
+        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, startLocation, startTangent, endLocation, endTangent);
+    }
+}
+
+USplineMeshComponent* ULineGeneratorComponent::CreateSplineMeshComponent(FName Name, AActor* Actor, FVector StartLocation, FVector StartTangent, FVector EndLocation, FVector EndTangent) {
+    auto SplineMeshComponent = NewObject<USplineMeshComponent>(this, Name);
+    SplineMeshComponent->SetMobility(EComponentMobility::Static);
+    SplineMeshComponent->RegisterComponent();
+    SplineMeshComponent->AttachToComponent(SplineMeshRoot, FAttachmentTransformRules::KeepWorldTransform);
+    Actor->AddInstanceComponent(SplineMeshComponent);
+
+    SplineMeshComponent->SetStaticMesh(StaticMesh);
+    if (MaterialInterface != nullptr) {
+        SplineMeshComponent->SetMaterial(0, MaterialInterface);
+    }
+
+    SplineMeshComponent->SetStartAndEnd(StartLocation, StartTangent, EndLocation, EndTangent, true);
+    SplineMeshComponent->SetStartScale(FVector2D(MeshXScale, 1.0f));
+    SplineMeshComponent->SetEndScale(FVector2D(MeshXScale, 1.0f));
+    SplineMeshComponent->SetStartOffset(Offset);
+    SplineMeshComponent->SetEndOffset(Offset);
+    SplineMeshComponent->CastShadow = EnableShadow;
+    return SplineMeshComponent;
 }
 
 void ULineGeneratorComponent::CreateSplineMeshFromAssets(AActor* Actor, UStaticMesh* Mesh, UMaterialInterface* Material, float Gap, float XScale, float Length) {
