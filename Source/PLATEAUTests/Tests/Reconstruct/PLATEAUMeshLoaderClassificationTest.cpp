@@ -14,16 +14,16 @@
 
 namespace FPLATEAUTest_MeshLoader_Classification_Local {
 
-    const int MATERIAL_ID = 1;
+    constexpr int DISASTER_MAT_ID = 0;
 
-    //Material ID 1のMap生成
-    TMap<int, UMaterialInterface*> CreateMaterialMap() {
-        TMap<int, UMaterialInterface*> Materials;
+    //DisasterMaterialのマテリアルキャッシュ
+    FPLATEAUCachedMaterialArray CreateMaterialMap() {
+        FPLATEAUCachedMaterialArray Result;
         FString SourcePath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/Fallback/PlateauDefaultDisasterMaterialInstance");
         UMaterialInstance* Material = Cast<UMaterialInstance>(
             StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-        Materials.Add(MATERIAL_ID, Material);
-        return Materials;
+        Result.Add(Material);
+        return Result;
     }
 
     //MeshにMaterial ID 付与してMesh生成
@@ -37,7 +37,7 @@ namespace FPLATEAUTest_MeshLoader_Classification_Local {
         }
         Mesh.addIndicesList(indices, 0, false);
         Mesh.addVerticesList(vertices);
-        Mesh.addSubMesh("", nullptr, 0, indices.size() - 1, MATERIAL_ID);
+        Mesh.addSubMesh("", nullptr, 0, indices.size() - 1, DISASTER_MAT_ID);
         Mesh.addUV1(uv1, vertices.size());
         Mesh.addUV4WithSameVal(TVec2f(0, 1), vertices.size());
         Mesh.setCityObjectList(CityObj);
@@ -73,7 +73,7 @@ bool FPLATEAUTest_MeshLoader_Classification::RunTest(const FString& Parameters) 
     TAtomic<bool> bCanceled;
     bCanceled.Store(false);
 
-    TMap<int, UMaterialInterface*> Materials = FPLATEAUTest_MeshLoader_Classification_Local::CreateMaterialMap();
+    FPLATEAUCachedMaterialArray Materials = FPLATEAUTest_MeshLoader_Classification_Local::CreateMaterialMap();
     FPLATEAUMeshLoaderForClassification MeshLoader(Materials);
 
     MeshLoader.ReloadComponentFromModel(Model, ConvGranularity, CityObj, *Actor);

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "PLATEAUCachedMaterialArray.h"
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/fbx_writer.h"
 
@@ -20,10 +21,12 @@ namespace plateau {
     }
 }
 
+
 class PLATEAURUNTIME_API FPLATEAUMeshExporter {
 public:
-    bool Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option);
+    bool Export(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option);
     std::shared_ptr<plateau::polygonMesh::Model> CreateModelFromComponents(APLATEAUInstancedCityModel* ModelActor, const TArray<UPLATEAUCityObjectGroup*> ModelComponents, const FPLATEAUMeshExportOptions Option);
+    const FPLATEAUCachedMaterialArray& GetCachedMaterials(){ return CachedMaterials; }
 
 private:
     bool ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option);
@@ -37,4 +40,5 @@ private:
     TArray<FString> ModelNames;
     FVector ReferencePoint;
     APLATEAUInstancedCityModel* TargetActor = nullptr;
+    FPLATEAUCachedMaterialArray CachedMaterials;
 };

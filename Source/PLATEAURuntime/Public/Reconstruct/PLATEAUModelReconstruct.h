@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUCachedMaterialArray.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
 #include "Util/PLATEAUReconstructUtil.h"
@@ -29,13 +30,15 @@ public:
      * @brief 選択されたComponentの結合・分割処理用のModelを生成します
      * @param
      */
-    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects);
 
     /**
      * @brief 生成されたModelからStaticMeshコンポーネントを再生成します
      * @param
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
+
+    void ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Target);
 
 protected:
     
@@ -58,5 +61,9 @@ protected:
     TArray<USceneComponent*> ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
 
     virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity);
-
+    
+    /**
+     * @brief 変換後にマテリアルを復元する用です
+     */
+    FPLATEAUCachedMaterialArray CachedMaterials;
 };

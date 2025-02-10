@@ -33,12 +33,13 @@ FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUIns
     }
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
 
     //最小地物単位のModelを生成
     std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
 
     //指定されたタイプのModelのSubMeshにGameMaterialIDを追加
+    // FIXME PLATEAUModelClassificationByAttribute.cppのようにCachedMaterialを使う用に変更すべき。マテリアル未指定の場合に対応するため。
     plateau::materialAdjust::MaterialAdjusterByType Adjuster;
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
@@ -78,13 +79,7 @@ void FPLATEAUModelClassificationByType::SetConvertGranularity(const ConvertGranu
 }
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
-
-    TMap<int, UMaterialInterface*> NewClassificationMaterials;
-    for (const auto& KV : ClassificationMaterials) {
-        const int* MaterialID = MaterialIDMap.Find(KV.Key);
-        if (MaterialID != nullptr && KV.Value != nullptr)
-            NewClassificationMaterials.Add(*MaterialID, KV.Value);
-    }
-    FPLATEAUMeshLoaderForClassification MeshLoader(NewClassificationMaterials, false);
+    
+    FPLATEAUMeshLoaderForClassification MeshLoader(CachedMaterials, false);
     return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }

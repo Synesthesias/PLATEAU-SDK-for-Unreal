@@ -447,12 +447,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         }
 
                         MaterialInterface = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
-                        UMaterialInstanceDynamic* DynMaterial = StaticCast<UMaterialInstanceDynamic*>(MaterialInterface);
-                        if (DynMaterial) {
+                        if (auto DynMaterial = Cast<UMaterialInstanceDynamic>(MaterialInterface)) {
                             //Textureが存在する場合
                             if (Texture != nullptr)
                                 DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
-
+                        
                             DynMaterial->TwoSided = false;
                         }
                         
