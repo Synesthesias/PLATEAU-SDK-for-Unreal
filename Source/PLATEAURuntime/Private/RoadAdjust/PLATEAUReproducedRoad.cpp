@@ -120,7 +120,7 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
     // }
 }
 
-void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type, TArray<FVector> LinePoints, FVector2D Offset) {
+void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type, const TArray<FVector>& LinePoints, FVector2D Offset) {
     const auto& Param = LineTypeMap[Type];
     const auto& Component = NewObject<ULineGeneratorComponent>(this, FName(TEXT("LineGeneratorComponent_") + StaticEnum<EPLATEAURoadLineType>()->GetDisplayValueAsText(Type).ToString() + TEXT("_") + FString::FromInt(NumComponents)));
     Component->RegisterComponent();
