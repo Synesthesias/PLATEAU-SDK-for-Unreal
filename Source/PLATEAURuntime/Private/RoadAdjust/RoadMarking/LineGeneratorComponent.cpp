@@ -89,6 +89,9 @@ void ULineGeneratorComponent::CreateSplineMeshLengthBased(AActor* Actor) {
         //Last Mesh & FillEnd 
         if (index == numLoop - 1 && FillEnd) {
             endDistance = this->GetSplineLength();
+
+            if (SplinePointType == ESplinePointType::Linear)
+                endDistance -= 0.01f;
         }
 
         const auto& endLocation = this->GetLocationAtDistanceAlongSpline(endDistance, CoordinateSpace);
