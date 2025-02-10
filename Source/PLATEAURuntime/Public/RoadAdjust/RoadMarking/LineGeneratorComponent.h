@@ -11,6 +11,13 @@
 /**
  * 
  */
+
+UENUM(BlueprintType)
+enum class ESplineMeshType : uint8 {
+    LengthBased,
+    SegmentBased,
+};
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PLATEAURUNTIME_API ULineGeneratorComponent : public USplineComponent
 {
@@ -18,26 +25,44 @@ class PLATEAURUNTIME_API ULineGeneratorComponent : public USplineComponent
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
 	UStaticMesh* StaticMesh;
 
-	UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
 	UMaterialInterface* MaterialInterface;
 
-	UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
 	float MeshGap;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
     float MeshXScale;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
     float MeshLength;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|RoadAdjust")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
     FVector2D Offset;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    ESplineMeshType SplineMeshType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    TEnumAsByte<ESplinePointType::Type> SplinePointType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    TEnumAsByte<ESplineCoordinateSpace::Type> CoordinateSpace;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    bool FillEnd;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    bool EnableShadow;
 
 	UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
 	void CreateSplineFromVectorArray(TArray<FVector> Points);
+
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
+    void RefreshSplinePoints();
 
 	UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
 	void CreateSplineMesh(AActor* Actor);
@@ -50,10 +75,9 @@ public:
 private:
 
 	float GetMeshLength(bool includeGap);
+    void CreateSplineMeshLengthBased(AActor* Actor);
+    void CreateSplineMeshSegmentBased(AActor* Actor);
+    USplineMeshComponent* CreateSplineMeshComponent(FName Name, AActor* Actor, FVector StartLocation, FVector StartTangent, FVector EndLocation, FVector EndTangent);
 
 	USceneComponent* SplineMeshRoot;
-
-    ESplinePointType::Type SplinePointType;
-	ESplineCoordinateSpace::Type CoordinateSpace;
-	
 };

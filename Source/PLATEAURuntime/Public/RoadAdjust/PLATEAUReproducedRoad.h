@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "RoadMarking/LineGeneratorComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
 enum class EPLATEAURoadLineType;
@@ -32,6 +33,14 @@ struct PLATEAURUNTIME_API FPLATEAURoadLineParam {
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
     UMaterialInterface* LineMaterial;
+
+    //Splineタイプ (CurveCustomTangent/Linearなど）
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    TEnumAsByte<ESplinePointType::Type> SplinePointType;
+
+    //SplineMeshType長さ単位の場合、終点位置までMesh生成
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
+    bool FillEnd;
 
     //Mesh間の隙間
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
