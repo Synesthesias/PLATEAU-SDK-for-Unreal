@@ -66,9 +66,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bMergeRoadGroup = true;
 
-    // #TODO : まだうまくいっていないのでデフォルトfalseにしておく
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
-    bool bCalibrateIntersection = false;
+    bool bCalibrateIntersection = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bSeparateContinuousBorder = true;

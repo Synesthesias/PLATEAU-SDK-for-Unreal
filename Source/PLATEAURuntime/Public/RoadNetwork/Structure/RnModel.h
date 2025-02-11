@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Component/PLATEAUSceneComponent.h"
 #include "RoadNetwork/PLATEAURnDef.h"
+#include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RnModel.generated.h"
 class URnRoad;
 class URnIntersection;
@@ -13,7 +14,7 @@ class URnLineString;
 class URnWay;
 class UPLATEAUCityObjectGroup;
 class URnRoadBase;
-class FLineSegment3D;
+struct FLineSegment3D;
 
 USTRUCT(BlueprintType)
 struct FRnModelCalibrateIntersectionBorderOption
@@ -176,6 +177,8 @@ public:
         URnRoad* PrevRoad;
         URnRoad* NextRoad;
     };
+
+    static ERoadCutResult CanSliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment, FPLATEAURnEx::FLineCrossPointResult& OutResult);
 
     FSliceRoadHorizontalResult SliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment);
 

@@ -6,10 +6,8 @@
 
 #include "PLATEAURnLinq.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
-#include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
 #include "RoadNetwork/GeoGraph/LineUtil.h"
-#include "RoadNetwork/RGraph/RGraphDef.h"
 
 class URnRoad;
 class UPLATEAUCityObjectGroup;
@@ -18,6 +16,9 @@ class URnLineString;
 class URnWay;
 class URnPoint;
 class URnLane;
+
+
+
 
 struct FPLATEAURnEx
 {

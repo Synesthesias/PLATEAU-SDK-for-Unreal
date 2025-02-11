@@ -185,6 +185,9 @@ public:
     UPROPERTY(EditAnywhere)
     bool bSliceHorizontal = false;
 
+    UPROPERTY(EditAnywhere)
+    bool bCheckSliceHorizontal = false;
+
 };
 
 USTRUCT()

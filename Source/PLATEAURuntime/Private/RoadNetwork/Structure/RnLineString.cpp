@@ -184,7 +184,7 @@ bool URnLineString::SplitByIndex(float Index, URnLineString*& OutFront, URnLineS
     else
     {
         // 少数の時は中間点をfontの最後とbackの最初に追加
-        auto V = FMath::Lerp(Points[I]->Vertex, Points[I + 1]->Vertex, 0.5f);
+        auto V = FMath::Lerp(Points[I]->Vertex, Points[I + 1]->Vertex, Index - I);
         auto MidPoint = CreatePoint(V);
         FrontPoints.Add(MidPoint);
         BackPoints.Add(MidPoint);
@@ -397,6 +397,17 @@ FVector URnLineString::GetVertex(int32 Index) const
 TRnRef_T<URnPoint> URnLineString::GetPoint(int32 Index) const
 {
     return (Points)[Index];
+}
+
+FVector URnLineString::GetVertexByFloatIndex(float index) const
+{
+    const auto I1 = (int)index;
+    const auto I2 = I1 + 1;
+    if (I2 >= Count()) {
+        return GetVertex(Count()-1);
+    }
+    const auto t = index - I1;
+    return FMath::Lerp((*this)[I1], (*this)[I2], t);
 }
 
 void URnLineString::SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point)

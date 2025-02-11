@@ -76,6 +76,10 @@ public:
 
     TRnRef_T<URnPoint> GetPoint(int32 Index) const;
 
+    // floatのindex指定で座標を取ってくる
+    // GetVertexByFloatIndex(1.5) -> FMath::Lerp(v[1], v[2], 0.5f)が返る
+    FVector GetVertexByFloatIndex(float index) const;
+
     void SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point);
 
     FVector GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const;

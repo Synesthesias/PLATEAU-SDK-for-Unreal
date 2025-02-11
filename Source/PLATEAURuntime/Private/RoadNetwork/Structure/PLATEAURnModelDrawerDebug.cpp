@@ -30,6 +30,8 @@ namespace
 
         FPLATEAURnModelDrawerDebug* Self = nullptr;
 
+        TArray<TFunction<void()>> DelayExecs;
+
         RnModelDrawWork(FPLATEAURnModelDrawerDebug* self, URnModel* model) {
             Self = self;
             Model = model;
@@ -277,9 +279,6 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     if (!Model)
         return;
 
-    RnModelDrawWork Work(this, Model);
-
-
     struct Way : public FRnModelWayDrawer<FRnModelDrawWayOption>
     {
         Way(const FRnModelDrawWayOption& InOption)
@@ -438,13 +437,36 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::Road) != 0)
                 FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
 
+            if (Option.bCheckSliceHorizontal) {
+                FLineSegment3D Segment;
+                if (Self.TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType::Next, 200.f, Segment)) {
+
+                    FPLATEAURnDebugEx::DrawLine(Segment.GetStart(), Segment.GetEnd(), FLinearColor::Red);
+                    FPLATEAURnEx::FLineCrossPointResult Res;
+                    URnModel::CanSliceRoadHorizontal(&Self, Segment, Res);
+                    for (auto& Line : Res.TargetLines) {
+                        for (auto& I : Line.Intersections) {
+                            FPLATEAURnDebugEx::DrawSphere(I.Value, 100.f);
+                            auto V = Line.LineString->GetVertexByFloatIndex(I.Key);
+                            FPLATEAURnDebugEx::DrawSphere(V + FVector::UpVector * 30, 100.f, FLinearColor::Blue);
+                            
+                        }
+                    }
+
+                }
+            }
+
             if(Option.bSliceHorizontal)
             {
-                FRnModelCalibrateIntersectionBorderOption Op;
-                URnRoad* A;
-                URnRoad* B;
-                URnRoad* C;
-                Work.Model->TrySliceRoadHorizontalNearByBorder(&Self, Op, A, B, C);
+                Work.DelayExecs.Add([Road = &Self, Model=Work.Model]() 
+                    {
+                        FRnModelCalibrateIntersectionBorderOption Op;
+                        URnRoad* A;
+                        URnRoad* B;
+                        URnRoad* C;
+                        Model->TrySliceRoadHorizontalNearByBorder(Road, Op, A, B, C);
+                    });
+                
             }
 
             for (auto BorderType : { EPLATEAURnLaneBorderType::Prev , EPLATEAURnLaneBorderType::Next }) 
@@ -538,12 +560,17 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     Intersection IntersectionDrawer(IntersectionOption);
     SideWalk SideWalkDrawer(SideWalkOption);
 
+    RnModelDrawWork Work(this, Model);
+
+
     for (auto road : Model->GetRoads()) {
 
         if (bShowOnlyTargets && ShowTargetNames.Contains(road->GetName()) == false)
             continue;
         RoadDrawer.Draw(Work, road, ERnModelDrawerVisibleType::NonSelected);
     }
+    // 実行ボタン代わりなので毎フレームリセット
+    RoadOption.bSliceHorizontal = false;
 
     for (auto intersection : Model->GetIntersections()) {
         if (bShowOnlyTargets && ShowTargetNames.Contains(intersection->GetName()) == false)
@@ -554,4 +581,8 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     for (auto sideWalk : Model->GetSideWalks()) {
         SideWalkDrawer.Draw(Work, sideWalk, ERnModelDrawerVisibleType::NonSelected);
     }
+
+    // 遅延実行処理
+    for (auto& Delay : Work.DelayExecs)
+        Delay();
 }

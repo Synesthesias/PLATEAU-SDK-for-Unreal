@@ -440,74 +440,7 @@ namespace
     /// 切断時の端点判定の時の許容誤差
     /// </summary>
     constexpr float CutIndexTolerance = 1e-5f;
-    URnModel::ERoadCutResult CanSliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment, FPLATEAURnEx::FLineCrossPointResult& OutResult)
-    {
-        if (!Road || !Road->IsValid() || !Road->IsAllLaneValid()) {
-            return URnModel::ERoadCutResult::InvalidRoad;
-        }
-
-        OutResult = FPLATEAURnEx::GetLaneCrossPoints(Road, LineSegment);
-
-        // 同じLineStringと２回以上交わってはいけない
-        if(Algo::AnyOf(OutResult.TargetLines, [](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X)
-        {
-                return X.Intersections.Num() >1;
-            }))
-        {
-            return URnModel::ERoadCutResult::InvalidCutLine;
-        }
-
-        auto& targetLines = OutResult.TargetLines;
-
-        auto IsSliced = [&](URnWay* Way)
-        {
-            if (!Way)
-                return false;
-            return Algo::AnyOf(targetLines, [Way](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X) {
-                return X.LineString == Way->LineString && X.Intersections.IsEmpty() == false;
-                });
-        };
-
-        for(auto Lane : Road->GetAllLanesWithMedian())
-        {
-            for(auto Way : Lane->GetBothWays())
-            {
-                if (IsSliced(Way) == false)
-                    return URnModel::ERoadCutResult::UnSlicedLaneExist;
-            }
-        }
-
-        for(auto Sw  : Road->GetSideWalks())
-        {
-            if (Sw->IsValid() == false)
-                return URnModel::ERoadCutResult::InvalidSideWalk;
-
-            // 歩道は角の道だったりすると前後で分かれていたりするので交わらない場合もある
-            // ただし、inside/outsideがどっちも交わるかどっちも交わらないかしか許さない
-            auto SliceCount = Algo::CountIf(Sw->GetSideWays(), [&](URnWay* Way) {
-                return IsSliced(Way);
-                });
-            if (!(SliceCount == 0 || SliceCount == 2))
-            {
-                return URnModel::ERoadCutResult::PartiallySlicedSideWalkExist;
-            }
-        }
-
-        for (auto& Line : OutResult.TargetLines) 
-        {
-            if (Line.Intersections.Num() == 0)
-                continue;
-
-            if(Line.Intersections[0].Key <= CutIndexTolerance ||
-                Line.Intersections[0].Key >= Line.LineString->Count() - 1.f - CutIndexTolerance)
-            {
-                return URnModel::ERoadCutResult::TerminateCutLine;                
-            }
-        }
-
-        return URnModel::ERoadCutResult::Success;
-    }
-
+    
     /// <summary>
     /// wayのlineStringだけ差し替えて他同じ物を返す
     /// </summary>
@@ -598,6 +531,66 @@ namespace
     }
 }
 
+URnModel::ERoadCutResult URnModel::CanSliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment,
+    FPLATEAURnEx::FLineCrossPointResult& OutResult)
+{
+    if (!Road || !Road->IsValid() || !Road->IsAllLaneValid()) {
+        return URnModel::ERoadCutResult::InvalidRoad;
+    }
+
+    OutResult = FPLATEAURnEx::GetLaneCrossPoints(Road, LineSegment);
+
+    // 同じLineStringと２回以上交わってはいけない
+    if (Algo::AnyOf(OutResult.TargetLines, [](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X) {
+        return X.Intersections.Num() > 1;
+    })) {
+        return URnModel::ERoadCutResult::InvalidCutLine;
+    }
+
+    auto& targetLines = OutResult.TargetLines;
+
+    auto IsSliced = [&](URnWay* Way) {
+        if (!Way)
+            return false;
+        return Algo::AnyOf(targetLines, [Way](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X) {
+            return X.LineString == Way->LineString && X.Intersections.IsEmpty() == false;
+        });
+    };
+
+    for (auto Lane : Road->GetAllLanesWithMedian()) {
+        for (auto Way : Lane->GetBothWays()) {
+            if (IsSliced(Way) == false)
+                return URnModel::ERoadCutResult::UnSlicedLaneExist;
+        }
+    }
+
+    for (auto Sw : Road->GetSideWalks()) {
+        if (Sw->IsValid() == false)
+            return URnModel::ERoadCutResult::InvalidSideWalk;
+
+        // 歩道は角の道だったりすると前後で分かれていたりするので交わらない場合もある
+        // ただし、inside/outsideがどっちも交わるかどっちも交わらないかしか許さない
+        auto SliceCount = Algo::CountIf(Sw->GetSideWays(), [&](URnWay* Way) {
+            return IsSliced(Way);
+        });
+        if (!(SliceCount == 0 || SliceCount == 2)) {
+            return URnModel::ERoadCutResult::PartiallySlicedSideWalkExist;
+        }
+    }
+
+    for (auto& Line : OutResult.TargetLines) {
+        if (Line.Intersections.Num() == 0)
+            continue;
+
+        if (Line.Intersections[0].Key <= CutIndexTolerance ||
+            Line.Intersections[0].Key >= Line.LineString->Count() - 1.f - CutIndexTolerance) {
+            return URnModel::ERoadCutResult::TerminateCutLine;
+        }
+    }
+
+    return URnModel::ERoadCutResult::Success;
+}
+
 URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment)
 {
     FSliceRoadHorizontalResult Result;
@@ -647,7 +640,7 @@ URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road
         };
 
     auto AddTable = [&](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& inter, bool IsFrontPrev) {
-        auto item = inter.Intersections[0];
+        const auto& item = inter.Intersections[0];
         URnLineString* Front = nullptr;
         URnLineString* Back = nullptr;
         SplitByIndex(inter.LineString, item.Key, Front, Back);
