@@ -46,13 +46,14 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
     
     // ChachedMaterialに入っている元々のマテリアルに追加で、マテリアル分け用のマテリアルを追加
     TMap<int, UMaterialInterface*> ClassifyMatIDs;
-    for(const auto& [Attr, Mat] : ClassificationMaterials)
+    for (const auto& [Attr, Mat] : ClassificationMaterials)
     {
+        if (Mat == nullptr) continue;
         int id = CachedMaterials.Add(Mat);
-            Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Attr), id);
+        Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Attr), id);
     }
 
-    
+    // 変更が必要な属性値とマテリアルIDをC++側に登録
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
@@ -66,7 +67,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                 TSet<FString> AttributeStringValues = ConvertAttributeValuesToUniqueStringValues(AttributeValues);
                 
                 for (const auto& Value : AttributeStringValues) {
-                    if (ClassificationMaterials.Contains(Value)) {
+                    if (ClassificationMaterials.Contains(Value) && ClassificationMaterials[Value] != nullptr) {
 
                         Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
 

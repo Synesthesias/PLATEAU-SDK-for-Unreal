@@ -9,28 +9,13 @@
 
 using namespace plateau::granularityConvert;
 
-FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType() {}
 
 FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
 {
     CityModelActor = Actor;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
-
-    //マテリアルごとにMaterial ID生成
-    // TMap<UMaterialInterface*, int> Material_MaterialIDMap;
-    // int ID = 0;
-    // for (const auto& KV : ClassificationMaterials) { //同一Materialを共通Material IDに
-    //     if (!Material_MaterialIDMap.Contains(KV.Value)) {
-    //         Material_MaterialIDMap.Add(KV.Value, ID);
-    //         ID++;
-    //     }
-    // }
-    //
-    // //属性の値ごとにMaterial IDをセット
-    // for (const auto& KV : ClassificationMaterials) {
-    //     MaterialIDMap.Add(KV.Key, Material_MaterialIDMap[KV.Value]);
-    // }
+    
 }
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
@@ -48,12 +33,13 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
     TMap<int, UMaterialInterface*> ClassifyMatIDs;
     for(const auto& [Type, Mat] : ClassificationMaterials)
     {
+        if(Mat == nullptr) continue;
         int id = CachedMaterials.Add(Mat);
         citygml::CityObject::CityObjectsType PlateauType = (citygml::CityObject::CityObjectsType)UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Type);
         Adjuster.registerMaterialPattern(PlateauType, id);
     }
 
-    
+    // 変更が必要な地物型とマテリアルIDをC++側に登録
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
@@ -64,8 +50,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
 
             if (const auto AttrInfoPtr = CityObjMap.Find(UTF8_TO_TCHAR(GmlId.c_str()))) {
                 const auto Type = AttrInfoPtr->Type;
-                if (ClassificationMaterials.Contains(Type)) {
-                    // const int MaterialID = ClassificationMaterials[Type];
+                if (ClassificationMaterials.Contains(Type) && ClassificationMaterials[Type] != nullptr) {
                     citygml::CityObject::CityObjectsType PlateauType = (citygml::CityObject::CityObjectsType)UPLATEAUCityObjectBlueprintLibrary::GetTypeAsInt64(Type);
                     Adjuster.registerType(GmlId, PlateauType);
             
