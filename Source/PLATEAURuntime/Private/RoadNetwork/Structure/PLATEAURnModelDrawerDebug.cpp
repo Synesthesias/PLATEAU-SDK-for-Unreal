@@ -228,9 +228,10 @@ FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
     ShowBorderEdge.Color = FLinearColor::Blue;
 
     auto E = StaticEnum<ERnTurnType>();
-    for(auto i = 0; E->NumEnums(); ++i)
+    auto Num = E->NumEnums();
+    for(auto i = 0; i < Num; ++i)
     {
-        auto Color = FPLATEAURnDebugEx::GetDebugColor(i, E->NumEnums());
+        auto Color = FPLATEAURnDebugEx::GetDebugColor(i, Num);
         showTrackColor.Add((ERnTurnType)i, Color);
     }
 }
@@ -487,6 +488,13 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
                 else
                 {
                     NonBorder.Draw(Work, Edge->GetBorder(), Work.visibleType);
+                }
+
+                if(Option.bShowEdgeNormal)
+                {
+                    auto Center = Edge->GetCenterPoint();
+                    auto Normal = FRnIntersectionEx::GetEdgeNormal(Edge);
+                    FPLATEAURnDebugEx::DrawArrow(Center, Center + Normal * 100, FColor::White);
                 }
             }
 

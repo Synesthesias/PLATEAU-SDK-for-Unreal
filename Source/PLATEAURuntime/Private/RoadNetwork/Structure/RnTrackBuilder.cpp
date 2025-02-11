@@ -35,10 +35,10 @@ FBuildTrackOption FBuildTrackOption::WithBorder(const TArray<URnLineString*>& Bo
 
 
 // コンストラクタ
-URnTracksBuilder::URnTracksBuilder() {
+FRnTracksBuilder::FRnTracksBuilder() {
 }
 
-void URnTracksBuilder::BuildTracks(URnIntersection* Intersection, const FBuildTrackOption& Option) {
+void FRnTracksBuilder::BuildTracks(URnIntersection* Intersection, const FBuildTrackOption& Option) {
     // Option が指定されていない場合は FBuildTrackOption::Default() を利用（呼び出し側で補完してもよい）
     FBuildTrackOption Op = Option;
 
@@ -91,7 +91,6 @@ void URnTracksBuilder::BuildTracks(URnIntersection* Intersection, const FBuildTr
             if (ToEgOutBounds.Num() == 0) {
                 continue;
             }
-            // RnTurnTypeEx::GetTurnType(-FromEg->Normal, ToEg->Normal, RnModel::Plane)
             ERnTurnType TurnType = GetTurnType(-FromEg.GetNormal(), ToEg.GetNormal());
             for (URnIntersectionEdge* Out : ToEgOutBounds) {
                 OutBoundsLeft2Rights.Add(FOutBound(TurnType, &ToEg, Out));
@@ -157,22 +156,22 @@ void URnTracksBuilder::BuildTracks(URnIntersection* Intersection, const FBuildTr
     }
 }
 
-URnTrack* URnTracksBuilder::MakeTrack(URnIntersection* Intersection, URnIntersectionEdge* From, const FBuildTrackOption& Option,
+URnTrack* FRnTracksBuilder::MakeTrack(URnIntersection* Intersection, URnIntersectionEdge* From, const FBuildTrackOption& Option,
     FRnIntersectionEx::FEdgeGroup* FromEg
     , const FOutBound& OutBound) {
     // UEの仕様ではスプラインはいらないので無視
     return RnNew<URnTrack>(From->GetBorder(), OutBound.To->GetBorder(), nullptr, OutBound.TurnType);}
 
 
-ERnTurnType URnTracksBuilder::GetTurnType(const FVector& From, const FVector& To) {
+ERnTurnType FRnTracksBuilder::GetTurnType(const FVector& From, const FVector& To) {
     // Project the 3D vectors onto a 2D plane.
     FVector2D VFrom = FPLATEAURnDef::To2D(From);
     FVector2D VTo = FPLATEAURnDef::To2D(To);
     return GetTurnType(VFrom, VTo);
 }
 
-ERnTurnType URnTracksBuilder::GetTurnType(const FVector2D& From, const FVector2D& To) {
-    float ang = -FPLATEAUVector2DEx::Angle360(From, To);
+ERnTurnType FRnTracksBuilder::GetTurnType(const FVector2D& From, const FVector2D& To) {
+    float ang = -FPLATEAUVector2DEx::SignedAngle(From, To) + 180.f;
     // Use angle ranges to determine the turn type.
     if (ang > 10.f && ang < 67.5f) {
         return ERnTurnType::LeftBack;

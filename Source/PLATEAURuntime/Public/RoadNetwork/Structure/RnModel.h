@@ -13,7 +13,7 @@ class URnLineString;
 class URnWay;
 class UPLATEAUCityObjectGroup;
 class URnRoadBase;
-
+class FLineSegment3D;
 
 USTRUCT(BlueprintType)
 struct FRnModelCalibrateIntersectionBorderOption

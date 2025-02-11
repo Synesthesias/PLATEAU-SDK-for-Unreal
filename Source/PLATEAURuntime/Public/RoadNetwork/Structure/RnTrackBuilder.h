@@ -76,10 +76,8 @@ struct PLATEAURUNTIME_API FBuildTrackOption {
  *
  * 交差点におけるトラック生成処理（RnTracksBuilder.cs 相当）
  */
-UCLASS()
-class PLATEAURUNTIME_API URnTracksBuilder : public UObject {
-    GENERATED_BODY()
-
+struct PLATEAURUNTIME_API FRnTracksBuilder
+{
 public:
     // 内部クラス: 出口情報
     struct FOutBound {
@@ -94,16 +92,15 @@ public:
             : TurnType(InTurnType), ToEg(InToEg), To(InTo) {
         }
     };
-public:
+
     // デフォルトコンストラクタ
-    URnTracksBuilder();
+    FRnTracksBuilder();
 
     /**
      * トラックの再生成処理
      * @param Intersection  対象交差点（URnIntersection）
      * @param Option        オプション。nullptrの場合はデフォルト値を用いる
      */
-    UFUNCTION(BlueprintCallable, Category = "RoadNetwork")
     void BuildTracks(URnIntersection* Intersection, const FBuildTrackOption& Option);
 
     /**

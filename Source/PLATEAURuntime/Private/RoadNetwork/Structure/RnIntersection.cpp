@@ -292,12 +292,12 @@ void URnIntersection::Align()
         for (auto&& j = i + 1; j < Edges.Num(); ++j) {
             auto&& e1 = Edges[j]->GetBorder();
             if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(0))) {
-                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                Swap(Edges[i + 1], Edges[j]);
                 break;
             }
             if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(-1))) {
                 e1->Reverse(false);
-                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                Swap(Edges[i + 1], Edges[j]);
                 break;
             }
         }
@@ -586,6 +586,7 @@ void URnIntersection::SeparateContinuousBorder() {
 
 void URnIntersection::BuildTracks()
 {
-    URnTracksBuilder builder;
+    Align();
+    FRnTracksBuilder builder;
     builder.BuildTracks(this, FBuildTrackOption::Default());
 }

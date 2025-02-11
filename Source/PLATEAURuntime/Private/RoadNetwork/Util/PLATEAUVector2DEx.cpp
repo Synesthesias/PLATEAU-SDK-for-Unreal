@@ -31,7 +31,8 @@ float FPLATEAUVector2DEx::Angle(const FVector2D& From, const FVector2D& To)
 float FPLATEAUVector2DEx::SignedAngle(const FVector2D& From, const FVector2D& To)
 {
     float Ang = Angle(From, To);
-    return Ang * FMath::Sign((float)((double)From.X * (double)To.Y - (double)From.Y * (double)To.X));
+    // UEのXy座標は, UnityのXz座標に対してX軸が反転しているので符号も反転
+    return -Ang * FMath::Sign((float)((double)From.X * (double)To.Y - (double)From.Y * (double)To.X));
 }
 
 float FPLATEAUVector2DEx::Cross(const FVector2D& A, const FVector2D& B) {

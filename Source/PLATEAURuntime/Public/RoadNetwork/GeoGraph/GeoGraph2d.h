@@ -41,8 +41,8 @@ public:
             const FVector2D& V2 = ToVec2(Vertices[(i + 1) % Vertices.Num()]);            
             Sum += FPLATEAUVector2DEx::Cross(V1, V2);
         }
-
-        return Sum < 0;
+        // UEの場合ZUpなので, ZUpから見るとUnityとは系が逆なので符号反対
+        return Sum > 0;
     }
 
     static bool Contains(const TArray<FVector2D>& Vertices, const FVector2D& Point);
