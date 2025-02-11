@@ -137,12 +137,12 @@ void URnWay::AppendBack2LineString(const TRnRef_T<URnWay>& Back) {
 
     if (IsReversed) {
         for (const auto& P : Back->GetPoints()) {
-            LineString->AddPointFrontOrSkip(P);
+            LineString->AddPointFrontOrSkip(P, 0.f, 0.f, 0.f);
         }
     }
     else {
         for (const auto& P : Back->GetPoints()) {
-            LineString->AddPointOrSkip(P);
+            LineString->AddPointOrSkip(P, 0.f, 0.f, 0.f);
         }
     }
 }
@@ -156,12 +156,12 @@ void URnWay::AppendFront2LineString(const TRnRef_T<URnWay>& Front) {
         return;
     if (IsReversed) {
         for (int32 i = 0; i < Front->Count(); ++i) {
-            LineString->AddPointOrSkip(Front->GetPoint(Front->Count() - 1 - i));
+            LineString->AddPointOrSkip(Front->GetPoint(Front->Count() - 1 - i), 0.f, 0.f, 0.f);
         }
     }
     else {
         for (int32 i = 0; i < Front->Count(); ++i) {
-            LineString->AddPointFrontOrSkip(Front->GetPoint(Front->Count() - 1 - i));
+            LineString->AddPointFrontOrSkip(Front->GetPoint(Front->Count() - 1 - i), 0.f, 0.f, 0.f);
         }
     }
 }

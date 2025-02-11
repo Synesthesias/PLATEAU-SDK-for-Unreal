@@ -718,7 +718,8 @@ bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType)
         Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
             [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
 
-        Next->ReplaceNeighbor(this, Intersection);
+        if(Next)
+            Next->ReplaceNeighbor(this, Intersection);
     }
     else if (BorderType == EPLATEAURnLaneBorderType::Next) {
         auto RightEdge = EdgeGroup->RightSide->Edges.Last();
@@ -729,6 +730,9 @@ bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType)
 
         Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
             [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
+
+        if (Prev)
+            Prev->ReplaceNeighbor(this, Intersection);
     }
 
     Intersection->ReplaceEdges(this, OppositeBorders);
@@ -849,7 +853,8 @@ void URnRoad::SeparateContinuousBorder() {
         for (int32 D1 : D) {
             for (int32 D2 : D) {
                 if (A->GetPoint(D1) == B->GetPoint(D2)) {
-                    const float Offset = 0.01f;
+                    // 1cmずらす
+                    const float Offset = 0.01f * FPLATEAURnDef::Meter2Unit;
                     OutNewA = RnNew<URnPoint>(A->GetAdvancedPoint(Offset, D1 == -1));
                     OutNewB = RnNew<URnPoint>(B->GetAdvancedPoint(Offset, D2 == -1));
                     OutJointPoint = A->GetPoint(D1);

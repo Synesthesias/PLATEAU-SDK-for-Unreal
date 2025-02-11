@@ -493,6 +493,7 @@ FVector FRnIntersectionEx::FEdgeGroup::GetNormal() const
 
 TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection)
 {
+    Intersection->Align();
     auto CopiedEdges = Intersection->GetEdges();
     auto Groups = FPLATEAURnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
         CopiedEdges
@@ -548,7 +549,7 @@ void URnIntersection::SeparateContinuousBorder() {
             URnPoint* P1 = E1->GetBorder()->GetPoint(0);
 
             // Offset by 1cm
-            const float Offset = 0.01f;
+            const float Offset = 0.01f * FPLATEAURnDef::Meter2Unit;
 
             if (E0->GetBorder()->Count() < 2 || E1->GetBorder()->Count() < 2) {
                 UE_LOG(LogTemp, Error, TEXT("Border line has less than 2 vertices"));

@@ -217,18 +217,32 @@ void URnLineString::AddPointFrontOrSkip(TRnRef_T<URnPoint> Point, float Distance
     Points.Insert(Point, 0);
 }
 
-float URnLineString::CalcLength(float StartIndex, float EndIndex) const {
-    if (!IsValid()) return 0.0f;
+float URnLineString::CalcLength(float StartPointIndex, float EndPointIndex) const
+{
+    // Determine the starting and ending indices, clamped to valid range.
+    int32 stI = FMath::Max(0, FMath::FloorToInt(StartPointIndex));
+    int32 enI = FMath::Min(Count() - 1, FMath::FloorToInt(EndPointIndex));
 
-    const int32 StartIdx = FMath::FloorToInt(StartIndex);
-    const int32 EndIdx = FMath::CeilToInt(EndIndex);
-
-    float Length = 0.0f;
-    for (int32 i = StartIdx; i < EndIdx && i < Points.Num() - 1; ++i) {
-        Length += (GetVertex(i + 1) - GetVertex(i)).Size();
+    // If the starting index is the last, there's no segment.
+    if (stI >= Count() - 1) {
+        return 0.f;
     }
 
-    return Length;
+    float t = StartPointIndex - stI;
+    // Linearly interpolate between the two points.
+    FVector last = FMath::Lerp((*this)[stI], (*this)[stI + 1], t);
+    float ret = 0.f;
+    // Sum lengths for full segments between stI+1 and enI.
+    for (int32 i = stI + 1; i <= enI; ++i) {
+        ret += ((*this)[i] - last).Size();
+        last = (*this)[i];
+    }
+    // If the end index is not the last point, add the partial segment.
+    if (enI < Count() - 1) {
+        float t2 = EndPointIndex - enI;
+        ret += (FMath::Lerp((*this)[enI], (*this)[enI + 1], t2) - last).Size();
+    }
+    return ret;
 }
 
 float URnLineString::CalcTotalAngle2D() const {
@@ -334,8 +348,8 @@ FVector URnLineString::GetVertexNormal(int32 VertexIndex) const {
 int32 URnLineString::ReplacePoint(TRnRef_T<URnPoint> OldPoint, TRnRef_T<URnPoint> NewPoint) {
     int32 ReplaceCount = 0;
     for (int32 i = 0; i < Points.Num(); i++) {
-        if (GetPoint(i) == OldPoint) {
-            (Points)[i] = NewPoint;
+        if (Points[i] == OldPoint) {
+            Points[i] = NewPoint;
             ReplaceCount++;
         }
     }
