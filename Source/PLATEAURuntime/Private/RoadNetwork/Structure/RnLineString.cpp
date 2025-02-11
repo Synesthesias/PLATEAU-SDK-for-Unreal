@@ -444,7 +444,7 @@ FVector URnLineString::GetAdvancedPoint(float Offset, bool bReverse, int32& OutS
 }
 
 TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(
-    const FLineSegment3D& Ray,
+    const FLineSegment3D& LineSegment,
     EAxisPlane Plane) const {
     TArray<TTuple<float, FVector>> Result;
     auto Edges = GetEdges();
@@ -454,7 +454,7 @@ TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(
         FVector P;
         float T1;
         float T2;
-        if(E.TrySegmentIntersectionBy2D(Ray, Plane, -1.f, P, T1, T2))
+        if(E.TrySegmentIntersectionBy2D(LineSegment, Plane, -1.f, P, T1, T2))
         {
             auto V = E.Lerp(T1);
             Result.Add(MakeTuple(i + T1, V));
