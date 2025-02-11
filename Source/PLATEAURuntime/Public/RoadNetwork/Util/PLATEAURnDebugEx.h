@@ -23,6 +23,8 @@ public:
     static FLinearColor GetDebugColor(int32 I, int32 Num = 8, float A = 1.0f);
     static void DrawLine(const FVector& Start, const FVector& End, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f);
     static void DrawArrow(const FVector& Start, const FVector& End, float ArrowSize = 50.f, const FVector& ArrowUp = FVector::UpVector, const FLinearColor& BodyColor = FLinearColor::White, const FLinearColor& ArrowColor = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f);
+    static void DrawArrow(const FVector& Start, const FVector& End, const FLinearColor& Color, float Duration = 0.0f, float Thickness = 0.0f);
+
     static void DrawArrows(const TArray<FVector>& Vertices, bool bIsLoop = false, float ArrowSize = 50.f, const FVector& ArrowUp = FVector::UpVector, const FLinearColor& Color = FLinearColor::White, const FLinearColor& ArrowColor = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f);
     static void DrawLines(const TArray<FVector>& Vertices, bool bIsLoop = false, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f, float Thickness = 0.0f);
     static void DrawSphere(const FVector& Center, float Radius, const FLinearColor& Color = FLinearColor::White, float Duration = 0.0f);

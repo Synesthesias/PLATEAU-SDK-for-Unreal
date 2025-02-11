@@ -912,6 +912,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
             TArray<FString> FailedRoads;
             Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
         }
+
+        if(Self.bBuildTracks)
+        {
+            for (auto Inter : Model->GetIntersections())
+                Inter->BuildTracks();
+        }
+
     }
     catch(std::exception e)
     {

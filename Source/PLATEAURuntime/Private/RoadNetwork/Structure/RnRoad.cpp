@@ -419,6 +419,21 @@ void URnRoad::Reverse(bool KeepOneLaneIsLeft)
     }
 }
 
+TArray<URnLane*> URnRoad::GetConnectedLanes(URnWay* border)
+{
+    if (border == nullptr)
+        return TArray<URnLane*>();
+    TArray<URnLane*> lanes; 
+    for(auto lane : MainLanes) 
+    {
+        // Borderと同じ線上にあるレーンを返す
+        auto borders = lane->GetAllBorders();
+        if ( Algo::AnyOf(borders, [&](URnWay* W){ return W->IsSameLineReference(border);}))
+            lanes.Add(lane);
+    }
+    return lanes;
+}
+
 FVector URnRoad::GetCentralVertex() const {
     if (!IsValid()) return FVector::ZeroVector;
 

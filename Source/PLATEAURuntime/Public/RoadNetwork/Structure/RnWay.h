@@ -184,10 +184,10 @@ public:
     float GetLerpPoint(float P, FVector& OutMidPoint) const;
 
     // 同じLineStringを参照しているかどうか
-    bool IsSameLineReference(const TRnRef_T<URnWay>& Other) const;
+    bool IsSameLineReference(const URnWay* Other) const;
 
     // 同じ頂点列を持っているかどうか
-    bool IsSameLineSequence(const TRnRef_T<URnWay>& Other) const;
+    bool IsSameLineSequence(const URnWay* Other) const;
 
     // 自身をnum分割して返す. 分割できない(頂点空）の時は空リストを返す.
     // insertNewPoint=trueの時はselfにも新しい点を追加する

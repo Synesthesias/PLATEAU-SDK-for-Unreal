@@ -348,12 +348,12 @@ TRnRef_T<URnWay> URnWay::Clone(bool CloneVertex) const
     return RnNew<URnWay>(LineString->Clone(CloneVertex), IsReversed, IsReverseNormal);
 }
 
-bool URnWay::IsSameLineReference(const TRnRef_T<URnWay>& Other) const {
+bool URnWay::IsSameLineReference(const URnWay* Other) const {
     if (!Other) return false;
     return LineString == Other->LineString;
 }
 
-bool URnWay::IsSameLineSequence(const TRnRef_T<URnWay>& Other) const {
+bool URnWay::IsSameLineSequence(const URnWay* Other) const {
     if (!Other) return false;
     if (!LineString || !Other->LineString) return false;
     if (Count() != Other->Count()) return false;

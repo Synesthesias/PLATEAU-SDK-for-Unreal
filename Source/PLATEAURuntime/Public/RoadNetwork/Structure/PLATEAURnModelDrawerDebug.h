@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "RnIntersection.h"
 #include "RnWay.h"
 #include "GameFramework/Actor.h"
 #include "RoadNetwork/PLATEAURnDef.h"
@@ -212,6 +213,13 @@ public:
 
     UPROPERTY(EditAnywhere)
     bool bShowEdgeNormal = false;
+
+    UPROPERTY(EditAnywhere)
+    bool bShowTrack = false;
+
+
+    UPROPERTY(EditAnywhere)
+    TMap<ERnTurnType, FLinearColor> showTrackColor;
 };
 
 USTRUCT()

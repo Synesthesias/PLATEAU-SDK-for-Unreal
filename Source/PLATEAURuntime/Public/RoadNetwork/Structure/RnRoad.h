@@ -149,6 +149,12 @@ public:
     // keepOneLaneIsLeftがtrueの場合, 1車線しか無い道路だとその1車線がRoadのPrev / Nextを同じ方向になるように(左車線扱い)する
     void Reverse(bool KeepOneLaneIsLeft = true);
 
+    /// <summary>
+      /// この境界とつながっているレーンリスト
+      /// </summary>
+      /// <returns></returns>
+    TArray<URnLane*> GetConnectedLanes(URnWay* border);
+
     // デバッグ用) その道路の中心を表す代表頂点を返す
     virtual FVector GetCentralVertex() const override;
 
