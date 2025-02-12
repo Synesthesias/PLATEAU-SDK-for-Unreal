@@ -14,7 +14,7 @@ FPLATEAUDirectionalArrowComposer::FPLATEAUDirectionalArrowComposer(TObjectPtr<UR
     const TCHAR* MeshPathLeft = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowLeft.RoadMarkArrowLeft'");
     const TCHAR* MeshPathRight = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowRight.RoadMarkArrowRight'");
     const TCHAR* MeshPathStraight = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowStraight.RoadMarkArrowStraight'");
-    const TCHAR* MeshPathStraightLeft = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowStraightLeft.RoadMarkArrowStraight'");
+    const TCHAR* MeshPathStraightLeft = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowStraightLeft.RoadMarkArrowStraightLeft'");
     const TCHAR* MeshPathStraightRight = TEXT("StaticMesh'/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/RoadMarkArrowStraightRight.RoadMarkArrowStraightRight'");
 
     MeshLeft = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), nullptr, MeshPathLeft));
