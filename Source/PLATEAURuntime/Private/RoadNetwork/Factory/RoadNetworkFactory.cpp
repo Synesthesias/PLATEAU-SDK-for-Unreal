@@ -336,7 +336,7 @@ namespace
                 const auto& Tran = TranPair.Value;
 
                 // Only process LODLevel 1
-                if (Tran->GetRoadType() != 1) {
+                if (Tran->GetLodLevel() != 1) {
                     if (URnRoad* Road = Cast<URnRoad>(Tran->Node)) {
                         AddedRoads.Add(Road, Lod1SideWalkSize);
                     }
