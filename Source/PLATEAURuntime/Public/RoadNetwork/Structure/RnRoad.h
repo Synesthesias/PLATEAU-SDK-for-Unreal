@@ -161,9 +161,6 @@ public:
     // 所属するすべてのWayを取得(重複の可能性あり)
     virtual TArray<TRnRef_T<URnWay>> GetAllWays() const override;
 
-    // otherをつながりから削除する
-    virtual void UnLink(const TRnRef_T<URnRoadBase>& Other) override;
-
     // 自身の接続を切断する
     virtual void DisConnect(bool RemoveFromModel) override;
 
