@@ -32,8 +32,15 @@ UMaterialInterface* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(c
                 return Mat;
             }
                 
-        }    
+        } 
     }
+
+    //Defaultマテリアル設定時
+    const auto& DefaultMaterial = CachedMaterials.GetDefaultMaterial();
+    if (DefaultMaterial != nullptr) {
+        return DefaultMaterial;
+    }
+
     return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
 }
 

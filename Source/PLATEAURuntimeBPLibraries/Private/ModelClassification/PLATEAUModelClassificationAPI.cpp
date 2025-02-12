@@ -143,18 +143,19 @@ TSet<EPLATEAUCityObjectsType> UPLATEAUModelClassificationAPI::SearchTypes(const 
     return UniqueTypes;
 }
 
-void UPLATEAUModelClassificationAPI::ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+void UPLATEAUModelClassificationAPI::ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial) {
+        
 #if WITH_EDITOR
-    TargetCityModel->ClassifyModel(TargetComponents, Materials, ReconstructType, bDestroyOriginal);
+    TargetCityModel->ClassifyModel(TargetComponents, Materials, ReconstructType, bDestroyOriginal, DefaultMaterial);
 #else
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif  
 }
 
 
-void UPLATEAUModelClassificationAPI::ClassifyByAttribute(APLATEAUInstancedCityModel * TargetCityModel, TArray<USceneComponent*> TargetComponents, FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+void UPLATEAUModelClassificationAPI::ClassifyByAttribute(APLATEAUInstancedCityModel * TargetCityModel, TArray<USceneComponent*> TargetComponents, FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial) {
 #if WITH_EDITOR
-    TargetCityModel->ClassifyModel(TargetComponents, AttributeKey, Materials, ReconstructType, bDestroyOriginal);
+    TargetCityModel->ClassifyModel(TargetComponents, AttributeKey, Materials, ReconstructType, bDestroyOriginal, DefaultMaterial);
 #else
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif  

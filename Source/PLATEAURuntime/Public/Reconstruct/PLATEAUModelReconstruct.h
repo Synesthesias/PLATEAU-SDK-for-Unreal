@@ -38,7 +38,7 @@ public:
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
-    void ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Target);
+    virtual void ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Target);
 
 protected:
     

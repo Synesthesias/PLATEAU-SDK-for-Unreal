@@ -68,6 +68,17 @@ public:
 
         return -1;
     }
+
+    void SetDefaultMaterial(UMaterialInterface* Material) {
+        DefaultMaterial = Material;
+    }
+
+    UMaterialInterface* GetDefaultMaterial() {
+        return DefaultMaterial;
+    }
+
 private:
     TArray<TObjectPtr<UMaterialInterface>> Materials;
+
+    UMaterialInterface* DefaultMaterial;
 };

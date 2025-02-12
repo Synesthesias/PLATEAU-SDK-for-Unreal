@@ -10,12 +10,12 @@
 using namespace plateau::granularityConvert;
 
 
-FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials)
+FPLATEAUModelClassificationByType::FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, UMaterialInterface* Material)
 {
     CityModelActor = Actor;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
-    
+    DefaultMaterial = Material;
 }
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
@@ -74,6 +74,17 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByType::
 
 void FPLATEAUModelClassificationByType::SetConvertGranularity(const ConvertGranularity Granularity) {
     ConvGranularity = Granularity;
+}
+
+void FPLATEAUModelClassificationByType::ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Targets) {
+
+    if (DefaultMaterial == nullptr) {
+        FPLATEAUModelReconstruct::ComposeCachedMaterialFromTarget(Targets);
+    }
+    else {
+        CachedMaterials.Clear();
+        CachedMaterials.SetDefaultMaterial(DefaultMaterial);
+    }
 }
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByType::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
