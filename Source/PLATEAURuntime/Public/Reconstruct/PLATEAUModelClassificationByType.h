@@ -5,19 +5,20 @@
 #include "CoreMinimal.h"
 #include "Reconstruct/PLATEAUModelClassification.h"
 
-//マテリアル分け（タイプ）
+/**
+ * 地物型によるマテリアル分けを行います。
+ * 類似クラスとして FPLATEAUModelClassificationByAttribute があります。
+ */
 class PLATEAURUNTIME_API FPLATEAUModelClassificationByType : public FPLATEAUModelClassification {
 
 public:
-    FPLATEAUModelClassificationByType();
     FPLATEAUModelClassificationByType(APLATEAUInstancedCityModel* Actor, const TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials);
     void SetConvertGranularity(const ConvertGranularity Granularity) override;
 
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) override;
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;
 
 protected:
 
     TMap<EPLATEAUCityObjectsType, UMaterialInterface*> ClassificationMaterials;
-    TMap<EPLATEAUCityObjectsType, int> MaterialIDMap;
 };

@@ -6,21 +6,22 @@
 #include "Reconstruct/PLATEAUModelClassification.h"
 #include <plateau/material_adjust/material_adjuster_by_attr.h>
 
-//マテリアル分け（属性）
+/**
+ * 属性によるマテリアル分けを行います。
+ * 類似クラスとして FPLATEAUModelClassificationByType があります。
+ */
 class PLATEAURUNTIME_API FPLATEAUModelClassificationByAttribute : public FPLATEAUModelClassification {
 
 public:
-    FPLATEAUModelClassificationByAttribute();
-    FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString AttributeKey, const TMap<FString, UMaterialInterface*> Materials);
+    FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString& AttributeKey, const TMap<FString, UMaterialInterface*>& Materials);
     void SetConvertGranularity(const ConvertGranularity Granularity) override;
 
-    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) override;
+    std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) override;
     TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) override;
 
 protected:
 
     FString ClassificationAttributeKey;
     TMap<FString, UMaterialInterface*> ClassificationMaterials;
-    TMap<FString, int> MaterialIDMap;
 };
 
