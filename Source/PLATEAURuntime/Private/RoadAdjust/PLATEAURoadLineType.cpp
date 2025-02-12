@@ -2,6 +2,7 @@
 
 #include "RoadAdjust/PLATEAURoadLineType.h"
 #include "RoadAdjust/PLATEAUReproducedRoad.h"
+#include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 
 FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoadLineType RoadLineType, UStaticMesh* LineMesh, UStaticMesh* TileMesh) {
     FPLATEAURoadLineParam Param;
@@ -19,6 +20,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 0.0f;
             Param.LineXScale = 0.3f;
             Param.LineLength = 0.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = true;
             break;
         case EPLATEAURoadLineType::YellowLine:
             Param.Type = EPLATEAURoadLineType::YellowLine;
@@ -27,6 +30,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 0.0f;
             Param.LineXScale = 0.3f;
             Param.LineLength = 0.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = true;
             break;
         case EPLATEAURoadLineType::DashedWhilteLine:
             Param.Type = EPLATEAURoadLineType::DashedWhilteLine;
@@ -35,6 +40,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 100.0f;
             Param.LineXScale = 0.3f;
             Param.LineLength = 90.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = false;
             break;
         case EPLATEAURoadLineType::StopLine:
             Param.Type = EPLATEAURoadLineType::StopLine;
@@ -43,6 +50,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 0.0f;
             Param.LineXScale = 1.2f;
             Param.LineLength = 0.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = true;
             break;
         case EPLATEAURoadLineType::Crossing:
             Param.Type = EPLATEAURoadLineType::Crossing;
@@ -51,6 +60,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 80.0f;
             Param.LineXScale = 1.5f;
             Param.LineLength = 50.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = false;
             break;
         default:
             // Noneの場合はWhiteLineと同じパラメータを返す
@@ -60,6 +71,8 @@ FPLATEAURoadLineParam PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoad
             Param.LineGap = 0.0f;
             Param.LineXScale = 0.3f;
             Param.LineLength = 0.0f;
+            Param.SplinePointType = ESplinePointType::Linear;
+            Param.FillEnd = true;
             break;
     }
     

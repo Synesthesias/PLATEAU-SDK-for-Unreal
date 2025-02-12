@@ -31,7 +31,7 @@ namespace {
     /**
      * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
      */
-    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
+    int GetChildIndex(const FString& name, plateau::polygonMesh::Node* Node) {
         int num = Node->getChildCount();
         for (int i = 0; i < num; i++) {
             if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
@@ -62,7 +62,7 @@ namespace {
     }
 }
 
-bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::Export(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     ModelNames.Empty();
     TargetActor = ModelActor;
     switch (Option.FileFormat) {
@@ -262,13 +262,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString TextureFilePath = FString("");
 
-        //マテリアル分け時のMaterialID
-        float MaterialID = -1;
+        auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
         if (Option.bExportTexture) {
             
-            if (StaticMeshComponent->GetMaterial(k) != nullptr) {
-                auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
-                const auto  MaterialInstance = (UMaterialInstance*)MaterialInterface;
+            if (MaterialInterface != nullptr) {
+                
+                const auto  MaterialInstance = Cast<UMaterialInstance>(MaterialInterface);
                 if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
 
                     FMaterialParameterMetadata MetaData;
@@ -279,7 +278,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                         if (TextureSourceFiles.Num() == 0) {
                             UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
                             // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, MaterialID);
+                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, CachedMaterials.Add(MaterialInterface));
                             continue;
                         }
 
@@ -295,7 +294,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
 
         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, MaterialID);
+        int gameMaterialID = MaterialInterface == nullptr ? -1 : CachedMaterials.Add(MaterialInterface);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, gameMaterialID);
     }
 
     OutMesh.addVerticesList(Vertices);

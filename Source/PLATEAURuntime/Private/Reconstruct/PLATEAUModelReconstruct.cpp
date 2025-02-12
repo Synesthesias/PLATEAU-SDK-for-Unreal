@@ -47,7 +47,7 @@ TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelReconstruct::FilterComponentsByCon
     return Components;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
     return ConvertModelWithGranularity(TargetCityObjects, ConvGranularity);
 }
 
@@ -73,6 +73,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     check(CityModelActor != nullptr);
 
     std::shared_ptr<plateau::polygonMesh::Model> basemodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
+    CachedMaterials = MeshExporter.GetCachedMaterials();
 
     std::shared_ptr<plateau::polygonMesh::Model> converted = std::make_shared<plateau::polygonMesh::Model>(Converter.convert(*basemodel, ConvOption));
 
@@ -92,4 +93,31 @@ TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel
         MeshLoader.ReloadComponentFromNode(CityModelActor->GetRootComponent(), Model->getRootNodeAt(i), ConvGranularity, CityObjMap, *CityModelActor);
     }
     return MeshLoader.GetLastCreatedComponents();
+}
+
+void FPLATEAUModelReconstruct::ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Targets) {
+    // CachedMaterialsをクリア
+    CachedMaterials.Clear();
+    
+
+    // ActorのStaticMeshComponentを再帰的に取得
+    TArray<UStaticMeshComponent*> StaticMeshComponents;
+    for(const auto& Target : Targets)
+    {
+        StaticMeshComponents.Add(Target);
+    }
+
+    // 各StaticMeshComponentのマテリアルを処理
+    for (const auto& MeshComp : StaticMeshComponents) {
+        if (!IsValid(MeshComp))
+            continue;
+
+        const int MaterialCount = MeshComp->GetNumMaterials();
+        for (int MaterialIndex = 0; MaterialIndex < MaterialCount; ++MaterialIndex) {
+            if (const auto Material = MeshComp->GetMaterial(MaterialIndex)) {
+                CachedMaterials.Add(Material);
+            }
+        }
+    }
+   
 }

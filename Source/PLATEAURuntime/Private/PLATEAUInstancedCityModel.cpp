@@ -150,7 +150,7 @@ bool APLATEAUInstancedCityModel::HasAttributeInfo() {
         });
 }
 
-TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal)  {
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(const TArray<USceneComponent*>& TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal)  {
 
     UE_LOG(LogTemp, Log, TEXT("ReconstructModel: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     TTask<TArray<USceneComponent*>> ReconstructModelTask = Launch(TEXT("ReconstructModelTask"), [this, TargetComponents, ReconstructType, bDestroyOriginal] {       
@@ -169,7 +169,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructModel(con
     return ReconstructModelTask;
 }
 
-TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*>& TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
     
     UE_LOG(LogTemp, Log, TEXT("ClassifyModelByType: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     TTask<TArray<USceneComponent*>> ClassifyModelByTypeTask = Launch(TEXT("ClassifyModelByTypeTask"), [&, this, TargetComponents, bDestroyOriginal, Materials, ReconstructType] {
@@ -190,7 +190,7 @@ TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const 
     return ClassifyModelByTypeTask;
 }
 
-UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyModel(const TArray<USceneComponent*>& TargetComponents, const FString& AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
     
     UE_LOG(LogTemp, Log, TEXT("ClassifyModelByAttr: %d %d %s"), TargetComponents.Num(), static_cast<int>(ReconstructType), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     TTask<TArray<USceneComponent*>> ClassifyModelByAttrTask = Launch(TEXT("ClassifyModelByAttrTask"), [&, this, TargetComponents, AttributeKey, bDestroyOriginal, Materials, ReconstructType] {
@@ -211,7 +211,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyM
     return ClassifyModelByAttrTask;
 }
 
-UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
 
     TTask<TArray<USceneComponent*>> ClassifyTask = Launch(TEXT("ClassifyTask"), [&, TargetCityObjects, ReconstructType, bDestroyOriginal] {
 
@@ -219,7 +219,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
 
             //粒度ごとにターゲットを取得して実行
             TArray<USceneComponent*> JoinedResults;
-            TArray<ConvertGranularity> GranularityList{ 
+            const TArray<ConvertGranularity> GranularityList{
                 ConvertGranularity::PerAtomicFeatureObject,
                 ConvertGranularity::PerPrimaryFeatureObject,
                 ConvertGranularity::PerCityModelArea,
@@ -250,7 +250,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ClassifyT
 }
 
 
-UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, bool bDestroyOriginal) {
+UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, bool bDestroyOriginal) {
 
     TTask<TArray<USceneComponent*>> ConvertTask = Launch(TEXT("ReconstructTask"), [&, TargetCityObjects, bDestroyOriginal] {
         std::shared_ptr<plateau::polygonMesh::Model> converted = ModelReconstruct.ConvertModelForReconstruct(TargetCityObjects);
@@ -267,7 +267,7 @@ UE::Tasks::TTask<TArray<USceneComponent*>> APLATEAUInstancedCityModel::Reconstru
 }
 
 //Landscape
-UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
+UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<USceneComponent*>& TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
 
     UE_LOG(LogTemp, Log, TEXT("CreateLandscape: %d %s"), TargetComponents.Num(), bDestroyOriginal ? TEXT("True") : TEXT("False"));
     FTask CreateLandscapeTask = Launch(TEXT("CreateLandscapeTask"), [&, TargetComponents, Param, bDestroyOriginal] {
@@ -333,7 +333,7 @@ UE::Tasks::FTask APLATEAUInstancedCityModel::CreateLandscape(const TArray<UScene
     return CreateLandscapeTask;
 }
 
-TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal) {
+TArray<UPLATEAUCityObjectGroup*> APLATEAUInstancedCityModel::AlignLand(TArray<HeightmapCreationResult>& Results, const FPLATEAULandscapeParam& Param, bool bDestroyOriginal) {
 
     FPLATEAUModelAlignLand ModelAlign(this);
     ModelAlign.SetResults(Results, Param);

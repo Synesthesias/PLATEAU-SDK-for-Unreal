@@ -158,26 +158,26 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*>& TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
 
     /**
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*>& TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 選択されたComponentのMaterialを属性情報のKeyに紐づく値で分割します
      * @param
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*>& TargetComponents, const FString& AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 選択されたComponentからLandscapeを生成します
      * @param
      */
-	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*>& TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
 protected:
     // Called when the game starts or when spawned
@@ -191,17 +191,17 @@ protected:
     /**
      * @brief 結合分離　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, bool bDestroyOriginal);
 
     /**
      * @brief マテリアル分け　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 特定パッケージを地形に合わせて高さ合わせ
      */
-    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, const FPLATEAULandscapeParam& Param, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。

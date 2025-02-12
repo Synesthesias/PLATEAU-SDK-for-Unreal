@@ -21,40 +21,39 @@ namespace {
     }
 }
 
-FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute() {}
 
-FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString AttributeKey, const TMap<FString, UMaterialInterface*> Materials)
+FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString& AttributeKey, const TMap<FString, UMaterialInterface*>& Materials)
 {
     CityModelActor = Actor;
     ClassificationAttributeKey = AttributeKey;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
-
-    //マテリアルごとにMaterial ID生成
-    TMap<UMaterialInterface*, int> Material_MaterialIDMap;
-    int ID = 0;
-    for (const auto& KV : ClassificationMaterials) { //同一Materialを共通Material IDに
-        if (!Material_MaterialIDMap.Contains(KV.Value)) {
-            Material_MaterialIDMap.Add(KV.Value, ID);
-            ID++;
-        }
-    }
-    //属性の値ごとにMaterial IDをセット
-    for (const auto& KV : ClassificationMaterials) {
-        MaterialIDMap.Add(KV.Key, Material_MaterialIDMap[KV.Value]);
-    }
 }
 
 void FPLATEAUModelClassificationByAttribute::SetConvertGranularity(const ConvertGranularity Granularity) {
     ConvGranularity = Granularity;
 }
 
-std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects) {
+std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
 
     //最小地物単位のModelを生成
     std::shared_ptr<plateau::polygonMesh::Model> converted = ConvertModelWithGranularity(TargetCityObjects, ConvertGranularity::PerAtomicFeatureObject);
 
     plateau::materialAdjust::MaterialAdjusterByAttr Adjuster;
+
+    // CachedMaterialに元々のマテリアルを追加
+    ComposeCachedMaterialFromTarget(TargetCityObjects);
+    
+    // ChachedMaterialに入っている元々のマテリアルに追加で、マテリアル分け用のマテリアルを追加
+    TMap<int, UMaterialInterface*> ClassifyMatIDs;
+    for (const auto& [Attr, Mat] : ClassificationMaterials)
+    {
+        if (Mat == nullptr) continue;
+        int id = CachedMaterials.Add(Mat);
+        Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Attr), id);
+    }
+
+    // 変更が必要な属性値とマテリアルIDをC++側に登録
     auto meshes = converted.get()->getAllMeshes();
     for (auto& mesh : meshes) {
         auto cityObjList = mesh->getCityObjectList();
@@ -68,13 +67,9 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
                 TSet<FString> AttributeStringValues = ConvertAttributeValuesToUniqueStringValues(AttributeValues);
                 
                 for (const auto& Value : AttributeStringValues) {
-                    if (MaterialIDMap.Contains(Value)) {
-                        int MaterialID = MaterialIDMap[Value];
+                    if (ClassificationMaterials.Contains(Value) && ClassificationMaterials[Value] != nullptr) {
 
                         Adjuster.registerAttribute(GmlId, TCHAR_TO_UTF8(*Value));
-                        Adjuster.registerMaterialPattern(TCHAR_TO_UTF8(*Value), MaterialID);
-
-                        UE_LOG(LogTemp, Log, TEXT("Register Mat: %s %s %d"), *FString(GmlId.c_str()), *Value, MaterialID);
 
                         const auto AttrInfo = *AttrInfoPtr;
                         TSet<FString> Children = FPLATEAUGmlUtil::GetChildrenGmlIds(AttrInfo);
@@ -97,13 +92,6 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttrib
 
 TArray<USceneComponent*> FPLATEAUModelClassificationByAttribute::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
 
-    TMap<int, UMaterialInterface*> NewClassificationMaterials;
-    for (const auto& KV : ClassificationMaterials) {
-        const int* MaterialID = MaterialIDMap.Find(KV.Key);
-        if(MaterialID != nullptr && KV.Value != nullptr)
-            NewClassificationMaterials.Add(*MaterialID, KV.Value);
-    }
-
-    FPLATEAUMeshLoaderForClassification MeshLoader(NewClassificationMaterials, false);
+    FPLATEAUMeshLoaderForClassification MeshLoader(CachedMaterials, false);
     return FPLATEAUModelReconstruct::ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }

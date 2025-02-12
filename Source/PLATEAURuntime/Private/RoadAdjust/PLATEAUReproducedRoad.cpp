@@ -26,7 +26,6 @@ void APLATEAUReproducedRoad::CreateLineTypeMap() {
     const TCHAR* TileMeshPath = TEXT("/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/simple_tile");
     const auto TileMesh = Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TileMeshPath));
     
-
     LineTypeMap.Add(EPLATEAURoadLineType::WhiteLine, PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoadLineType::WhiteLine, LineMesh, TileMesh));
     LineTypeMap.Add(EPLATEAURoadLineType::YellowLine, PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoadLineType::YellowLine, LineMesh, TileMesh));
     LineTypeMap.Add(EPLATEAURoadLineType::DashedWhilteLine, PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoadLineType::DashedWhilteLine, LineMesh, TileMesh));
@@ -127,7 +126,10 @@ void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type
     Component->RegisterComponent();
     this->AddInstanceComponent(Component);
     Component->AttachToComponent(this->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);  
+    Component->SplinePointType = Param.SplinePointType;
     Component->CreateSplineFromVectorArray(LinePoints);
+    Component->SplineMeshType = ESplineMeshType::LengthBased; //Segment単位に変更可能
+    Component->FillEnd = Param.FillEnd;
     Component->Offset = Offset;
     Component->CreateSplineMeshFromAssets(this, Param.LineMesh, Param.LineMaterial, Param.LineGap, Param.LineXScale, Param.LineLength);
     NumComponents++;
