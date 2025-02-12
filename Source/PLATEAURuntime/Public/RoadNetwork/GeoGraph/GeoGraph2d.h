@@ -41,8 +41,8 @@ public:
             const FVector2D& V2 = ToVec2(Vertices[(i + 1) % Vertices.Num()]);            
             Sum += FPLATEAUVector2DEx::Cross(V1, V2);
         }
-
-        return Sum < 0;
+        // UEの場合ZUpなので, ZUpから見るとUnityとは系が逆なので符号反対
+        return Sum > 0;
     }
 
     static bool Contains(const TArray<FVector2D>& Vertices, const FVector2D& Point);
@@ -119,7 +119,60 @@ public:
         }
         return Result;
     }
-    static float Cross(const FVector2D& A, const FVector2D& B);  
+    static float Cross(const FVector2D& A, const FVector2D& B);
+
+
+    /// <summary>
+    /// 多角形の面積を計算する
+    /// </summary>
+    /// <param name="vertices"></param>
+    /// <returns></returns>
+    static float CalcPolygonArea(TArray<FVector2D> vertices) {
+        return CalcPolygonArea<FVector2D>(vertices, [](const FVector2D& v) {return v; });
+    }
+
+    /// <summary>
+    /// 多角形の面積を計算する
+    /// </summary>
+    /// <param name="vertices"></param>
+    /// <returns></returns>
+    template<typename T>
+    static float CalcPolygonArea(const TArray<T>& vertices, TFunction<FVector2D(const T&)> ToVec2);
+
+    // verticesを始点終点から見ていき,お互い中心線を使って比較しながら中心の辺を表すインデックス配列を返す
+    static TArray<int> FindMidEdge
+    (
+        const TArray<FVector2D>& vertices
+        , float toleranceAngleDegForMidEdge = 20.f
+        , float skipAngleDeg = 20.f
+    );
+
+    /**
+     * Calculates a point on line 'a' where the ratio of distances to lines a and b is p:(1-p)
+     * @param RayA First ray
+     * @param RayB Second ray
+     * @param P Ratio parameter [0-1]
+     * @param OutPos Resulting point if calculation succeeds
+     * @return Whether calculation succeeded
+     */
+    static bool CalcLerpPointInLine(const FRay2D& RayA, const FRay2D& RayB, float P, FVector2D& OutPos);
+
+
+    /// <summary>
+    /// 直線l上の点から直線a,bへの距離がp : 1-pとなるような直線lを返す
+    /// 0.5だと角の２等分線が返る
+    /// \ p  |1-p /
+    ///  \   |   /
+    ///   \  |  / 
+    ///  a \ | / b
+    ///     \ /
+    /// </summary>
+    /// <param name="rayA"></param>
+    /// <param name="rayB"></param>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static FRay2D LerpRay(const FRay2D& rayA, const FRay2D& rayB, float p);
+
 private:
     static bool IsLastClockwise(const TArray<FVector2D>& List);
 };
@@ -230,6 +283,18 @@ void FGeoGraph2D::RemoveSelfCrossing(
             }
         }
     }
+}
+
+template<typename T>
+float FGeoGraph2D::CalcPolygonArea(const TArray<T>& vertices, TFunction<FVector2D(const T&)> ToVec2)
+{
+    auto area = 0.f;
+    for (auto i = 0; i < vertices.Num(); i++) {
+        auto v1 = ToVec2(vertices[i]);
+        auto v2 = ToVec2(vertices[(i + 1) % vertices.Num()]);
+        area += (v1.X * v2.Y - v2.X * v1.Y);
+    }
+    return FMath::Abs(area) / 2.f;
 }
 
 template<typename T>

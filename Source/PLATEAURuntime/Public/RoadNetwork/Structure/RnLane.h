@@ -125,6 +125,10 @@ public:
     // クローンを作成する
     TRnRef_T<URnLane> Clone() const;
 
+    TArray<TRnRef_T<URnRoadBase>> GetNextRoads();
+    TArray<TRnRef_T<URnRoadBase>> GetPrevRoads();
+    TRnRef_T<URnRoadBase> GetNextRoad();
+    TRnRef_T<URnRoadBase> GetPrevRoad();
     static TRnRef_T<URnLane> CreateOneWayLane(TRnRef_T<URnWay> way);
 
     /// <summary>
@@ -140,6 +144,8 @@ private:
     // typeの境界線をborderDirにそろえる
     void AlignBorder(EPLATEAURnLaneBorderType type, EPLATEAURnLaneBorderDir borderDir);
 
+
+    TArray<TRnRef_T<URnRoadBase>> GetConnectedRoads(TRnRef_T<URnWay> Border);
 private:
     // 親リンク
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")

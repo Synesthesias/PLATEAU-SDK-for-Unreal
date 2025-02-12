@@ -128,6 +128,10 @@ public:
         return VertexEnumerator(this);
     }
 
+    TRnRef_T<URnLineString> GetLineString() const {
+        return LineString;
+    }
+
     int32 Count() const;
     bool IsValid() const;
 
@@ -180,10 +184,10 @@ public:
     float GetLerpPoint(float P, FVector& OutMidPoint) const;
 
     // 同じLineStringを参照しているかどうか
-    bool IsSameLineReference(const TRnRef_T<URnWay>& Other) const;
+    bool IsSameLineReference(const URnWay* Other) const;
 
     // 同じ頂点列を持っているかどうか
-    bool IsSameLineSequence(const TRnRef_T<URnWay>& Other) const;
+    bool IsSameLineSequence(const URnWay* Other) const;
 
     // 自身をnum分割して返す. 分割できない(頂点空）の時は空リストを返す.
     // insertNewPoint=trueの時はselfにも新しい点を追加する
@@ -211,4 +215,13 @@ struct FRnWayEx
 
     // Self != nullptr && Self->IsValid()
     static bool IsValidWayOrDefault(const URnWay* Self);
+
+    // selfにsrcを結合しようとする(内部のLineStringに結合しようとする).結合できない場合はfalseを返す
+    // self (v0, v1, v2, v3...vn) src(v0', v1', v2', v3'...vm')の場合
+    // v0 == v0'だと, srcを逆順にselfの先頭に追加 (vm'... v3', v2', v1', v0'(v0), v1, v2, v3...vn)となる
+    // vn == vm'だと, srcを逆順にselfの末尾に追加 (v0, v1, v2, v3...vn(vm')... v3', v2', v1', v0')となる
+    // v0 == vm'だと, srcをそのままselfの先頭に追加 (v0', v1', v2', v3'...vm'(v0), v1, v2, v3...vn)となる
+    // vn == v0'だと, srcをそのままselfの末尾に追加 (v0, v1, v2, v3...vn(v0'), v1', v2', v3'...vm')となる
+    // selfとsrcの最初と最後のポイントを見て, どっちの方向に結合するかを決める
+    static bool TryMergePointsToLineString(URnWay* Self, URnWay* Src, float PointDistanceTolerance);
 };

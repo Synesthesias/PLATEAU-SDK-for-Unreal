@@ -1,4 +1,8 @@
 #include "RoadNetwork/Structure/RnModel.h"
+
+#include "Algo/AllOf.h"
+#include "Algo/AnyOf.h"
+#include "Algo/Count.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
@@ -154,45 +158,131 @@ TArray<TRnRef_T<URnSideWalk>> URnModel::GetNeighborSideWalks(const TRnRef_T<URnR
     return RoadBase->GetSideWalks();
 }
 
-void URnModel::CalibrateIntersectionBorder(const FRnModelCalibrateIntersectionBorderOption& Option) {
-    for (const auto& Intersection : Intersections) {
-        for (const auto& Edge : Intersection->GetEdges()) {
-            if (!Edge->GetRoad()) continue;
+void URnModel::CalibrateIntersectionBorderForAllRoad(const FRnModelCalibrateIntersectionBorderOption& Option)
+{
+    TSet<URnRoad*> Prevs;
+    TSet<URnRoad*> Nexts;
 
-            auto Road = Edge->GetRoad()->CastToRoad();
-            if (!Road) continue;
+    TArray<URnRoad*> RnRoads = GetRoads();
+    for (URnRoad* Road : RnRoads) {
+        URnRoad* Prev = nullptr;
+        URnRoad* Center = nullptr;
+        URnRoad* Next = nullptr;
 
-            // 道路の長さを取得
-            float RoadLength = 0.0f;
-            TRnRef_T<URnWay> LeftWay, RightWay;
-            if (Road->TryGetMergedSideWay(NullOpt, LeftWay, RightWay)) {
-                RoadLength = (LeftWay->CalcLength() + RightWay->CalcLength()) * 0.5f;
+        if (TrySliceRoadHorizontalNearByBorder(Road, Option, Prev, Center, Next)) {
+            if (Prev) {
+                Prevs.Add(Prev);
             }
-
-            // 道路の長さが必要な長さより短い場合は調整量を減らす
-            float Offset = Option.MaxOffsetMeter;
-            if (RoadLength < Option.NeedRoadLengthMeter) {
-                Offset *= RoadLength / Option.NeedRoadLengthMeter;
-            }
-
-            // 境界線を移動
-            for (const auto& Lane : Edge->GetConnectedLanes()) {
-                auto Border = Edge->GetBorder();
-                if (!Border) continue;
-
-                // 境界線の方向を取得
-                FVector Dir = Border->GetEdgeNormal(0);
-                Dir.Z = 0.0f;
-                Dir.Normalize();
-
-                // 境界線を移動
-                for (auto& Point : Border->LineString->GetPoints()) {
-                    Point->Vertex += Dir * Offset;
-                }
+            if (Next) {
+                Nexts.Add(Next);
             }
         }
     }
+
+    if(Option.SkipMergeRoads == false)
+    {
+        // Merge with neighboring intersections
+        for (URnRoad* Prev : Prevs) {
+            Prev->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Prev);
+        }
+
+        for (URnRoad* Next : Nexts) {
+            Next->TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType::Next);
+        }        
+    }
 }
+
+bool URnModel::TrySliceRoadHorizontalNearByBorder(
+    URnRoad* Road,
+    const FRnModelCalibrateIntersectionBorderOption& Option,
+    URnRoad*& OutPrevSideRoad,
+    URnRoad*& OutCenterSideRoad,
+    URnRoad*& OutNextSideRoad) {
+    OutPrevSideRoad = nullptr;
+    OutNextSideRoad = nullptr;
+    OutCenterSideRoad = Road;
+
+    if (!Road->IsValid()) {
+        return false;
+    }
+
+    if (!Road->IsAllLaneValid())
+        return false;
+
+    URnWay* LeftWay = nullptr;
+    URnWay* RightWay = nullptr;
+    Road->TryGetMergedSideWay(NullOpt, LeftWay, RightWay);
+
+    const float MinLength = FMath::Min(LeftWay->CalcLength(), RightWay->CalcLength());
+    const float MaxOffset = Option.MaxOffsetMeter * FPLATEAURnDef::Meter2Unit;
+    const float NeedRoadLengthMeter = Option.NeedRoadLengthMeter * FPLATEAURnDef::Meter2Unit;
+    if (MinLength < MaxOffset) {
+        return false;
+    }
+    struct FNeighborInfo {
+        URnIntersection* Intersection;
+        EPLATEAURnLaneBorderType BorderType;
+    };
+    auto IsNeighbor = [&](URnRoad* r, URnIntersection* neighbor) {
+        return r->Next == neighbor || r->Prev == neighbor;
+        };
+    struct SideInfo
+    {
+        URnRoad* FarSide = nullptr;
+        URnRoad* NearSide = nullptr;
+    };
+
+    auto CheckSliceResult = [&](const FSliceRoadHorizontalResult& Res, URnIntersection* Neighbor) {
+        auto nearRoad = Res.NextRoad;
+        auto farRoad = Res.PrevRoad;
+        if (IsNeighbor(Res.PrevRoad, Neighbor))
+            Swap(nearRoad, farRoad);
+        return SideInfo({ farRoad, nearRoad });
+        };
+
+    TArray<FNeighborInfo> Neighbors;
+    for (EPLATEAURnLaneBorderType BorderType : {EPLATEAURnLaneBorderType::Prev, EPLATEAURnLaneBorderType::Next})
+    {
+        if (URnIntersection* Intersection = Cast<URnIntersection>(Road->GetNeighborRoad(BorderType))) {
+            Neighbors.Add({ Intersection, BorderType });
+        }
+    }
+
+    if (Neighbors.Num() == 0) {
+        return false;
+    }
+
+    const float OffsetLength = FMath::Max(1.0f,
+        FMath::Min(MaxOffset, (MinLength - NeedRoadLengthMeter) / Neighbors.Num()));
+
+    if (URnIntersection* NextIntersection = Cast<URnIntersection>(Road->GetNext())) {
+        FLineSegment3D Segment;
+        if (Road->TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType::Next, OffsetLength, Segment)) {
+            FSliceRoadHorizontalResult Result = SliceRoadHorizontal(Road, Segment);
+            if (Result.Result == ERoadCutResult::Success) {
+                auto Check = CheckSliceResult(Result, NextIntersection);
+                OutCenterSideRoad = Check.FarSide;
+                OutNextSideRoad = Check.NearSide;
+                Road = Check.FarSide;
+            }
+        }
+    }
+
+    if (URnIntersection* PrevIntersection = Cast<URnIntersection>(Road->GetPrev())) {
+        FLineSegment3D Segment;
+        if (Road->TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType::Prev, OffsetLength, Segment)) {
+            FSliceRoadHorizontalResult Result = SliceRoadHorizontal(Road, Segment);
+            if (Result.Result == ERoadCutResult::Success) {
+                auto Check = CheckSliceResult(Result, PrevIntersection);
+                OutCenterSideRoad = Check.FarSide;
+                OutPrevSideRoad = Check.NearSide;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 TRnRef_T<URnModel> URnModel::Create() {
     return RnNew<URnModel>();
@@ -341,4 +431,347 @@ bool URnModel::Check() const
             return false;
     }
     return true;
+}
+
+namespace
+{
+
+    /// <summary>
+    /// 切断時の端点判定の時の許容誤差
+    /// </summary>
+    constexpr float CutIndexTolerance = 1e-5f;
+    
+    /// <summary>
+    /// wayのlineStringだけ差し替えて他同じ物を返す
+    /// </summary>
+    /// <param name="lineString"></param>
+    /// <param name="way"></param>
+    /// <returns></returns>
+    URnWay* CopyWay(URnLineString* lineString, URnWay* way) {
+        if (!way || !lineString)
+            return nullptr;
+        return RnNew<URnWay>(lineString, way->IsReversed, way->IsReverseNormal);
+    }
+
+
+    // key: Original LineString, value: (prev, next, midPoint) after split
+    struct SliceRoadMapValue {
+        URnLineString* prev;
+        URnLineString* next;
+        URnPoint* midPoint;
+    };
+
+    void SliceSideWalks(
+        URnModel* Model,
+        const TArray<URnSideWalk*>& SrcSideWalks,
+        const FLineSegment2D& LineSegment2D,
+        const TMap<URnLineString*, SliceRoadMapValue>& LineTable,
+        URnRoadBase* NewNextRoad,
+        TFunction<bool(URnSideWalk*)> IsPrevSide)
+    {
+        auto CopySideWalks = SrcSideWalks;
+        for (URnSideWalk* SideWalk : CopySideWalks) {
+            const SliceRoadMapValue* Inside =
+                LineTable.Find(SideWalk->GetInsideWay()->GetLineString());
+            const SliceRoadMapValue* Outside =
+                LineTable.Find(SideWalk->GetOutsideWay()->GetLineString());
+
+            if (!Inside && !Outside) {
+                if (!IsPrevSide(SideWalk)) {
+                    NewNextRoad->AddSideWalk(SideWalk);
+                }
+                continue;
+            }
+
+            URnWay* NextInsideWay = CopyWay(Inside ? Inside->next : nullptr, SideWalk->GetInsideWay());
+            URnWay* NextOutsideWay = CopyWay(Outside ? Outside->next : nullptr, SideWalk->GetOutsideWay());
+
+            URnWay* PrevInsideWay = CopyWay(Inside ? Inside->prev : nullptr, SideWalk->GetInsideWay());
+            URnWay* PrevOutsideWay = CopyWay(Outside ? Outside->prev : nullptr, SideWalk->GetOutsideWay());
+
+            auto StartEdgeWay = SideWalk->GetStartEdgeWay();
+            auto EndEdgeWay = SideWalk->GetEndEdgeWay();
+            constexpr auto Plane = FPLATEAURnDef::Plane;
+            if (StartEdgeWay) {
+                const float PrevSign = LineSegment2D.Sign(FAxisPlaneEx::ToVector2D(
+                    FMath::Lerp(Inside->prev->GetPoint(0)->Vertex,
+                        Inside->prev->GetPoint(1)->GetVertex(), 0.5f),
+                    Plane));
+
+                const float StartSign = LineSegment2D.Sign(FAxisPlaneEx::ToVector2D(
+                    StartEdgeWay->GetPoint(0)->GetVertex(), Plane));
+
+                if (PrevSign != StartSign) {
+                    Swap(StartEdgeWay, EndEdgeWay);
+                }
+            }
+            else if (EndEdgeWay) {
+                const float PrevSign = LineSegment2D.Sign(FAxisPlaneEx::ToVector2D(
+                    FMath::Lerp(Inside->next->GetPoint(0)->GetVertex(),
+                        Inside->next->GetPoint(1)->GetVertex(), 0.5f),
+                    Plane));
+
+                const float StartSign = LineSegment2D.Sign(FAxisPlaneEx::ToVector2D(
+                    EndEdgeWay->GetPoint(0)->GetVertex(), Plane));
+
+                if (PrevSign != StartSign) {
+                    Swap(StartEdgeWay, EndEdgeWay);
+                }
+            }
+            TArray<URnPoint*> points{ Inside->midPoint, Outside->midPoint };
+            URnWay* MidEdgeWay = RnNew<URnWay>(URnLineString::Create(points));
+
+            URnSideWalk* NewSideWalk = URnSideWalk::Create(
+                NewNextRoad, NextOutsideWay, NextInsideWay, MidEdgeWay, EndEdgeWay, SideWalk->GetLaneType());
+
+            SideWalk->SetSideWays(PrevOutsideWay, PrevInsideWay);
+            SideWalk->SetEdgeWays(StartEdgeWay, MidEdgeWay);
+            Model->AddSideWalk(NewSideWalk);
+        }
+    }
+}
+
+URnModel::ERoadCutResult URnModel::CanSliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment,
+    FPLATEAURnEx::FLineCrossPointResult& OutResult)
+{
+    if (!Road || !Road->IsValid() || !Road->IsAllLaneValid()) {
+        return URnModel::ERoadCutResult::InvalidRoad;
+    }
+
+    OutResult = FPLATEAURnEx::GetLaneCrossPoints(Road, LineSegment);
+
+    // 同じLineStringと２回以上交わってはいけない
+    if (Algo::AnyOf(OutResult.TargetLines, [](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X) {
+        return X.Intersections.Num() > 1;
+    })) {
+        return URnModel::ERoadCutResult::InvalidCutLine;
+    }
+
+    auto& targetLines = OutResult.TargetLines;
+
+    auto IsSliced = [&](URnWay* Way) {
+        if (!Way)
+            return false;
+        return Algo::AnyOf(targetLines, [Way](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& X) {
+            return X.LineString == Way->LineString && X.Intersections.IsEmpty() == false;
+        });
+    };
+
+    for (auto Lane : Road->GetAllLanesWithMedian()) {
+        for (auto Way : Lane->GetBothWays()) {
+            if (IsSliced(Way) == false)
+                return URnModel::ERoadCutResult::UnSlicedLaneExist;
+        }
+    }
+
+    for (auto Sw : Road->GetSideWalks()) {
+        if (Sw->IsValid() == false)
+            return URnModel::ERoadCutResult::InvalidSideWalk;
+
+        // 歩道は角の道だったりすると前後で分かれていたりするので交わらない場合もある
+        // ただし、inside/outsideがどっちも交わるかどっちも交わらないかしか許さない
+        auto SliceCount = Algo::CountIf(Sw->GetSideWays(), [&](URnWay* Way) {
+            return IsSliced(Way);
+        });
+        if (!(SliceCount == 0 || SliceCount == 2)) {
+            return URnModel::ERoadCutResult::PartiallySlicedSideWalkExist;
+        }
+    }
+
+    for (auto& Line : OutResult.TargetLines) {
+        if (Line.Intersections.Num() == 0)
+            continue;
+
+        if (Line.Intersections[0].Key <= CutIndexTolerance ||
+            Line.Intersections[0].Key >= Line.LineString->Count() - 1.f - CutIndexTolerance) {
+            return URnModel::ERoadCutResult::TerminateCutLine;
+        }
+    }
+
+    return URnModel::ERoadCutResult::Success;
+}
+
+URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road, const FLineSegment3D& LineSegment)
+{
+    FSliceRoadHorizontalResult Result;
+    FPLATEAURnEx::FLineCrossPointResult CrossPointResult;
+    Result.Result = CanSliceRoadHorizontal(Road, LineSegment, CrossPointResult);
+    if (Result.Result != ERoadCutResult::Success) {
+        return Result;
+    }
+
+    const FLineSegment2D LineSegment2D = LineSegment.To2D(FPLATEAURnDef::Plane);
+
+    TMap<URnLineString*, SliceRoadMapValue> LineTable;
+
+    // Points for prev/next side determination
+    TSet<URnPoint*> PrevBorderPoints;
+    TSet<URnPoint*> NextBorderPoints;
+
+    // Collect border points
+    for (URnWay* Way : Road->GetBorderWays(EPLATEAURnLaneBorderType::Prev)) {
+        for (URnPoint* Point : Way->GetPoints()) {
+            PrevBorderPoints.Add(Point);
+        }
+    }
+    for (URnWay* Way : Road->GetBorderWays(EPLATEAURnLaneBorderType::Next)) {
+        for (URnPoint* Point : Way->GetPoints()) {
+            NextBorderPoints.Add(Point);
+        }
+    }
+
+    // Undecided lines
+    TSet<FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo*> Undecideds;
+
+    // Share points table to prevent duplicates
+    TMap<FVector, URnPoint*> SharePoints;
+
+    // Split processing functions
+    auto SplitByIndex = [&](URnLineString* Ls, float Index, URnLineString*& OutFront, URnLineString*& OutBack) {
+        Ls->SplitByIndex(Index, OutFront, OutBack, [&](const FVector& V) {
+            URnPoint** Found = SharePoints.Find(V);
+            if (!Found) {
+                URnPoint* NewPoint = RnNew<URnPoint>(V);
+                SharePoints.Add(V, NewPoint);
+                return NewPoint;
+            }
+            return *Found;
+            });
+        };
+
+    auto AddTable = [&](const FPLATEAURnEx::FLineCrossPointResult::FTargetLineInfo& inter, bool IsFrontPrev) {
+        const auto& item = inter.Intersections[0];
+        URnLineString* Front = nullptr;
+        URnLineString* Back = nullptr;
+        SplitByIndex(inter.LineString, item.Key, Front, Back);
+        auto Mid = Back->GetPoint(0);
+        if(IsFrontPrev)
+        {
+            LineTable.Add(inter.LineString, { Front, Back, Mid });
+        }
+        else {
+            LineTable.Add(inter.LineString, { Back, Front, Mid });
+        }
+    };
+
+    for (auto& inter : CrossPointResult.TargetLines)
+    {
+        if (inter.Intersections.Num() == 0)
+            continue;
+
+        if(PrevBorderPoints.Contains(inter.LineString->GetPoint(0)))
+        {
+            AddTable(inter, true);
+        }
+        else if(NextBorderPoints.Contains(inter.LineString->GetPoint(0)))
+        {
+            AddTable(inter, false);
+        }
+        else
+        {
+            Undecideds.Add(&inter);
+        }
+    }
+
+    for (auto& inter : Undecideds) 
+    {
+        auto& item = inter->Intersections[0];
+        URnLineString* Front = nullptr;
+        URnLineString* Back = nullptr;
+        SplitByIndex(inter->LineString, item.Key, Front, Back);
+
+        auto MinPrevScore = FLT_MAX;
+        auto MaxPrevScore = FLT_MAX;
+        for(auto& L : LineTable)
+        {
+            auto PrevScore = Front->CalcProximityScore(L.Value.prev);
+            auto NextScore = Front->CalcProximityScore(L.Value.next);
+
+            if (PrevScore.IsSet() && PrevScore.GetValue() < MinPrevScore) {
+                MinPrevScore = PrevScore.GetValue();
+            }
+            if (NextScore.IsSet() && NextScore.GetValue() < MaxPrevScore) {
+                MaxPrevScore = NextScore.GetValue();
+            }
+        }
+        auto Mid = Back->GetPoint(0);
+        if (MinPrevScore < MaxPrevScore) {
+            LineTable.Add(inter->LineString, { Front, Back, Mid });
+        }
+        else {
+            LineTable.Add(inter->LineString, { Back, Front, Mid });
+        }
+    }
+
+    // 新しく生成されるRoad
+    auto newNextRoad = RnNew<URnRoad>(Road->GetTargetTrans());
+
+    // roadをprev/next側で分断して, next側をnewRoadにする
+    for (auto lane : Road->GetAllLanesWithMedian()) 
+    {
+        // 必ず存在する前提
+        auto left = LineTable[lane->GetLeftWay()->LineString];
+        auto right = LineTable[lane->GetRightWay()->LineString];
+
+        auto nextLeftWay = CopyWay(left.next, lane->GetLeftWay());
+        auto nextRightWay = CopyWay(right.next, lane->GetRightWay());
+
+        auto prevLeftWay = CopyWay(left.prev, lane->GetLeftWay());
+        auto prevRightWay = CopyWay(right.prev, lane->GetRightWay());
+
+        auto isReverseLane = lane->GetIsReverse();
+
+        // 分割個所の境界線
+        auto midBorderWay = RnNew<URnWay>(URnLineString::Create(TArray<URnPoint*> { left.midPoint, right.midPoint }));
+
+        // 順方向ならNext/逆方向ならPrevが中間地点になる
+        auto laneMidBorderType = isReverseLane ? EPLATEAURnLaneBorderType::Prev : EPLATEAURnLaneBorderType::Next;
+
+        // 以前のボーダーは新しいボーダーに設定する
+        auto nextBorder = lane->GetBorder(laneMidBorderType);
+        lane->SetBorder(laneMidBorderType, midBorderWay);
+
+        auto newLane = RnNew<URnLane>(nextLeftWay, nextRightWay, nullptr, nullptr);
+        newLane->SetIsReverse(isReverseLane);
+        newLane->SetBorder(laneMidBorderType, nextBorder);
+        newLane->SetBorder( FPLATEAURnLaneBorderTypeEx::GetOpposite(laneMidBorderType), midBorderWay);
+        if (lane->IsMedianLane()) {
+            newNextRoad->SetMedianLane(newLane);
+        }
+        else {
+            newNextRoad->AddMainLane(newLane);
+        }
+        lane->SetSideWay(EPLATEAURnDir::Left, prevLeftWay);
+        lane->SetSideWay(EPLATEAURnDir::Right, prevRightWay);
+    }
+
+    newNextRoad->SetPrevNext(Road, Road->GetNext());
+    Road->SetPrevNext(Road->GetPrev(), newNextRoad);
+    if(newNextRoad->GetPrev())
+        newNextRoad->GetPrev()->ReplaceNeighbor(Road, newNextRoad);
+    if (newNextRoad->GetNext())
+        newNextRoad->GetNext()->ReplaceNeighbor(Road, newNextRoad);
+    AddRoad(newNextRoad);
+
+    // 歩道周りを処理する
+
+    SliceSideWalks(this, Road->GetSideWalks(), LineSegment2D, LineTable, newNextRoad
+        , [&](URnSideWalk* sw) {
+            return sw->CalcRoadProximityScore(Road) < sw->CalcRoadProximityScore(newNextRoad);
+        });
+    Result.PrevRoad = Road;
+    Result.NextRoad = newNextRoad;
+    return Result;
+}
+
+void URnModel::SeparateContinuousBorder()
+{
+    for(auto inter : Intersections) {
+        // 連続した境界線を分離する
+        inter->SeparateContinuousBorder();
+    }
+
+    for(auto road : Roads) {
+        road->SeparateContinuousBorder();
+    }
 }

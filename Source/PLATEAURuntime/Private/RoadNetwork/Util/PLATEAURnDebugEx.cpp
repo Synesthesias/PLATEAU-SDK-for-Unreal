@@ -32,6 +32,13 @@ void FPLATEAURnDebugEx::DrawArrow(const FVector& Start, const FVector& End, floa
         DrawLine(Arrow2, End, ArrowColor, Duration, Thickness);
     }
 }
+
+void FPLATEAURnDebugEx::DrawArrow(const FVector& Start, const FVector& End, const FLinearColor& Color, float Duration,
+    float Thickness)
+{
+    DrawArrow(Start, End, 50.f, FVector::UpVector, Color, Color, Duration, Thickness);
+}
+
 void FPLATEAURnDebugEx::DrawArrows(const TArray<FVector>& Vertices, bool bIsLoop, float ArrowSize, const FVector& ArrowUp, const FLinearColor& Color, const FLinearColor& ArrowColor, float Duration, float Thickness) {
     for (int32 i = 0; i < Vertices.Num() - 1; ++i) {
         DrawArrow(Vertices[i], Vertices[i + 1], ArrowSize, ArrowUp, Color, ArrowColor, Duration, Thickness);

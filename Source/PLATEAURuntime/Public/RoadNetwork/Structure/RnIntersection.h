@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "RnRoadBase.h"
+#include "RnWay.h"
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RnIntersection.generated.h"
@@ -13,6 +14,29 @@ class URnRoadBase;
 class URnWay;
 class URnRoad;
 
+UENUM(BlueprintType)
+enum class ERnTurnType : uint8 {
+    LeftBack   UMETA(DisplayName = "左後ろ"),
+    LeftTurn   UMETA(DisplayName = "左折"),
+    LeftFront  UMETA(DisplayName = "左前"),
+    Straight   UMETA(DisplayName = "直進"),
+    RightFront UMETA(DisplayName = "右前"),
+    RightTurn  UMETA(DisplayName = "右折"),
+    RightBack  UMETA(DisplayName = "右後ろ"),
+    UTurn      UMETA(DisplayName = "Uターン")
+};
+
+// 交差点への進行タイプ
+UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class ERnFlowTypeMask : uint8 {
+    Empty = 0 UMETA(Hidden),
+    // 流入
+    Inbound = 1 << 0,
+    // 流出
+    Outbound = 1 << 1,
+};
+ENUM_CLASS_FLAGS(ERnFlowTypeMask);
+
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class URnIntersectionEdge : public UObject
 {
@@ -20,7 +44,7 @@ class URnIntersectionEdge : public UObject
 public:
     URnIntersectionEdge();
     void Init();
-    void Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder);
+    void Init(URnRoadBase* InRoad, URnWay* InBorder);
 
     TRnRef_T<URnRoadBase> GetRoad() const { return Road; }
 
@@ -33,6 +57,7 @@ public:
     // 有効なNeighborかどうか
     bool IsValid() const;
 
+    // 他の道路との境界線かどうか
     bool IsBorder() const;
 
     // 境界線の中点を取得
@@ -47,6 +72,9 @@ public:
     // 指定した境界線に接続されているレーンを取得
     TRnRef_T<URnLane> GetConnectedLane(const TRnRef_T<URnWay>& BorderWay) const;
 
+    // この境界線に対して流入/流出するタイプを取得
+    ERnFlowTypeMask GetFlowType() const;
+
 private:
 
     // 接続先の道路
@@ -58,8 +86,82 @@ private:
     URnWay* Border;
 };
 
+
+/**
+ * URnTrack
+ *
+ * UE5用トラッククラス。RnTrack の振る舞いをUE5形式に変換したもの。
+ */
 UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
-class URnIntersection : public URnRoadBase {
+class PLATEAURUNTIME_API URnTrack : public UObject {
+    GENERATED_BODY()
+
+public:
+    // デフォルトコンストラクタ（シリアライズ用）
+    URnTrack();
+
+    /**
+     * 初期化用関数
+     * @param InFromBorder 流入元
+     * @param InToBorder   流出先
+     * @param InSpline     経路を表すSplineコンポーネント
+     * @param InTurnType   曲がり具合（デフォルトは直進）
+     */
+    UFUNCTION(BlueprintCallable, Category = "URnTrack")
+    void Init(URnWay* InFromBorder, URnWay* InToBorder, USplineComponent* InSpline, ERnTurnType InTurnType = ERnTurnType::Straight);
+
+    //---------------------------
+    // フィールド
+    //---------------------------
+
+    // 流入元
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "URnTrack")
+    URnWay* FromBorder;
+
+    // 流出先
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "URnTrack")
+    URnWay* ToBorder;
+
+    // 経路(現状未対応)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "URnTrack")
+    USplineComponent* Spline;
+
+    // 曲がり具合
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "URnTrack")
+    ERnTurnType TurnType;
+
+    //---------------------------
+    // 関数
+    //---------------------------
+
+    /**
+     * 指定した流入元/流出先と一致しているか判定
+     * @param OtherFromBorder 比較する流入元
+     * @param OtherToBorder   比較する流出先
+     * @return 両方一致すればtrueを返す
+     */
+    UFUNCTION(BlueprintCallable, Category = "URnTrack")
+    bool IsSameInOut(const URnWay* OtherFromBorder, const URnWay* OtherToBorder) const;
+
+    /**
+     * 他の URnTrack と入口/出口が同じかどうか判定
+     * @param Other 比較対象の URnTrack クラス
+     * @return 一致していればtrueを返す
+     */
+    UFUNCTION(BlueprintCallable, Category = "URnTrack")
+    bool IsSameInOutWithTrack(const URnTrack* Other) const;
+
+    /**
+     * FromBorder または ToBorder が指定の way と一致しているか判定
+     * @param Way 比較対象の RnWay
+     * @return 一致していればtrueを返す
+     */
+    UFUNCTION(BlueprintCallable, Category = "URnTrack")
+    bool ContainsBorder(const URnWay* Way) const;
+};
+
+UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
+class PLATEAURUNTIME_API URnIntersection : public URnRoadBase {
     GENERATED_BODY()
 public:
     using Super = URnRoadBase;
@@ -76,6 +178,9 @@ public:
 
     // 輪郭のEdge取得
     const TArray<TRnRef_T<URnIntersectionEdge>>& GetEdges() const { return Edges; }
+
+    // トラック一覧取得
+    const TArray<TRnRef_T<URnTrack>>& GetTracks() const { return Tracks; }
 
     // 有効な交差点かどうか
     bool IsValid() const;
@@ -104,6 +209,10 @@ public:
     // 指定したRoadに接続されているEdgeを置き換える
     void ReplaceEdges(const TRnRef_T<URnRoadBase>& Road, const TArray<TRnRef_T<URnWay>>& NewBorders);
 
+    // borderを持つEdgeの隣接道路情報をafterRoadに差し替える.
+    // 戻り値は差し替えが行われた数
+    int32 ReplaceEdgeLink(TRnRef_T<URnWay> Border, TRnRef_T<URnRoadBase> AfterRoad);
+
     // Edgeを追加
     void AddEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border);
 
@@ -116,6 +225,9 @@ public:
     // Edgesの順番を整列する
     // 各Edgeが連結かつ時計回りになるように整列する
     void Align();
+
+    // トラックを全削除
+    void ClearTracks();
 
     // 隣接するRoadを取得
     virtual TArray<TRnRef_T<URnRoadBase>> GetNeighborRoads() const override;
@@ -138,6 +250,9 @@ public:
     // 所属するすべてのWayを取得(重複の可能性あり)
     virtual TArray<TRnRef_T<URnWay>> GetAllWays() const override;
 
+    // トラック情報を追加/更新する.
+    // 同じfrom/toのトラックがすでにある場合は上書きする. そうでない場合は追加する
+    bool TryAddOrUpdateTrack(TRnRef_T<URnTrack> track);
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad() override {
@@ -158,12 +273,18 @@ public:
     /// </summary>
     /// <param name="edge"></param>
     static void AlignEdgeNormal(TRnRef_T<URnIntersectionEdge> edge);
+    void SeparateContinuousBorder();
+
+    void BuildTracks();
 
 private:
 
     // 交差点の外形情報
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TArray<URnIntersectionEdge*> Edges;
+
+    UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
+    TArray<URnTrack*> Tracks;
 };
 
 struct FRnIntersectionEx
@@ -177,12 +298,22 @@ struct FRnIntersectionEx
         }
 
         bool IsValid() const;
+                
+        TArray<URnIntersectionEdge*> GetInBoundEdges() const;
 
+        TArray<URnIntersectionEdge*> GetOutBoundEdges() const;
 
+        FVector GetNormal() const;
 
         FEdgeGroup* RightSide = nullptr;
         FEdgeGroup* LeftSide = nullptr;
     };
 
     static TArray<FEdgeGroup> CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection);
+
+    static FVector GetEdgeNormal(TRnRef_T<URnIntersectionEdge> Edge);
+    static FVector2D GetEdgeNormal2D(TRnRef_T<URnIntersectionEdge> Edge);
+    static FVector GetEdgeCenter(TRnRef_T<URnIntersectionEdge> Edge);
+
+    static FVector2D GetEdgeCenter2D(TRnRef_T<URnIntersectionEdge> Edge);
 };

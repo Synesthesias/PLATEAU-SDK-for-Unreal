@@ -16,11 +16,11 @@ private:
     GENERATED_BODY()
 public:
     URnRoad();
-    explicit URnRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
-    explicit URnRoad(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    explicit URnRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    explicit URnRoad(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
-    void Init(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
-    void Init(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    void Init(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran);
+    void Init(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // メインレーンすべて取得
     const auto& GetMainLanes() const { return MainLanes; }
@@ -112,7 +112,7 @@ public:
 
 
     // 指定した方向の境界線を取得する(全レーンマージした状態で取得する)
-    TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const;
+    TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir = NullOpt) const;
 
     // 指定した方向のWayを取得する(全レーンマージした状態で取得する)
     TRnRef_T<URnWay> GetMergedSideWay(EPLATEAURnDir Dir) const;
@@ -134,6 +134,8 @@ public:
     // 指定したレーンの境界線を取得する
     virtual TRnRef_T<URnWay> GetBorderWay(const TRnRef_T<URnLane>& Lane, EPLATEAURnLaneBorderType BorderType, EPLATEAURnLaneBorderDir BorderDir) const;
 
+    // 境界線の一覧を取得する. left->rightの順番
+    TArray<URnWay*> GetBorderWays(EPLATEAURnLaneBorderType BorderType) const;
     // レーンを置き換える
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir);
     void ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes);
@@ -146,6 +148,12 @@ public:
     // その結果, レーンのIsReverseも逆転 / mainLanesの配列順も逆転する
     // keepOneLaneIsLeftがtrueの場合, 1車線しか無い道路だとその1車線がRoadのPrev / Nextを同じ方向になるように(左車線扱い)する
     void Reverse(bool KeepOneLaneIsLeft = true);
+
+    /// <summary>
+      /// この境界とつながっているレーンリスト
+      /// </summary>
+      /// <returns></returns>
+    TArray<URnLane*> GetConnectedLanes(URnWay* border);
 
     // デバッグ用) その道路の中心を表す代表頂点を返す
     virtual FVector GetCentralVertex() const override;
@@ -164,6 +172,8 @@ public:
 
     // 左右のWayを結合したものを取得
     TArray<TRnRef_T<URnWay>> GetMergedSideWays() const;
+    bool TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType);
+    void SeparateContinuousBorder();
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad() override
@@ -179,14 +189,21 @@ public:
 
     // 構造的に正しいかどうかチェック
     virtual bool Check() const override;
+
+
+    bool TryGetVerticalSliceSegment(
+        EPLATEAURnLaneBorderType BorderSide,
+        float BorderOffset,
+        FLineSegment3D& OutSegment);
+
     // 道路を作成する
-    static TRnRef_T<URnRoad> Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
-    static TRnRef_T<URnRoad> Create(const TArray<TObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
+    static TRnRef_T<URnRoad> Create(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran = nullptr);
+    static TRnRef_T<URnRoad> Create(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& TargetTrans);
 
     // 孤立した道路を作成する
-    static TRnRef_T<URnRoad> CreateIsolatedRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way);
+    static TRnRef_T<URnRoad> CreateIsolatedRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnWay> Way);
 
-    static TRnRef_T<URnRoad> CreateOneLaneRoad(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane);
+    static TRnRef_T<URnRoad> CreateOneLaneRoad(TWeakObjectPtr<UPLATEAUCityObjectGroup> TargetTran, TRnRef_T<URnLane> Lane);
 
 private:
 
@@ -216,4 +233,5 @@ struct FRnRoadEx
 
     static auto IsValidBorderAdjacentNeighbor(const URnRoad* Self, EPLATEAURnLaneBorderType BorderType,
                                               bool NoBorderIsTrue) -> bool;
+
 };

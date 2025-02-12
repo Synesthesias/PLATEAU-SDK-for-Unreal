@@ -1,5 +1,6 @@
 #include "RoadNetwork/Structure/RnLane.h"
 
+#include "Algo/AnyOf.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
@@ -283,6 +284,22 @@ TRnRef_T<URnLane> URnLane::Clone() const {
     return NewLane;
 }
 
+TRnRef_T<URnRoadBase> URnLane::GetNextRoad()
+{
+    auto Ret = GetNextRoads();
+    if (Ret.IsEmpty())
+        return nullptr;
+    return Ret[0];
+}
+
+TRnRef_T<URnRoadBase> URnLane::GetPrevRoad()
+{
+    auto Ret = GetPrevRoads();
+    if (Ret.IsEmpty())
+        return nullptr;
+    return Ret[0];
+}
+
 TRnRef_T<URnLane> URnLane::CreateOneWayLane(TRnRef_T<URnWay> way)
 {
     return RnNew<URnLane>(way, nullptr, nullptr, nullptr);
@@ -304,4 +321,29 @@ void URnLane::AlignBorder(EPLATEAURnLaneBorderType type, EPLATEAURnLaneBorderDir
     if (dir != borderDir) {
         border->Reverse(true);
     }
+}
+
+TArray<TRnRef_T<URnRoadBase>> URnLane::GetConnectedRoads(TRnRef_T<URnWay> Border)
+{
+    if(!Parent || !Border)
+        return TArray<TRnRef_T<URnRoadBase>>();
+    TArray<TRnRef_T<URnRoadBase>> Result;
+    for(auto B : Parent->GetNeighborRoads())
+    {
+        if (Algo::AnyOf( B->GetBorders(), [&](TRnRef_T<URnWay> W)
+        {
+                return W->IsSameLineReference(Border);
+            })) {
+            Result.Add(B);
+        }
+    }
+    return Result;
+}
+TArray<TRnRef_T<URnRoadBase>> URnLane::GetNextRoads()
+{
+    return GetConnectedRoads(NextBorder);
+}
+
+TArray<TRnRef_T<URnRoadBase>> URnLane::GetPrevRoads() {
+    return GetConnectedRoads(PrevBorder);
 }

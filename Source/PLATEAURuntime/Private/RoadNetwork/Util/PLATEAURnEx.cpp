@@ -7,6 +7,8 @@
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnModel.h"
+#include "RoadNetwork/Structure/RnSideWalk.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 int32 FPLATEAURnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) const
 {
@@ -88,7 +90,7 @@ FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLineIntersections(
         FLineCrossPointResult::FTargetLineInfo Elem;
         Elem.LineString = Way;
 
-        auto Intersections = Way->GetIntersectionBy2D(LineSegment, URnModel::Plane);
+        auto Intersections = Way->GetIntersectionBy2D(LineSegment, FPLATEAURnDef::Plane);
         for (const auto& R : Intersections) {
             Elem.Intersections.Add(MakeTuple(R.Key, R.Value));
         }
@@ -99,8 +101,184 @@ FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLineIntersections(
     return Result;
 }
 
+
+FPLATEAURnEx::FBorderEdgesResult FPLATEAURnEx::FindBorderEdges(const TArray<FVector2D>& Vertices,
+    float ToleranceAngleDegForMidEdge, float SkipAngleDeg) {
+    TArray<FVector2D> Verts = Vertices;
+    const bool bIsClockwise = FGeoGraph2D::IsClockwise(Verts);
+
+    FBorderEdgesResult Result;
+    Result.SrcVertices = Verts;
+
+    auto AfterVerts = Reduction<FVector2D>(
+        Verts,
+        [](const FVector2D& V) { return V; },
+        [](const FVector2D& V) { return V; },
+        [&](const TArray<FVector2D>& List, int32 i) {
+            if (List.Num() <= 4) return true;
+            float Area1 = FGeoGraph2D::CalcPolygonArea(List);
+            float Area2 = FGeoGraph2D::CalcPolygonArea(Verts);
+            return Area1 / Area2 < 0.7f;
+        }
+    );
+
+    Result.ReducedVertices = AfterVerts;
+    Result.ReducedBorderVertexIndices = FGeoGraph2D::FindMidEdge(AfterVerts, ToleranceAngleDegForMidEdge, SkipAngleDeg);
+
+    const int32 X = (Result.ReducedBorderVertexIndices.Num() - 1) / 2;
+    const int32 Ind0 = Result.ReducedBorderVertexIndices[X];
+    const int32 Ind1 = Result.ReducedBorderVertexIndices[X + 1];
+
+    const FVector2D St = AfterVerts[Ind0];
+    const FVector2D En = AfterVerts[Ind1];
+
+    FVector2D N = GetEdgeNormal(St, En);
+    if (!bIsClockwise) {
+        N *= -1.f;
+    }
+
+    const FVector2D Mid = (St + En) * 0.5f;
+    const FRay2D Ray(Mid, N);
+
+    float MinLen = MAX_FLT;
+    int32 MinIndex = -1;
+
+    TArray<FLineSegment2D> Edges =
+        FGeoGraphEx::GetEdgeSegments(Verts, false);
+
+    for (int32 i = 0; i < Edges.Num(); ++i) {
+        const FLineSegment2D& Seg = Edges[i];
+        FVector2D Inter;
+        float T1, T2;
+
+        if (Seg.TryHalfLineIntersection(Ray.Origin, Ray.Direction, Inter, T1, T2)) {
+            const float Len = (Mid - Inter).SizeSquared();
+            if (Len < MinLen) {
+                MinLen = Len;
+                MinIndex = i;
+            }
+        }
+    }
+
+    if (MinIndex < 0) {
+        Result.bSuccess = false;
+        Result.BorderVertexIndices = FGeoGraph2D::FindMidEdge(Vertices, ToleranceAngleDegForMidEdge, SkipAngleDeg);
+        return Result;
+    }
+
+    Result.bSuccess = true;
+    auto CollinearRange = FindCollinearRange(MinIndex, Edges, ToleranceAngleDegForMidEdge);
+    CollinearRange.Add(CollinearRange.Last() + 1);
+    Result.BorderVertexIndices = CollinearRange;
+
+    return Result;
+}
+
+FPLATEAURnEx::FLineCrossPointResult FPLATEAURnEx::GetLaneCrossPoints(TRnRef_T<URnRoad> Road,
+    const FLineSegment3D& LineSegment)
+{
+    TArray<URnWay*> TargetLines;
+    // Get all lane ways
+    for (URnLane* Lane : Road->GetAllLanesWithMedian()) {
+        for (URnWay* Way : Lane->GetBothWays()) {
+            TargetLines.Add(Way);
+        }
+    }
+
+    // Get all sidewalk ways
+    for (URnSideWalk* SideWalk : Road->GetSideWalks()) {
+        for (URnWay* Way : SideWalk->GetSideWays()) {
+            TargetLines.Add(Way);
+        }
+    }
+
+    return GetLineIntersections(LineSegment, TargetLines);
+}
+
+TArray<FVector2D> FPLATEAURnEx::FBorderEdgesResult::GetReducedBorderVertices() const {
+    return FPLATEAURnLinq::Select(ReducedBorderVertexIndices, [this](int32 i) {
+        return ReducedVertices[i];
+        });
+}
+
+TArray<FVector2D> FPLATEAURnEx::FBorderEdgesResult::GetBorderVertices() const
+{
+    TArray<FVector2D> Result;
+    for (int32 Index : BorderVertexIndices) {
+        Result.Add(SrcVertices[Index]);
+    }
+    return Result;
+}
+
+TArray<int32> FPLATEAURnEx::FindCollinearRange(int32 EdgeBaseIndex, const TArray<FLineSegment2D>& Edges,
+                                               float ToleranceAngleDegForMidEdge)
+{
+    TArray<int32> Result;
+    Result.Add(EdgeBaseIndex);
+
+    TArray<bool> Stop;
+    Stop.Add(false);
+    Stop.Add(false);
+    struct FAngleInfo {
+        int32 DirectionIndex;
+        int32 EdgeIndex;
+        float Angle;
+    };
+    while (!Stop.Contains(true) && Result.Num() < Edges.Num() - 1) {
+        struct FDirectionInfo {
+            int32 Now;
+            int32 Direction;
+        };
+
+        TArray<FDirectionInfo> Infos;
+        Infos.Add({ Result[0], -1 });
+        Infos.Add({ Result.Last(), 1 });
+
+        TArray<FAngleInfo> EdgeAngles;
+        for (int32 i = 0; i < 2; ++i) {
+            if (Stop[i]) continue;
+
+            const FDirectionInfo& Info = Infos[i];
+            const int32 NextIndex = Info.Now + Info.Direction;
+
+            if (NextIndex < 0 || NextIndex >= Edges.Num()) continue;
+
+            const FLineSegment2D& E0 = Edges[EdgeBaseIndex];
+            const FLineSegment2D& E1 = Edges[NextIndex];
+
+            const float Angle = FMath::RadiansToDegrees(
+                FMath::Acos(FVector2D::DotProduct(E0.GetDirection(), E1.GetDirection()))
+            );
+
+            EdgeAngles.Add({ i, NextIndex, Angle });
+        }
+
+        if (EdgeAngles.Num() == 0) break;
+
+        EdgeAngles.Sort([](const FAngleInfo& A, const FAngleInfo& B) {
+            return A.Angle < B.Angle;
+        });
+
+        for (const FAngleInfo& Edge : EdgeAngles) {
+            if (Edge.Angle > ToleranceAngleDegForMidEdge) {
+                Stop[Edge.DirectionIndex] = true;
+                continue;
+            }
+
+            if (Edge.DirectionIndex == 0) {
+                Result.Insert(Edge.EdgeIndex, 0);
+            }
+            else {
+                Result.Add(Edge.EdgeIndex);
+            }
+        }
+    }
+
+    return Result;
+}
+
 void FPLATEAURnEx::AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child,
-    FAttachmentTransformRules TransformRule)
+                                             FAttachmentTransformRules TransformRule)
 {
     if (!Parent || !Child || !Actor)
         return;

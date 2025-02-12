@@ -382,10 +382,15 @@ bool URnRoadGroup::MergeRoads() {
         SrcRoad->DisConnect(true);
     }
 
-    if (NextIntersection) {
+    if (NextIntersection) 
+    {
         NextIntersection->RemoveEdges([&](const TRnRef_T<URnIntersectionEdge>& Edge) { return Edge->GetRoad() == (Roads)[Roads.Num() - 1]; });
-        for (const auto& Lane : DstLanes) {
-            NextIntersection->AddEdge(DstRoad, DstRoad->GetBorderWay(Lane, EPLATEAURnLaneBorderType::Next, EPLATEAURnLaneBorderDir::Left2Right));
+        for (const auto& Lane : DstLanes) 
+        {
+            auto Border = DstRoad->GetBorderWay(Lane, EPLATEAURnLaneBorderType::Next, EPLATEAURnLaneBorderDir::Left2Right);
+            auto LinkedNum = NextIntersection->ReplaceEdgeLink(Border, DstRoad);
+            if(LinkedNum == 0)
+                UE_LOG(LogTemp, Error, TEXT("Failed to link edge"));
         }
     }
     DstRoad->SetPrevNext(PrevIntersection, NextIntersection);

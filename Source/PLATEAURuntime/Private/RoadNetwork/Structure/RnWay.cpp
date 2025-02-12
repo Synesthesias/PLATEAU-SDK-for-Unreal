@@ -137,12 +137,12 @@ void URnWay::AppendBack2LineString(const TRnRef_T<URnWay>& Back) {
 
     if (IsReversed) {
         for (const auto& P : Back->GetPoints()) {
-            LineString->AddPointFrontOrSkip(P);
+            LineString->AddPointFrontOrSkip(P, 0.f, 0.f, 0.f);
         }
     }
     else {
         for (const auto& P : Back->GetPoints()) {
-            LineString->AddPointOrSkip(P);
+            LineString->AddPointOrSkip(P, 0.f, 0.f, 0.f);
         }
     }
 }
@@ -156,12 +156,12 @@ void URnWay::AppendFront2LineString(const TRnRef_T<URnWay>& Front) {
         return;
     if (IsReversed) {
         for (int32 i = 0; i < Front->Count(); ++i) {
-            LineString->AddPointOrSkip(Front->GetPoint(Front->Count() - 1 - i));
+            LineString->AddPointOrSkip(Front->GetPoint(Front->Count() - 1 - i), 0.f, 0.f, 0.f);
         }
     }
     else {
         for (int32 i = 0; i < Front->Count(); ++i) {
-            LineString->AddPointFrontOrSkip(Front->GetPoint(Front->Count() - 1 - i));
+            LineString->AddPointFrontOrSkip(Front->GetPoint(Front->Count() - 1 - i), 0.f, 0.f, 0.f);
         }
     }
 }
@@ -220,36 +220,18 @@ void URnWay::MoveLerpAlongNormal(const FVector& StartOffset, const FVector& EndO
 }
 
 FVector URnWay::GetAdvancedPointFromFront(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    if (IsReversed) {
-        auto Result = LineString->GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex);
-        OutStartIndex = SwitchIndex(OutStartIndex);
-        OutEndIndex = SwitchIndex(OutEndIndex);
-        return Result;
-    }
-
-    auto Result = LineString->GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
-    OutStartIndex = SwitchIndex(OutStartIndex);
-    return Result;
+    return GetAdvancedPoint(Offset, false, OutStartIndex, OutEndIndex);
 }
 
 FVector URnWay::GetAdvancedPointFromBack(float Offset, int32& OutStartIndex, int32& OutEndIndex) const {
-    if (IsReversed) {
-        auto Result = LineString->GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
-        OutStartIndex = SwitchIndex(OutStartIndex);
-        OutEndIndex = SwitchIndex(OutEndIndex);
-        return Result;
-    }
-
-    auto Result = LineString->GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex);
-    OutStartIndex = SwitchIndex(OutStartIndex);
-    OutEndIndex = SwitchIndex(OutEndIndex);
-    return Result;
+    return GetAdvancedPoint(Offset, true, OutStartIndex, OutEndIndex);
 }
 
 FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse, int32& OutStartIndex, int32& OutEndIndex) const {
-    return Reverse ?
-        GetAdvancedPointFromBack(Offset, OutStartIndex, OutEndIndex) :
-        GetAdvancedPointFromFront(Offset, OutStartIndex, OutEndIndex);
+    const auto Ret = LineString->GetAdvancedPoint(Offset, IsReversed != Reverse, OutStartIndex, OutEndIndex);
+    OutStartIndex = SwitchIndex(OutStartIndex);
+    OutEndIndex = SwitchIndex(OutEndIndex);
+    return Ret;
 }
 
 FVector URnWay::GetAdvancedPoint(float Offset, bool Reverse) const {
@@ -366,12 +348,12 @@ TRnRef_T<URnWay> URnWay::Clone(bool CloneVertex) const
     return RnNew<URnWay>(LineString->Clone(CloneVertex), IsReversed, IsReverseNormal);
 }
 
-bool URnWay::IsSameLineReference(const TRnRef_T<URnWay>& Other) const {
+bool URnWay::IsSameLineReference(const URnWay* Other) const {
     if (!Other) return false;
     return LineString == Other->LineString;
 }
 
-bool URnWay::IsSameLineSequence(const TRnRef_T<URnWay>& Other) const {
+bool URnWay::IsSameLineSequence(const URnWay* Other) const {
     if (!Other) return false;
     if (!LineString || !Other->LineString) return false;
     if (Count() != Other->Count()) return false;
@@ -429,4 +411,24 @@ TArray<TRnRef_T<URnWay>> URnWay::Split(int32 Num, bool InsertNewPoint, TFunction
     if(IsReversed)
         Algo::Reverse(Result);
     return Result;
+}
+
+bool FRnWayEx::TryMergePointsToLineString(URnWay* Self, URnWay* Src, float PointDistanceTolerance) {
+    if (Self->GetPoint(0)->IsSamePoint(Src->GetPoint(0), PointDistanceTolerance)) {
+        Self->AppendFront2LineString(Src->ReversedWay());
+    }
+    else if (Self->GetPoint(0)->IsSamePoint(Src->GetPoint(-1), PointDistanceTolerance)) {
+        Self->AppendFront2LineString(Src);
+    }
+    else if (Self->GetPoint(-1)->IsSamePoint(Src->GetPoint(0), PointDistanceTolerance)) {
+        Self->AppendBack2LineString(Src);
+    }
+    else if (Self->GetPoint(-1)->IsSamePoint(Src->GetPoint(-1), PointDistanceTolerance)) {
+        Self->AppendBack2LineString(Src->ReversedWay());
+    }
+    else {
+        return false;
+    }
+
+    return true;
 }

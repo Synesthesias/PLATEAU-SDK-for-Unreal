@@ -1,12 +1,15 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 
+#include "Algo/AnyOf.h"
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnPoint.h"
 #include "RoadNetwork/Structure/RnRoad.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnLane.h"
+#include "RoadNetwork/Structure/RnTrackBuilder.h"
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
+
 
 
 URnIntersectionEdge::URnIntersectionEdge()
@@ -15,7 +18,7 @@ URnIntersectionEdge::URnIntersectionEdge()
 void URnIntersectionEdge::Init()
 {}
 
-void URnIntersectionEdge::Init(TObjectPtr<URnRoadBase> InRoad, TObjectPtr<URnWay> InBorder)
+void URnIntersectionEdge::Init(URnRoadBase* InRoad, URnWay* InBorder)
 {
     Road = InRoad;
     Border = InBorder;
@@ -27,7 +30,7 @@ bool URnIntersectionEdge::IsValid() const {
 
 bool URnIntersectionEdge::IsBorder() const
 {
-    return static_cast<bool>(Border);
+    return Road != nullptr;
 }
 
 
@@ -91,6 +94,73 @@ TRnRef_T<URnLane> URnIntersectionEdge::GetConnectedLane(const TRnRef_T<URnWay>& 
         return nullptr;
     }
     return nullptr;
+}
+
+ERnFlowTypeMask URnIntersectionEdge::GetFlowType() const
+{
+    if (Border == nullptr || Road == nullptr)
+        return ERnFlowTypeMask::Empty;
+    if (Border->IsValid() == false)
+        return ERnFlowTypeMask::Empty;
+
+    if (auto road = Road->CastToRoad()) 
+    {
+        auto ret = ERnFlowTypeMask::Empty;
+        auto Lanes = road->GetConnectedLanes(Border);
+
+        for(auto L : Lanes)
+        {
+            if (L->IsMedianLane())
+                continue;
+            if (L->GetNextBorder() && L->GetNextBorder()->IsSameLineReference(Border))
+                ret |= ERnFlowTypeMask::Inbound;
+            if (L->GetPrevBorder() && L->GetPrevBorder()->IsSameLineReference(Border))
+                ret |= ERnFlowTypeMask::Outbound;
+        }
+        return ret;
+    }
+    // 交差点同士の接続の場合はレーン全部対象
+    else if (auto intersection = Road->CastToIntersection()) {
+        return ERnFlowTypeMask::Inbound | ERnFlowTypeMask::Outbound;
+    }
+
+    return ERnFlowTypeMask::Empty;
+}
+
+URnTrack::URnTrack()
+    : FromBorder(nullptr)
+    , ToBorder(nullptr)
+    , Spline(nullptr)
+    , TurnType(ERnTurnType::Straight) {
+}
+
+void URnTrack::Init(URnWay* InFromBorder, URnWay* InToBorder, USplineComponent* InSpline, ERnTurnType InTurnType) {
+    FromBorder = InFromBorder;
+    ToBorder = InToBorder;
+    Spline = InSpline;
+    TurnType = InTurnType;
+}
+
+bool URnTrack::IsSameInOut(const URnWay* OtherFromBorder, const URnWay* OtherToBorder) const {
+    // RnWay クラスに IsSameLineReference() 関数が実装されている前提
+    if (FromBorder && OtherFromBorder && ToBorder && OtherToBorder) {
+        return FromBorder->IsSameLineReference(OtherFromBorder) && ToBorder->IsSameLineReference(OtherToBorder);
+    }
+    return false;
+}
+
+bool URnTrack::IsSameInOutWithTrack(const URnTrack* Other) const {
+    if (Other) {
+        return IsSameInOut(Other->FromBorder, Other->ToBorder);
+    }
+    return false;
+}
+
+bool URnTrack::ContainsBorder(const URnWay* Way) const {
+    if (FromBorder && ToBorder && Way) {
+        return FromBorder->IsSameLineReference(Way) || ToBorder->IsSameLineReference(Way);
+    }
+    return false;
 }
 
 URnIntersection::URnIntersection()
@@ -189,6 +259,18 @@ void URnIntersection::ReplaceEdges(const TRnRef_T<URnRoadBase>& Road, const TArr
     }
 }
 
+int32 URnIntersection::ReplaceEdgeLink(TRnRef_T<URnWay> Border, TRnRef_T<URnRoadBase> AfterRoad)
+{
+    int32 Count = 0;
+    for (auto& Edge : Edges) {
+        if (Edge->GetBorder()->IsSameLineReference(Border)) {
+            Edge->SetRoad(AfterRoad);
+            Count++;
+        }
+    }
+    return Count;
+}
+
 void URnIntersection::AddEdge(const TRnRef_T<URnRoadBase>& Road, const TRnRef_T<URnWay>& Border) {
     auto NewEdge = RnNew<URnIntersectionEdge>(Road, Border);
     Edges.Add(NewEdge);
@@ -210,12 +292,12 @@ void URnIntersection::Align()
         for (auto&& j = i + 1; j < Edges.Num(); ++j) {
             auto&& e1 = Edges[j]->GetBorder();
             if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(0))) {
-                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                Swap(Edges[i + 1], Edges[j]);
                 break;
             }
             if (URnPoint::Equals(e0->GetPoint(-1), e1->GetPoint(-1))) {
                 e1->Reverse(false);
-                (Edges[i + 1], Edges[j]) = (Edges[j], Edges[i + 1]);
+                Swap(Edges[i + 1], Edges[j]);
                 break;
             }
         }
@@ -239,6 +321,11 @@ void URnIntersection::Align()
     }
 }
 
+void URnIntersection::ClearTracks()
+{
+    Tracks.Empty();
+}
+
 TArray<TRnRef_T<URnRoadBase>> URnIntersection::GetNeighborRoads() const {
     TArray<TRnRef_T<URnRoadBase>> Roads;
     for (const auto& Edge : Edges) {
@@ -260,7 +347,10 @@ TArray<TRnRef_T<URnWay>> URnIntersection::GetBorders() const {
 }
 
 void URnIntersection::UnLink(const TRnRef_T<URnRoadBase>& Other) {
-    RemoveEdges(Other);
+    for (auto& E : Edges) {
+        if (E->GetRoad() == Other)
+            E->SetRoad(nullptr);
+    }
 }
 
 void URnIntersection::DisConnect(bool RemoveFromModel) {
@@ -306,6 +396,38 @@ TArray<TRnRef_T<URnWay>> URnIntersection::GetAllWays() const {
     return Ways;
 }
 
+bool URnIntersection::TryAddOrUpdateTrack(TRnRef_T<URnTrack> track)
+{
+    if (!track)
+        return false;
+    // trackの入口/出口がこの交差点のものかチェックする
+    auto hasFrom = false;
+    auto hasTo = false;
+    for(auto E : Edges)
+    {
+        if (!E->GetBorder())
+            continue;
+        if (E->GetBorder()->IsSameLineReference(track->FromBorder))
+            hasFrom = true;
+        if (E->GetBorder()->IsSameLineReference(track->ToBorder))
+            hasTo = true;
+    }
+
+    if (!hasFrom || !hasTo) {
+        UE_LOG(LogTemp, Error, TEXT("交差点に含まれないトラックが追加されようとしています"));
+        return false;
+    }
+
+    // それに同じ物が入口/出口のものがあれば削除する
+    Tracks.RemoveAll([&](URnTrack* t) {
+        return t->IsSameInOutWithTrack(track);
+        });
+
+    // track追加
+    Tracks.Add(track);
+    return true;
+}
+
 
 TRnRef_T<URnIntersection> URnIntersection::Create(TObjectPtr<UPLATEAUCityObjectGroup> TargetTran) {
     return RnNew<URnIntersection>(TargetTran);
@@ -333,8 +455,45 @@ bool FRnIntersectionEx::FEdgeGroup::IsValid() const
     return true;
 }
 
+TArray<URnIntersectionEdge*> FRnIntersectionEx::FEdgeGroup::GetInBoundEdges() const
+{
+    TArray<URnIntersectionEdge*> InBoundEdges;
+    for (auto& Edge : Edges) {
+        if (Edge->GetBorder() && EnumHasAnyFlags (Edge->GetFlowType() , ERnFlowTypeMask::Inbound)) 
+        {
+            InBoundEdges.Add(Edge);
+        }
+    }
+    return InBoundEdges;
+        
+}
+
+TArray<URnIntersectionEdge*> FRnIntersectionEx::FEdgeGroup::GetOutBoundEdges() const
+{
+    TArray<URnIntersectionEdge*> InBoundEdges;
+    for (auto& Edge : Edges) {
+        if (Edge->GetBorder() && EnumHasAnyFlags(Edge->GetFlowType(), ERnFlowTypeMask::Outbound)) {
+            InBoundEdges.Add(Edge);
+        }
+    }
+    return InBoundEdges;
+}
+
+FVector FRnIntersectionEx::FEdgeGroup::GetNormal() const
+{
+    for(auto E : Edges)
+    {
+        if(FRnWayEx::IsValidWayOrDefault(E->GetBorder()))
+        {
+            return E->GetBorder()->GetEdgeNormal(0);
+        }
+    }
+    return FVector::ZeroVector;
+}
+
 TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_T<URnIntersection> Intersection)
 {
+    Intersection->Align();
     auto CopiedEdges = Intersection->GetEdges();
     auto Groups = FPLATEAURnEx::GroupByOutlineEdges<TRnRef_T<URnRoadBase>, TRnRef_T<URnIntersectionEdge>>(
         CopiedEdges
@@ -353,5 +512,82 @@ TArray<FRnIntersectionEx::FEdgeGroup> FRnIntersectionEx::CreateEdgeGroup(TRnRef_
     }
 
 
-    return {};
+    return Ret;
+}
+
+FVector FRnIntersectionEx::GetEdgeNormal(TRnRef_T<URnIntersectionEdge> Edge)
+{
+    URnIntersection::AlignEdgeNormal(Edge);
+    auto Border = Edge->GetBorder();
+    return Border->GetEdgeNormal((Border->Count() - 1) / 2);
+}
+
+FVector2D FRnIntersectionEx::GetEdgeNormal2D(TRnRef_T<URnIntersectionEdge> Edge)
+{
+    return FPLATEAURnDef::To2D(GetEdgeNormal(Edge));
+}
+
+FVector FRnIntersectionEx::GetEdgeCenter(TRnRef_T<URnIntersectionEdge> Edge)
+{
+    return Edge->GetBorder()->GetLerpPoint(0.5f);
+}
+
+FVector2D FRnIntersectionEx::GetEdgeCenter2D(TRnRef_T<URnIntersectionEdge> Edge)
+{
+    return FPLATEAURnDef::To2D(GetEdgeCenter(Edge));
+}
+
+void URnIntersection::SeparateContinuousBorder() {
+    Align();
+
+    for (int32 i = 0; i < Edges.Num(); ++i) {
+        URnIntersectionEdge* E0 = Edges[i];
+        URnIntersectionEdge* E1 = Edges[(i + 1) % Edges.Num()];
+
+        if (E0->IsBorder() && E1->IsBorder() && E0->GetRoad() != E1->GetRoad()) {
+            URnPoint* P0 = E0->GetBorder()->GetPoint(-1);
+            URnPoint* P1 = E1->GetBorder()->GetPoint(0);
+
+            // Offset by 1cm
+            const float Offset = 0.01f * FPLATEAURnDef::Meter2Unit;
+
+            if (E0->GetBorder()->Count() < 2 || E1->GetBorder()->Count() < 2) {
+                UE_LOG(LogTemp, Error, TEXT("Border line has less than 2 vertices"));
+                continue;
+            }
+
+            URnPoint* NewP0 = RnNew<URnPoint>(E0->GetBorder()->GetAdvancedPoint(Offset, true));
+            URnPoint* NewP1 = RnNew<URnPoint>(E1->GetBorder()->GetAdvancedPoint(Offset, false));
+
+            TArray<URnPoint*> Points = { NewP0, P0, NewP1 };
+            URnLineString* LineString = URnLineString::Create(Points);
+
+            auto AdjustPoint = [](URnIntersectionEdge* E, URnPoint* OldPoint, URnPoint* NewPoint) {
+                E->GetBorder()->LineString->ReplacePoint(OldPoint, NewPoint);
+
+                if (E->GetRoad()) {
+                    TSet<URnLineString*> LineStrings = E->GetRoad()->GetAllLineStringsDistinct();
+                    for (URnLineString* Ls : LineStrings) {
+                        Ls->ReplacePoint(OldPoint, NewPoint);
+                    }
+                }
+                };
+
+            AdjustPoint(E0, P0, NewP0);
+            AdjustPoint(E1, P1, NewP1);
+
+            URnWay* Way = RnNew<URnWay>(LineString, false, true);
+
+            URnIntersectionEdge* NewNeighbor = RnNew<URnIntersectionEdge>(nullptr, Way);
+            Edges.Insert(NewNeighbor, i + 1);
+            i++;
+        }
+    }
+}
+
+void URnIntersection::BuildTracks()
+{
+    Align();
+    FRnTracksBuilder builder;
+    builder.BuildTracks(this, FBuildTrackOption::Default());
 }

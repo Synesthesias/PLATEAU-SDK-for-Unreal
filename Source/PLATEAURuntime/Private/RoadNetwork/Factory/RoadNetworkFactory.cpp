@@ -219,6 +219,8 @@ namespace
         }
         TRnRef_T<URnWay> CreateWay(const TArray<RGraphRef_t<URVertex>>& Vertices, bool& IsCached)
         {
+            if (Vertices.IsEmpty())
+                return nullptr;
             for (auto& Pair : LineMap) 
             {
                 bool IsReverse;
@@ -467,9 +469,45 @@ namespace
         // 行き止まり
         if (RoadType == ERoadType::Terminate) 
         {
-            // #TODO : RN
-            auto way = Work.CreateWay(Vertices);
-            return URnRoad::CreateIsolatedRoad(CityObjectGroup.Get(), way);
+            auto borderPtr = Lines.FindByPredicate([](TSharedPtr<FTranLine> L)
+            {
+                return L->IsBorder();
+            });
+            auto LinePtr = Lines.FindByPredicate([](TSharedPtr<FTranLine> L) {
+                return L->IsBorder() == false;
+                });
+
+            if (!LinePtr || !(*LinePtr)) {
+                UE_LOG(LogTemp, Error, TEXT("不正なレーン構成[Terminate]. %s"), *FaceGroup->CityObjectGroup->GetName());
+                return nullptr;
+            }
+
+            auto border = borderPtr ? (*borderPtr).Get() : nullptr;
+            auto line = *LinePtr;
+
+            auto vertices = FPLATEAURnLinq::Select(line->Vertices, [](RGraphRef_t<URVertex> V) {
+                return FPLATEAURnDef::To2D(V->GetPosition());
+                });
+
+            auto borderResult = FPLATEAURnEx::FindBorderEdges(vertices, Work.TerminateAllowEdgeAngle, Work.TerminateSkipAngleDeg);
+            auto edgeIndices = borderResult.BorderVertexIndices;
+            auto AsWay = [&](const TArray<int32>& ind, bool isReverse, bool isRightSide) -> TRnRef_T<URnWay>
+            {
+                auto vs = FPLATEAURnLinq::Select(ind, [&](int32 i) {return line->Vertices[i]; });
+                auto ls = Work.CreateWay(vs);
+                if (!ls)
+                    return nullptr;
+                return RnNew<URnWay>(ls->LineString, ls->IsReversed ? !isReverse : isReverse, isRightSide);
+            };
+
+            auto rWay = AsWay(FPLATEAURnLinq::Range(0, edgeIndices[0] + 1), true, true);
+            auto lWay = AsWay(FPLATEAURnLinq::Range(edgeIndices.Last(), line->Vertices.Num() - edgeIndices.Last()), false, false);
+            auto prevBorderWay = AsWay(edgeIndices, true, false);
+            auto nextBorderWay = Work.CreateWay(border ? border->Vertices : TArray<RGraphRef_t<URVertex>>());
+            auto lane = RnNew<URnLane>(lWay, rWay, prevBorderWay, nextBorderWay);
+            auto road = URnRoad::CreateOneLaneRoad(CityObjectGroup, lane);
+            road->SetPrevNext(nullptr, border ? border->Neighbor->Node : nullptr);
+            return road;
         }
 
         // 通常の道
@@ -827,8 +865,8 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         }
 
         // 交差点の
-        //if (bSeparateContinuousBorder)
-        //    ret->SeparateContinuousBorder();
+        if (Self.bSeparateContinuousBorder)
+            Model->SeparateContinuousBorder();
 
         // 中央分離帯の幅で道路を分割する
         //{
@@ -864,14 +902,23 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         }
 
 
-        //// 交差点との境界線が垂直になるようにする
-        //if (CalibrateIntersection && CalibrateIntersectionOption != nullptr) {
-        //    ret.CalibrateIntersectionBorderForAllRoad(CalibrateIntersectionOption);
-        //}
+        // 交差点との境界線が垂直になるようにする
+        if (Self.bCalibrateIntersection) {
+            Model->CalibrateIntersectionBorderForAllRoad(Self.CalibrateIntersectionOption);
+        }
 
         // 道路を分割する
-        TArray<FString> FailedRoads;
-        Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);        
+        if (Self.bSplitLane) {
+            TArray<FString> FailedRoads;
+            Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
+        }
+
+        if(Self.bBuildTracks)
+        {
+            for (auto Inter : Model->GetIntersections())
+                Inter->BuildTracks();
+        }
+
     }
     catch(std::exception e)
     {
