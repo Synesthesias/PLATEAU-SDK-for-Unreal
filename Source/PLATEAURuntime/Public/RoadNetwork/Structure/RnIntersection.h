@@ -235,9 +235,6 @@ public:
     // 境界線情報を取得
     virtual TArray<TRnRef_T<URnWay>> GetBorders() const override;
 
-    // otherをつながりから削除する
-    virtual void UnLink(const TRnRef_T<URnRoadBase>& Other) override;
-
     // 自身の接続を切断する
     virtual void DisConnect(bool RemoveFromModel) override;
 

@@ -346,13 +346,6 @@ TArray<TRnRef_T<URnWay>> URnIntersection::GetBorders() const {
     return Borders;
 }
 
-void URnIntersection::UnLink(const TRnRef_T<URnRoadBase>& Other) {
-    for (auto& E : Edges) {
-        if (E->GetRoad() == Other)
-            E->SetRoad(nullptr);
-    }
-}
-
 void URnIntersection::DisConnect(bool RemoveFromModel) {
     Super::DisConnect(RemoveFromModel);
     if (RemoveFromModel && GetParentModel()) {

@@ -458,11 +458,6 @@ TArray<TRnRef_T<URnWay>> URnRoad::GetAllWays() const {
     return Ways;
 }
 
-void URnRoad::UnLink(const TRnRef_T<URnRoadBase>& Other) {
-    if (Prev == Other) Prev = nullptr;
-    if (Next == Other) Next = nullptr;
-}
-
 void URnRoad::DisConnect(bool RemoveFromModel) {
     Super::DisConnect(RemoveFromModel);
     if (RemoveFromModel && GetParentModel()) {
@@ -717,9 +712,6 @@ bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType)
 
         Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
             [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
-
-        if(Next)
-            Next->ReplaceNeighbor(this, Intersection);
     }
     else if (BorderType == EPLATEAURnLaneBorderType::Next) {
         auto RightEdge = EdgeGroup->RightSide->Edges.Last();
@@ -730,11 +722,9 @@ bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType)
 
         Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
             [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
-
-        if (Prev)
-            Prev->ReplaceNeighbor(this, Intersection);
     }
 
+    // 参照情報からthisを削除して新しいものに差し替え
     Intersection->ReplaceEdges(this, OppositeBorders);
     Intersection->ReplaceNeighbor(this, OppositeRoadBase);
     OppositeRoadBase->ReplaceNeighbor(this, Intersection);
