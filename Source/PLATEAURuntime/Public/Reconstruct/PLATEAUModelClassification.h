@@ -10,4 +10,8 @@ class PLATEAURUNTIME_API FPLATEAUModelClassification : public FPLATEAUModelRecon
 
 public:
     virtual void SetConvertGranularity(const ConvertGranularity Granularity) = 0;
+
+protected:
+    //設定がない場合のマテリアル
+    UMaterialInterface* DefaultMaterial;
 };

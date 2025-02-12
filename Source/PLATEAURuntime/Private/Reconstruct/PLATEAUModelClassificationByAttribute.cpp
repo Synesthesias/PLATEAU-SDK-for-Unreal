@@ -22,16 +22,28 @@ namespace {
 }
 
 
-FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString& AttributeKey, const TMap<FString, UMaterialInterface*>& Materials)
+FPLATEAUModelClassificationByAttribute::FPLATEAUModelClassificationByAttribute(APLATEAUInstancedCityModel* Actor, const FString& AttributeKey, const TMap<FString, UMaterialInterface*>& Materials, UMaterialInterface* Material)
 {
     CityModelActor = Actor;
     ClassificationAttributeKey = AttributeKey;
     ClassificationMaterials = Materials;
     bDivideGrid = false;
+    DefaultMaterial = Material;
 }
 
 void FPLATEAUModelClassificationByAttribute::SetConvertGranularity(const ConvertGranularity Granularity) {
     ConvGranularity = Granularity;
+}
+
+void FPLATEAUModelClassificationByAttribute::ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Targets) {
+
+    if (DefaultMaterial == nullptr) {
+        FPLATEAUModelReconstruct::ComposeCachedMaterialFromTarget(Targets);
+    }
+    else {
+        CachedMaterials.Clear();
+        CachedMaterials.SetDefaultMaterial(DefaultMaterial);
+    }
 }
 
 std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelClassificationByAttribute::ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
