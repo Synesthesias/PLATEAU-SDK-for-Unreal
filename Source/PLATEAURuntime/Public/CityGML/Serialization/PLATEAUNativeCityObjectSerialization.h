@@ -4,6 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUCityObjectSerializationBase.h"
+#include "CityGML/PLATEAUAttributeValue.h"
+
+namespace plateau::polygonMesh {
+    class Mesh;
+    class Node;
+    enum class MeshGranularity;
+    struct CityObjectIndex;
+}
+namespace citygml
+{
+    class CityModel;
+    class CityObject;
+}
 
 /**
 * @brief citygml::CityModelをJsonにシリアライズ
