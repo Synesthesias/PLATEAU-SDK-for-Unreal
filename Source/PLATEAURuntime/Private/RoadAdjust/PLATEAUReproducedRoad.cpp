@@ -3,6 +3,7 @@
 #include "RoadAdjust/PLATEAUReproducedRoad.h"
 
 #include "RoadAdjust/PLATEAURoadLineType.h"
+#include "RoadAdjust/RoadMarking/PLATEAUDirectionalArrowComposer.h"
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "RoadAdjust/RoadMarking/PLATEAUCrosswalkComposer.h"
 #include "RoadAdjust/RoadMarking/PLATEAUMarkedWayListComposerMain.h"
@@ -56,68 +57,10 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
         const auto Type = MarkedWay.GetRoadLineType();
         CreateLineComponentByType(Type, Points, FVector2d(0.0f, 0.0f));
     }
-    
-    // const auto& Roads = RnModel->GetRoads();
-    //
-    // for (const auto& Road : Roads) {
-    //
-    //     const auto& Lanes = Road->GetAllLanes();
-    //     for (const auto& Lane : Lanes) {
-    //
-    //         //Leftway
-    //         const auto& Way = Lane->GetLeftWay();
-    //         if (Way != nullptr)                 
-    //         {
-    //             TArray<FVector> LinePoints;
-    //             const auto& itr = Way->GetVertices();
-    //             for (auto it = itr.begin(); it != itr.end(); ++it) {
-    //                 LinePoints.Add(*it);
-    //             }
-    //             CreateLineComponentByType(EPLATEAURoadLineType::DashedWhilteLine, LinePoints, FVector2D(-50.0f, 0.f));
-    //         }
-    //
-    //         //Rightway
-    //         const auto& RightWay = Lane->GetRightWay();
-    //         if (RightWay != nullptr) {
-    //             TArray<FVector> LinePoints;
-    //             const auto& itr = RightWay->GetVertices();
-    //             for (auto it = itr.begin(); it != itr.end(); ++it) {
-    //                 LinePoints.Add(*it);
-    //             }
-    //             CreateLineComponentByType(EPLATEAURoadLineType::WhiteLine, LinePoints, FVector2D(50.0f, 0.f));
-    //         }
-    //
-    //         //Centerway
-    //         const auto& CenterWay = Lane->GetCenterWay();
-    //         if (CenterWay != nullptr) {
-    //             TArray<FVector> LinePoints;
-    //             const auto& itr = CenterWay->GetVertices();
-    //             for (auto it = itr.begin(); it != itr.end(); ++it) {
-    //                 LinePoints.Add(*it);
-    //             }
-    //             CreateLineComponentByType(EPLATEAURoadLineType::YellowLine, LinePoints);
-    //         }
-    //     }
-    //
-    //     //Borders
-    //     const auto& Borders =  Road->GetBorders();
-    //     for (const auto& Border : Borders) {
-    //
-    //         if (Border != nullptr) {
-    //
-    //             TArray<FVector> LinePoints;
-    //             const auto& itr = Border->GetVertices();
-    //             for (auto it = itr.begin(); it != itr.end(); ++it) {
-    //                 LinePoints.Add(*it);
-    //             }
-    //
-    //             if(LinePoints.Num() <= 2)
-    //                 CreateLineComponentByType(EPLATEAURoadLineType::StopLine, LinePoints);
-    //             else
-    //                 CreateLineComponentByType(EPLATEAURoadLineType::Crossing, LinePoints);
-    //         }
-    //     }
-    // }
+
+    // 車線矢印を生成
+    auto ArrowComposer = FPLATEAUDirectionalArrowComposer(RnModel, this);
+    ArrowComposer.Compose();
 }
 
 void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type, const TArray<FVector>& LinePoints, FVector2D Offset) {

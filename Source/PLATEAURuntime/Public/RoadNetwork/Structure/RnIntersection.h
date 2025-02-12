@@ -26,6 +26,12 @@ enum class ERnTurnType : uint8 {
     UTurn      UMETA(DisplayName = "Uターン")
 };
 
+class PLATEAURUNTIME_API FRnTurnTypeUtil {
+public:
+    static bool IsLeft(ERnTurnType TurnType);
+    static bool IsRight(ERnTurnType TurnType);
+};
+
 // 交差点への進行タイプ
 UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class ERnFlowTypeMask : uint8 {

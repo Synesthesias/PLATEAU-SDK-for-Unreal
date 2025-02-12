@@ -77,6 +77,7 @@ bool FPLATEAUMeshExporter::Export(const FString& ExportPath, APLATEAUInstancedCi
     }
 }
 
+
 bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     plateau::meshWriter::ObjWriter Writer;
     if (Option.TransformType == EMeshTransformType::PlaneRect) {

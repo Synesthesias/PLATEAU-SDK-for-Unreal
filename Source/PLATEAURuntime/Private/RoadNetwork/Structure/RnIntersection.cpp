@@ -1,6 +1,15 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 
 #include "Algo/AnyOf.h"
+
+bool FRnTurnTypeUtil::IsLeft(ERnTurnType TurnType) {
+    return TurnType == ERnTurnType::LeftBack || TurnType == ERnTurnType::LeftTurn || TurnType == ERnTurnType::LeftFront;
+}
+
+bool FRnTurnTypeUtil::IsRight(ERnTurnType TurnType) {
+    return TurnType == ERnTurnType::RightFront || TurnType == ERnTurnType::RightTurn || TurnType == ERnTurnType::RightBack;
+}
+
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Structure/RnPoint.h"
