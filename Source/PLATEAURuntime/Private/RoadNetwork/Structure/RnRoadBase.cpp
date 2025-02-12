@@ -60,6 +60,12 @@ TArray<TRnRef_T<URnWay>> URnRoadBase::GetAllWays() const {
     return Ways;
 }
 
+void URnRoadBase::UnLink(const TRnRef_T<URnRoadBase>& Other)
+{
+    if(Other)
+        ReplaceNeighbor(Other, nullptr);
+}
+
 void URnRoadBase::DisConnect(bool RemoveFromModel) {
     if (RemoveFromModel) {
         for (const auto& SideWalk : SideWalks) {

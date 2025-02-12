@@ -47,7 +47,7 @@ public:
     virtual TArray<TRnRef_T<URnWay>> GetAllWays() const;
 
     // otherをつながりから削除する. other側の接続は消えない
-    virtual void UnLink(const TRnRef_T<URnRoadBase>& Other) {}
+    void UnLink(const TRnRef_T<URnRoadBase>& Other);
 
     // 自身の接続を切断する
     // removeFromModel=trueの場合、RnModelからも削除する
