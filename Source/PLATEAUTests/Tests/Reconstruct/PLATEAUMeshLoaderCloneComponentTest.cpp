@@ -46,7 +46,7 @@ bool FPLATEAUTest_MeshLoader_CloneComponent::RunTest(const FString& Parameters) 
 
     TAtomic<bool> bCanceled;
     bCanceled.Store(false);
-    FPLATEAUMeshLoaderCloneComponent MeshLoader;
+    auto MeshLoader = FPLATEAUMeshLoaderCloneComponent(FPLATEAUCachedMaterialArray());
 
     MeshLoader.ReloadComponentFromModel(Model, CompMap, *Actor);
 

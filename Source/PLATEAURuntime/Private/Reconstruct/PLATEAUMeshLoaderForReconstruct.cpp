@@ -5,11 +5,11 @@
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "Util/PLATEAUComponentUtil.h"
 
-FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct() {
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
     bAutomationTest = false;
 }
 
-FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest) {
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
     bAutomationTest = InbAutomationTest;
 }
 

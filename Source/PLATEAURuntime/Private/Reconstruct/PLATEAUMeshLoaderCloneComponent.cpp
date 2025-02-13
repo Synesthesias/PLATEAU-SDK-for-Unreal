@@ -9,9 +9,9 @@
 #include "StaticMeshOperations.h"
 #include "StaticMeshAttributes.h"
 
-FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent() {}
+FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoaderForReconstruct(CachedMaterials) {}
 
-FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest){
+FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoaderForReconstruct(CachedMaterials){
     bAutomationTest = InbAutomationTest;
 }
 

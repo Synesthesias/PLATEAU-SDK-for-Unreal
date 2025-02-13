@@ -16,9 +16,10 @@
 #include "Util/PLATEAUComponentUtil.h"
 
 
-FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() {}
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray())
+{}
 
-FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest){
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest) : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray()){
     bAutomationTest = InbAutomationTest;
 }
 

@@ -70,6 +70,9 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
     //属性情報を覚えておきます。
     CityObjMap = FPLATEAUReconstructUtil::CreateMapFromCityObjectGroups(TargetCityObjects);
 
+    // マテリアルを覚えておきます
+    ComposeCachedMaterialFromTarget(TargetCityObjects);
+
     check(CityModelActor != nullptr);
 
     std::shared_ptr<plateau::polygonMesh::Model> basemodel = MeshExporter.CreateModelFromComponents(CityModelActor, TargetCityObjects, ExtOptions);
@@ -83,7 +86,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUModelReconstruct::ConvertMo
 }
 
 TArray<USceneComponent*> FPLATEAUModelReconstruct::ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model) {
-    FPLATEAUMeshLoaderForReconstruct MeshLoader(false);
+    FPLATEAUMeshLoaderForReconstruct MeshLoader(false, CachedMaterials);
     return ReconstructFromConvertedModelWithMeshLoader(MeshLoader, Model);
 }
 

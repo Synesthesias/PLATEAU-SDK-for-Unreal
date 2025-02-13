@@ -6,13 +6,11 @@
 #include "PLATEAUMeshLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 
-FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(FPLATEAUCachedMaterialArray Mats) {
-    CachedMaterials = Mats;
+FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(const FPLATEAUCachedMaterialArray& Mats) : FPLATEAUMeshLoaderForReconstruct(Mats) {
     bAutomationTest = false;
 }
 
-FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(FPLATEAUCachedMaterialArray Mats, const bool InbAutomationTest) {
-    CachedMaterials = Mats;
+FPLATEAUMeshLoaderForClassification::FPLATEAUMeshLoaderForClassification(const FPLATEAUCachedMaterialArray& Mats, const bool InbAutomationTest) : FPLATEAUMeshLoaderForReconstruct(Mats) {
     bAutomationTest = InbAutomationTest;
 }
 
@@ -21,8 +19,8 @@ UMaterialInterface* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(c
 
     UE_LOG(LogTemp, Log, TEXT("GetMaterialForSubMesh: %d"), SubMeshValue.GameMaterialID);
 
-    if (SubMeshValue.GameMaterialID > -1 && CachedMaterials.Num() > 0 && SubMeshValue.GameMaterialID < CachedMaterials.Num()) {
-        const auto MatPtr = CachedMaterials.Get(SubMeshValue.GameMaterialID);
+    if (SubMeshValue.GameMaterialID > -1 && BeforeConvertCachedMaterials.Num() > 0 && SubMeshValue.GameMaterialID < BeforeConvertCachedMaterials.Num()) {
+        const auto MatPtr = BeforeConvertCachedMaterials.Get(SubMeshValue.GameMaterialID);
         if (MatPtr != nullptr) {
             const auto& Mat = MatPtr;
             if (Mat != nullptr)
@@ -36,7 +34,7 @@ UMaterialInterface* FPLATEAUMeshLoaderForClassification::GetMaterialForSubMesh(c
     }
 
     //Defaultマテリアル設定時
-    const auto& DefaultMaterial = CachedMaterials.GetDefaultMaterial();
+    const auto& DefaultMaterial = BeforeConvertCachedMaterials.GetDefaultMaterial();
     if (DefaultMaterial != nullptr) {
         return DefaultMaterial;
     }

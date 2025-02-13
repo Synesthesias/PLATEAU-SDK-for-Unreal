@@ -64,7 +64,7 @@ TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<UPLATEAUCity
     // 元コンポーネントを覚えておきます。
     const auto& ComponentsMap = FPLATEAUComponentUtil::CreateComponentsMapWithNodePath(TargetCityObjects);
 
-    FPLATEAUMeshLoaderCloneComponent MeshLoader(false);
+    FPLATEAUMeshLoaderCloneComponent MeshLoader(false, FPLATEAUCachedMaterialArray());
 
     MeshLoader.ReloadComponentFromModel(Model, ComponentsMap, *CityModelActor);
     return MeshLoader.GetLastCreatedComponents();
