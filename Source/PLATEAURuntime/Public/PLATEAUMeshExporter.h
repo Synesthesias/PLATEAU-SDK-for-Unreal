@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Component/PLATEAUCityObjectGroup.h"
 #include "PLATEAUCachedMaterialArray.h"
+#include "Component/PLATEAUCityObjectGroup.h"
 #include "plateau/mesh_writer/gltf_writer.h"
 #include "plateau/mesh_writer/fbx_writer.h"
 
@@ -20,7 +20,6 @@ namespace plateau {
         class Model;
     }
 }
-
 
 class PLATEAURUNTIME_API FPLATEAUMeshExporter {
 public:

@@ -358,9 +358,9 @@ bool URnWay::IsSameLineSequence(const URnWay* Other) const {
     if (!LineString || !Other->LineString) return false;
     if (Count() != Other->Count()) return false;
 
-    for (int32 i = 0; i < Count(); ++i) 
+    for (int i = 0; i < Count(); ++i) 
     {
-        constexpr float Threshold = 0.001f;
+        constexpr float Threshold = 0.1f;
         const auto P1 = GetPoint(i)->Vertex;
         const auto P2 = Other->GetPoint(i)->Vertex;
         if (FMath::Abs(P1.X - P2.X) > Threshold) return false;
