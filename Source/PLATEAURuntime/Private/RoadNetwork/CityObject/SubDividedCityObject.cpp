@@ -348,6 +348,6 @@ ERRoadTypeMask FSubDividedCityObject::GetRoadTypeFromCityObject(const FPLATEAUCi
 
 
     if (Ret == ERRoadTypeMask::Empty)
-        Ret |= ERRoadTypeMask::Undefined;
+        Ret |= ERRoadTypeMask::Road; // デフォルトはRoad
     return Ret;
 }
