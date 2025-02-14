@@ -60,3 +60,16 @@ TSharedPtr<IPLATEAUCrosswalkPlacementRule> FPLATEAUCrosswalkFrequencyExtensions:
             return nullptr;
     }
 }
+
+EPLATEAUCrosswalkFrequency FPLATEAUCrosswalkFrequencyExtensions::StrToFrequency(const FString& Str)
+{
+    if (Str == TEXT("大きい道路に配置") || Str == TEXT("") /* 初期値 */)
+        return EPLATEAUCrosswalkFrequency::BigRoad;
+    if (Str == TEXT("すべての交差点に配置"))
+        return EPLATEAUCrosswalkFrequency::All;
+    if (Str == TEXT("配置しない"))
+        return EPLATEAUCrosswalkFrequency::None;
+    
+    UE_LOG(LogTemp, Error, TEXT("Unknown CrosswalkFrequency: %s"), *Str);
+    return EPLATEAUCrosswalkFrequency::None;
+}

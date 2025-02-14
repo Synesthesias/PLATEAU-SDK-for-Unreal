@@ -26,8 +26,8 @@ public:
     TArray<TObjectPtr<UStaticMeshComponent>> Compose();
 
 private:
-    static constexpr float ArrowMeshHeightOffset = 7.0f; // 7cm
-    static constexpr float ArrowPositionOffset = 450.0f; // 4.5m 
+    static constexpr float ArrowMeshHeightOffset = 9.0f; // cm
+    static constexpr float ArrowPositionOffset = 450.0f; // cm 
 
     TObjectPtr<UStaticMeshComponent> GenerateArrow(const URnWay* LaneBorder, const URnIntersection* Intersection,
                                                   const FVector& Position, float Rotation);

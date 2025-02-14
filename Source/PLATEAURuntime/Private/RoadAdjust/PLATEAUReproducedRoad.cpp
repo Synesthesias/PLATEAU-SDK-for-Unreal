@@ -7,6 +7,7 @@
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "RoadAdjust/RoadMarking/PLATEAUCrosswalkComposer.h"
 #include "RoadAdjust/RoadMarking/PLATEAUMarkedWayListComposerMain.h"
+#include "RoadAdjust/PLATEAUCrosswalkPlacementRule.h"
 #include "RoadAdjust/RoadNetworkToMesh/PLATEAURrTarget.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
@@ -34,7 +35,7 @@ void APLATEAUReproducedRoad::CreateLineTypeMap() {
     LineTypeMap.Add(EPLATEAURoadLineType::Crossing, PLATEAURoadLineTypeExtension::ToRoadLineParam(EPLATEAURoadLineType::Crossing, LineMesh, TileMesh));
 }
 
-void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
+void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model, FString CrosswalkFrequency) {
 
     auto RnModel = Model->Model;
 
@@ -47,7 +48,7 @@ void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model) {
     auto MarkedWays = WayComposer->ComposeFrom(TargetModel).GetMarkedWays();
 
     // 横断歩道
-    auto CrossRoads = NewObject<UPLATEAUCrosswalkComposer>()->Compose(*TargetModel, EPLATEAUCrosswalkFrequency::BigRoad);
+    auto CrossRoads = NewObject<UPLATEAUCrosswalkComposer>()->Compose(*TargetModel, FPLATEAUCrosswalkFrequencyExtensions::StrToFrequency(CrosswalkFrequency));
     MarkedWays.Append(CrossRoads.GetMarkedWays());
 
     // 白線を生成
