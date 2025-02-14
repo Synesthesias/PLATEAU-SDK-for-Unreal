@@ -74,15 +74,15 @@ bool FLineSegment2D::TrySegmentIntersection(const FLineSegment2D& Other) const
 }
 
 bool FLineSegment2D::TryHalfLineIntersection(const FVector2D& Origin, const FVector2D& Dir, FVector2D& OutIntersection,
-    float& OutT1, float& OutT2) const
+    float& OutHalfLineOffset, float& OutSegmentT) const
 {
-    return FLineUtil::HalfLineSegmentIntersection(FRay2D(Origin, Dir), Start, End, OutIntersection, OutT1, OutT2);
+    return FLineUtil::HalfLineSegmentIntersection(FRay2D(Origin, Dir), Start, End, OutIntersection, OutHalfLineOffset, OutSegmentT);
 }
 
 bool FLineSegment2D::TryLineIntersection(const FVector2D& Origin, const FVector2D& Dir,
-    FVector2D& OutIntersection, float& OutT1, float& OutT2) const
+    FVector2D& OutIntersection, float& OutLineLength, float& OutSegmentT) const
 {
-    return FLineUtil::LineSegmentIntersection(FRay2D(Origin, Dir), Start, End, OutIntersection, OutT1, OutT2);
+    return FLineUtil::LineSegmentIntersection(FRay2D(Origin, Dir), Start, End, OutIntersection, OutLineLength, OutSegmentT);
 }
 
 float FLineSegment2D::GetDistance(const FLineSegment2D& Other) const {
