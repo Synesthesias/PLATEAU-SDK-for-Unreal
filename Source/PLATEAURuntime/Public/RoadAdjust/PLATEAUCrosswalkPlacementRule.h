@@ -21,6 +21,7 @@ enum class EPLATEAUCrosswalkFrequency : uint8 {
     Delete UMETA(DisplayName = "Delete"),
 };
 
+
 /**
 * @brief 横断歩道を設置する条件を表す基底クラスです。
 * 設置すべきときにメソッドShouldPlaceがtrueとなるようにサブクラスを実装します。
@@ -75,4 +76,5 @@ public:
 class PLATEAURUNTIME_API FPLATEAUCrosswalkFrequencyExtensions {
 public:
     static TSharedPtr<IPLATEAUCrosswalkPlacementRule> ToPlacementRule(EPLATEAUCrosswalkFrequency Frequency);
+    static EPLATEAUCrosswalkFrequency StrToFrequency(const FString& Str);
 };

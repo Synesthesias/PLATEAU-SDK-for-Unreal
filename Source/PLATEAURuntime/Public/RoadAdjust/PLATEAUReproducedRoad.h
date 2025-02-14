@@ -64,7 +64,7 @@ public:
 
     /// 道路標示を生成します。
     UFUNCTION(BlueprintCallable, meta = (Category = "PLATEAU|RoadAdjust"))
-    void CreateRoadMarks(APLATEAURnStructureModel* Model);
+    void CreateRoadMarks(APLATEAURnStructureModel* Model, FString CrosswalkFrequency);
 
 
 protected:
