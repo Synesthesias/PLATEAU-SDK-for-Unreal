@@ -8,6 +8,7 @@
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUCachedMaterialArray.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "Component/PLATEAUSceneComponent.h"
@@ -421,39 +422,60 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, &NodeHier] {
-                for (const auto& SubMeshValue : SubMeshMaterialSets) {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &
+                ComponentRef, &LoadInputData, &NodeHier]
+            {
+                for (const auto& SubMeshValue : SubMeshMaterialSets)
+                {
                     UMaterialInterface** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
-                    if (SharedMatPtr == nullptr) {
+                    if (SharedMatPtr == nullptr)
+                    {
                         // マテリアル作成
                         UMaterialInterface* MaterialInterface;
-                        FString TexturePath = SubMeshValue.TexturePath;
-                        UTexture2D* Texture;
-                        if (TexturePath.IsEmpty()) {
-                            Texture = nullptr;
-                        }
-                        else {
-                            const bool TextureInCache = PathToTexture.Contains(TexturePath);
-                            if (TextureInCache) // テクスチャをすでにロード済みの場合、使い回します。
-                            {
-                                Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
-                            }
-                            else // テクスチャ未ロードの場合、ロードします。
-                            {
-                                Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
-                                // なければnullptrを返します。
-                                PathToTexture.Add(TexturePath, Texture);
-                            }
-                        }
 
-                        MaterialInterface = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
-                        if (auto DynMaterial = Cast<UMaterialInstanceDynamic>(MaterialInterface)) {
-                            //Textureが存在する場合
-                            if (Texture != nullptr)
-                                DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
-                        
-                            DynMaterial->TwoSided = false;
+                        // 変換前のマテリアルを使う箇所で、変換前のマテリアル情報があればそれを利用
+                        int gameMatID = SubMeshValue.GameMaterialID;
+                        if (gameMatID >= 0 &&
+                            gameMatID < BeforeConvertCachedMaterials.Num())
+                        {
+                            MaterialInterface = BeforeConvertCachedMaterials.Get(gameMatID);
                         }
+                        // 新規マテリアル作成
+                        else 
+                        {
+                            FString TexturePath = SubMeshValue.TexturePath;
+                            UTexture2D* Texture;
+                            if (TexturePath.IsEmpty())
+                            {
+                                Texture = nullptr;
+                            }
+                            else
+                            {
+                                const bool TextureInCache = PathToTexture.Contains(TexturePath);
+                                if (TextureInCache) // テクスチャをすでにロード済みの場合、使い回します。
+                                {
+                                    Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
+                                }
+                                else // テクスチャ未ロードの場合、ロードします。
+                                {
+                                    Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
+                                    // なければnullptrを返します。
+                                    PathToTexture.Add(TexturePath, Texture);
+                                }
+                            }
+
+                            MaterialInterface = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture,
+                                                                      NodeHier);
+                            if (auto DynMaterial = Cast<UMaterialInstanceDynamic>(MaterialInterface))
+                            {
+                                //Textureが存在する場合
+                                if (Texture != nullptr)
+                                    DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
+
+                                DynMaterial->TwoSided = false;
+                            }
+                        }
+                        
                         
                         StaticMesh->AddMaterial(MaterialInterface);
 

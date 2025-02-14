@@ -39,7 +39,7 @@ bool FPLATEAUTest_MeshLoader_Reconstruct_Model::RunTest(const FString& Parameter
 
     TAtomic<bool> bCanceled;
     bCanceled.Store(false);
-    FPLATEAUMeshLoaderForReconstruct MeshLoader;
+    auto MeshLoader = FPLATEAUMeshLoaderForReconstruct(FPLATEAUCachedMaterialArray());
 
     MeshLoader.ReloadComponentFromModel(Model, ConvGranularity, CityObj, *Actor);
 

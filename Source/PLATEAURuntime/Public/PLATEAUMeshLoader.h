@@ -5,6 +5,7 @@
 #include <citygml/material.h>
 #include "MeshTypes.h"
 #include "CoreMinimal.h"
+#include "PLATEAUCachedMaterialArray.h"
 
 struct FPLATEAUCityObject;
 struct FLoadInputData;
@@ -62,10 +63,16 @@ public:
 class PLATEAURUNTIME_API FPLATEAUMeshLoader {
     using FPathToTexture = TMap<FString, UTexture2D*>;
 public:
-    FPLATEAUMeshLoader() {
+    virtual ~FPLATEAUMeshLoader() = default;
+
+    FPLATEAUMeshLoader(const FPLATEAUCachedMaterialArray& BeforeConvertCachedMaterials) :
+        BeforeConvertCachedMaterials(BeforeConvertCachedMaterials)
+    {
         bAutomationTest = false;
     }
-    FPLATEAUMeshLoader(const bool InbAutomationTest) {
+    FPLATEAUMeshLoader(const bool InbAutomationTest)  :
+        BeforeConvertCachedMaterials(BeforeConvertCachedMaterials)
+    {
         bAutomationTest = InbAutomationTest;
     }
 
@@ -132,4 +139,7 @@ protected:
     virtual bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
         TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles);
     virtual UStaticMesh* CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name);
+
+protected:
+    const FPLATEAUCachedMaterialArray& BeforeConvertCachedMaterials;
 };

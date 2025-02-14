@@ -13,8 +13,8 @@
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderCloneComponent : public FPLATEAUMeshLoaderForReconstruct {
 
 public:
-    FPLATEAUMeshLoaderCloneComponent();
-    FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest);
+    FPLATEAUMeshLoaderCloneComponent(const FPLATEAUCachedMaterialArray& CachedMaterials);
+    FPLATEAUMeshLoaderCloneComponent(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials);
 
     void ReloadComponentFromModel(
         std::shared_ptr<plateau::polygonMesh::Model> Model,

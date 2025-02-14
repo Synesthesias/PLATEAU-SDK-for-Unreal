@@ -32,12 +32,12 @@ public:
         return Materials.Num() - 1;
     }
 
-    TObjectPtr<UMaterialInterface> Get(int Index)
+    TObjectPtr<UMaterialInterface> Get(int Index) const
     {
         return Materials[Index];
     }
 
-    int Num()
+    int Num() const
     {
         return Materials.Num();
     }
@@ -73,7 +73,7 @@ public:
         DefaultMaterial = Material;
     }
 
-    UMaterialInterface* GetDefaultMaterial() {
+    UMaterialInterface* GetDefaultMaterial() const {
         return DefaultMaterial;
     }
 
