@@ -168,14 +168,13 @@ void URnModel::CalibrateIntersectionBorderForAllRoad(const FRnModelCalibrateInte
         URnRoad* Prev = nullptr;
         URnRoad* Center = nullptr;
         URnRoad* Next = nullptr;
-
-        if (TrySliceRoadHorizontalNearByBorder(Road, Option, Prev, Center, Next)) {
-            if (Prev) {
-                Prevs.Add(Prev);
-            }
-            if (Next) {
-                Nexts.Add(Next);
-            }
+        TrySliceRoadHorizontalNearByBorder(Road, Option, Prev, Center, Next);
+        // 失敗してもPrev or Nextどっちかは成功しているかもしれないので結果は見ない
+        if (Prev) {
+            Prevs.Add(Prev);
+        }
+        if (Next) {
+            Nexts.Add(Next);
         }
     }
 
