@@ -41,7 +41,7 @@ public:
     virtual FPLATEAUMarkedWayList ComposeFrom(const IPLATEAURrTarget* Target) override;
     
     // 経験的にこのくらいの高さなら道路にめりこまないという値
-    static constexpr float HeightOffset = 7.0f;
+    static constexpr float HeightOffset = 9.0f;
 
 private:
     

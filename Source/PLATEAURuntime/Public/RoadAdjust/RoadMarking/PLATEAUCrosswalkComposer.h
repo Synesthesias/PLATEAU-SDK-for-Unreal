@@ -10,34 +10,6 @@
 #include "RoadAdjust/RoadNetworkToMesh/PLATEAURrTarget.h"
 #include "PLATEAUCrosswalkComposer.generated.h"
 
-// USTRUCT()
-// struct PLATEAURUNTIME_API FPLATEAUCrosswalkInstance {
-//     GENERATED_BODY()
-// public:
-//     FPLATEAUCrosswalkInstance() = default;
-//     FPLATEAUCrosswalkInstance(const TSharedPtr<FRoadMarkingInstance>& InRoadMarkingInstance, 
-//         const TSharedPtr<URnRoadBase>& InSrcRoad, 
-//         EPLATEAUReproducedRoadDirection InDirection)
-//         : RoadMarkingInstance(InRoadMarkingInstance)
-//         , SrcRoad(InSrcRoad)
-//         , Direction(InDirection)
-//     {}
-//
-//     TSharedPtr<FRoadMarkingInstance> GetRoadMarkingInstance() const { return RoadMarkingInstance; }
-//     TSharedPtr<URnRoadBase> GetSrcRoad() const { return SrcRoad; }
-//     EPLATEAUReproducedRoadDirection GetDirection() const { return Direction; }
-//
-// private:
-//     UPROPERTY()
-//     TSharedPtr<FRoadMarkingInstance> RoadMarkingInstance;
-//
-//     UPROPERTY()
-//     TSharedPtr<URnRoadBase> SrcRoad;
-//
-//     UPROPERTY()
-//     EPLATEAUReproducedRoadDirection Direction;
-// };
-
 UCLASS()
 class PLATEAURUNTIME_API UPLATEAUCrosswalkComposer : public UObject {
     GENERATED_BODY()
