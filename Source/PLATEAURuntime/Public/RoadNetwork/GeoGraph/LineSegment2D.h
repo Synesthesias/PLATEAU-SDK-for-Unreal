@@ -34,7 +34,7 @@ struct PLATEAURUNTIME_API FLineSegment2D {
         const FVector2D& Origin,
         const FVector2D& Direction,
         FVector2D& OutIntersection,
-        float& OutLineLength,
+        float& OutLineOffset,
         float& OutSegmentT) const;
     float GetDistance(const FLineSegment2D& Other) const;
 

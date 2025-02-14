@@ -159,5 +159,3 @@ template<class T>
 inline TRnRef_T<T> RnFrom(TObjectPtr<T> Ptr) {
     return TPLATEAURnRef<T>::From(Ptr);
 }
-
-#define PLATEAU_RN_DETAIL_LOG
