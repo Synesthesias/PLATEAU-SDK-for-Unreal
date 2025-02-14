@@ -25,8 +25,8 @@ bool FRay2D::CalcIntersection(const FRay2D& other, FVector2D& intersection, floa
 }
 
 bool FLineUtil::LineIntersection(const FVector2D& A, const FVector2D& B, const FVector2D& C, const FVector2D& D,
-                                 FVector2D& OutIntersection, float& OutT1, float& OutT2) {
-    OutT1 = OutT2 = 0.0f;
+                                 FVector2D& OutIntersection, float& OutAbT, float& OutCdT) {
+    OutAbT = OutCdT = 0.0f;
     OutIntersection = FVector2D::ZeroVector;
 
     const auto Deno = FPLATEAUVector2DEx::Cross(B - A, D - C);
@@ -34,9 +34,9 @@ bool FLineUtil::LineIntersection(const FVector2D& A, const FVector2D& B, const F
         return false;
     }
 
-    OutT1 = FPLATEAUVector2DEx::Cross(C - A, D - C) / Deno;
-    OutT2 = FPLATEAUVector2DEx::Cross(B - A, A - C) / Deno;
-    OutIntersection = FMath::Lerp(A, B, OutT1);
+    OutAbT = FPLATEAUVector2DEx::Cross(C - A, D - C) / Deno;
+    OutCdT = FPLATEAUVector2DEx::Cross(B - A, A - C) / Deno;
+    OutIntersection = FMath::Lerp(A, B, OutAbT);
     return true;
 }
 
@@ -45,6 +45,32 @@ bool FLineUtil::SegmentIntersection(const FVector2D& S1St, const FVector2D& S1En
     FVector2D& OutIntersection, float& OutT1, float& OutT2) {
     const bool Result = LineIntersection(S1St, S1En, S2St, S2En, OutIntersection, OutT1, OutT2);
     return Result && OutT1 >= 0.0f && OutT1 <= 1.0f && OutT2 >= 0.0f && OutT2 <= 1.0f;
+}
+
+bool FLineUtil::LineIntersection(const FRay2D& rayA, const FRay2D& rayB, FVector2D& OutIntersection, float& OutRayAOffset,
+    float& OutRayBOffset)
+{
+    return LineIntersection(rayA.Origin, rayA.Origin + rayA.Direction, rayB.Origin, rayB.Origin + rayB.Direction,
+        OutIntersection, OutRayAOffset, OutRayBOffset);
+}
+
+bool FLineUtil::HalfLineSegmentIntersection(const FRay2D& HalfLine, const FVector2D& P1, const FVector2D& P2,
+    FVector2D& OutIntersection, float& OutHalfLineOffset, float& OutSegmentT)
+{
+    auto ret = LineIntersection(HalfLine.Origin, HalfLine.Origin + HalfLine.Direction, P1, P2, OutIntersection, OutHalfLineOffset,
+       OutSegmentT);
+    // halfLineは半直線なので後ろになければOK
+    // p1,p2は線分なので0~1の範囲内ならOK
+    return ret && OutHalfLineOffset >= 0.f && OutSegmentT >= 0.f && OutSegmentT <= 1.f;
+}
+
+bool FLineUtil::LineSegmentIntersection(const FRay2D& line, FVector2D p1, FVector2D p2, FVector2D& Intersection,
+    float& OutLineLength, float& OutSegmentT)
+{
+    auto ret = LineIntersection(line.Origin, line.Origin + line.Direction, p1, p2, Intersection, OutLineLength,
+        OutSegmentT);
+    // p1,p2は線分なので0~1の範囲内ならOK
+    return ret && OutSegmentT >= 0.f && OutSegmentT <= 1.f;
 }
 
 float FLineUtil::GetLineSegmentLength(const TArray<FVector>& Vertices) {
@@ -61,29 +87,3 @@ FVector2D FLineUtil::GetNearestPoint(const FRay2D& Self, const FVector2D& P, flo
     return Self.Origin + OutT * D;
 }
 
-bool FLineUtil::LineIntersection(const FRay2D& rayA, const FRay2D& rayB, FVector2D& intersection, float& t1,
-    float& t2)
-{
-    return LineIntersection(rayA.Origin, rayA.Origin + rayA.Direction, rayB.Origin, rayB.Origin + rayB.Direction,
-        intersection, t1, t2);
-}
-
-bool FLineUtil::HalfLineSegmentIntersection(const FRay2D& HalfLine, const FVector2D& P1, const FVector2D& P2,
-    FVector2D& Intersection, float& T1, float& T2)
-{
-    auto ret = LineIntersection(HalfLine.Origin, HalfLine.Origin + HalfLine.Direction, P1, P2, Intersection, T1,
-       T2);
-    // halfLineは半直線なので後ろになければOK
-    // p1,p2は線分なので0~1の範囲内ならOK
-    return ret && T1 >= 0.f && T2 >= 0.f && T2 <= 1.f;
-}
-
-bool FLineUtil::LineSegmentIntersection(const FRay2D& line, FVector2D p1, FVector2D p2, FVector2D& Intersection,
-    float& T1, float& T2)
-{
-    auto ret = LineIntersection(line.Origin, line.Origin + line.Direction, p1, p2, Intersection, T1,
-        T2);
-    // p1,p2は線分なので0~1の範囲内ならOK
-    return ret && T2 >= 0.f && T2 <= 1.f;
-
-}

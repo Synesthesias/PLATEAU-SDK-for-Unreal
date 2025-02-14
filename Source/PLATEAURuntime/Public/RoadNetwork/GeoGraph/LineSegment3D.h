@@ -23,7 +23,7 @@ public:
     FVector GetNearestPoint(const FVector& Point, float& OutDistanceFromStart) const;
 
     bool TryLineIntersectionBy2D(const FVector& Origin, const FVector& Dir, EAxisPlane Plane,
-        float NormalTolerance, FVector& OutIntersection, float& OutT1, float& OutT2) const;
+        float NormalTolerance, FVector& OutIntersection, float& OutLineOffset, float& OutSegmentT) const;
 
     bool TryHalfLineIntersectionBy2D(const FVector& Origin, const FVector& Dir, EAxisPlane Plane,
         float NormalTolerance, FVector& OutIntersection, float& OutT1, float& OutT2) const;

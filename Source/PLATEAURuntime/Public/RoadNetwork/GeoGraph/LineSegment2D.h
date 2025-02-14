@@ -29,13 +29,13 @@ struct PLATEAURUNTIME_API FLineSegment2D {
     bool TrySegmentIntersection(const FLineSegment2D& Other, FVector2D& OutIntersection) const;
     bool TrySegmentIntersection(const FLineSegment2D& Other) const;
 
-    bool TryHalfLineIntersection(const FVector2D& Origin, const FVector2D& Dir, FVector2D& OutIntersection, float& OutT1, float& OutT2) const;
+    bool TryHalfLineIntersection(const FVector2D& Origin, const FVector2D& Dir, FVector2D& OutIntersection, float& OutHalfLineOffset, float& OutSegmentT) const;
     bool TryLineIntersection(
         const FVector2D& Origin,
         const FVector2D& Direction,
         FVector2D& OutIntersection,
-        float& OutT1,
-        float& OutT2) const;
+        float& OutLineOffset,
+        float& OutSegmentT) const;
     float GetDistance(const FLineSegment2D& Other) const;
 
     // Pointが線分の左側にあれば1, 右側にあれば-1, 線分上にあれば0を返す

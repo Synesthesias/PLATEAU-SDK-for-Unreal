@@ -168,14 +168,13 @@ void URnModel::CalibrateIntersectionBorderForAllRoad(const FRnModelCalibrateInte
         URnRoad* Prev = nullptr;
         URnRoad* Center = nullptr;
         URnRoad* Next = nullptr;
-
-        if (TrySliceRoadHorizontalNearByBorder(Road, Option, Prev, Center, Next)) {
-            if (Prev) {
-                Prevs.Add(Prev);
-            }
-            if (Next) {
-                Nexts.Add(Next);
-            }
+        TrySliceRoadHorizontalNearByBorder(Road, Option, Prev, Center, Next);
+        // 失敗してもPrev or Nextどっちかは成功しているかもしれないので結果は見ない
+        if (Prev) {
+            Prevs.Add(Prev);
+        }
+        if (Next) {
+            Nexts.Add(Next);
         }
     }
 
@@ -206,8 +205,9 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
         return false;
     }
 
-    if (!Road->IsAllLaneValid())
+    if (!Road->IsAllLaneValid()) {
         return false;
+    }
 
     URnWay* LeftWay = nullptr;
     URnWay* RightWay = nullptr;
@@ -226,8 +226,7 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
     auto IsNeighbor = [&](URnRoad* r, URnIntersection* neighbor) {
         return r->Next == neighbor || r->Prev == neighbor;
         };
-    struct SideInfo
-    {
+    struct SideInfo {
         URnRoad* FarSide = nullptr;
         URnRoad* NearSide = nullptr;
     };
@@ -241,8 +240,7 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
         };
 
     TArray<FNeighborInfo> Neighbors;
-    for (EPLATEAURnLaneBorderType BorderType : {EPLATEAURnLaneBorderType::Prev, EPLATEAURnLaneBorderType::Next})
-    {
+    for (EPLATEAURnLaneBorderType BorderType : {EPLATEAURnLaneBorderType::Prev, EPLATEAURnLaneBorderType::Next}) {
         if (URnIntersection* Intersection = Cast<URnIntersection>(Road->GetNeighborRoad(BorderType))) {
             Neighbors.Add({ Intersection, BorderType });
         }
@@ -255,8 +253,10 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
     const float OffsetLength = FMath::Max(1.0f,
         FMath::Min(MaxOffset, (MinLength - NeedRoadLengthMeter) / Neighbors.Num()));
 
+    auto Success = true;
     if (URnIntersection* NextIntersection = Cast<URnIntersection>(Road->GetNext())) {
         FLineSegment3D Segment;
+
         if (Road->TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType::Next, OffsetLength, Segment)) {
             FSliceRoadHorizontalResult Result = SliceRoadHorizontal(Road, Segment);
             if (Result.Result == ERoadCutResult::Success) {
@@ -265,6 +265,12 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
                 OutNextSideRoad = Check.NearSide;
                 Road = Check.FarSide;
             }
+            else {
+                Success = false;
+            }
+        }
+        else {
+            Success = false;
         }
     }
 
@@ -277,10 +283,16 @@ bool URnModel::TrySliceRoadHorizontalNearByBorder(
                 OutCenterSideRoad = Check.FarSide;
                 OutPrevSideRoad = Check.NearSide;
             }
+            else {
+                Success = false;
+            }
+        }
+        else {
+            Success = false;
         }
     }
-
-    return true;
+    
+    return Success;
 }
 
 
@@ -570,7 +582,8 @@ URnModel::ERoadCutResult URnModel::CanSliceRoadHorizontal(URnRoad* Road, const F
 
         // 歩道は角の道だったりすると前後で分かれていたりするので交わらない場合もある
         // ただし、inside/outsideがどっちも交わるかどっちも交わらないかしか許さない
-        auto SliceCount = Algo::CountIf(Sw->GetSideWays(), [&](URnWay* Way) {
+        auto SwSideWays = Sw->GetSideWays();
+        auto SliceCount = Algo::CountIf(SwSideWays, [&](URnWay* Way) {
             return IsSliced(Way);
         });
         if (!(SliceCount == 0 || SliceCount == 2)) {

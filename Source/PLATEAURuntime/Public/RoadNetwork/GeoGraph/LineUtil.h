@@ -54,13 +54,13 @@ public:
         FVector2D& Intersection, float& T1, float& T2);
 
     UFUNCTION(BlueprintCallable)
-    static bool LineIntersection(const FRay2D& rayA, const FRay2D& rayB, FVector2D& intersection, float& t1, float& t2);
+    static bool LineIntersection(const FRay2D& rayA, const FRay2D& rayB, FVector2D& OutIntersection, float& OutRayAOffset, float& OutRayBOffset);
 
     UFUNCTION(BlueprintCallable)
     static bool HalfLineSegmentIntersection(const FRay2D& HalfLine, const FVector2D& P1, const FVector2D& P2,
-        FVector2D& Intersection, float& T1, float& T2);
+        FVector2D& OutIntersection, float& OutHalfLineOffset, float& OutSegmentT);
 
-    static bool LineSegmentIntersection(const FRay2D& line, FVector2D p1, FVector2D p2, FVector2D& Intersection, float& T1, float& T2);
+    static bool LineSegmentIntersection(const FRay2D& line, FVector2D p1, FVector2D p2, FVector2D& Intersection, float& OutLineLength, float& OutSegmentT);
     static bool SegmentIntersection(const FVector2D& S1St, const FVector2D& S1En,
                                     const FVector2D& S2St, const FVector2D& S2En,
                                     FVector2D& OutIntersection, float& OutT1, float& OutT2);

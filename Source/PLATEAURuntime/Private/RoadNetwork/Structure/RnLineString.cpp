@@ -496,10 +496,10 @@ TArray<TTuple<float, FVector>> URnLineString::GetIntersectionBy2D(const FRay& Ra
     for (auto i = 0; i < Edges.Num(); ++i) {
         auto E = Edges[i];
         FVector P;
-        float T1;
-        float T2;
-        if (E.TryLineIntersectionBy2D(Ray.Origin, Ray.Direction, Plane, -1.f, P, T1, T2)) {
-            Result.Add(MakeTuple(i + T1, P));
+        float LineLength;
+        float SegmentT;
+        if (E.TryLineIntersectionBy2D(Ray.Origin, Ray.Direction, Plane, -1.f, P, LineLength, SegmentT)) {
+            Result.Add(MakeTuple(i + SegmentT, P));
         }
     }
 

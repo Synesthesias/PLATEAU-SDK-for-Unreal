@@ -492,6 +492,7 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
     URnWay* LeftWay = nullptr;
     URnWay* RightWay = nullptr;
     if (!TryGetMergedSideWay(NullOpt, LeftWay, RightWay)) {
+        UE_LOG(LogTemp, Warning, TEXT("TryGetMergedSideWayに失敗(%s)"), *GetTargetTransName());
         return false;
     }
 
@@ -564,6 +565,7 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
         Position = CenterWay->GetAdvancedPointFromFront(BorderOffset, StartIndex, EndIndex);
     }
     else {
+        UE_LOG(LogTemp, Warning, TEXT("InValid BorderSide(%s)"), *GetTargetTransName());
         return false;
     }
 
@@ -574,17 +576,20 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
 
     TTuple<float, FVector> LeftIntersection, RightIntersection;
     if (!LeftWay->LineString->TryGetNearestIntersectionBy2D(Ray, LeftIntersection)) {
+        UE_LOG(LogTemp, Warning, TEXT("LeftWayの切断に失敗(%s)"), *GetTargetTransName());
         return false;
     }
 
     if (!RightWay->LineString->TryGetNearestIntersectionBy2D(Ray, RightIntersection)) {
+        UE_LOG(LogTemp, Warning, TEXT("RightWayの切断に失敗(%s)"), *GetTargetTransName());
         return false;
     }
 
     FVector DirectionNormalized = (LeftIntersection.Value - Ray.Origin).GetSafeNormal();
+    auto Padding = 20.f * FPLATEAURnDef::Meter2Unit;
     OutSegment = FLineSegment3D(
-        LeftIntersection.Value + DirectionNormalized * 20.f * FPLATEAURnDef::Meter2Unit,
-        RightIntersection.Value - DirectionNormalized * 20.f * FPLATEAURnDef::Meter2Unit);
+        LeftIntersection.Value + DirectionNormalized * Padding,
+        RightIntersection.Value - DirectionNormalized * Padding);
 
     return true;
 }
