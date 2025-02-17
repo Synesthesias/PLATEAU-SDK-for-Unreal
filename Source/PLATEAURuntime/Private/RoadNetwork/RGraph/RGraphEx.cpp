@@ -865,3 +865,186 @@ bool FRGraphEx::CreateSideWalk(RGraphRef_t<URFace> Face, TArray<RGraphRef_t<UREd
     }
     return true;
 }
+
+namespace
+{
+    enum class ESideWalkEdgeKeyType
+    {
+        OutSide,
+        InSide,
+        Border
+    };
+
+    struct SideWalkEdgeKey
+    {
+    public:
+        ESideWalkEdgeKeyType Type = ESideWalkEdgeKeyType::OutSide;
+        UPLATEAUCityObjectGroup* CityObjectGroup = nullptr;
+        SideWalkEdgeKey(){}
+        SideWalkEdgeKey(ESideWalkEdgeKeyType InType, UPLATEAUCityObjectGroup* InCo)
+            : Type(InType)
+        , CityObjectGroup(InCo)
+        {}
+
+        bool operator==(const SideWalkEdgeKey& Other) const
+        {
+            return Type == Other.Type && CityObjectGroup == Other.CityObjectGroup;
+        }
+
+        bool operator!=(const SideWalkEdgeKey& Other) const {
+            return !(*this == Other);
+        }
+    };
+
+    using SideWalkEdgeGroup = FPLATEAURnEx::FKeyEdgeGroup < SideWalkEdgeKey, RGraphRef_t<UREdge>>;
+    bool TryGroupBySideWalkEdge(
+        URFaceGroup* FaceGroup
+        , const TSet<UPLATEAUCityObjectGroup*>& NeighborCityObjectGroupsFilter
+        , TArray<SideWalkEdgeGroup>& OutEdgeGroup)
+    {
+        auto Edge2WayType = [&](RGraphRef_t<UREdge> e)-> SideWalkEdgeKey
+        {
+            // 自身の歩道にしか所属しない場合は外側の辺
+            if (e->GetFaces().Num() == 1)
+                return {ESideWalkEdgeKeyType::OutSide, nullptr};
+
+            // 以下複数のFaceと所属する場合        
+            auto t = e->GetAllFaceTypeMask();
+
+            TSet<UPLATEAUCityObjectGroup*> NeighborCityObjects;
+            for (auto& F : e->GetFaces()) {
+                if (F->GetCityObjectGroup() != FaceGroup->CityObjectGroup)
+                    NeighborCityObjects.Add(F->GetCityObjectGroup().Get());
+            }
+
+            if (NeighborCityObjectGroupsFilter.IsEmpty() == false)
+                NeighborCityObjects = NeighborCityObjects.Intersect(NeighborCityObjectGroupsFilter);
+
+
+            // 複数の歩道に所属している場合は歩道との境界線
+            if (FRRoadTypeMaskEx::HasAnyFlag(t, ERRoadTypeMask::SideWalk) && NeighborCityObjects.IsEmpty() == false) {
+                auto Key = *NeighborCityObjects.begin();
+                return { ESideWalkEdgeKeyType::Border, Key };
+            }
+
+            // 歩道との境界線ではない and 他のtranメッシュとの境界線は外側の辺
+            TSet<TWeakObjectPtr<UPLATEAUCityObjectGroup>> CityObjects;
+            for (auto&& F : e->GetFaces())
+                CityObjects.Add(F->GetCityObjectGroup());
+            if (CityObjects.Num() > 1)
+                return { ESideWalkEdgeKeyType::OutSide, nullptr };
+
+            // 自身のtranメッシュの歩道以外に所属している場合は内側の辺
+            return { ESideWalkEdgeKeyType::InSide, nullptr };;
+        };
+
+        auto Vertices = FRGraphEx::ComputeOutlineVertices(FaceGroup, [](const URFace* F) {
+            return FRRoadTypeMaskEx::IsSideWalk(F->GetRoadTypes());
+            });
+
+        // 面ができない場合は無視
+        if (Vertices.Num() <= 3)
+            return false;
+        TArray<RGraphRef_t<UREdge>> OutlineEdges;
+        FRGraphEx::OutlineVertex2Edge(Vertices, OutlineEdges);
+
+        OutEdgeGroup = FPLATEAURnEx::GroupByOutlineEdges<SideWalkEdgeKey, RGraphRef_t<UREdge>>(OutlineEdges, Edge2WayType);
+        return true;
+    }
+
+    bool SplitSideWalkEdge(
+        const TArray<SideWalkEdgeGroup>& Group
+        , TArray<RGraphRef_t<UREdge>>& OutsideEdges
+        , TArray<RGraphRef_t<UREdge>>& InsideEdges
+        , TArray<RGraphRef_t<UREdge>>& StartEdges
+        , TArray<RGraphRef_t<UREdge>>& EndEdges
+    )
+    {
+        // #TODO : このチェックはいらないかも(OutSideが無い歩道もあるため)
+        const auto OutSideIndex = Group.IndexOfByPredicate([](const SideWalkEdgeGroup& G) { return G.Key.Type == ESideWalkEdgeKeyType::OutSide; });
+        if (OutSideIndex == INDEX_NONE)
+            return false;
+
+        for (auto _ = 0; _ < Group.Num(); ++_) 
+        {
+            const auto Index = (OutSideIndex + _) % Group.Num();
+            auto& G = Group[Index];
+            TArray<RGraphRef_t<UREdge>>* DstEdges = nullptr;
+            if (G.Key.Type == ESideWalkEdgeKeyType::OutSide) {
+                DstEdges = &OutsideEdges;
+            }
+            else if (G.Key.Type == ESideWalkEdgeKeyType::InSide) {
+                DstEdges = &InsideEdges;
+            }
+            else {
+                // ひとつ前がOutsideだったら次の境界線はEnd
+                const auto LastKey = Group[(Index - 1 + Group.Num()) % Group.Num()].Key.Type;
+                if (LastKey == ESideWalkEdgeKeyType::OutSide)
+                    DstEdges = &EndEdges;
+                else
+                    DstEdges = &StartEdges;
+            }
+
+            if (DstEdges) {
+                for (auto&& E : G.Edges)
+                    DstEdges->Add(E);
+            }
+        }
+        return true;
+    }
+}
+
+
+bool FRGraphEx::CreateSideWalk(RGraphRef_t<URFaceGroup> Face, TArray<RGraphRef_t<UREdge>>& OutsideEdges,
+    TArray<RGraphRef_t<UREdge>>& InsideEdges, TArray<RGraphRef_t<UREdge>>& StartEdges,
+    TArray<RGraphRef_t<UREdge>>& EndEdges, TSet<UPLATEAUCityObjectGroup*> NeighborCityObjectGroupsFilter)
+{
+    if (!Face)
+        return false;
+
+    // 歩道のみ
+    if (FRRoadTypeMaskEx::IsSideWalk(Face->GetRoadTypes()) == false)
+        return false;
+
+    auto Edge2WayType = [](RGraphRef_t<UREdge> e) {
+        // 自身の歩道にしか所属しない場合は外側の辺
+        if (e->GetFaces().Num() == 1)
+            return 0;
+
+        // 以下複数のFaceと所属する場合        
+        auto t = e->GetAllFaceTypeMask();
+
+        // 複数の歩道に所属している場合は歩道との境界線
+        if (FRRoadTypeMaskEx::HasAnyFlag(t, ERRoadTypeMask::SideWalk))
+            return 2;
+
+        // 歩道との境界線ではない and 他のtranメッシュとの境界線は外側の辺
+        TSet<TWeakObjectPtr<UPLATEAUCityObjectGroup>> CityObjects;
+        for (auto&& F : e->GetFaces())
+            CityObjects.Add(F->GetCityObjectGroup());
+        if (CityObjects.Num() > 1)
+            return 0;
+
+        // 自身のtranメッシュの歩道以外に所属している場合は内側の辺
+        return 1;
+        };
+
+    const auto OutlineVertices = ComputeOutlineVertices(Face, [](const URFace* F)
+    {
+        return FRRoadTypeMaskEx::IsSideWalk(F->GetRoadTypes());
+    });
+    TArray<RGraphRef_t<UREdge>> OutlineEdges;
+    OutlineVertex2Edge(OutlineVertices, OutlineEdges);
+
+    auto Group = CreateOutlineBorderGroup<int32>(OutlineEdges, [&](RGraphRef_t<UREdge> E) {
+        return Edge2WayType(E);
+        });
+
+    // #TODO : このチェックはいらないかも(OutSideが無い歩道もあるため)
+    auto OutsideGroup = Group.FindByPredicate([](const FOutlineBorderGroup<int32>& G) { return G.Key == 0; });
+    if (!OutsideGroup)
+        return false;
+    TArray<SideWalkEdgeGroup> Groups;
+    TryGroupBySideWalkEdge(Face, NeighborCityObjectGroupsFilter, Groups);
+    return ::SplitSideWalkEdge(Groups, OutsideEdges, InsideEdges, StartEdges, EndEdges);
+}

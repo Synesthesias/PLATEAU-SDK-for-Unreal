@@ -20,10 +20,10 @@ public:
     bool bUseCityObjectOutline = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
-    float MergeCellSize = 0.5f;
+    float MergeCellSize = 0.2f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
-    int32 MergeCellLength = 4;
+    int32 MergeCellLength = 2;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
     float RemoveMidPointTolerance = 0.3f;

@@ -80,6 +80,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bBuildTracks = true;
 
+    // LOD3.1以上のLane情報を見る
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    bool bCheckLane = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FRGraphFactory GraphFactory;
 

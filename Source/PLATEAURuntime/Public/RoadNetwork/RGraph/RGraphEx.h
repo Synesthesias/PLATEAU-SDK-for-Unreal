@@ -44,6 +44,9 @@ public:
     // Verticesの隣接情報に基づくので生成できない場合もある
     static bool OutlineVertex2Edge(const TArray<RGraphRef_t<URVertex>>& Vertices, TArray<RGraphRef_t<UREdge>>& OutlineEdges);
 
+    /*
+     * 歩道情報を作成
+     */
     static bool CreateSideWalk(
         RGraphRef_t<URFace> Face
         , TArray<RGraphRef_t<UREdge>>& OutsideEdges
@@ -52,6 +55,17 @@ public:
         , TArray<RGraphRef_t<UREdge>>& EndEdges
     );
 
+    /*
+     * 歩道情報を作成
+     */
+    static bool CreateSideWalk(
+        RGraphRef_t<URFaceGroup> Face
+        , TArray<RGraphRef_t<UREdge>>& OutsideEdges
+        , TArray<RGraphRef_t<UREdge>>& InsideEdges
+        , TArray<RGraphRef_t<UREdge>>& StartEdges
+        , TArray<RGraphRef_t<UREdge>>& EndEdges
+        , TSet<UPLATEAUCityObjectGroup*> NeighborCityObjectGroupsFilter
+    );
     // EdgesをKeyでグループ化したもの
     template<typename TKey>
     using FOutlineBorderGroup = FPLATEAURnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;
