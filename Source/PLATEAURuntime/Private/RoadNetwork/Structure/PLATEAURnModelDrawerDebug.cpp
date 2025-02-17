@@ -238,6 +238,12 @@ FRnModelDrawIntersectionOption::FRnModelDrawIntersectionOption()
     }
 }
 
+FPLATEAURnModelDrawerDebug::FPLATEAURnModelDrawerDebug()
+{
+    MedianLaneOption.bVisible = false;
+    MedianLaneOption.ShowCenterWay.Color = FLinearColor::Yellow;
+}
+
 //
 //bool FRnModelDrawWayOption::DrawImpl(RnModelDrawWork& work, URnWay& way)
 //{
@@ -373,11 +379,15 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
             virtual bool DrawImpl(RnModelDrawWork& Work, URnRoad& Self) override
             {
                 Lane L(Work.Self->LaneOption);
+                Lane Median(Work.Self->MedianLaneOption);
                 for (auto i = 0; i < Self.MainLanes.Num(); ++i) {
                     if (Option.ShowLaneIndex >= 0 && Option.ShowLaneIndex != i)
                         continue;
                     L.Draw(Work, Self.MainLanes[i], Work.visibleType);
                 }
+
+                if (Self.MedianLane)
+                    Median.Draw(Work, Self.MedianLane, Work.visibleType);
 
                 
 
@@ -497,7 +507,6 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     private:
         virtual bool DrawImpl(RnModelDrawWork& Work, URnIntersection& Self) override
         {
-            Lane L(Work.Self->LaneOption);
             Way Border(Option.ShowBorderEdge);
             Way NonBorder(Option.ShowNonBorderEdge);
 

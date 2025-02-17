@@ -31,3 +31,13 @@ void FPLATEAURnDef::SetNewObjectWorld(UObject* World)
 inline FVector2D FPLATEAURnDef::To2D(const FVector& Vector) {
     return FAxisPlaneEx::ToVector2D(Vector, Plane);
 }
+
+FRay2D FPLATEAURnDef::To2D(const FRay& Ray)
+{
+    return FRay2D(To2D(Ray.Origin), To2D(Ray.Direction));
+}
+
+FVector FPLATEAURnDef::To3D(const FVector2D& Vector, float A)
+{
+    return FAxisPlaneEx::ToVector3D(Vector, Plane, A);
+}

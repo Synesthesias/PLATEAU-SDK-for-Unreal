@@ -8,6 +8,7 @@
 #include "RoadNetwork/CityObject/SubDividedCityObject.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 #include "Algo/AnyOf.h"
+#include "RoadNetwork/Util/PLATEAURay2DEx.h"
 #include "RoadNetwork/Util/PLATEAURnDebugEx.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"
 
@@ -728,7 +729,7 @@ TSet<RGraphRef_t<UREdge>> FRGraphEx::RemoveIsolatedEdge(RGraphRef_t<URFace> Self
 }
 
 bool FRGraphEx::SegmentEdge2VertexArray(const TArray<RGraphRef_t<UREdge>>& Edges,
-    TArray<RGraphRef_t<URVertex>>& OutVertices, bool& OutIsLoop)
+                                        TArray<RGraphRef_t<URVertex>>& OutVertices, bool& OutIsLoop)
 {
     OutIsLoop = Edges.Num() > 1 && Edges[0]->IsShareAnyVertex(Edges.Last());
     OutVertices.Reset();
@@ -896,11 +897,11 @@ namespace
         }
     };
 
-    using SideWalkEdgeGroup = FPLATEAURnEx::FKeyEdgeGroup < SideWalkEdgeKey, RGraphRef_t<UREdge>>;
+    using FSideWalkEdgeGroup = FPLATEAURnEx::FKeyEdgeGroup < SideWalkEdgeKey, RGraphRef_t<UREdge>>;
     bool TryGroupBySideWalkEdge(
         URFaceGroup* FaceGroup
         , const TSet<UPLATEAUCityObjectGroup*>& NeighborCityObjectGroupsFilter
-        , TArray<SideWalkEdgeGroup>& OutEdgeGroup)
+        , TArray<FSideWalkEdgeGroup>& OutEdgeGroup)
     {
         auto Edge2WayType = [&](RGraphRef_t<UREdge> e)-> SideWalkEdgeKey
         {
@@ -952,8 +953,25 @@ namespace
         return true;
     }
 
+    bool TryGroupBySideWalkEdge(
+        URFace* Face
+        , const TSet<UPLATEAUCityObjectGroup*>& NeighborCityObjectGroupsFilter
+        , TArray<FSideWalkEdgeGroup>& OutEdgeGroup)
+    {
+        if (!Face)
+            return false;
+        if (FRRoadTypeMaskEx::IsSideWalk(Face->GetRoadTypes()) == false)
+            return false;
+
+        if (Face->GetEdges().Num() < 3)
+            return false;
+        TArray<RGraphRef_t<URFace>> Faces = { Face };
+        auto FaceGroup = URFaceGroup::CreateFaceGroup(Face->GetGraph(), Face->GetCityObjectGroup().Get(), Faces);
+        return TryGroupBySideWalkEdge(FaceGroup, NeighborCityObjectGroupsFilter, OutEdgeGroup);
+    }
+
     bool SplitSideWalkEdge(
-        const TArray<SideWalkEdgeGroup>& Group
+        const TArray<FSideWalkEdgeGroup>& Group
         , TArray<RGraphRef_t<UREdge>>& OutsideEdges
         , TArray<RGraphRef_t<UREdge>>& InsideEdges
         , TArray<RGraphRef_t<UREdge>>& StartEdges
@@ -961,7 +979,7 @@ namespace
     )
     {
         // #TODO : このチェックはいらないかも(OutSideが無い歩道もあるため)
-        const auto OutSideIndex = Group.IndexOfByPredicate([](const SideWalkEdgeGroup& G) { return G.Key.Type == ESideWalkEdgeKeyType::OutSide; });
+        const auto OutSideIndex = Group.IndexOfByPredicate([](const FSideWalkEdgeGroup& G) { return G.Key.Type == ESideWalkEdgeKeyType::OutSide; });
         if (OutSideIndex == INDEX_NONE)
             return false;
 
@@ -1044,7 +1062,106 @@ bool FRGraphEx::CreateSideWalk(RGraphRef_t<URFaceGroup> Face, TArray<RGraphRef_t
     auto OutsideGroup = Group.FindByPredicate([](const FOutlineBorderGroup<int32>& G) { return G.Key == 0; });
     if (!OutsideGroup)
         return false;
-    TArray<SideWalkEdgeGroup> Groups;
+    TArray<FSideWalkEdgeGroup> Groups;
     TryGroupBySideWalkEdge(Face, NeighborCityObjectGroupsFilter, Groups);
     return ::SplitSideWalkEdge(Groups, OutsideEdges, InsideEdges, StartEdges, EndEdges);
+}
+
+void FRGraphEx::ModifySideWalkShape(RGraphRef_t<URGraph> Self) {
+    TArray<URFace*> SideWalkFaces = FPLATEAURnLinq::Where(Self->GetFaces(), [](URFace* F) {return
+        FRRoadTypeMaskEx::IsSideWalk(F->GetRoadTypes()); }
+    );
+
+    for (auto&& Face : SideWalkFaces) {
+        ModifySideWalkShape(Face);
+    }
+}
+
+void FRGraphEx::ModifySideWalkShape(RGraphRef_t<URFace> swFace) {
+    // 微小な量だけ移動する
+    const float moveDeltaMeter = 1e-3f;
+
+    // TryGroupBySideWalkEdgeは、swFaceの歩道エッジをグループ化し、edgeGroupsに出力する関数と仮定する
+    TArray<FSideWalkEdgeGroup> edgeGroups;
+    if (!TryGroupBySideWalkEdge(swFace, {}, edgeGroups)) {
+        return;
+    }
+
+    // 外/内/境界線×2あればOK
+    if (edgeGroups.Num() == 4) {
+        return;
+    }
+
+    // グループ毎に処理
+    for (int32 i = 0; i < edgeGroups.Num(); ++i) {
+        FSideWalkEdgeGroup& g0 = edgeGroups[i];
+        FSideWalkEdgeGroup& g1 = edgeGroups[(i + 1) % edgeGroups.Num()];
+
+        // 境界線が連続する場合（外側/内側の辺が存在しない）
+        // 微小な辺を挿入する
+        if (g0.Key.Type == g1.Key.Type && g0.Key.Type == ESideWalkEdgeKeyType::Border) {
+            // g0.Edges.Last() returns last edge; g1.Edges[0] returns first edge.
+            UREdge* e0 = g0.Edges.Last();
+            UREdge* e1 = g1.Edges[0];
+
+            URVertex* originVertex = nullptr;
+            // IsShareAnyVertex returns true if the two edges share a vertex.
+            // It writes the shared vertex to originVertex.
+            if (!e0->IsShareAnyVertex(e1, originVertex) || originVertex == nullptr) {
+                UE_LOG(LogTemp, Error, TEXT("[%s] Invalid EdgeGroup"), *swFace->GetCityObjectGroup()->GetName());
+                return;
+            }
+
+            URVertex* v0 = e0->GetOppositeVertex(originVertex);
+            URVertex* v1 = e1->GetOppositeVertex(originVertex);
+
+            // Create 3D rays from originVertex to the opposite vertices.
+            FRay ray0(originVertex->Position, v0->Position - originVertex->Position);
+            FRay ray1(originVertex->Position, v1->Position - originVertex->Position);
+
+            // Convert the rays to 2D using the projection plane from RnDef.
+            FRay2D ray2D0 =  FPLATEAURnDef::To2D(ray0);
+            FRay2D ray2D1 = FPLATEAURnDef::To2D(ray1);
+            // Lerp between both rays to get an intermediate ray.
+            FRay2D ray2D = FGeoGraph2D::LerpRay(ray2D0, ray2D1, 0.5f);
+
+            // Compute a direction vector by rotating ray2D.direction by 90 degrees.
+            FVector2D rotatedDir2D = FPLATEAUVector2DEx::Rotate(ray2D.Direction, 90.f);
+            FVector d = FPLATEAURnDef::To3D(rotatedDir2D);
+            d.Normalize();
+
+            // Create a new vertex by moving originVertex by moveDeltaMeter along d.
+            URVertex* newVertex = RGraphNew<URVertex>(originVertex->Position + d * moveDeltaMeter);
+
+            // Determine on which side (left/right) new vertex lies relative to ray2D.
+            bool isNewVertexLeftSide = FPLATEAURay2DEx::IsPointOnLeftSide(ray2D, FPLATEAURnDef::To2D(newVertex->Position));
+
+            // For each edge attached to originVertex, reassign the vertex if it lies on the same side as newVertex.
+            auto copyOriginEdges = originVertex->GetEdges(); // Make a local copy if needed.
+            for (UREdge* edge : copyOriginEdges) {
+                URVertex* opp = edge->GetOppositeVertex(originVertex);
+                if (FPLATEAURay2DEx::IsPointOnLeftSide(ray2D, FPLATEAURnDef::To2D(opp->Position)) == isNewVertexLeftSide) {
+                    edge->ChangeVertex(originVertex, newVertex);
+                }
+            }
+
+            // Add the new edge to all faces common to both newVertex and originVertex.
+            TSet<URFace*> commonFaces;
+            for (auto F : newVertex->GetFaces())
+                commonFaces.Add(F);
+
+            TSet<URFace*> originVertexFaces;
+            for(auto F : originVertex->GetFaces())
+                originVertexFaces.Add(F);
+
+            commonFaces = commonFaces.Intersect(originVertexFaces);
+
+            UREdge* newEdge = RGraphNew<UREdge>(newVertex, originVertex);
+            for (URFace* face : commonFaces) {
+                face->AddEdge(newEdge);
+            }
+
+            break;
+        }
+    }
 }

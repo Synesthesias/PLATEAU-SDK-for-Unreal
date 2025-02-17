@@ -66,6 +66,17 @@ public:
         , TArray<RGraphRef_t<UREdge>>& EndEdges
         , TSet<UPLATEAUCityObjectGroup*> NeighborCityObjectGroupsFilter
     );
+
+    /*
+     * 歩道のうちOutSideがない歩道に対して微小な辺を追加する
+     */
+    static void ModifySideWalkShape(RGraphRef_t<URGraph> Self);
+
+    /*
+     * 歩道のうちOutSideがない歩道に対して微小な辺を追加する
+     */
+    static void ModifySideWalkShape(RGraphRef_t<URFace> Self);
+
     // EdgesをKeyでグループ化したもの
     template<typename TKey>
     using FOutlineBorderGroup = FPLATEAURnEx::FKeyEdgeGroup<TKey, RGraphRef_t<UREdge>>;

@@ -16,6 +16,7 @@
 #include "RoadNetwork/Structure/RnLane.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLineString.h"
+#include "RoadNetwork/Structure/RnRoadGroup.h"
 #include "RoadNetwork/Structure/RnWay.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"
 
@@ -148,6 +149,143 @@ namespace
         void BuildConnection();
 
         bool BuildLine();
+        float GetMedianLength(FTranLine& line)
+        {
+
+            auto Filter = [&](URFace* F) { return GetFaces().Contains(F); };
+
+            auto IsMedian = [&](URVertex* V) { return FRRoadTypeMaskEx::IsMedian(V->GetRoadType(Filter)); };
+            // 中央分離帯の開始地点を探す
+            const auto StartIndex = line.Vertices.IndexOfByPredicate(IsMedian);
+
+            if (StartIndex == INDEX_NONE)
+                return 0.f;
+            auto Len = 0.f;
+            for(auto i = StartIndex + 1; i < line.Vertices.Num(); ++i)
+            {
+                auto V = line.Vertices[i];
+                if(IsMedian(V) == false)
+                    break;
+
+                Len += (V->Position - line.Vertices[i - 1]->Position).Size();
+            }
+            return Len;
+        }
+        float GetMedianWidth()
+        {
+            auto Len = FLT_MAX;
+            for(auto& L : Lines)
+            {
+                if (L->IsBorder() == false)
+                    continue;
+
+                Len = FMath::Min(Len, GetMedianLength(*L));
+            }
+            if (Len == FLT_MAX)
+                return 0.f;
+            return Len;
+        }
+
+        // すでに匿名名前空間内でFTranクラス内に以下を追加しています
+
+        bool TryGetLaneNum(int32& leftLaneNum, int32& rightLaneNum) {
+            leftLaneNum = 0;
+            rightLaneNum = 0;
+
+            // NodeがRoad型の場合のみ処理する
+            if (auto Road = Node->CastToRoad()) {
+                auto prevBorder = Road->GetMergedBorder(EPLATEAURnLaneBorderType::Prev);
+                auto nextBorder = Road->GetMergedBorder(EPLATEAURnLaneBorderType::Next);
+
+                // ラムダ: prev側かどうか判定。GetNearestPointの引数や戻り値は各自実装に合わせて調整してください
+                auto IsPrevSide = [prevBorder, nextBorder](const RGraphRef_t<UREdge>& Edge) -> bool {
+                    if (!prevBorder) {
+                        return false;
+                    }
+                    if (!nextBorder) {
+                        return true;
+                    }
+                    float prevDistance = 0.0f;
+                    float nextDistance = 0.0f;
+                    FVector DummyVec;
+                    prevBorder->GetNearestPoint(Edge->GetV0()->Position, DummyVec, prevDistance, prevDistance);
+                    nextBorder->GetNearestPoint(Edge->GetV0()->Position, DummyVec, nextDistance, nextDistance);
+                    return prevDistance < nextDistance;
+                    };
+
+                // 各FTranLineについて処理する
+                for (const auto& line : Lines) {
+                    if (!line.IsValid() || !line->IsBorder()) {
+                        continue;
+                    }
+
+                    // ラムダ: 二つのfaceセットが同じか判定する
+                    auto IsSame = [](const TSet<RGraphRef_t<URFace>>& A, const TSet<RGraphRef_t<URFace>>& B) -> bool {
+                        if (A.Num() != B.Num()) {
+                            return false;
+                        }
+                        for (const auto& Face : A) {
+                            if (!B.Contains(Face)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                        };
+
+                    TSet<RGraphRef_t<URFace>> lastLaneFaces;
+                    // laneCountsの0番目が左側・1番目が右側のカウント（初期状態では左側のみ）
+                    TArray<int32> laneCounts;
+                    laneCounts.Add(0);
+
+                    if (line->Edges.Num() == 0) {
+                        continue;
+                    }
+
+                    // 各Edgeについて処理する
+                    for (const auto& edge : line->Edges) {
+                        auto roadType = edge->GetAnyFaceTypeMask();
+                        if (FRRoadTypeMaskEx::IsMedian(roadType)) {
+                            if (laneCounts.Num() == 1) {
+                                laneCounts.Add(0);
+                            }
+                            continue;
+                        }
+
+                        // このedgeに含まれる車線判定のFace集合を作成
+                        TSet<RGraphRef_t<URFace>> faces;
+                        for (const auto& face : edge->GetFaces()) {
+                            if (FRRoadTypeMaskEx::IsLane(face->GetRoadTypes())) {
+                                faces.Add(face);
+                            }
+                        }
+
+                        // 車線を表すFaceが無い場合はスキップ
+                        if (faces.Num() == 0) {
+                            continue;
+                        }
+
+                        // すでに同一の車線Faceの集合の場合はカウントを加算しない
+                        if (IsSame(lastLaneFaces, faces)) {
+                            continue;
+                        }
+                        laneCounts.Last()++; // 最後の要素をインクリメント
+                        lastLaneFaces = faces;
+                    }
+
+                    leftLaneNum = laneCounts[0];
+                    rightLaneNum = laneCounts.Num() > 1 ? laneCounts.Last() : 0;
+
+                    // 先頭Edgeがprev側にある場合、左右を入れ替える
+                    if (IsPrevSide(line->Edges[0])) {
+                        int32 tmp = leftLaneNum;
+                        leftLaneNum = rightLaneNum;
+                        rightLaneNum = tmp;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
     };
 
     class FWork {
@@ -885,32 +1023,60 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
             Model->SeparateContinuousBorder();
 
         // 中央分離帯の幅で道路を分割する
-        //{
-        //    auto&& visited = new HashSet<RnRoad>();
-        //    for(auto&& n : work->TranMap.Values) {
-        //        if (n.Node is RnRoad road) {
-        //            if (visited.Contains(road))
-        //                continue;
-        //            auto&& medianWidth = n.GetMedianWidth();
-        //            if (medianWidth <= 0f)
-        //                continue;
-        //            auto&& linkGroup = road.CreateRoadGroupOrDefault();
-        //            if (linkGroup == nullptr)
-        //                continue;
 
-        //            // 中央分離帯の幅が道路の幅を超えている場合は分割
-        //            if (road.MainLanes.Count > 0) {
-        //                auto&& borderWidth = road.MainLanes[0].CalcWidth();
-        //                if (CheckMedian && borderWidth > medianWidth) {
-        //                    linkGroup.SetLaneCountWithMedian(1, 1, medianWidth / borderWidth);
-        //                }
-        //            }
+        TSet<URnRoad*> IsLaneSplitRoads;
+        {
+            TSet<URnRoad*> Visited;
+            for(auto&& Item : work.TranMap) 
+            {
+                auto& Tran = Item.Value;
+                auto Road = Cast<URnRoad>(Tran->Node);
+                if (!Road)
+                    continue;
+                if (Visited.Contains(Road))
+                    continue;
 
-        //            for(auto&& r : linkGroup.Roads)
-        //                visited.Add(r);
-        //        }
-        //    }
-        //}
+
+                auto RoadGroup = URnRoadGroup::CreateRoadGroupOrDefault(Road);
+                if (RoadGroup == nullptr)
+                    continue;
+
+                for (auto R : RoadGroup->Roads)
+                    Visited.Add(R);
+
+                if (Road->GetMainLanes().IsEmpty())
+                    continue;
+
+                auto LeftLaneNum = 0;
+                auto RightLaneNum = 0;
+                if (Self.bCheckLane)
+                    Tran->TryGetLaneNum(LeftLaneNum, RightLaneNum);
+
+                const auto MedianWidth = Tran->GetMedianWidth();
+                const auto BorderWidth = Road->GetMainLanes()[0]->CalcWidth();
+                const auto HasLaneInfo = (LeftLaneNum + RightLaneNum) >= 1;
+
+                if(HasLaneInfo)
+                {
+                    UE_LOG(LogTemp, Verbose, TEXT("LaneNum : %d/%d/%s"), LeftLaneNum, RightLaneNum, *Road->GetTargetTransName());
+
+                    for(auto R : RoadGroup->Roads)
+                        IsLaneSplitRoads.Add(Road);
+                }
+
+                if(MedianWidth > 0.f && Self.bCheckMedian && BorderWidth > MedianWidth)
+                {
+                    LeftLaneNum = FMath::Max(1, LeftLaneNum);
+                    RightLaneNum = FMath::Max(1, RightLaneNum);
+                    RoadGroup->SetLaneCountWithMedian(LeftLaneNum, RightLaneNum, MedianWidth / BorderWidth);
+                }
+                // レーン数が2以上になる場合だけ分割する
+                else if((LeftLaneNum + RightLaneNum) > 1)
+                {
+                    RoadGroup->SetLaneCount(LeftLaneNum, RightLaneNum);
+                }
+            }
+        }
 
         // 連続した道路を一つにまとめる
         if (Self.bMergeRoadGroup) {
@@ -926,7 +1092,13 @@ TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRnModel(
         // 道路を分割する
         if (Self.bSplitLane) {
             TArray<FString> FailedRoads;
-            Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads);
+            Model->SplitLaneByWidth(Self.RoadSize, false, FailedRoads, [&](URnRoadGroup* Rg)
+            {
+                // すでにIsLaneSplitRoadsに入っている場合は3.1対応で実行済み
+                return Rg->Roads.ContainsByPredicate([&](URnRoad* R) {
+                    return IsLaneSplitRoads.Contains(R);
+                }) == false;
+            });
         }
 
         if(Self.bBuildTracks)

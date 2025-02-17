@@ -673,13 +673,13 @@ void URnRoadGroup::SetLaneCountWithMedian(int32 LeftCount, int32 RightCount, flo
         auto Road = (Roads)[i];
         auto Lanes = AfterLanes[Road];
 
-        if (i == Roads.Num() - 1) 
+        if (i == Roads.Num() - 1 && NextIntersection)
         {
             NextIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select( Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder(); }));
             NewNextBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetNextBorder()->LineString; }));
         }
 
-        if (i == 0) {
+        if (i == 0 && PrevIntersection) {
             PrevIntersection->ReplaceEdges(Road, FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder(); }));
             NewPrevBorders.Append(FPLATEAURnLinq::Select(Lanes, [](const TRnRef_T<URnLane>& Lane) { return Lane->GetPrevBorder()->LineString; }));
         }

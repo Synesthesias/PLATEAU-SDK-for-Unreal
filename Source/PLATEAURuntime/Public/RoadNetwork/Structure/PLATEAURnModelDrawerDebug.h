@@ -247,8 +247,9 @@ struct PLATEAURUNTIME_API FPLATEAURnModelDrawerDebug {
     GENERATED_BODY()
 
 public:
+    FPLATEAURnModelDrawerDebug();
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bVisible = true;
+    bool bVisible = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowInsideNormalMidPoint = false;
@@ -278,13 +279,16 @@ public:
     FRnModelDrawLaneOption LaneOption;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    FRnModelDrawLaneOption MedianLaneOption;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawSideWalkOption SideWalkOption;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERnPartsTypeMask))
-    int32 ShowPartsType;
+    int32 ShowPartsType = 0;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bShowOnlyTargets;
+    bool bShowOnlyTargets = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     TArray<FString> ShowTargetNames;

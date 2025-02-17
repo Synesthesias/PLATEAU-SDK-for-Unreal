@@ -48,6 +48,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
     bool bOptSeparateFaces = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
+    bool bOptModifySideWalkShape = true;
 };
 
 struct FRGraphFactoryEx

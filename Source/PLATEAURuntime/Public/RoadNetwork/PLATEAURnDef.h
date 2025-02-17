@@ -4,6 +4,7 @@
 #include "Math/Vector.h"
 #include "Containers/Array.h"
 #include "GeoGraph/AxisPlane.h"
+#include "GeoGraph/LineUtil.h"
 #include "PLATEAURnDef.generated.h"
 class UObject;
 UENUM(BlueprintType)
@@ -105,6 +106,9 @@ public:
 
     static FVector2D To2D(const FVector& Vector);
 
+    static FRay2D To2D(const FRay& Ray);
+
+    static FVector To3D(const FVector2D& Vector, float A = 0.f);
 private:
     static inline UObject* NewObjectWorld = nullptr;
 };
