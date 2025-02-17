@@ -2,6 +2,7 @@
 
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "RoadAdjust/PLATEAUReproducedRoad.h"
 
 ULineGeneratorComponent::ULineGeneratorComponent() :
     SplineMeshType(ESplineMeshType::LengthBased), 
@@ -32,7 +33,7 @@ float ULineGeneratorComponent::GetMeshLength(bool includeGap) {
 
 void ULineGeneratorComponent::CreateSplineFromVectorArray(TArray<FVector> Points) {
 	this->ClearSplinePoints();
-
+    
 	for (const auto& Point : Points) {
 		this->AddSplinePoint(Point, CoordinateSpace, true);
 	}
@@ -74,20 +75,40 @@ void ULineGeneratorComponent::CreateSplineMesh(AActor* Actor) {
 }
 
 void ULineGeneratorComponent::CreateSplineMeshLengthBased(AActor* Actor) {
-    float SplineLength = this->GetSplineLength();
-    float Length = GetMeshLength(true);
 
-    int64 numLoop = (int64)(SplineLength / Length);
     //Add Spline Mesh
-    for (int64 index = 0; index < numLoop; index++) {
+    for(int index = 0; index < GetNumberOfSplinePoints() - 1; index++)
+    {
+
+        FVector StartPos, EndPos, StartTangent, EndTangent;
+        GetLocalLocationAndTangentAtSplinePoint(index, StartPos, StartTangent);
+        GetLocalLocationAndTangentAtSplinePoint(index + 1, EndPos, EndTangent);
+
+        // 端だけタンジェントが変になることがあるので修正
+        if(index == 0) StartTangent = EndPos - StartPos;
+        if(index == GetNumberOfSplinePoints() - 2) EndTangent = EndPos - StartPos; 
+
+        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, StartPos, StartTangent, EndPos, EndTangent);
+    }
+}
+
+void ULineGeneratorComponent::CreateSplineMeshSegmentBased(AActor* Actor)
+{
+    float SplineLength = GetSplineLength();
+    float Length = GetMeshLength(true);
+    int numLoop = SplineLength / Length;
+    //Add Spline Mesh
+    for (int64 index = 0; index < numLoop; index++)
+    {
         float startDistance = Length * index;
         const auto& startLocation = this->GetLocationAtDistanceAlongSpline(startDistance, CoordinateSpace);
-        const auto& startTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(startDistance, CoordinateSpace));
+        const auto& startTangent = UKismetMathLibrary::Normal(
+            this->GetTangentAtDistanceAlongSpline(startDistance, CoordinateSpace));
 
         float endDistance = (Length * (index + 1)) - MeshGap;
 
-        //Last Mesh & FillEnd 
-        if (index == numLoop - 1 && FillEnd) {
+        if (index == numLoop - 1 && FillEnd)
+        {
             endDistance = this->GetSplineLength();
 
             if (SplinePointType == ESplinePointType::Linear)
@@ -95,22 +116,10 @@ void ULineGeneratorComponent::CreateSplineMeshLengthBased(AActor* Actor) {
         }
 
         const auto& endLocation = this->GetLocationAtDistanceAlongSpline(endDistance, CoordinateSpace);
-        const auto& endTangent = UKismetMathLibrary::Normal(this->GetTangentAtDistanceAlongSpline(endDistance, CoordinateSpace));
-
-        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, startLocation, startTangent, endLocation, endTangent);
-    }
-}
-
-void ULineGeneratorComponent::CreateSplineMeshSegmentBased(AActor* Actor) {
-
-    int64 numLoop = this->GetNumberOfSplinePoints() - 1;
-    //Add Spline Mesh
-    for (int64 index = 0; index < numLoop; index++) {
-        const auto& startLocation = this->GetLocationAtSplinePoint(index, CoordinateSpace);
-        const auto& startTangent = this->GetTangentAtSplinePoint(index, CoordinateSpace);
-        const auto& endLocation = this->GetLocationAtSplinePoint(index + 1, CoordinateSpace);
-        const auto& endTangent = this->GetTangentAtSplinePoint(index + 1, CoordinateSpace);
-        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, startLocation, startTangent, endLocation, endTangent);
+        const auto& endTangent = UKismetMathLibrary::Normal(
+            this->GetTangentAtDistanceAlongSpline(endDistance, CoordinateSpace));
+        CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, startLocation,
+                                  startTangent, endLocation, endTangent);
     }
 }
 
@@ -142,4 +151,27 @@ void ULineGeneratorComponent::CreateSplineMeshFromAssets(AActor* Actor, UStaticM
     MeshXScale = XScale;
     MeshLength = Length;
 	CreateSplineMesh(Actor);
+}
+
+void ULineGeneratorComponent::Init(const TArray<FVector>& InPoints, const FPLATEAURoadLineParam& Param, FVector2D InOffset) {
+    // スプラインポイントの種類を設定
+    SplinePointType = Param.SplinePointType;
+    
+    // スプラインポイントを作成
+    CreateSplineFromVectorArray(InPoints);
+    
+    // スプラインメッシュの種類を設定
+    if( Param.LineGap > 0.001f )
+    {
+        SplineMeshType = ESplineMeshType::SegmentBased;
+    }else
+    {
+        SplineMeshType = ESplineMeshType::LengthBased; 
+    }
+    
+    // 終端を埋めるかどうかを設定
+    FillEnd = Param.FillEnd;
+    
+    // オフセット値を設定
+    Offset = InOffset;
 }

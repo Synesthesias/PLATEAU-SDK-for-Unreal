@@ -9,8 +9,10 @@
 #include "RoadAdjust/RoadMarking/PLATEAUMarkedWayListComposerMain.h"
 #include "RoadAdjust/PLATEAUCrosswalkPlacementRule.h"
 #include "RoadAdjust/RoadNetworkToMesh/PLATEAURrTarget.h"
+#include "RoadMarking/LineSmoother.h"
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
+#include "Misc/ScopedSlowTask.h"
 
 APLATEAUReproducedRoad::APLATEAUReproducedRoad() {
     CreateLineTypeMap();
@@ -37,29 +39,48 @@ void APLATEAUReproducedRoad::CreateLineTypeMap() {
 
 void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model, FString CrosswalkFrequency) {
 
+    auto ProgressDialogue = FScopedSlowTask(10, FText::FromString(TEXT("処理中...")));
+    ProgressDialogue.MakeDialog(false);
+
     auto RnModel = Model->Model;
+
+    // 道路ネットワークのスムージング。
+    // 道路ネットワークのコピーは未実装なので、スムージングは破壊的変更になります。
+    FString ProgressSmooth = FString(TEXT("道路ネットワークのスムージング中"));
+    ProgressDialogue.EnterProgressFrame(1, FText::FromString(ProgressSmooth));
+    PLATEAU::RoadAdjust::RoadMarking::FRoadNetworkLineSmoother Smoother;
+    Smoother.Smooth(RnModel, PLATEAU::RoadAdjust::RoadMarking::FSmoothingStrategyRespectOriginal());
 
     // ターゲットとなる道路ネットワークの定義
     auto TargetModel = NewObject<UPLATEAURrTargetModel>(GetTransientPackage(), UPLATEAURrTargetModel::StaticClass());
     TargetModel->Initialize(RnModel);
 
     // 白線生成の対象と種類を定義
+    FString ProgressMarkedWay = FString(TEXT("白線対象を収集中"));
+    ProgressDialogue.EnterProgressFrame(1, FText::FromString(ProgressMarkedWay));
     auto WayComposer = NewObject<UPLATEAUMarkedWayListComposerMain>(GetTransientPackage(), UPLATEAUMarkedWayListComposerMain::StaticClass());
     auto MarkedWays = WayComposer->ComposeFrom(TargetModel).GetMarkedWays();
 
     // 横断歩道
+    FString ProgressCrosswalk = FString(TEXT("横断歩道の場所を計算中"));
+    ProgressDialogue.EnterProgressFrame(1, FText::FromString(ProgressCrosswalk));
     auto CrossRoads = NewObject<UPLATEAUCrosswalkComposer>()->Compose(*TargetModel, FPLATEAUCrosswalkFrequencyExtensions::StrToFrequency(CrosswalkFrequency));
     MarkedWays.Append(CrossRoads.GetMarkedWays());
-
+    
     // 白線を生成
-    for(const auto& MarkedWay : MarkedWays)
+    for(int i=0; i<MarkedWays.Num(); i++)
     {
-        const auto Points = MarkedWay.GetLine().GetPoints();
+        const auto& MarkedWay = MarkedWays[i];
+        FString ProgressGenMarkedWay = FString::Printf(TEXT("白線を生成中(%d/%d)"), i, MarkedWays.Num()); 
+        ProgressDialogue.EnterProgressFrame(0, FText::FromString(ProgressGenMarkedWay));
+        const auto& Points = MarkedWay.GetLine().GetPoints();
         const auto Type = MarkedWay.GetRoadLineType();
         CreateLineComponentByType(Type, Points, FVector2d(0.0f, 0.0f));
     }
 
     // 車線矢印を生成
+    FString ProgressArrow = FString(TEXT("車線の矢印を生成中"));
+    ProgressDialogue.EnterProgressFrame(1, FText::FromString(ProgressArrow));
     auto ArrowComposer = FPLATEAUDirectionalArrowComposer(RnModel, this);
     ArrowComposer.Compose();
 }
@@ -70,11 +91,10 @@ void APLATEAUReproducedRoad::CreateLineComponentByType(EPLATEAURoadLineType Type
     Component->RegisterComponent();
     this->AddInstanceComponent(Component);
     Component->AttachToComponent(this->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);  
-    Component->SplinePointType = Param.SplinePointType;
-    Component->CreateSplineFromVectorArray(LinePoints);
-    Component->SplineMeshType = ESplineMeshType::LengthBased; //Segment単位に変更可能
-    Component->FillEnd = Param.FillEnd;
-    Component->Offset = Offset;
+    
+    Component->Init(LinePoints, Param, Offset);
+    
+    // メッシュの生成
     Component->CreateSplineMeshFromAssets(this, Param.LineMesh, Param.LineMaterial, Param.LineGap, Param.LineXScale, Param.LineLength);
     NumComponents++;
 }

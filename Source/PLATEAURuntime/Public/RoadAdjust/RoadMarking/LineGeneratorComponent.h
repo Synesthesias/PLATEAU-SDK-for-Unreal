@@ -70,6 +70,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
 	void CreateSplineMeshFromAssets(AActor* Actor, UStaticMesh* Mesh, UMaterialInterface* Material, float Gap, float XScale, float Length = 0.f);
 
+    /**
+     * @brief コンポーネントの初期化を行います
+     */
+    UFUNCTION(BlueprintCallable, Category = "PLATEAU|RoadAdjust")
+    void Init(const TArray<FVector>& InPoints, const FPLATEAURoadLineParam& Param, FVector2D InOffset);
+
     ULineGeneratorComponent();
 
 private:

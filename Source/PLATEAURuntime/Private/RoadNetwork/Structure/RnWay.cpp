@@ -41,6 +41,22 @@ TRnRef_T<URnPoint> URnWay::SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point
     return Ret;
 }
 
+void URnWay::SetPoints(const TArray<TRnRef_T<URnPoint>>& Points)
+{
+    if(IsReversed)
+    {
+        TArray<TRnRef_T<URnPoint>> ReversedPoints;
+        for (int i = Points.Num() - 1; i >= 0; --i)
+        {
+            ReversedPoints.Add(Points[i]);
+        }
+        LineString->Init(ReversedPoints);   
+    }else
+    {
+        LineString->Init(Points);
+    }
+}
+
 FVector URnWay::GetVertex(int32 Index) const
 {
     return GetPoint(Index)->Vertex;

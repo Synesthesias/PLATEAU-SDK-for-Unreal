@@ -1,6 +1,7 @@
 #include "RoadNetwork/Structure/RnLineString.h"
 
 #include <optional>
+#include <ShaderConductor/ShaderConductor/External/SPIRV-Headers/include/spirv/unified1/spirv.h>
 
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
@@ -33,7 +34,6 @@ void URnLineString::Init(const TArray<TRnRef_T<URnPoint>>& InPoints)
 {
     Points = InPoints;
 }
-
 
 int32 URnLineString::Count() const
 { return Points.Num(); }
