@@ -37,7 +37,8 @@
   - 生成された道路標示（白線、停止線など）がこのアクターのコンポーネントに設定されます。
   - コンポーネントの名称は、横断歩道であれば`LineGeneratorComponent_Crossing` 、白線であれば`LineGeneratorComponent_WhiteLine`、破線であれば`LineGeneratorComponent_DashedWhilteLine`、黄色の線であれば`LineGeneratorComponent_YellowLine`、停止線であれば`LineGeneratorComponent_StopLine`、車線の矢印であれば `LineGeneratorComponent_WhiteLine` となります。
 - `PLATEAURnStructureModel`という名称のアクター
-  - このアクターに道路ネットワークが格納されます。
+  - このアクターには、道路ネットワーク作成時のパラメータや道路標示生成のために一時的に道路ネットワークが格納されます。
+  - ただし、格納されている道路ネットワークはシリアライズされない為、レベルを閉じると削除されます。
   - アクターの `PLATEAU/Debug`項目では、`Visible`をオンにすることでPIE実行時に道路ネットワーク構造を可視化できます。
   - 可視化する種類、色などを同コンポーネントで設定できます。可視化時はPCの動作が重くなることがあります。
   - 下図はメインの`Visible`をオンにしたうえで、`Road Option`の`Visible`および`Lane Option`の`Visible`をオンにした場合の表示です。
