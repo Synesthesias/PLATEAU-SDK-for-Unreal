@@ -107,7 +107,7 @@ FPLATEAURnEx::FBorderEdgesResult FPLATEAURnEx::FindBorderEdges(const TArray<FVec
             if (List.Num() <= 4) return true;
             float Area1 = FGeoGraph2D::CalcPolygonArea(List);
             float Area2 = FGeoGraph2D::CalcPolygonArea(Verts);
-            return Area1 / Area2 < 0.7f;
+            return Area1 / Area2 < 0.6f;
         }
     );
 

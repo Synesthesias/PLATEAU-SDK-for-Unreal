@@ -194,6 +194,8 @@ public:
 
     ERRoadTypeMask GetRoadTypes() const;
 
+
+    static RGraphRef_t<URFaceGroup> CreateFaceGroup(RGraphRef_t<URGraph> Graph, UPLATEAUCityObjectGroup* CityObjectGroup, const TArray<RGraphRef_t<URFace>>& Faces);
 private:
     TSet<RGraphRef_t<URFace>> Faces;
 };

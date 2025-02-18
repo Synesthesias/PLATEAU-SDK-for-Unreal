@@ -163,6 +163,12 @@ RGraphRef_t<URGraph> FRGraphFactoryEx::CreateGraph(const FRGraphFactory& Factory
         FRGraphEx::SeparateFaces(Graph);
     }
 
+    if (Factory.bOptRemoveIsolatedEdgeFromFace) {
+        FRGraphEx::RemoveIsolatedEdgeFromFace(Graph);
+    }
+
+    if (Factory.bOptModifySideWalkShape)
+        FRGraphEx::ModifySideWalkShape(Graph);
 
     return Graph;
 }

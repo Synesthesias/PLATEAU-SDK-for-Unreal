@@ -359,7 +359,7 @@ void URnModel::MergeRoadGroup()
     }
 }
 
-void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<FString>& failedRoads)
+void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<FString>& failedRoads, TFunction<bool(URnRoadGroup*)> IsLaneSplitTarget)
 {
     failedRoads.Reset();
     TSet<TRnRef_T<URnRoad>> visitedRoads;
@@ -384,6 +384,10 @@ void URnModel::SplitLaneByWidth(float RoadWidthMeter, bool rebuildTrack, TArray<
 
             if (RoadGroup->Roads.ContainsByPredicate([](TRnRef_T<URnRoad> l) { return l->MainLanes[0]->HasBothBorder() == false; }))
                 continue;
+
+            if (IsLaneSplitTarget(RoadGroup) == false)
+                continue;
+
             auto&& leftCount = RoadGroup->GetLeftLaneCount();
             auto&& rightCount = RoadGroup->GetRightLaneCount();
             // すでにレーンが分かれている場合、左右で独立して分割を行う

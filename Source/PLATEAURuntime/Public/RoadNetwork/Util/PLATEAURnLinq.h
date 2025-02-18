@@ -59,6 +59,18 @@ public:
         return SelectWithIndexImpl<T, DstType>(Src, Forward<F>(Selector));
     }
 
+    // Linq.Where代わり
+    template<typename T, typename F>
+    static auto Where(const TSet<T>& Src, F&& Predicate) {
+        TArray<T> Result;
+        for (const auto& S : Src) {
+            if (Predicate(S)) {
+                Result.Add(S);
+            }
+        }
+        return Result;
+    }
+
     // Enumerable.Range代わり
     static TArray<int32> Range(int32 Start, int32 Count)
     {
