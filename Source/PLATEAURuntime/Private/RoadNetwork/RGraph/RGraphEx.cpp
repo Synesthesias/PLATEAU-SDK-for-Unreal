@@ -274,7 +274,7 @@ void FRGraphEx::InsertVertexInNearEdge(RGraphRef_t<URGraph> Graph, float Toleran
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
-    constexpr auto Comp = FPLATEAURnEx::Vector3Comparer();
+    constexpr auto Comp = FPLATEAURnDef::Vector3Comparer();
 
     auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
         return Comp(A->Position, B->Position);
@@ -340,7 +340,7 @@ void FRGraphEx::InsertVerticesInEdgeIntersection(RGraphRef_t<URGraph> Graph, flo
 
     auto&& Vertices = Graph->GetAllVertices().Array();
 
-    constexpr auto Comp = FPLATEAURnEx::Vector3Comparer();
+    constexpr auto Comp = FPLATEAURnDef::Vector3Comparer();
 
     auto Comparer = [&](const RGraphRef_t<URVertex>& A, const RGraphRef_t<URVertex>& B) {
         return Comp(A->Position, B->Position);

@@ -5,8 +5,8 @@
 #include "Math/Vector2D.h"
 #include "Math/Vector.h"
 #include "Containers/Array.h"
+
 #include "RoadNetwork/PLATEAURnDef.h"
-#include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
 class PLATEAURUNTIME_API FGeoGraph2D {
@@ -416,14 +416,16 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         return FComputeOutlineResult<T>(false, hasCrossing, ret);
         };
 
+
+
     auto leftSearch = Search(
         Keys[0]
         , -FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) 
         {
-            auto x = -FPLATEAURnEx::Compare(A.Angle, B.Angle);
+            auto x = -FPLATEAURnDef::Compare(A.Angle, B.Angle);
             if(x == 0)
-                x = FPLATEAURnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FPLATEAURnDef::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
     // 見つかったらそれでおしまい
@@ -436,9 +438,9 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
         Keys[0]
         , FVector2D::UnitY()
         , [](EvalValue A, EvalValue B) {
-            auto x = FPLATEAURnEx::Compare(A.Angle, B.Angle);
+            auto x = FPLATEAURnDef::Compare(A.Angle, B.Angle);
             if (x == 0)
-                x = FPLATEAURnEx::Compare(A.SqrLen, B.SqrLen);
+                x = FPLATEAURnDef::Compare(A.SqrLen, B.SqrLen);
             return x;
         });
 

@@ -109,6 +109,25 @@ public:
     static FRay2D To2D(const FRay& Ray);
 
     static FVector To3D(const FVector2D& Vector, float A = 0.f);
+
+    // A < B なら-1, A > B なら1, A == B なら0
+    template<typename T>
+    static int32 Compare(T A, T B) {
+        if (A < B)
+            return -1;
+        if (A > B)
+            return 1;
+        return 0;
+    }
+
+    /*
+     * FVectorのComparer. X, Y, Zの順で比較する
+     */
+    class Vector3Comparer {
+    public:
+        int32 operator()(const FVector& A, const FVector& B) const;
+    };
+
 private:
     static inline UObject* NewObjectWorld = nullptr;
 };

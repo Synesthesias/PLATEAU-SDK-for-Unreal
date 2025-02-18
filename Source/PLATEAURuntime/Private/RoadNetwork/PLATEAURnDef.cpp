@@ -28,7 +28,7 @@ void FPLATEAURnDef::SetNewObjectWorld(UObject* World)
     NewObjectWorld = World;
 }
 
-inline FVector2D FPLATEAURnDef::To2D(const FVector& Vector) {
+FVector2D FPLATEAURnDef::To2D(const FVector& Vector) {
     return FAxisPlaneEx::ToVector2D(Vector, Plane);
 }
 
@@ -40,4 +40,14 @@ FRay2D FPLATEAURnDef::To2D(const FRay& Ray)
 FVector FPLATEAURnDef::To3D(const FVector2D& Vector, float A)
 {
     return FAxisPlaneEx::ToVector3D(Vector, Plane, A);
+}
+
+int32 FPLATEAURnDef::Vector3Comparer::operator()(const FVector& A, const FVector& B) const {
+    auto X = Compare(A.X, B.X);
+    if (X != 0)
+        return X;
+    auto Y = Compare(A.Y, B.Y);
+    if (Y != 0)
+        return Y;
+    return X = Compare(A.Z, B.Z);
 }

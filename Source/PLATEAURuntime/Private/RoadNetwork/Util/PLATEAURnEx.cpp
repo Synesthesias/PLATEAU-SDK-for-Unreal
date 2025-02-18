@@ -10,17 +10,6 @@
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"
 
-int32 FPLATEAURnEx::Vector3Comparer::operator()(const FVector& A, const FVector& B) const
-{
-    auto X = Compare(A.X, B.X);
-    if (X != 0)
-        return X;
-    auto Y = Compare(A.Y, B.Y);
-    if (Y != 0)
-        return Y;
-    return X = Compare(A.Z, B.Z);
-}
-
 void FPLATEAURnEx::ReplaceLane(TArray<TRnRef_T<URnLane>>& Self, TRnRef_T<URnLane> Before, TRnRef_T<URnLane> After) {
     Replace(Self, Before, After);
 }
