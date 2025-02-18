@@ -22,13 +22,6 @@ class URnLane;
 
 struct FPLATEAURnEx
 {
-
-    class Vector3Comparer {
-    public:
-        int32 operator()(const FVector& A, const FVector& B) const;
-    };
-
-
     class FLineCrossPointResult {
     public:
         class FTargetLineInfo {
@@ -105,17 +98,6 @@ public:
     static FLineCrossPointResult GetLaneCrossPoints(TRnRef_T<URnRoad> Road,  const FLineSegment3D& LineSegment);
 
 public:
-    template<typename T>
-    static int32 Compare(T A, T B)
-    {
-        if (A < B)
-            return -1;
-        if (A > B)
-            return 1;
-        return 0;
-    }
-
-
     // ParentにChildを追加する
     // ActorにAddInstanceComponentをして, ChildをParentにアタッチする
     static void AddChildInstanceComponent(AActor* Actor, USceneComponent* Parent, USceneComponent* Child, FAttachmentTransformRules TransformRule = FAttachmentTransformRules::KeepRelativeTransform);
