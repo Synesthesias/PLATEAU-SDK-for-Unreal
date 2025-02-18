@@ -2,6 +2,7 @@
 
 #include "RoadAdjust/PLATEAUReproducedRoad.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "RoadAdjust/PLATEAURoadLineType.h"
 #include "RoadAdjust/RoadMarking/PLATEAUDirectionalArrowComposer.h"
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
@@ -38,6 +39,15 @@ void APLATEAUReproducedRoad::CreateLineTypeMap() {
 }
 
 void APLATEAUReproducedRoad::CreateRoadMarks(APLATEAURnStructureModel* Model, FString CrosswalkFrequency) {
+    
+    // すでに生成済みの道路標示があれば削除します
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), APLATEAUReproducedRoad::StaticClass(), FoundActors);
+    for (AActor* Actor : FoundActors) {
+        if (Actor != this) {
+            Actor->Destroy();
+        }
+    }
 
     auto ProgressDialogue = FScopedSlowTask(10, FText::FromString(TEXT("処理中...")));
     ProgressDialogue.MakeDialog(false);
