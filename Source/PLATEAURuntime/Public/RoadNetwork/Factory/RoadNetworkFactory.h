@@ -104,6 +104,8 @@ struct FRoadNetworkFactoryEx
 
     static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
+    // Targetが生成対象かどうか
+    static bool IsConvertTarget(UPLATEAUCityObjectGroup* Target);
 private:
 
     static TRnRef_T<URnModel> CreateRoadNetwork(
