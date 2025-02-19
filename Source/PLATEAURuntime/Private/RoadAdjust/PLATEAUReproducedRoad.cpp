@@ -21,8 +21,8 @@ APLATEAUReproducedRoad::APLATEAUReproducedRoad() {
     auto SceneRootComponent = CreateDefaultSubobject<UPLATEAUSceneComponent>(USceneComponent::GetDefaultSceneRootVariableName());
     SceneRootComponent->SetMobility(EComponentMobility::Static);
     SceneRootComponent->RegisterComponent();
-    this->SetRootComponent(SceneRootComponent);
     this->AddInstanceComponent(SceneRootComponent);
+    this->SetRootComponent(SceneRootComponent);
 }
 
 void APLATEAUReproducedRoad::CreateLineTypeMap() {
