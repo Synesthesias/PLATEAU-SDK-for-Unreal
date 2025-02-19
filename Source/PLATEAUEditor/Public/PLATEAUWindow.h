@@ -3,9 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Framework/MultiBox/MultiBoxExtender.h"
-#include "Widgets/SWindow.h"
-#include "Widgets/Docking/SDockTab.h"
 
 class UEditorUtilityWidgetBlueprint;
 class UEditorUtilityWidget;

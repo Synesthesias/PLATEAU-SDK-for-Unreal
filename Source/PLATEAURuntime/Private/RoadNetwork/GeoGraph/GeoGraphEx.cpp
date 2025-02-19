@@ -1,5 +1,5 @@
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
-#include "Containers/Queue.h"
+
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAUIntVectorEx.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"

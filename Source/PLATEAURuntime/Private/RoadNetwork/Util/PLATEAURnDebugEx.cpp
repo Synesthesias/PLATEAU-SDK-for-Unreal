@@ -1,5 +1,4 @@
 #include "RoadNetwork/Util/PLATEAURnDebugEx.h"
-#include "Engine/World.h"
 
 FVector FPLATEAURnDebugEx::ToVec3(const FVector2D& Self, bool bShowXZ) {
     return bShowXZ ? FVector(Self.X, 0.0f, Self.Y) : FVector(Self.X, Self.Y, 0.0f);
