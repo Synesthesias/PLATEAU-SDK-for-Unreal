@@ -8,6 +8,8 @@
 #include "MeshDescription.h"
 #include "StaticMeshOperations.h"
 #include "StaticMeshAttributes.h"
+#include "Math/UnrealMathUtility.h"
+#include "MathUtil.h"
 
 FPLATEAUMeshLoaderCloneComponent::FPLATEAUMeshLoaderCloneComponent(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoaderForReconstruct(CachedMaterials) {}
 

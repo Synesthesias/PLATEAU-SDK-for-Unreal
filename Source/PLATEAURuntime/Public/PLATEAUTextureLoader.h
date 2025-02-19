@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/Texture2D.h"
 
 class PLATEAURUNTIME_API FPLATEAUTextureLoader {
 public:

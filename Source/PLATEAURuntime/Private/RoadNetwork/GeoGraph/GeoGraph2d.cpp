@@ -1,6 +1,8 @@
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/AxisPlane.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
+#include "Math/UnrealMathUtility.h"
+#include "MathUtil.h"
 
 
 bool FGeoGraph2D::FVector2DEquitable::Equals(const FVector2D& X, const FVector2D& Y) const {

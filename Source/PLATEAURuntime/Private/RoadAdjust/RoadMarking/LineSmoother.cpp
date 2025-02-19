@@ -10,6 +10,7 @@
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnLane.h"
+#include "Engine/Engine.h"
 
 namespace PLATEAU::RoadAdjust::RoadMarking {
 

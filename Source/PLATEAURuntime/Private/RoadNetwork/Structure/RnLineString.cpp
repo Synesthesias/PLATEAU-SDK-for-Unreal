@@ -1,11 +1,12 @@
 #include "RoadNetwork/Structure/RnLineString.h"
 
 #include <optional>
-#include <ShaderConductor/ShaderConductor/External/SPIRV-Headers/include/spirv/unified1/spirv.h>
 
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/GeoGraphEx.h"
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
+#include "RoadNetwork/PLATEAURnDef.h"
+#include "RoadNetwork/Util/PLATEAURnLinq.h"
 
 URnLineString::URnLineString() {
 }

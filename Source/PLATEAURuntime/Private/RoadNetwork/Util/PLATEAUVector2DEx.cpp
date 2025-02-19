@@ -1,4 +1,6 @@
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
+#include <cmath>
+
 FVector2D FPLATEAUVector2DEx::Abs(const FVector2D& Vec) {
     return FVector2D(FMath::Abs(Vec.X), FMath::Abs(Vec.Y));
 }

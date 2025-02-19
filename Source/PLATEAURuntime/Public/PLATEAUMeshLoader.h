@@ -2,10 +2,14 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
 #include <citygml/material.h>
 #include "MeshTypes.h"
-#include "CoreMinimal.h"
 #include "PLATEAUCachedMaterialArray.h"
+#include <plateau/polygon_mesh/mesh.h>
+#include "StaticMeshAttributes.h"
+#include "Materials/MaterialInterface.h"
+#include "Engine/StaticMesh.h"
 
 struct FPLATEAUCityObject;
 struct FLoadInputData;

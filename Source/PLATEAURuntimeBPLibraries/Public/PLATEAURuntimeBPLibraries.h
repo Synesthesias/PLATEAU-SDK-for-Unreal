@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "Modules/ModuleInterface.h"
 
 class FPLATEAURuntimeBPLibraries : public IModuleInterface {
 public:

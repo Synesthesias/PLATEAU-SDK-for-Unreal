@@ -8,8 +8,8 @@ ULineGeneratorComponent::ULineGeneratorComponent() :
     SplineMeshType(ESplineMeshType::LengthBased), 
     SplinePointType(ESplinePointType::Linear), 
     CoordinateSpace(ESplineCoordinateSpace::Local), 
-    SplineMeshRoot(nullptr),
     FillEnd(false),
+    SplineMeshRoot(nullptr),
     EnableShadow(false) {
     this->SetDrawDebug(false);
     this->bInputSplinePointsToConstructionScript = false;

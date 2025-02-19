@@ -1,4 +1,4 @@
-// Copyright 2023 Ministry of Land�AInfrastructure and Transport
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
 
 using UnrealBuildTool;
 using System;
@@ -30,7 +30,7 @@ public class PLATEAURuntime : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities" , "Landscape",
+                "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities" , "Landscape", "MeshDescription"
             }
         );
 

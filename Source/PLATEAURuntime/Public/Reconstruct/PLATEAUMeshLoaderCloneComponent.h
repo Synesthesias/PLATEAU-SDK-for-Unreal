@@ -37,17 +37,17 @@ public:
 
 protected:
 
-    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
+    virtual UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 
-    UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
+    virtual UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
 
     UPLATEAUCityObjectGroup* GetOriginalComponent(FString NodePathString);
 
-    bool UseCachedMaterial() override;
-    bool MergeTriangles() override;
-    void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
+    virtual bool UseCachedMaterial() override;
+    virtual bool MergeTriangles() override;
+    virtual void ModifyMeshDescription(FMeshDescription& MeshDescription) override;
 
 private:
 

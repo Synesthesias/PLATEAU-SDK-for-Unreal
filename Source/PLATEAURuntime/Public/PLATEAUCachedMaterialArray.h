@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Materials/MaterialInterface.h"
 
 /**
  * モデル変換で、あとでマテリアルを復元したい場合に使います。indexがマテリアルID、値がマテリアルです。
