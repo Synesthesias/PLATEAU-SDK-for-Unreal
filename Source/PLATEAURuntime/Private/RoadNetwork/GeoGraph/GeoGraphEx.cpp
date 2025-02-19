@@ -4,6 +4,7 @@
 #include "RoadNetwork/Util/PLATEAUIntVectorEx.h"
 #include "RoadNetwork/Util/PLATEAURnLinq.h"
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
+#include "Containers/Queue.h"
 
 TArray<FVector> FGeoGraphEx::GetInnerLerpSegments(
     const TArray<FVector>& LeftVertices,

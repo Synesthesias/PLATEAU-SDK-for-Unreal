@@ -21,22 +21,22 @@ USTRUCT()
 struct FRGraphDrawFaceOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowOutline = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowConvexVolume = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     ERRoadTypeMask ShowOutlineMask = ERRoadTypeMask::Road;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     ERRoadTypeMask ShowOutlineRemoveMask = ERRoadTypeMask::Empty;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowCityObjectOutline = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowOutlineLoop = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
@@ -50,10 +50,10 @@ USTRUCT()
 struct FRGraphDrawEdgeOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bUseAnyFaceVertexColor = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNeighborCount = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
@@ -64,35 +64,35 @@ USTRUCT()
 struct FRGraphDrawVertexOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     int32 Size = 10;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnDrawOption NeighborOption;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowPos = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowEdgeCount = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bUseAnyFaceVertexColor = false;
 };
 USTRUCT()
 struct FRGraphDrawSideWalkOption : public FPLATEAURnDrawOption {
     GENERATED_BODY()
 public:
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnDrawOption OutsideWay;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnDrawOption InsideWay;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnDrawOption StartEdgeWay;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FPLATEAURnDrawOption EndEdgeWay;
 
 };

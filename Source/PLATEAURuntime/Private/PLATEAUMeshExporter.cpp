@@ -25,7 +25,6 @@
 #include "EditorFramework/AssetImportData.h"
 #endif
 
-using namespace plateau::polygonMesh;
 
 namespace {
     /**
@@ -54,8 +53,11 @@ namespace {
     /**
      * @brief FPLATEAUCityObjectからCityObjectIndexを取得してCityObjectListに追加します。
      */
-    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, CityObjectList& cityObjList) {
-        CityObjectIndex cityObjIdx;
+    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, plateau::polygonMesh::CityObjectList& cityObjList) {
+        
+        // 注: 名前空間plateau::polygonMeshをusingで省略しないこと。Packageビルドで問題となる。
+        plateau::polygonMesh::CityObjectIndex cityObjIdx;
+        
         cityObjIdx.primary_index = cityObj.CityObjectIndex.PrimaryIndex;
         cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
         cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
@@ -335,7 +337,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             auto Mesh = plateau::polygonMesh::Mesh();
             CreateMesh(Mesh, comp, Option);
             auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-            CityObjectList cityObjList;
+            plateau::polygonMesh::CityObjectList cityObjList;
             for (auto cityObj : comp->GetAllRootCityObjects()) {
                 SetCityObjectIndex(cityObj, cityObjList);
                 for (auto child : cityObj.Children) {
@@ -376,7 +378,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             CreateMesh(Mesh, comp, Option);
             auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
 
-            CityObjectList cityObjList;
+            plateau::polygonMesh::CityObjectList cityObjList;
             for (auto cityObj : comp->GetAllRootCityObjects()) {
                 SetCityObjectIndex(cityObj, cityObjList);
                 for (auto child : cityObj.Children) {

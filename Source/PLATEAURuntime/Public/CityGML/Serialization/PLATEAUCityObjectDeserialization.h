@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUCityObjectSerializationBase.h"
+#include "Dom/JsonValue.h"
 
 struct FPLATEAUCityObject;
 

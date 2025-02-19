@@ -1,6 +1,7 @@
 #pragma once
 // ☀
 #include "CoreMinimal.h"
+#include "RGraphDef.generated.h"
 
 /**
  * 道路タイプ

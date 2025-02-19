@@ -4,6 +4,7 @@
 #include "Util/PLATEAUGmlUtil.h"
 #include <Misc/DefaultValueHelper.h>
 #include <PLATEAUImportSettings.h>
+#include "Internationalization/Regex.h"
 
 namespace {
     void GetRootCityObjectsRecursive(USceneComponent* SceneComponent, TArray<FPLATEAUCityObject>& RootCityObjects) {

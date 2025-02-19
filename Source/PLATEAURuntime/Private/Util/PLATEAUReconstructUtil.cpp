@@ -2,6 +2,7 @@
 
 #include "Util/PLATEAUReconstructUtil.h"
 #include "Util/PLATEAUComponentUtil.h"
+#include "Misc/Paths.h"
 
 TMap<FString, FPLATEAUCityObject> FPLATEAUReconstructUtil::CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjectGroups) {
     TMap<FString, FPLATEAUCityObject> OutCityObjMap;

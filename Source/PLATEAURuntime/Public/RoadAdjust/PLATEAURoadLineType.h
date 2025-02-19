@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/StaticMesh.h"
+
 #include "PLATEAURoadLineType.generated.h"
 class FPLATEAURoadLineParam;
 
