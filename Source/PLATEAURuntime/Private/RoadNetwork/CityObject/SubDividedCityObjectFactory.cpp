@@ -4,6 +4,7 @@
 #include "PLATEAUMeshExporter.h"
 #include "CityGML/PLATEAUCityObject.h"
 #include "Reconstruct/PLATEAUModelReconstruct.h"
+#include "RoadNetwork/Factory/RoadNetworkFactory.h"
 #include "Util/PLATEAUReconstructUtil.h"
 
 namespace
@@ -36,9 +37,10 @@ FSubDividedCityObjectFactory::ConvertCityObjectsAsync(
 
     for (auto CityObjectGroup : CityObjectGroups) 
     {
-        // 見えていないものはスキップ
-        if (CityObjectGroup->IsVisible() == false)
+        // 生成対象チェック
+        if (FRoadNetworkFactoryEx::IsConvertTarget(CityObjectGroup) == false)
             continue;
+
         TArray<UPLATEAUCityObjectGroup*> Tmp;
         Tmp.Add(CityObjectGroup);
         auto model = Loader.ConvertModelForReconstruct(Tmp);
