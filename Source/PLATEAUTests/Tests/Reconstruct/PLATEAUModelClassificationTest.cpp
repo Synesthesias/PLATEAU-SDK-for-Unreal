@@ -10,6 +10,7 @@
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
 #include "PLATEAUModelLandscapeTestEventListener.h"
+#include "Materials/MaterialInstance.h"
 
 namespace FPLATEAUTest_Reconstruct_ModelClassification_Local {
 
