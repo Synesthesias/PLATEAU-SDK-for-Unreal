@@ -858,6 +858,23 @@ void FRoadNetworkFactoryEx::CreateRnModel(const FRoadNetworkFactory& Self, APLAT
     auto res = CreateRoadNetwork(Self, Actor, DestActor, CityObjectGroups);
 }
 
+bool FRoadNetworkFactoryEx::IsConvertTarget(UPLATEAUCityObjectGroup* Target)
+{
+    if (!Target)
+        return false;
+
+    // 非表示オブジェクトは無視
+    if (Target->IsVisible() == false)
+        return false;
+
+    const auto RootCityObjects = Target->GetAllRootCityObjects();
+    // 少なくとも一つはCOT_Roadを含める必要がある
+    return RootCityObjects.ContainsByPredicate([](const FPLATEAUCityObject& A) 
+        {
+        return A.Type == EPLATEAUCityObjectsType::COT_Road;
+        });
+}
+
 TRnRef_T<URnModel> FRoadNetworkFactoryEx::CreateRoadNetwork(
     const FRoadNetworkFactory& Self
     , APLATEAUInstancedCityModel* TargetCityModel
