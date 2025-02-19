@@ -9,7 +9,7 @@
 #include <PLATEAUMeshExporter.h>
 #include <ImageUtils.h>
 #include <CityGML/PLATEAUCityGmlProxy.h>
-#include "EngineMinimal.h"
+#include "Component/PLATEAUSceneComponent.h"
 
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
