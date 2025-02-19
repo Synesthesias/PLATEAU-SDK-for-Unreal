@@ -1,4 +1,6 @@
 #include "RoadNetwork/RGraph/RGraph.h"
+#include "Component/PLATEAUCityObjectGroup.h"
+
 URVertex::URVertex(const FVector& InPosition)
 {
     Init(InPosition);
@@ -388,7 +390,7 @@ URFace::~URFace()
 void URFace::Init(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* InCityObjectGroup, ERRoadTypeMask InRoadType,
     int32 InLodLevel)
 {
-    //CityObjectGroup = TWeakObjectPtr<UPLATEAUCityObjectGroup>(InCityObjectGroup);
+    CityObjectGroup = InCityObjectGroup;
     RoadTypes = InRoadType;
     LodLevel = InLodLevel;
     SetGraph(InGraph);
@@ -509,7 +511,7 @@ void URFaceGroup::Init(RGraphRef_t<URGraph> InGraph, UPLATEAUCityObjectGroup* In
     const TArray<RGraphRef_t<URFace>>& InFaces)
 {
     Graph = InGraph;
-    //CityObjectGroup = InCityObjectGroup;
+    CityObjectGroup = InCityObjectGroup;
     Faces.Reset();
     for (auto Face : InFaces) {
         Faces.Add(Face);
