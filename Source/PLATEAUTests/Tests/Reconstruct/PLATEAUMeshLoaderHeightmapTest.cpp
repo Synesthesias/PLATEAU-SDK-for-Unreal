@@ -2,12 +2,7 @@
 
 #include "FileHelpers.h"
 #include "../PLATEAUAutomationTestBase.h"
-
-#ifndef PLATEAUAutomationTestUtil
-#define PLATEAUAutomationTestUtil
-#include "PLATEAUTests/Tests/PLATEAUAutomationTestUtil.h"
-#endif
-
+#include "../PLATEAUAutomationTestUtil.h"
 #include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "Component/PLATEAUSceneComponent.h"

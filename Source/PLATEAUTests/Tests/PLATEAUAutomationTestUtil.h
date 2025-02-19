@@ -11,6 +11,9 @@
 #include <CityGML/PLATEAUCityGmlProxy.h>
 #include "EngineMinimal.h"
 
+#ifndef PLATEAUAutomationTestUtil
+#define PLATEAUAutomationTestUtil
+
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
 
@@ -586,3 +589,4 @@ namespace PLATEAUAutomationTestUtil {
 
 };
 
+#endif

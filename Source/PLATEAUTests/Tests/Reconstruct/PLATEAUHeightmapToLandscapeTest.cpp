@@ -1,14 +1,8 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
-#pragma once
 #include "FileHelpers.h"
-#include "PLATEAUTests/Tests/PLATEAUAutomationTestBase.h"
-
-#ifndef PLATEAUAutomationTestUtil
-#define PLATEAUAutomationTestUtil
-#include "PLATEAUTests/Tests/PLATEAUAutomationTestUtil.h"
-#endif
-
+#include "../PLATEAUAutomationTestBase.h"
+#include "../PLATEAUAutomationTestUtil.h"
 #include <Reconstruct/PLATEAUModelLandscape.h>
 #include <Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h>
 #include "PLATEAUInstancedCityModel.h"
