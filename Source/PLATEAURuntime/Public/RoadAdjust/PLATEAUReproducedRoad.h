@@ -5,7 +5,7 @@
 #include "RoadMarking/LineGeneratorComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
-enum class EPLATEAURoadLineType;
+enum class EPLATEAURoadLineType : uint8;
 /**
 * @brief 道路の両端に配置される道路標示（横断歩道）において、道路のどちら側に配置されたかを示します。
 * どちらでもない道路標示はNoneとなります。

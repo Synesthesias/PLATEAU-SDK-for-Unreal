@@ -8,6 +8,7 @@
 #include "RoadNetwork/GeoGraph/GeoGraph2d.h"
 #include "RoadNetwork/GeoGraph/LineSegment3D.h"
 #include "RoadNetwork/GeoGraph/LineUtil.h"
+#include "Engine/EngineTypes.h"
 
 class URnRoad;
 class UPLATEAUCityObjectGroup;

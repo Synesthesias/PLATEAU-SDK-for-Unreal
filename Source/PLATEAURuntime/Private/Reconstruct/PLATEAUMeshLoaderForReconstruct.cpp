@@ -4,6 +4,8 @@
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "Util/PLATEAUComponentUtil.h"
+#include "Materials/MaterialInstance.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
     bAutomationTest = false;

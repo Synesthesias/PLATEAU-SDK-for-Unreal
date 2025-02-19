@@ -5,6 +5,9 @@
 #include <PLATEAUTextureLoader.h>
 #include "Materials/MaterialInstanceConstant.h"
 #include "UObject/SavePackage.h"
+#include "Engine/World.h"
+#include "Materials/Material.h"
+#include "Misc/PackageName.h"
 
 namespace {
 

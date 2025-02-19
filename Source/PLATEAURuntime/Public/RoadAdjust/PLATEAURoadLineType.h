@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/StaticMesh.h"
 #include "PLATEAURoadLineType.generated.h"
 class FPLATEAURoadLineParam;
 
 UENUM(BlueprintType)
-enum class EPLATEAURoadLineType {
+enum class EPLATEAURoadLineType :uint8 {
     None UMETA(DisplayName = "None"),
     WhiteLine UMETA(DisplayName = "WhiteLine"),
     YellowLine UMETA(DisplayName = "YellowLine"),

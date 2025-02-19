@@ -36,7 +36,7 @@ public class PLATEAUTests : ModuleRules {
 			new string[] {
 			});
 
-		IncludeLibPlateau();
+		//IncludeLibPlateau();
 	}
 
 	// 注意 : 他の PLATEAU*.Build.cs にも同じものを書いてください
@@ -73,6 +73,6 @@ public class PLATEAUTests : ModuleRules {
 		}
 
 		//using c++17
-		CppStandard = CppStandardVersion.Cpp17;
+		CppStandard = CppStandardVersion.Default;
 	}
 }

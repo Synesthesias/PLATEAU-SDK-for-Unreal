@@ -14,7 +14,7 @@ enum class EPLATEAURnDir : uint8 {
 
 
 UENUM(BlueprintType)
-enum class EPLATEAURnLaneBorderType {
+enum class EPLATEAURnLaneBorderType : uint8 {
     Prev UMETA(DisplayName = "Prev"),
     Next UMETA(DisplayName = "Next"),
 };

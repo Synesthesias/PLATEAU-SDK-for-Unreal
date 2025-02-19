@@ -2,14 +2,15 @@
 
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Engine/StaticMesh.h"
 
 ULineGeneratorComponent::ULineGeneratorComponent() :
     SplineMeshType(ESplineMeshType::LengthBased), 
     SplinePointType(ESplinePointType::Linear), 
-    CoordinateSpace(ESplineCoordinateSpace::Local), 
-    SplineMeshRoot(nullptr),
+    CoordinateSpace(ESplineCoordinateSpace::Local),  
     FillEnd(false),
-    EnableShadow(false) {
+    EnableShadow(false),  
+    SplineMeshRoot(nullptr) {
     this->SetDrawDebug(false);
     this->bInputSplinePointsToConstructionScript = false;
     this->SetMobility(EComponentMobility::Static);

@@ -9,6 +9,9 @@
 #include "UObject/SavePackage.h"
 #include "Engine/Texture2D.h"
 #include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Misc/PackageName.h"
+#include "Component/PLATEAUSceneComponent.h"
 #include "TextureResource.h"
 #include <filesystem>
 

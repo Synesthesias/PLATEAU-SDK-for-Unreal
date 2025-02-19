@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "PLATEAUCityObjectSerializationBase.h"
+#include "plateau/polygon_mesh/mesh.h"
+#include "plateau/polygon_mesh/node.h"
+#include "CityGML/PLATEAUCityObject.h"
 
 /**
 * @brief FPLATEAUCityObjectをJsonにシリアライズ

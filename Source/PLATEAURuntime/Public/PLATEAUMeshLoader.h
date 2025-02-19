@@ -6,6 +6,9 @@
 #include "MeshTypes.h"
 #include "CoreMinimal.h"
 #include "PLATEAUCachedMaterialArray.h"
+#include "MeshDescription.h"
+#include "Materials/MaterialInterface.h"
+#include "Engine/StaticMesh.h"
 
 struct FPLATEAUCityObject;
 struct FLoadInputData;

@@ -1,6 +1,7 @@
 #pragma once
 // ☀
 #include "CoreMinimal.h"
+#include "RGraphDef.generated.h"
 
 // グラフ構造用
 UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
