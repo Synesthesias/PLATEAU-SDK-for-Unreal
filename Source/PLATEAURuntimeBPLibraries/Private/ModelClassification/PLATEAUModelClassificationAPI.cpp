@@ -160,12 +160,3 @@ void UPLATEAUModelClassificationAPI::ClassifyByAttribute(APLATEAUInstancedCityMo
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
 #endif  
 }
-
-
-void UPLATEAUModelClassificationAPI::ClassifyByAttribute(APLATEAUInstancedCityModel * TargetCityModel, TArray<USceneComponent*> TargetComponents, FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal) {
-#if WITH_EDITOR
-    TargetCityModel->ClassifyModel(TargetComponents, AttributeKey, Materials, ReconstructType, bDestroyOriginal);
-#else
-    FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
-#endif  
-}
