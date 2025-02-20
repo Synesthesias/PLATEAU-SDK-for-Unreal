@@ -83,13 +83,13 @@ namespace {
 }
 
 namespace plateau::CityObject {
-    static FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType) {
+    FString CityObjectsTypeToString(const citygml::CityObject::CityObjectsType InType) {
         int32 TypeMsbBit;
         MSB64Bit(static_cast<uint64_t>(InType), TypeMsbBit);
         return EPLATEAUCityObjectsTypeNameArray[TypeMsbBit];
     }
 
-    static FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
+    FString CityObjectsTypeToString(const EPLATEAUCityObjectsType InType) {
         int32 index = static_cast<int32>(InType);
         if(EPLATEAUCityObjectsTypeNameArray.IsValidIndex(index))
             return EPLATEAUCityObjectsTypeNameArray[index];

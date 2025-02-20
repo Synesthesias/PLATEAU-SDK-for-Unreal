@@ -10,7 +10,7 @@
 #include <plateau/dataset/city_model_package.h>
 #include <PLATEAUImportSettings.h>
 #include "Tasks/Task.h"
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "PLATEAUInstancedCityModel.generated.h"
 
 
@@ -80,20 +80,6 @@ public:
      */
     UPROPERTY(BlueprintAssignable, Category = "PLATEAU|BPLibraries")
     FOnLandscapeCreationFinishedDelegate OnLandscapeCreationFinished;
-
-    /**
-     * @brief Componentのユニーク化されていない元の名前を取得します。
-     * コンポーネント名の末尾に"__{数値}"が存在する場合、ユニーク化の際に追加されたものとみなし、"__"以降を削除します。
-     * 元の名前に"__{数値}"が存在する可能性もあるので、基本的に地物ID、Lod以外を取得するのには使用しないでください。
-     */
-    static FString GetOriginalComponentName(const USceneComponent* InComponent);
-
-    /**
-     * @brief Lodを名前として持つComponentの名前をパースし、Lodを数値として返します。
-     */
-    static int ParseLodComponent(const USceneComponent* InLodComponent);
-
-    static void DestroyOrHideComponents(TArray<UPLATEAUCityObjectGroup*> Components, bool bDestroy );
 
     // Sets default values for this actor's properties
     APLATEAUInstancedCityModel();
@@ -172,34 +158,27 @@ public:
      * @brief 選択されたComponentの結合・分割処理を行います。
      * @param 
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*> TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructModel(const TArray<USceneComponent*>& TargetComponents, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
 
     /**
      * @brief 選択されたComponentのMaterialをCityObjectのTypeごとに分割します
      * @param
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*>& TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial = nullptr);
 
     /**
      * @brief 選択されたComponentのMaterialを属性情報のKeyに紐づく値で分割します
      * @param
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*> TargetComponents, const FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyModel(const TArray<USceneComponent*>& TargetComponents, const FString& AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial = nullptr);
 
     /**
      * @brief 選択されたComponentからLandscapeを生成します
      * @param
      */
-	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*> TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+	UE::Tasks::FTask CreateLandscape(const TArray<USceneComponent*>& TargetComponents, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
 
-    /**
-     * @brief 複数LODの形状を持つ地物について、MinLod, MaxLodで指定される範囲の内最大LOD以外の形状を非表示化します。
-     * @param InGmlComponent フィルタリング対象地物を含むコンポーネント
-     * @param MinLod 可視化される最小のLOD
-     * @param MaxLod 可視化される最大のLOD
-     */
-    static void FilterLowLods(const USceneComponent* const InGmlComponent, const int MinLod = 0, const int MaxLod = 4);
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
@@ -212,17 +191,17 @@ protected:
     /**
      * @brief 結合分離　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ReconstructTask(FPLATEAUModelReconstruct& ModelReconstruct, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, bool bDestroyOriginal);
 
     /**
      * @brief マテリアル分け　共通処理
      */
-    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    UE::Tasks::TTask<TArray<USceneComponent*>> ClassifyTask(FPLATEAUModelClassification& ModelClassification, const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
 
     /**
      * @brief 特定パッケージを地形に合わせて高さ合わせ
      */
-    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, FPLATEAULandscapeParam Param, bool bDestroyOriginal);
+    TArray<UPLATEAUCityObjectGroup*> AlignLand(TArray<HeightmapCreationResult>& Results, const FPLATEAULandscapeParam& Param, bool bDestroyOriginal);
 
     /**
      * @brief 属性情報の有無を取得します。
@@ -236,6 +215,4 @@ public:
 private:
     TAtomic<bool> bIsFiltering;
     TArray<FPLATEAUCityObject> RootCityObjects;
-
-    void FilterByFeatureTypesInternal(const citygml::CityObject::CityObjectsType InCityObjectType);
 };

@@ -2,28 +2,25 @@
 
 #pragma once
 
+#include <plateau/granularity_convert/granularity_converter.h>
+#include "CityGML/PLATEAUCityObject.h"
+
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
+#include "Util/PLATEAUReconstructUtil.h"
 
-using ConvertGranularity = plateau::granularityConvert::ConvertGranularity;
-
+//結合分離処理用MeshLoader
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForReconstruct : public FPLATEAUMeshLoader {
 
 public:
-    FPLATEAUMeshLoaderForReconstruct();
-    FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest);
+    FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials);
+    FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials);
 
-    /**
-     * @brief UPLATEAUCityObjectGroupのリストからUPLATEAUCityObjectを取り出し、GmlIDをキーとしたMapを生成
-     * @param TargetCityObjects UPLATEAUCityObjectGroupのリスト
-     * @return Key: GmlID, Value: UPLATEAUCityObject の Map
-     */
-    static TMap<FString, FPLATEAUCityObject> CreateMapFromCityObjectGroups(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
-
-    /**
-     * @brief EPLATEAUMeshGranularityをplateau::polygonMesh::MeshGranularityに変換します
-     */
-    static plateau::polygonMesh::MeshGranularity ConvertGranularityToMeshGranularity(const ConvertGranularity ConvertGranularity);
+    void ReloadComponentFromModel(
+        std::shared_ptr<plateau::polygonMesh::Model> Model,
+        ConvertGranularity Granularity,
+        TMap<FString, FPLATEAUCityObject> CityObj,
+        AActor& InActor);
 
     void ReloadComponentFromNode(
         USceneComponent* InParentComponent,
@@ -45,9 +42,9 @@ protected:
         ConvertGranularity Granularity,
         AActor& Actor);
 
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
+    UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
 
-    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+    UStaticMeshComponent* GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 

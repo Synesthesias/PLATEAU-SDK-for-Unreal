@@ -23,7 +23,7 @@ PLATEAUウィンドウの`モデル調整`では、インポートした都市�
 
 ## コンポーネントON/OFF機能
 
-![](../resources/manual/modelAdjust/gameObjOnOff.png)
+![ONOFF](../resources/manual/modelAdjust/componentOnOff.png)
 - 条件指定をしてフィルタリングできます。
 - ここでいうフィルタリングとは、条件に合致するコンポーネントをアクティブにし、そうでないものを非アクティブにすることを指します。
 - 「重複する地物を表示」にチェックを入れた場合、フィルタリング後に重複している地物について、  
@@ -43,7 +43,7 @@ PLATEAUウィンドウの`モデル調整`では、インポートした都市�
 
 ## 分割・結合・マテリアル分け機能
 
-![](../resources/manual/modelAdjust/materialByType.png)
+![materialchanges](../resources/manual/modelAdjust/materialchanges.png)
 
 ### できること
 
@@ -59,7 +59,7 @@ PLATEAUウィンドウの`モデル調整`では、インポートした都市�
 ### 操作方法
 - PLATEAU Windowの「モデル調整」タブ → 「分割/結合/マテリアル分け」タブを開きます。
   
-  ![](../resources/manual/modelAdjust/materialAdjustWindow.png)
+  ![ModelAdjustUnreal](../resources/manual/modelAdjust/modelAdjustUnreal.png)
 
 #### 対象選択
 
@@ -124,7 +124,7 @@ PLATEAUウィンドウの`モデル調整`では、インポートした都市�
 
 ## 地形変換/高さ合わせ機能
 
-![](../resources/manual/landscape/landscapeMenu.png)
+![Landscape](../resources/manual/modelAdjust/landscape.png)
 
 `地形変換`画面では以下を行えます。
 - 地形をランドスケープに変換

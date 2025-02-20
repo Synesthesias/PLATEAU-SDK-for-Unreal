@@ -6,6 +6,7 @@
 
 #include "plateau/geometry/geo_coordinate.h"
 #include "plateau/geometry/geo_reference.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "PLATEAUGeometry.generated.h"
 

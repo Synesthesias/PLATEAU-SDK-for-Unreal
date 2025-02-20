@@ -26,8 +26,9 @@ class PLATEAURUNTIMEBPLIBRARIES_API UPLATEAUModelClassificationAPI : public UBlu
     static TSet<EPLATEAUCityObjectsType> SearchTypes(const TArray<USceneComponent*> TargetComponents);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
-    static void ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    static void ClassifyByType(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, TMap<EPLATEAUCityObjectsType, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial = nullptr);
 
     UFUNCTION(BlueprintCallable, Category = "PLATEAU|BPLibraries|ModelClassificationAPI")
-    static void ClassifyByAttribute(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal);
+    static void ClassifyByAttribute(APLATEAUInstancedCityModel* TargetCityModel, TArray<USceneComponent*> TargetComponents, FString AttributeKey, TMap<FString, UMaterialInterface*> Materials, const EPLATEAUMeshGranularity ReconstructType, bool bDestroyOriginal, UMaterialInterface* DefaultMaterial = nullptr);
+
 };

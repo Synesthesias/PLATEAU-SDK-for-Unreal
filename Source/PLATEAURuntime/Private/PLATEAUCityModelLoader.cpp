@@ -12,14 +12,13 @@
 #include "PLATEAUMeshLoader.h"
 #include "citygml/citygml.h"
 #include "Kismet/GameplayStatics.h"
-#include "Reconstruct/PLATEAUMeshLoaderForLandscape.h"
+#include "Reconstruct/PLATEAUMeshLoaderForHeightmap.h"
 #include "Component/PLATEAUSceneComponent.h"
 
 
 #define LOCTEXT_NAMESPACE "PLATEAUCityModelLoader"
 
 using namespace plateau::udx;
-using namespace plateau::polygonMesh;
 
 
 class FCityModelLoaderImpl {
@@ -203,7 +202,6 @@ namespace {
 
     void CreateRootComponent(AActor& Actor) {
 #if WITH_EDITOR
-        //USceneComponent* ActorRootComponent = NewObject<USceneComponent>(&Actor,
         USceneComponent* ActorRootComponent = NewObject<UPLATEAUSceneComponent>(&Actor,
             USceneComponent::GetDefaultSceneRootVariableName());
 
@@ -408,7 +406,8 @@ void APLATEAUCityModelLoader::LoadAsync(const bool bAutomationTest) {
                                     ImportGmlProgressDelegate.Broadcast(Index, 0.5, LOCTEXT("MeshExtractorExtract", "ポリゴンメッシュ変換中..."));
                                 }, TStatId(), nullptr, ENamedThreads::GameThread);
 
-                            const auto Model = MeshExtractor::extractInExtents(*CityModel, InputData.ExtractOptions, InputData.Extents);
+                            // 注: 名前空間plateau::polygonMeshをusingで省略しないこと。Packageビルドで問題となる。
+                            const auto Model = plateau::polygonMesh::MeshExtractor::extractInExtents(*CityModel, InputData.ExtractOptions, InputData.Extents);
 
                             // 各GMLについて親Componentを作成
                             // コンポーネントは拡張子無しgml名に設定
@@ -515,7 +514,7 @@ void APLATEAUCityModelLoader::LoadGmlAsync(const FString& GmlPath) {
             ExtractOptions.mesh_axes = plateau::geometry::CoordinateSystem::ESU;
             ExtractOptions.coordinate_zone_id = GeoReference.GetData().getZoneID();
 
-            const auto Model = MeshExtractor::extract(*CityModel, ExtractOptions);
+            const auto Model = plateau::polygonMesh::MeshExtractor::extract(*CityModel, ExtractOptions);
 
             FLoadInputData InputData;
             InputData.ExtractOptions = ExtractOptions;

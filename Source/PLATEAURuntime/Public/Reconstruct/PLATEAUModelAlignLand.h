@@ -6,6 +6,7 @@
 #include "Reconstruct/PLATEAUModelReconstruct.h"
 #include <plateau/height_map_alighner/height_map_aligner.h>
 
+//高さ合わせ処理
 class PLATEAURUNTIME_API FPLATEAUModelAlignLand : public FPLATEAUModelReconstruct {
 
 public:
@@ -29,11 +30,6 @@ public:
     EPLATEAUCityModelPackage::WaterBody,
     EPLATEAUCityModelPackage::UrbanPlanningDecision,
     };
-
-    /**
-     * @brief ComponentリストからLOD3のRoadを探してリストに追加します
-     */
-    static TArray<UPLATEAUCityObjectGroup*> FilterLod3RoadComponents(APLATEAUInstancedCityModel* Actor, TArray<UPLATEAUCityObjectGroup*> TargetComponents);
 
     FPLATEAUModelAlignLand();
     FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor);

@@ -2,19 +2,20 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "Reconstruct/PLATEAUMeshLoaderForReconstruct.h"
+#include "PLATEAUCachedMaterialArray.h"
+#include "PLATEAUMeshLoaderForReconstruct.h"
 
 class PLATEAURUNTIME_API FPLATEAUMeshLoaderForClassification : public FPLATEAUMeshLoaderForReconstruct {
 
 public:
-    FPLATEAUMeshLoaderForClassification(const TMap<int, UMaterialInterface*> Materials);
-    FPLATEAUMeshLoaderForClassification(const TMap<int, UMaterialInterface*> Materials, const bool InbAutomationTest);
+    FPLATEAUMeshLoaderForClassification(const FPLATEAUCachedMaterialArray& Mats);
+    FPLATEAUMeshLoaderForClassification(const FPLATEAUCachedMaterialArray& Mats, const bool InbAutomationTest);
 
 protected:
-    UMaterialInstanceDynamic* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) override;
+    virtual UMaterialInterface* GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) override;
+    
 private:
-
-    //Material分け時のマテリアルリスト
-    TMap<int, UMaterialInterface*> ClassificationMaterials;
+    
+    //Material分け時のマテリアルリスト。
+    // FPLATEAUCachedMaterialArray CachedMaterials;
 };

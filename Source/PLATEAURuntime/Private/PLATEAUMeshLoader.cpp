@@ -8,13 +8,19 @@
 #include "PhysicsEngine/BodySetup.h"
 #include "StaticMeshResources.h"
 #include "MeshElementRemappings.h"
+#include "PLATEAUCachedMaterialArray.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "Component/PLATEAUSceneComponent.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "StaticMeshAttributes.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Component/PLATEAUStaticMeshComponent.h"
+#include "Util/PLATEAUComponentUtil.h"
+#include "Util/PLATEAUGmlUtil.h"
+#include "PLATEAUModelFiltering.h"
+#include "Math/UnrealMathUtility.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
@@ -82,218 +88,219 @@ FORCEINLINE uint32 GetTypeHash(const FSubMeshMaterialSet& Value) {
     return Hash;
 }
 
-namespace {
-    void ComputeNormals(FStaticMeshAttributes& Attributes, bool InvertNormal) {
-        const auto Normals = Attributes.GetVertexInstanceNormals();
-        const auto Indices = Attributes.GetVertexInstanceVertexIndices();
-        const auto Vertices = Attributes.GetVertexPositions();
+FNodeHierarchy::FNodeHierarchy() {
+}
 
-        const uint32 NumFaces = Indices.GetNumElements() / 3;
-        for (uint32 FaceIndex = 0; FaceIndex < NumFaces; ++FaceIndex) {
-            const int32 FaceOffset = FaceIndex * 3;
+FNodeHierarchy::FNodeHierarchy(FString Name) {
+    NodeName = Name;
+}
 
-            FVector3f VertexPositions[3];
-            int32 VertexIndices[3];
+FNodeHierarchy::FNodeHierarchy(const plateau::polygonMesh::Node& InNode) {
+    NodeName = FString(InNode.getName().c_str());
+    NodePath = FPLATEAUGmlUtil::GetNodePathString(InNode);
+    if(InNode.hasRootNode())
+        RootNodeName = FString(InNode.getRootNode().getName().c_str());
+}
 
-            // Retrieve vertex indices and positions
-            VertexIndices[0] = Indices[FaceOffset];
-            VertexPositions[0] = Vertices[VertexIndices[0]];
+std::string FNodeHierarchy::GetNameAsStandardString() {
+    return TCHAR_TO_UTF8(*NodeName);
+}
 
-            VertexIndices[1] = Indices[FaceOffset + 1];
-            VertexPositions[1] = Vertices[VertexIndices[1]];
 
-            VertexIndices[2] = Indices[FaceOffset + 2];
-            VertexPositions[2] = Vertices[VertexIndices[2]];
+void FPLATEAUMeshLoader::ComputeNormals(FStaticMeshAttributes& Attributes, bool InvertNormal) {
+    const auto Normals = Attributes.GetVertexInstanceNormals();
+    const auto Indices = Attributes.GetVertexInstanceVertexIndices();
+    const auto Vertices = Attributes.GetVertexPositions();
 
-            // Calculate normal for triangle face	
-            FVector3f N = InvertNormal ?
-                FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]),
-                    (VertexPositions[0] - VertexPositions[2])) :
-                FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[2]),
-                    (VertexPositions[0] - VertexPositions[1]));
+    const uint32 NumFaces = Indices.GetNumElements() / 3;
+    for (uint32 FaceIndex = 0; FaceIndex < NumFaces; ++FaceIndex) {
+        const int32 FaceOffset = FaceIndex * 3;
 
-            N.Normalize();
+        FVector3f VertexPositions[3];
+        int32 VertexIndices[3];
 
-            // Unrolled loop
-            Normals[FaceOffset + 0] += N;
-            Normals[FaceOffset + 1] += N;
-            Normals[FaceOffset + 2] += N;
-        }
+        // Retrieve vertex indices and positions
+        VertexIndices[0] = Indices[FaceOffset];
+        VertexPositions[0] = Vertices[VertexIndices[0]];
 
-        for (int i = 0; i < Normals.GetNumElements(); ++i) {
-            Normals[i].Normalize();
-        }
+        VertexIndices[1] = Indices[FaceOffset + 1];
+        VertexPositions[1] = Vertices[VertexIndices[1]];
+
+        VertexIndices[2] = Indices[FaceOffset + 2];
+        VertexPositions[2] = Vertices[VertexIndices[2]];
+
+        // Calculate normal for triangle face	
+        FVector3f N = InvertNormal ?
+            FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[1]),
+                (VertexPositions[0] - VertexPositions[2])) :
+            FVector3f::CrossProduct((VertexPositions[0] - VertexPositions[2]),
+                (VertexPositions[0] - VertexPositions[1]));
+
+        N.Normalize();
+
+        // Unrolled loop
+        Normals[FaceOffset + 0] += N;
+        Normals[FaceOffset + 1] += N;
+        Normals[FaceOffset + 2] += N;
     }
 
-    bool ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
-        TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles) {
-        FStaticMeshAttributes Attributes(OutMeshDescription);
+    for (int i = 0; i < Normals.GetNumElements(); ++i) {
+        Normals[i].Normalize();
+    }
+}
 
-        // UVチャンネル数を3に設定
-        const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
-        if (VertexInstanceUVs.GetNumChannels() < 4) {
-            VertexInstanceUVs.SetNumChannels(4);
+bool FPLATEAUMeshLoader::ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, FMeshDescription& OutMeshDescription,
+    TArray<FSubMeshMaterialSet>& SubMeshMaterialSets, bool InvertNormal, bool MergeTriangles) {
+    FStaticMeshAttributes Attributes(OutMeshDescription);
+
+    // UVチャンネル数を3に設定
+    const auto VertexInstanceUVs = Attributes.GetVertexInstanceUVs();
+    if (VertexInstanceUVs.GetNumChannels() < 4) {
+        VertexInstanceUVs.SetNumChannels(4);
+    }
+
+    const auto& InVertices = InMesh.getVertices();
+    const auto& InIndices = InMesh.getIndices();
+
+    const auto FaceCount = InIndices.size() / 3;
+    // 同じ頂点は複数の面に利用されないように複製されるため、頂点数はインデックス数と同じサイズになる。
+    const auto VertexCount = InIndices.size();
+
+    OutMeshDescription.ReserveNewVertices(VertexCount);
+    OutMeshDescription.ReserveNewPolygons(FaceCount);
+    OutMeshDescription.ReserveNewVertexInstances(VertexCount);
+    OutMeshDescription.ReserveNewEdges(VertexCount);
+
+    const auto VertexPositions = Attributes.GetVertexPositions();
+    for (const auto& Vertex : InVertices) {
+        const auto VertexID = OutMeshDescription.CreateVertex();
+        VertexPositions[VertexID] = FVector3f(Vertex.x, Vertex.y, Vertex.z);
+    }
+
+    // 頂点の再利用を防ぐため使用済みの頂点を保持
+    TSet<unsigned> UsedVertexIDs;
+
+    for (const auto& SubMesh : InMesh.getSubMeshes()) {
+        const auto& TexturePath = SubMesh.getTexturePath();
+        const auto MaterialValue = SubMesh.getMaterial();
+        const auto GameMaterialID = SubMesh.getGameMaterialID();
+        FPolygonGroupID PolygonGroupID = 0;
+        FSubMeshMaterialSet MaterialSet(MaterialValue,
+            TexturePath.empty() ? FString() : FString(TexturePath.c_str()),
+            GameMaterialID);
+            
+        if (!SubMeshMaterialSets.Contains(MaterialSet)) {
+            // マテリアル設定
+            PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
+            FString MaterialName = "DefaultMaterial";
+            if (TexturePath != "") {
+                MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
+            }
+            else if (MaterialValue != nullptr) {
+                MaterialName = FString(MaterialValue->getId().c_str());
+            }
+            MaterialSet.PolygonGroupID = PolygonGroupID;
+            MaterialSet.MaterialSlot = MaterialName;
+            SubMeshMaterialSets.Add(MaterialSet);
+        }
+        else {
+            int32 FoundIndex = SubMeshMaterialSets.Find(MaterialSet);
+            check(FoundIndex != -1);
+            FSubMeshMaterialSet* Found = &SubMeshMaterialSets[FoundIndex];
+            PolygonGroupID = Found->PolygonGroupID;
+            MaterialSet = *Found;
+        }
+            
+        //BPのUStaticMeshDescriptionのSetPolygonGroupMaterialSlotNameと同様の処理
+        if (OutMeshDescription.IsPolygonGroupValid(PolygonGroupID)) {
+            const FName& SlotName = *MaterialSet.MaterialSlot;
+            OutMeshDescription.PolygonGroupAttributes().SetAttribute(
+                PolygonGroupID, MeshAttribute::PolygonGroup::ImportedMaterialSlotName, 0, SlotName);
         }
 
-        const auto& InVertices = InMesh.getVertices();
-        const auto& InIndices = InMesh.getIndices();
+        // インデックス、UV設定
+        const auto& StartIndex = SubMesh.getStartIndex();
+        const auto& EndIndex = SubMesh.getEndIndex();
+        TArray<FVertexInstanceID> VertexInstanceIDs;
+        for (int InIndexIndex = StartIndex; InIndexIndex <= EndIndex; ++InIndexIndex) {
+            auto VertexID = InIndices[InIndexIndex];
 
-        const auto FaceCount = InIndices.size() / 3;
-        // 同じ頂点は複数の面に利用されないように複製されるため、頂点数はインデックス数と同じサイズになる。
-        const auto VertexCount = InIndices.size();
-
-        OutMeshDescription.ReserveNewVertices(VertexCount);
-        OutMeshDescription.ReserveNewPolygons(FaceCount);
-        OutMeshDescription.ReserveNewVertexInstances(VertexCount);
-        OutMeshDescription.ReserveNewEdges(VertexCount);
-
-        const auto VertexPositions = Attributes.GetVertexPositions();
-        for (const auto& Vertex : InVertices) {
-            const auto VertexID = OutMeshDescription.CreateVertex();
-            VertexPositions[VertexID] = FVector3f(Vertex.x, Vertex.y, Vertex.z);
-        }
-
-        // 頂点の再利用を防ぐため使用済みの頂点を保持
-        TSet<unsigned> UsedVertexIDs;
-
-        for (const auto& SubMesh : InMesh.getSubMeshes()) {
-            const auto& TexturePath = SubMesh.getTexturePath();
-            const auto MaterialValue = SubMesh.getMaterial();
-            const auto GameMaterialID = SubMesh.getGameMaterialID();
-            FPolygonGroupID PolygonGroupID = 0;
-            FSubMeshMaterialSet MaterialSet(MaterialValue,
-                TexturePath.empty() ? FString() : FString(TexturePath.c_str()),
-                GameMaterialID);
-            
-            if (!SubMeshMaterialSets.Contains(MaterialSet)) {
-                // マテリアル設定
-                PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
-                FString MaterialName = "DefaultMaterial";
-                if (TexturePath != "") {
-                    MaterialName = FPaths::GetBaseFilename(UTF8_TO_TCHAR(TexturePath.c_str()));
-                }
-                else if (MaterialValue != nullptr) {
-                    MaterialName = FString(MaterialValue->getId().c_str());
-                }
-                MaterialSet.PolygonGroupID = PolygonGroupID;
-                MaterialSet.MaterialSlot = MaterialName;
-                SubMeshMaterialSets.Add(MaterialSet);
-            }
-            else {
-                int32 FoundIndex = SubMeshMaterialSets.Find(MaterialSet);
-                check(FoundIndex != -1);
-                FSubMeshMaterialSet* Found = &SubMeshMaterialSets[FoundIndex];
-                PolygonGroupID = Found->PolygonGroupID;
-                MaterialSet = *Found;
-            }
-            
-            //BPのUStaticMeshDescriptionのSetPolygonGroupMaterialSlotNameと同様の処理
-            if (OutMeshDescription.IsPolygonGroupValid(PolygonGroupID)) {
-                const FName& SlotName = *MaterialSet.MaterialSlot;
-                OutMeshDescription.PolygonGroupAttributes().SetAttribute(
-                    PolygonGroupID, MeshAttribute::PolygonGroup::ImportedMaterialSlotName, 0, SlotName);
+            // 頂点が使用済みの場合は複製
+            if (UsedVertexIDs.Contains(VertexID) && !MergeTriangles) {
+                const auto NewVertexID = OutMeshDescription.CreateVertex();
+                VertexPositions[NewVertexID] = VertexPositions[VertexID];
+                VertexID = NewVertexID;
             }
 
-            // インデックス、UV設定
-            const auto& StartIndex = SubMesh.getStartIndex();
-            const auto& EndIndex = SubMesh.getEndIndex();
-            TArray<FVertexInstanceID> VertexInstanceIDs;
-            for (int InIndexIndex = StartIndex; InIndexIndex <= EndIndex; ++InIndexIndex) {
-                auto VertexID = InIndices[InIndexIndex];
+            const auto NewVertexInstanceID = OutMeshDescription.CreateVertexInstance(VertexID);
+            VertexInstanceIDs.Add(NewVertexInstanceID);
 
-                // 頂点が使用済みの場合は複製
-                if (UsedVertexIDs.Contains(VertexID) && !MergeTriangles) {
-                    const auto NewVertexID = OutMeshDescription.CreateVertex();
-                    VertexPositions[NewVertexID] = VertexPositions[VertexID];
-                    VertexID = NewVertexID;
-                }
-
-                const auto NewVertexInstanceID = OutMeshDescription.CreateVertexInstance(VertexID);
-                VertexInstanceIDs.Add(NewVertexInstanceID);
-
-                const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
-                const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
-                VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
+            const auto InUV1 = InMesh.getUV1()[InIndices[InIndexIndex]];
+            const auto UV1 = FVector2f(InUV1.x, 1.0f - InUV1.y);
+            VertexInstanceUVs.Set(NewVertexInstanceID, 0, UV1);
                 
-                const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
-                const auto UV4 = FVector2f(InUV4.x, InUV4.y);
-                VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
+            const auto InUV4 = InMesh.getUV4()[InIndices[InIndexIndex]];
+            const auto UV4 = FVector2f(InUV4.x, InUV4.y);
+            VertexInstanceUVs.Set(NewVertexInstanceID, 3, UV4);
 
-                UsedVertexIDs.Add(VertexID);
-            }
-
-            // 3頂点毎にPolygonを生成
-            TArray<FVertexInstanceID> VertexInstanceIDsCache;
-            VertexInstanceIDsCache.SetNumUninitialized(3);
-            TArray<FVector3f> TriangleVerticesCache;
-            TriangleVerticesCache.SetNumUninitialized(3);
-            for (int32 TriangleIndex = 0; TriangleIndex < (EndIndex - StartIndex + 1) / 3; ++TriangleIndex) {
-                FMemory::Memcpy(VertexInstanceIDsCache.GetData(), VertexInstanceIDs.GetData() + TriangleIndex * 3,
-                    sizeof(FVertexInstanceID) * 3);
-
-                if (InvertNormal) {
-                    // Invert winding order for triangles
-                    VertexInstanceIDsCache.Swap(0, 2);
-                }
-
-                const FPolygonID NewPolygonID = OutMeshDescription.
-                    CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
-                // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
-                OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
-
-                check(OutMeshDescription.GetPolygonPolygonGroup(NewPolygonID) == PolygonGroupID); //Polygon Group IDチェック
-            }
+            UsedVertexIDs.Add(VertexID);
         }
 
-        ComputeNormals(Attributes, InvertNormal);
+        // 3頂点毎にPolygonを生成
+        TArray<FVertexInstanceID> VertexInstanceIDsCache;
+        VertexInstanceIDsCache.SetNumUninitialized(3);
+        TArray<FVector3f> TriangleVerticesCache;
+        TriangleVerticesCache.SetNumUninitialized(3);
+        for (int32 TriangleIndex = 0; TriangleIndex < (EndIndex - StartIndex + 1) / 3; ++TriangleIndex) {
+            FMemory::Memcpy(VertexInstanceIDsCache.GetData(), VertexInstanceIDs.GetData() + TriangleIndex * 3,
+                sizeof(FVertexInstanceID) * 3);
 
-        //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
-        FElementIDRemappings ElementIDRemappings;
-        OutMeshDescription.Compact(ElementIDRemappings);
+            if (InvertNormal) {
+                // Invert winding order for triangles
+                VertexInstanceIDsCache.Swap(0, 2);
+            }
 
-        return OutMeshDescription.Polygons().Num() > 0;
+            const FPolygonID NewPolygonID = OutMeshDescription.
+                CreatePolygon(PolygonGroupID, VertexInstanceIDsCache);
+            // Fill in the polygon's Triangles - this won't actually do any polygon triangulation as we always give it triangles
+            OutMeshDescription.ComputePolygonTriangulation(NewPolygonID);
+
+            check(OutMeshDescription.GetPolygonPolygonGroup(NewPolygonID) == PolygonGroupID); //Polygon Group IDチェック
+        }
     }
 
-    UStaticMesh* CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name) {
-        const auto StaticMesh = NewObject<UStaticMesh>(InOuter, Name);
+    ComputeNormals(Attributes, InvertNormal);
 
-        StaticMesh->InitResources();
-        // make sure it has a new lighting guid
-        StaticMesh->SetLightingGuid();
+    //Compact the MeshDescription, if there was visibility mask or some bounding box clip, it need to be compacted so the sparse array are from 0 to n with no invalid data in between. 
+    FElementIDRemappings ElementIDRemappings;
+    OutMeshDescription.Compact(ElementIDRemappings);
 
-        // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
-        StaticMesh->SetLightMapResolution(64);
-        StaticMesh->SetLightMapCoordinateIndex(1);
+    return OutMeshDescription.Polygons().Num() > 0;
+}
+
+UStaticMesh* FPLATEAUMeshLoader::CreateStaticMesh(const plateau::polygonMesh::Mesh& InMesh, UObject* InOuter, FName Name) {
+    const auto StaticMesh = NewObject<UStaticMesh>(InOuter, Name);
+
+    StaticMesh->InitResources();
+    // make sure it has a new lighting guid
+    StaticMesh->SetLightingGuid();
+
+    // Set it to use textured lightmaps. Note that Build Lighting will do the error-checking (texcoordindex exists for all LODs, etc).
+    StaticMesh->SetLightMapResolution(64);
+    StaticMesh->SetLightMapCoordinateIndex(1);
 #if WITH_EDITOR
-        FStaticMeshSourceModel& SrcModel = StaticMesh->AddSourceModel();
-        /*Don't allow the engine to recalculate normals*/
-        SrcModel.BuildSettings.bRecomputeNormals = false;
-        SrcModel.BuildSettings.bRecomputeTangents = false;
-        SrcModel.BuildSettings.bRemoveDegenerates = false;
-        SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
-        SrcModel.BuildSettings.bUseFullPrecisionUVs = false;
-        SrcModel.BuildSettings.bBuildReversedIndexBuffer = false;
+    FStaticMeshSourceModel& SrcModel = StaticMesh->AddSourceModel();
+    /*Don't allow the engine to recalculate normals*/
+    SrcModel.BuildSettings.bRecomputeNormals = false;
+    SrcModel.BuildSettings.bRecomputeTangents = false;
+    SrcModel.BuildSettings.bRemoveDegenerates = false;
+    SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = false;
+    SrcModel.BuildSettings.bUseFullPrecisionUVs = false;
+    SrcModel.BuildSettings.bBuildReversedIndexBuffer = false;
 #endif
-        return StaticMesh;
-    }
+    return StaticMesh;
 }
 
-USceneComponent* FPLATEAUMeshLoader::FindChildComponentWithOriginalName(USceneComponent* ParentComponent, const FString& OriginalName) {
-    for (const auto& Component : ParentComponent->GetAttachChildren()) {
-        const auto TargetName = APLATEAUInstancedCityModel::GetOriginalComponentName(Component);
-        if (TargetName == OriginalName)
-            return Component;
-    }
-    return nullptr;
-}
-
-FString FPLATEAUMeshLoader::MakeUniqueGmlObjectName(AActor* Actor, UClass* Class, const FString& BaseName) {
-    // 元の名前の末尾に_{数値}がある場合元の名前が復元不可能になるため毎回ユニーク化
-    // ユニーク化後は{元の名前}__{数値}
-    auto Name = BaseName;
-    Name.AppendChar(TEXT('_'));
-    return MakeUniqueObjectName(Actor, Class, FName(Name)).ToString();
-}
 
 void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentComponent,
     const std::shared_ptr<plateau::polygonMesh::Model> Model,
@@ -324,7 +331,7 @@ void FPLATEAUMeshLoader::LoadModel(AActor* ModelActor, USceneComponent* ParentCo
     // 最大LOD以外の形状を非表示化
     FFunctionGraphTask::CreateAndDispatchWhenReady(
         [ParentComponent]() {
-            APLATEAUInstancedCityModel::FilterLowLods(ParentComponent);
+            FPLATEAUModelFiltering().FilterLowLods(ParentComponent);
         }, TStatId(), nullptr, ENamedThreads::GameThread)->Wait();
 }
 
@@ -347,9 +354,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     const plateau::polygonMesh::Mesh& InMesh,
     const FLoadInputData& LoadInputData,
     const std::shared_ptr<const citygml::CityModel>
-    CityModel, const std::string& InNodeName) {
+    CityModel, FNodeHierarchy NodeHier) {
     // コンポーネント作成
-    const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
+    const FString NodeName = NodeHier.NodeName;
     UStaticMesh* StaticMesh;
     UStaticMeshComponent* Component = nullptr;
     UStaticMeshComponent* ComponentRef = nullptr;
@@ -357,10 +364,10 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
     FMeshDescription* MeshDescription;
     {
         FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [this, &LoadInputData, &InNodeName, &InMesh, &CityModel, &Component, &Actor, &StaticMesh, &MeshDescription,
+            [this, &LoadInputData, &NodeHier, &InMesh, &CityModel, &Component, &Actor, &StaticMesh, &MeshDescription,
             &NodeName]() {
 
-                Component = GetStaticMeshComponentForCondition(Actor, NAME_None, InNodeName, InMesh, LoadInputData, CityModel);
+                Component = GetStaticMeshComponentForCondition(Actor, NAME_None, NodeHier, InMesh, LoadInputData, CityModel);
                 if (bAutomationTest) {
                     Component->Mobility = EComponentMobility::Movable;
                 }
@@ -416,43 +423,66 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
             UE_LOG(LogTemp, Error, TEXT("SubMesh/PolygonGroups size wrong => %s %s SubMesh: %d PolygonGroups: %d "), *ParentComponent.GetName(), *NodeName, SubMeshMaterialSets.Num(), MeshDescription->PolygonGroups().Num());
 
         const auto ComponentSetupTask = FFunctionGraphTask::CreateAndDispatchWhenReady(
-            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &ComponentRef, &LoadInputData, NodeName] {
-                for (const auto& SubMeshValue : SubMeshMaterialSets) {
-                    UMaterialInstanceDynamic** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
-                    if (SharedMatPtr == nullptr) {
+            [&SubMeshMaterialSets, this, &Component, &StaticMesh, &MeshDescription, &Actor, &ParentComponent, &
+                ComponentRef, &LoadInputData, &NodeHier]
+            {
+                for (const auto& SubMeshValue : SubMeshMaterialSets)
+                {
+                    UMaterialInterface** SharedMatPtr = CachedMaterials.Find(SubMeshValue);
+                    if (SharedMatPtr == nullptr)
+                    {
                         // マテリアル作成
-                        UMaterialInstanceDynamic* DynMaterial;
-                        FString TexturePath = SubMeshValue.TexturePath;
-                        UTexture2D* Texture;
-                        if (TexturePath.IsEmpty()) {
-                            Texture = nullptr;
+                        UMaterialInterface* MaterialInterface;
+
+                        // 変換前のマテリアルを使う箇所で、変換前のマテリアル情報があればそれを利用
+                        int gameMatID = SubMeshValue.GameMaterialID;
+                        if (gameMatID >= 0 &&
+                            gameMatID < BeforeConvertCachedMaterials.Num())
+                        {
+                            MaterialInterface = BeforeConvertCachedMaterials.Get(gameMatID);
                         }
-                        else {
-                            const bool TextureInCache = PathToTexture.Contains(TexturePath);
-                            if (TextureInCache) // テクスチャをすでにロード済みの場合、使い回します。
+                        // 新規マテリアル作成
+                        else 
+                        {
+                            FString TexturePath = SubMeshValue.TexturePath;
+                            UTexture2D* Texture;
+                            if (TexturePath.IsEmpty())
                             {
-                                Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
+                                Texture = nullptr;
                             }
-                            else // テクスチャ未ロードの場合、ロードします。
+                            else
                             {
-                                Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
-                                // なければnullptrを返します。
-                                PathToTexture.Add(TexturePath, Texture);
+                                const bool TextureInCache = PathToTexture.Contains(TexturePath);
+                                if (TextureInCache) // テクスチャをすでにロード済みの場合、使い回します。
+                                {
+                                    Texture = PathToTexture[TexturePath]; // nullptrの場合もあります。
+                                }
+                                else // テクスチャ未ロードの場合、ロードします。
+                                {
+                                    Texture = FPLATEAUTextureLoader::Load(TexturePath, OverwriteTexture());
+                                    // なければnullptrを返します。
+                                    PathToTexture.Add(TexturePath, Texture);
+                                }
+                            }
+
+                            MaterialInterface = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture,
+                                                                      NodeHier);
+                            if (auto DynMaterial = Cast<UMaterialInstanceDynamic>(MaterialInterface))
+                            {
+                                //Textureが存在する場合
+                                if (Texture != nullptr)
+                                    DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
+
+                                DynMaterial->TwoSided = false;
                             }
                         }
-
-                        DynMaterial = GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
-
-                        //Textureが存在する場合
-                        if (Texture != nullptr)
-                            DynMaterial->SetTextureParameterValue("Texture", Cast<UTexture>(Texture));
-
-                        DynMaterial->TwoSided = false;
-                        StaticMesh->AddMaterial(DynMaterial);
+                        
+                        
+                        StaticMesh->AddMaterial(MaterialInterface);
 
                         if (UseCachedMaterial()) {
                             //Materialをキャッシュに保存
-                            CachedMaterials.Add(SubMeshValue, DynMaterial);
+                            CachedMaterials.Add(SubMeshValue, MaterialInterface);
                         }
 
                         //SubMeshのPolygonGroupIDとMeshDescriptionのPolygonGroupIDの整合性チェック
@@ -472,7 +502,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                 // 名前設定、ヒエラルキー設定など
                 Component->DepthPriorityGroup = SDPG_World;
                 const FString NewUniqueName = 
-                    MakeUniqueGmlObjectName(&Actor, UPLATEAUCityObjectGroup::StaticClass(),
+                    FPLATEAUComponentUtil::MakeUniqueGmlObjectName(&Actor, UPLATEAUCityObjectGroup::StaticClass(),
                     StaticMesh->GetName());
 
                 Component->Rename(*NewUniqueName, nullptr, REN_DontCreateRedirectors);
@@ -490,19 +520,19 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
         return ComponentRef;
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName, 
+UStaticMeshComponent* FPLATEAUMeshLoader::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
     const plateau::polygonMesh::Mesh& InMesh, 
     const FLoadInputData& LoadInputData, const std::shared_ptr <const citygml::CityModel> CityModel) {
     if (LoadInputData.bIncludeAttrInfo) {
         const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
-        PLATEAUCityObjectGroup->SerializeCityObject(InNodeName, InMesh, LoadInputData, CityModel);
+        PLATEAUCityObjectGroup->SerializeCityObject(NodeHier.GetNameAsStandardString(), InMesh, LoadInputData, CityModel);
         return PLATEAUCityObjectGroup;
     }
-    //return NewObject<UStaticMeshComponent>(&Actor, NAME_None);
+    //属性情報を追加しない場合は、UPLATEAUStaticMeshComponentとする
     return NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
+UMaterialInterface* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) {
 
     UMaterialInstanceDynamic* DynMaterial = nullptr;
     if (SubMeshValue.hasMaterial) {
@@ -583,20 +613,19 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
         const FString DesiredName = FString(UTF8_TO_TCHAR(Node.getName().c_str()));
         const FGraphEventRef Task = FFunctionGraphTask::CreateAndDispatchWhenReady([&, DesiredName] {
             // CityObjectがある場合はUPLATEAUCityObjectGroupとする
-            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) {
+            if (CityObject != nullptr && LoadInputData.bIncludeAttrInfo) { 
                 StaticClass = UPLATEAUCityObjectGroup::StaticClass();
                 const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
                 PLATEAUCityObjectGroup->SerializeCityObject(Node, CityObject, LoadInputData.ExtractOptions.mesh_granularity);
                 Comp = PLATEAUCityObjectGroup;
             }
             else {
-                //StaticClass = UStaticMeshComponent::StaticClass();
-                //Comp = NewObject<UStaticMeshComponent>(&Actor, NAME_None);
-                StaticClass = UPLATEAUStaticMeshComponent::StaticClass();
-                Comp = NewObject<UPLATEAUStaticMeshComponent>(&Actor, NAME_None);
+                // CityObjectがない場合はUPLATEAUSceneComponentとする
+                StaticClass = UPLATEAUSceneComponent::StaticClass();
+                Comp = NewObject<UPLATEAUSceneComponent>(&Actor, NAME_None);
             }
 
-            const FString NewUniqueName = MakeUniqueGmlObjectName(
+            const FString NewUniqueName = FPLATEAUComponentUtil::MakeUniqueGmlObjectName(
                 &Actor, UPLATEAUCityObjectGroup::StaticClass(),
                 DesiredName);
 
@@ -623,7 +652,7 @@ USceneComponent* FPLATEAUMeshLoader::LoadNode(USceneComponent* ParentComponent,
         return nullptr;
 
     return CreateStaticMeshComponent(Actor, *ParentComponent, *Node.getMesh(), LoadInputData, CityModel,
-        Node.getName());
+        FNodeHierarchy(Node));
 }
 
 void FPLATEAUMeshLoader::ModifyMeshDescription(FMeshDescription& MeshDescription) {

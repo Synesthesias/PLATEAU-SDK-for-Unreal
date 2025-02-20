@@ -3,17 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PLATEAUCachedMaterialArray.h"
 #include "PLATEAUInstancedCityModel.h"
 #include "PLATEAUMeshLoaderForReconstruct.h"
+#include "Util/PLATEAUReconstructUtil.h"
 
-using ConvertGranularity = plateau::granularityConvert::ConvertGranularity;
-
+//結合分離処理
 class PLATEAURUNTIME_API FPLATEAUModelReconstruct {
 
 public:
     FPLATEAUModelReconstruct();
     FPLATEAUModelReconstruct(APLATEAUInstancedCityModel* Actor, const ConvertGranularity Granularity);
 
+    virtual ~FPLATEAUModelReconstruct() = default;
     /**
      * @brief ComponentのChildrenからUPLATEAUCityObjectGroupを探してリストに追加します
      */
@@ -28,7 +30,7 @@ public:
      * @brief 選択されたComponentの結合・分割処理用のModelを生成します
      * @param
      */
-    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects);
+    virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelForReconstruct(const TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects);
 
     /**
      * @brief 生成されたModelからStaticMeshコンポーネントを再生成します
@@ -36,10 +38,7 @@ public:
      */
     virtual TArray<USceneComponent*> ReconstructFromConvertedModel(std::shared_ptr<plateau::polygonMesh::Model> Model);
 
-    /**
-     * @brief EPLATEAUMeshGranularityをplateau::granularityConvert::ConvertGranularityに変換します
-     */
-    static ConvertGranularity GetConvertGranularityFromReconstructType(const EPLATEAUMeshGranularity ReconstructType);
+    virtual void ComposeCachedMaterialFromTarget(const TArray<UPLATEAUCityObjectGroup*>& Target);
 
 protected:
     
@@ -53,7 +52,7 @@ protected:
      * @brief CityObjectのChildrenのidリストを返します
      * @param
      */
-    void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
+    //void GetChildrenGmlIds(const FPLATEAUCityObject CityObj, TSet<FString>& IdList);
 
     /**
      * @brief 指定したMeshLoaderで、生成されたModelからStaticMeshコンポーネントを再生成します
@@ -62,5 +61,9 @@ protected:
     TArray<USceneComponent*> ReconstructFromConvertedModelWithMeshLoader(FPLATEAUMeshLoaderForReconstruct& MeshLoader, std::shared_ptr<plateau::polygonMesh::Model> Model);
 
     virtual std::shared_ptr<plateau::polygonMesh::Model> ConvertModelWithGranularity(const TArray<UPLATEAUCityObjectGroup*> TargetCityObjects, const ConvertGranularity Granularity);
-
+    
+    /**
+     * @brief 変換後にマテリアルを復元する用です
+     */
+    FPLATEAUCachedMaterialArray CachedMaterials;
 };

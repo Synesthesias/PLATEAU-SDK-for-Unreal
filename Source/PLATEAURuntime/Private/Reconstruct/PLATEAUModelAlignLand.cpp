@@ -5,29 +5,12 @@
 #include <PLATEAUMeshExporter.h>
 #include <PLATEAUExportSettings.h>
 #include <plateau/height_map_generator/heightmap_generator.h>
+#include "Util/PLATEAUReconstructUtil.h"
+#include "Util/PLATEAUComponentUtil.h"
 
 FPLATEAUModelAlignLand::FPLATEAUModelAlignLand():heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU) {}
 FPLATEAUModelAlignLand::FPLATEAUModelAlignLand(APLATEAUInstancedCityModel* Actor) :heightmapAligner(HeightOffset, plateau::geometry::CoordinateSystem::ESU) {
     CityModelActor = Actor;
-}
-
-TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::FilterLod3RoadComponents(APLATEAUInstancedCityModel* Actor, TArray<UPLATEAUCityObjectGroup*> TargetComponents) {
-    TArray<UPLATEAUCityObjectGroup*> FilterdList;
-        for (auto Comp : TargetComponents) {
-        auto PackageComps = Actor->GetComponentsByPackage(EPLATEAUCityModelPackage::Road);
-        for (auto PComp : PackageComps) {
-            TArray<USceneComponent*> Children;
-            ((USceneComponent*)PComp)->GetChildrenComponents(true, Children);
-            if (Children.Contains(Comp)) {
-                auto Parent = Comp->GetAttachParent();
-                int Lod = APLATEAUInstancedCityModel::ParseLodComponent(Parent);
-                if (Lod >= 3) {
-                    FilterdList.Add(Comp);
-                }
-            }
-        }
-    }
-    return FilterdList;
 }
 
 TArray<UPLATEAUCityObjectGroup*> FPLATEAUModelAlignLand::GetTargetCityObjectsForAlignLand() {
@@ -79,19 +62,18 @@ TArray<USceneComponent*> FPLATEAUModelAlignLand::Align(const TArray<UPLATEAUCity
     heightmapAligner.align(*Model, MaxEdgeLength);
 
     // 元コンポーネントを覚えておきます。
-    const auto& ComponentsMap = FPLATEAUMeshLoaderCloneComponent::CreateComponentsMap(TargetCityObjects);
+    const auto& ComponentsMap = FPLATEAUComponentUtil::CreateComponentsMapWithNodePath(TargetCityObjects);
 
-    FPLATEAUMeshLoaderCloneComponent MeshLoader(false);
-    for (int i = 0; i < Model->getRootNodeCount(); i++) {
-        MeshLoader.ReloadComponentFromNode(Model->getRootNodeAt(i), ComponentsMap, *CityModelActor);
-    }
+    FPLATEAUMeshLoaderCloneComponent MeshLoader(false, FPLATEAUCachedMaterialArray());
+
+    MeshLoader.ReloadComponentFromModel(Model, ComponentsMap, *CityModelActor);
     return MeshLoader.GetLastCreatedComponents();
 }
 
 TArray<HeightmapCreationResult> FPLATEAUModelAlignLand::UpdateHeightMapForLod3Road(TArray<UPLATEAUCityObjectGroup*>& TargetCityObjects) {
 
     TArray<UPLATEAUCityObjectGroup*> InvertedTargetCityObjects;
-    InvertedTargetCityObjects = FilterLod3RoadComponents(CityModelActor, TargetCityObjects);
+    InvertedTargetCityObjects = FPLATEAUReconstructUtil::FilterComponentsByPackageAndLod(CityModelActor, TargetCityObjects, EPLATEAUCityModelPackage::Road, 3, true);
     if (InvertedTargetCityObjects.Num() <= 0)
         return HeightmapCreationResults;
 
@@ -120,7 +102,7 @@ TArray<HeightmapCreationResult> FPLATEAUModelAlignLand::UpdateHeightMapForLod3Ro
         NewResults.Add(NewResult);
 
         // Heightmap Image Output 
-        FPLATEAUMeshLoaderForLandscape::SaveHeightmapImage(LandscapeParam.HeightmapImageOutput, 
+        FPLATEAUReconstructUtil::SaveHeightmapImage(LandscapeParam.HeightmapImageOutput,
             "HM_ALN_" + NewResult.NodeName , 
             LandscapeParam.TextureWidth, LandscapeParam.TextureHeight, NewResult.Data->data());
     }

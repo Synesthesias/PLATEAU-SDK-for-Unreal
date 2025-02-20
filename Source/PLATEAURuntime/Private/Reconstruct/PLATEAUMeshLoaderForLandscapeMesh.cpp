@@ -4,6 +4,7 @@
 #include "Reconstruct/PLATEAUMeshLoaderForLandscapeMesh.h"
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
+#include "Util/PLATEAUComponentUtil.h"
 #include "plateau/polygon_mesh/mesh_extractor.h"
 #include <plateau/height_map_generator/heightmap_generator.h>
 #include "MeshDescription.h"
@@ -29,14 +30,13 @@ void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, 
         plateau::geometry::CoordinateSystem::ESU, Min, Max, MinUV, MaxUV, false);
 
     auto ParentComponent = Actor.GetRootComponent();
-    const auto BaseComponents = FindComponentsByName(&Actor, NodeName);
+    const auto BaseComponents = FPLATEAUComponentUtil::FindComponentsByName(&Actor, NodeName);
     if (BaseComponents.Num() > 0) {
         const auto BaseComponent = BaseComponents[0];
         if (BaseComponent->IsA<UStaticMeshComponent>()) {
 
             const auto BaseStaticMeshComponent = (UStaticMeshComponent*)BaseComponent;
-            if (BaseStaticMeshComponent->GetMaterial(0)->IsA<UMaterialInstanceDynamic>())
-                ReplaceMaterial = (UMaterialInstanceDynamic*)BaseStaticMeshComponent->GetMaterial(0);
+            ReplaceMaterial = BaseStaticMeshComponent->GetMaterial(0);
         }
 
         TArray<USceneComponent*> Parents;
@@ -56,7 +56,7 @@ void FPLATEAUMeshLoaderForLandscapeMesh::CreateMeshFromHeightMap(AActor& Actor, 
     };
 
     FString ComponentName = FString::Format(*FString(TEXT("Mesh_{0}")), { NodeName });
-    UStaticMeshComponent* Component = CreateStaticMeshComponent(Actor, *ParentComponent, mesh, LoadInputData, nullptr, TCHAR_TO_UTF8(*ComponentName));
+    UStaticMeshComponent* Component = CreateStaticMeshComponent(Actor, *ParentComponent, mesh, LoadInputData, nullptr, FNodeHierarchy(ComponentName));
 
     Component->Mobility = EComponentMobility::Movable;
     Actor.AddInstanceComponent(Component);
@@ -87,16 +87,16 @@ bool FPLATEAUMeshLoaderForLandscapeMesh::MergeTriangles() {
     return true;
 }
 
-UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, const std::string& InNodeName,
+UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
     const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData,
     const std::shared_ptr <const citygml::CityModel> CityModel) {
 
-    const FString NodeName = UTF8_TO_TCHAR(InNodeName.c_str());
+    const FString NodeName = NodeHier.NodeName;
     const auto& PLATEAUCityObjectGroup = NewObject<UPLATEAUCityObjectGroup>(&Actor, NAME_None);
 
     // Originalコンポーネントの属性をそのまま利用
     const FString ReplacedName = NodeName.Replace(*FString("Mesh_"), *FString());
-    const auto& OriginalComponent = GetOriginalComponent(&Actor, ReplacedName);
+    const auto& OriginalComponent = FPLATEAUComponentUtil::GetCityObjectGroupByName(&Actor, ReplacedName);
     if (OriginalComponent) {
         PLATEAUCityObjectGroup->SerializedCityObjects = OriginalComponent->SerializedCityObjects;
         PLATEAUCityObjectGroup->OutsideChildren = OriginalComponent->OutsideChildren;
@@ -106,11 +106,11 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForLandscapeMesh::GetStaticMeshComponent
     return PLATEAUCityObjectGroup;
 }
 
-UMaterialInstanceDynamic* FPLATEAUMeshLoaderForLandscapeMesh::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component, const FLoadInputData& LoadInputData, UTexture2D* Texture, FString NodeName) {
-
-    if (ReplaceMaterial)
+UMaterialInterface* FPLATEAUMeshLoaderForLandscapeMesh::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component,
+    const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) {
+    if (ReplaceMaterial != nullptr)
         return ReplaceMaterial;
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeName);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
 }
 
 void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription& MeshDescription) {
@@ -124,5 +124,6 @@ void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription&
     }
 
     FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
-    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
+    FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, 
+        EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);
 }

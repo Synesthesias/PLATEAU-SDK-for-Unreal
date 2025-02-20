@@ -65,6 +65,7 @@ void UPLATEAUSDKEditorUtilityWidget::SetEnableSelectionChangedEvent(const ETopMe
     case ETopMenuPanel::ModelAdjustmentPanel:
     case ETopMenuPanel::ExportPanel:
     case ETopMenuPanel::AttrInfoPanel:
+    case ETopMenuPanel::RoadAdjustmentPanel:
         if (!SelectionChangedEventHandle.IsValid()) {
             SelectionChangedEventHandle = USelection::SelectionChangedEvent.AddUObject(this, &UPLATEAUSDKEditorUtilityWidget::OnSelectionChanged);
         }

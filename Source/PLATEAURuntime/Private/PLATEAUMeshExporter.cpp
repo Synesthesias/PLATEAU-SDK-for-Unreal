@@ -16,6 +16,7 @@
 #include "Engine/StaticMesh.h"
 #include "StaticMeshResources.h"
 #include "UObject/UObjectBaseUtility.h"
+#include "Util/PLATEAUComponentUtil.h"
 #include "Algo/Reverse.h"
 
 #if WITH_EDITOR
@@ -24,13 +25,12 @@
 #include "EditorFramework/AssetImportData.h"
 #endif
 
-using namespace plateau::polygonMesh;
 
 namespace {
     /**
      * @brief NodeのChildに同名が存在する場合はindexを返します。ない場合は-1を返します。
      */
-    int GetChildIndex(FString name, plateau::polygonMesh::Node* Node) {
+    int GetChildIndex(const FString& name, plateau::polygonMesh::Node* Node) {
         int num = Node->getChildCount();
         for (int i = 0; i < num; i++) {
             if (Node->getChildAt(i).getName() == TCHAR_TO_UTF8(*name))
@@ -53,15 +53,18 @@ namespace {
     /**
      * @brief FPLATEAUCityObjectからCityObjectIndexを取得してCityObjectListに追加します。
      */
-    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, CityObjectList& cityObjList) {
-        CityObjectIndex cityObjIdx;
+    void SetCityObjectIndex(const FPLATEAUCityObject& cityObj, plateau::polygonMesh::CityObjectList& cityObjList) {
+        
+        // 注: 名前空間plateau::polygonMeshをusingで省略しないこと。Packageビルドで問題となる。
+        plateau::polygonMesh::CityObjectIndex cityObjIdx;
+        
         cityObjIdx.primary_index = cityObj.CityObjectIndex.PrimaryIndex;
         cityObjIdx.atomic_index = cityObj.CityObjectIndex.AtomicIndex;
         cityObjList.add(cityObjIdx, TCHAR_TO_UTF8(*cityObj.GmlID));
     }
 }
 
-bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
+bool FPLATEAUMeshExporter::Export(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     ModelNames.Empty();
     TargetActor = ModelActor;
     switch (Option.FileFormat) {
@@ -75,6 +78,7 @@ bool FPLATEAUMeshExporter::Export(const FString ExportPath, APLATEAUInstancedCit
         return false;
     }
 }
+
 
 bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstancedCityModel* ModelActor, const FPLATEAUMeshExportOptions& Option) {
     plateau::meshWriter::ObjWriter Writer;
@@ -161,7 +165,7 @@ TArray<std::shared_ptr<plateau::polygonMesh::Model>> FPLATEAUMeshExporter::Creat
         if (Components[i]->GetName().Contains("BillboardComponent")) continue;
 
         ModelArray.Add(CreateModel(Components[i], Option));
-        ModelNames.Add(APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i]));
+        ModelNames.Add(FPLATEAUComponentUtil::GetOriginalComponentName(Components[i]));
     }
     return ModelArray;
 }
@@ -170,7 +174,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModel(U
     auto OutModel = plateau::polygonMesh::Model::createModel();
     const auto Components = ModelRootComponent->GetAttachChildren();
     for (int i = 0; i < Components.Num(); i++) {
-        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(Components[i])));
+        auto& Node = OutModel->addEmptyNode(TCHAR_TO_UTF8(*FPLATEAUComponentUtil::GetOriginalComponentName(Components[i])));
         CreateNode(Node, Components[i], Option);
     }
     return OutModel;
@@ -261,13 +265,12 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         //マテリアルがテクスチャを持っているようなら取得、設定によってはスキップ
         FString TextureFilePath = FString("");
 
-        //マテリアル分け時のMaterialID
-        float MaterialID = -1;
+        auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
         if (Option.bExportTexture) {
             
-            if (StaticMeshComponent->GetMaterial(k) != nullptr) {
-                auto MaterialInterface =  StaticMeshComponent->GetMaterial(k);
-                const auto  MaterialInstance = (UMaterialInstance*)MaterialInterface;
+            if (MaterialInterface != nullptr) {
+                
+                const auto  MaterialInstance = Cast<UMaterialInstance>(MaterialInterface);
                 if (MaterialInstance != nullptr && MaterialInstance->TextureParameterValues.Num() > 0) {
 
                     FMaterialParameterMetadata MetaData;
@@ -278,7 +281,7 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                         if (TextureSourceFiles.Num() == 0) {
                             UE_LOG(LogTemp, Error, TEXT("SourceFilePath is missing in AssetImportData: %s"), *Texture->GetName());
                             // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, MaterialID);
+                            OutMesh.addSubMesh("", nullptr, FirstIndex, EndIndex, CachedMaterials.Add(MaterialInterface));
                             continue;
                         }
 
@@ -294,7 +297,8 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
         std::string TextureFilePathStr = TCHAR_TO_UTF8(*TextureFilePath);
 
         // TODO マテリアル対応、下のnullptrをマテリアルに置き換える
-        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, MaterialID);
+        int gameMaterialID = MaterialInterface == nullptr ? -1 : CachedMaterials.Add(MaterialInterface);
+        OutMesh.addSubMesh(TextureFilePathStr, nullptr, FirstIndex, EndIndex, gameMaterialID);
     }
 
     OutMesh.addVerticesList(Vertices);
@@ -333,7 +337,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             auto Mesh = plateau::polygonMesh::Mesh();
             CreateMesh(Mesh, comp, Option);
             auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
-            CityObjectList cityObjList;
+            plateau::polygonMesh::CityObjectList cityObjList;
             for (auto cityObj : comp->GetAllRootCityObjects()) {
                 SetCityObjectIndex(cityObj, cityObjList);
                 for (auto child : cityObj.Children) {
@@ -345,7 +349,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
         }
         else  {
             auto LodComp = Parents[LodCompIndex];
-            LodName = APLATEAUInstancedCityModel::GetOriginalComponentName(LodComp);
+            LodName = FPLATEAUComponentUtil::GetOriginalComponentName(LodComp);
             RootName = LodComp->GetAttachParent()->GetName();
             Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
 
@@ -363,18 +367,18 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             if (Parents.Num() > 0) {    //最小地物の場合
                 Algo::Reverse(Parents);
                 for (auto p : Parents) {
-                    int ParentIndex = GetChildIndex(APLATEAUInstancedCityModel::GetOriginalComponentName(p), Parent);
+                    int ParentIndex = GetChildIndex(FPLATEAUComponentUtil::GetOriginalComponentName(p), Parent);
                     Parent = (ParentIndex == -1) ?
-                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(p))) :
+                        &Parent->addEmptyChildNode(TCHAR_TO_UTF8(*FPLATEAUComponentUtil::GetOriginalComponentName(p))) :
                         &Parent->getChildAt(ParentIndex);
                 }
             }
-            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*APLATEAUInstancedCityModel::GetOriginalComponentName(comp)));
+            auto& Node = Parent->addEmptyChildNode(TCHAR_TO_UTF8(*FPLATEAUComponentUtil::GetOriginalComponentName(comp)));
             auto Mesh = plateau::polygonMesh::Mesh();
             CreateMesh(Mesh, comp, Option);
             auto MeshPtr = std::make_unique<plateau::polygonMesh::Mesh>(Mesh);
 
-            CityObjectList cityObjList;
+            plateau::polygonMesh::CityObjectList cityObjList;
             for (auto cityObj : comp->GetAllRootCityObjects()) {
                 SetCityObjectIndex(cityObj, cityObjList);
                 for (auto child : cityObj.Children) {
@@ -385,5 +389,6 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             Node.setMesh(std::move(MeshPtr));
         }
     }
+    OutModel->assignNodeHierarchy();
     return OutModel;
 }
