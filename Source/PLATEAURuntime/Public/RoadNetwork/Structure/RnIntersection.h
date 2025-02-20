@@ -170,7 +170,7 @@ UCLASS(ClassGroup = (Custom), BlueprintType, Blueprintable, meta = (BlueprintSpa
 class PLATEAURUNTIME_API URnIntersection : public URnRoadBase {
     GENERATED_BODY()
 public:
-    using Super = URnRoadBase;
+    //using Super = URnRoadBase;
 public:
     URnIntersection();
 

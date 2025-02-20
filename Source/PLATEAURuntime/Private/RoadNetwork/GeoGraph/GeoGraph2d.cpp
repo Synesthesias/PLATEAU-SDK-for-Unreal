@@ -118,12 +118,12 @@ TArray<int> FGeoGraph2D::FindMidEdge(const TArray<FVector2D>& vertices, float to
         for(auto i = 0; i < 2; ++i)
         {
             auto& info = infos[i];
-            if (stop[i] || startIndex > info.now || info.now + info.d > endIndex)
+            const auto Index = info.now + info.d;
+            if (stop[i] || Index < startIndex || endIndex < Index)
                 continue;
             auto e0 = edges[edgeBaseIndex];
-            auto e1 = edges[info.now + info.d];
-
-            es.Add({ i, info.now + info.d, FPLATEAUVector2DEx::Angle(e0.GetDirection(), e1.GetDirection()) });
+            auto e1 = edges[Index];
+            es.Add({ i, Index, FPLATEAUVector2DEx::Angle(e0.GetDirection(), e1.GetDirection()) });
         }
         if (es.IsEmpty())
             break;

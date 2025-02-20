@@ -17,13 +17,13 @@
 
 APLATEAUReproducedRoad::APLATEAUReproducedRoad() {
     CreateLineTypeMap();
-
     auto SceneRootComponent = CreateDefaultSubobject<UPLATEAUSceneComponent>(USceneComponent::GetDefaultSceneRootVariableName());
     SceneRootComponent->SetMobility(EComponentMobility::Static);
-    SceneRootComponent->RegisterComponent();
+    // SceneRootComponent->RegisterComponent();
     this->AddInstanceComponent(SceneRootComponent);
     this->SetRootComponent(SceneRootComponent);
 }
+
 
 void APLATEAUReproducedRoad::CreateLineTypeMap() {
     const TCHAR* LineMeshPath = TEXT("/PLATEAU-SDK-for-Unreal/RoadNetwork/Meshes/simple_line");
