@@ -6,6 +6,6 @@
 
 struct FRay2D;
 
-inline bool FPLATEAURay2DEx::IsPointOnLeftSide(const FRay2D& Self, const FVector2D Point) {
+bool FPLATEAURay2DEx::IsPointOnLeftSide(const FRay2D& Self, const FVector2D Point) {
     return FPLATEAUVector2DEx::IsPointOnLeftSide(Self.Direction, Point - Self.Origin);
 }
