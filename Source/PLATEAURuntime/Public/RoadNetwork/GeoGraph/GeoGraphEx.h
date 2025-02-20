@@ -60,13 +60,13 @@ public:
             }
 
             Edge<InnerValueType> operator*() const {
-                auto Get = [&](int I) -> InnerValueType
+                auto Get = [&](int I) -> int32
                 {
                     if (I == Vertices.Num())
-                        return Vertices[0];
-                    return Vertices[I];
+                        return 0;
+                    return I;
                 };
-                return Edge<InnerValueType>(Get(It), Get(NextIt));
+                return Edge<InnerValueType>(Vertices[Get(It)], Vertices[Get(NextIt)]);
             }
 
             bool operator==(const Iterator& Other) const {
@@ -126,15 +126,15 @@ public:
     static TArray<FLineSegment3D> GetEdgeSegments(const TArray<FVector>& Vertices, bool bIsLoop)
     {
         TArray<FLineSegment3D> Segments;
-        for (auto&& Edge : GetEdges(Vertices, bIsLoop)) {
+        for (auto Edge : GetEdges(Vertices, bIsLoop)) {
             Segments.Add(FLineSegment3D(Edge.P0, Edge.P1));
         }
         return Segments;    
     }
 
     static TArray<FLineSegment2D> GetEdgeSegments(const TArray<FVector2D>& Vertices, bool bIsLoop) {
-        TArray<FLineSegment2D> Segments;
-        for (auto&& Edge : GetEdges(Vertices, bIsLoop)) {
+        TArray<FLineSegment2D> Segments = TArray<FLineSegment2D>();
+        for (auto Edge : GetEdges(Vertices, bIsLoop)) {
             Segments.Add(FLineSegment2D(Edge.P0, Edge.P1));
         }
         return Segments;
