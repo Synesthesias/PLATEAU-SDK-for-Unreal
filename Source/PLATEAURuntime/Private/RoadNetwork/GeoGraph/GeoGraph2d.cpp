@@ -118,7 +118,7 @@ TArray<int> FGeoGraph2D::FindMidEdge(const TArray<FVector2D>& vertices, float to
         for(auto i = 0; i < 2; ++i)
         {
             auto& info = infos[i];
-            if (stop[i] || startIndex > info.now || info.now + info.d > endIndex || info.now + info.d < 0)
+            if (stop[i] || startIndex > (info.now + info.d) || (info.now + info.d) > endIndex)
                 continue;
             auto e0 = edges[edgeBaseIndex];
             auto e1 = edges[info.now + info.d];
