@@ -13,7 +13,7 @@ public:
     template<class T>
     struct Edge
     {
-    public:
+    public:        
         Edge(const T& P0, const T& P1)
             : P0(P0)
             , P1(P1) {
@@ -22,6 +22,11 @@ public:
         const T& P1;    
     };
 
+    /*
+     * 頂点を表す配列Arrに対して
+     * (V[0], V[1]), (V[1], V[2])...(V[N-2], V[N-1])のペアを返すイテレータ.
+     * isLoop=trueの時は最後に(V[N-1], V[0])も返る
+     */
     template<class T>
     class EdgeEnumerator
     {
@@ -31,46 +36,40 @@ public:
         class Iterator
         {
         public:
-            Iterator(const TArray<T>& vertices, bool isLoop, int it, int nextIt)
-            : Vertices(vertices)
-            , IsLoop(isLoop)
-            , It(it)
-            , NextIt(nextIt)
+            Iterator(const TArray<T>& InVertices, const int InIndex)
+            : Vertices(InVertices)
+            , Index(InIndex)
             { }
 
+            // 前置++
             Iterator& operator++()
             {
                 // 最後まで行ったらループする
-                if (It == Vertices.Num())
-                    It = 0;
+                if (Index == Vertices.Num())
+                    Index = 0;
                 else
-                    ++It;
+                    ++Index;
 
-                if (NextIt == Vertices.Num())
-                    NextIt = 0;
-                else
-                    ++NextIt;
                 return *this;
             }
 
-            Iterator& operator++(int) {
+            // 後置++
+            Iterator operator++(int) {
                 Iterator Temp = *this;
-                ++It;
+                this->operator++();
                 return Temp;
             }
 
+
             Edge<InnerValueType> operator*() const {
-                auto Get = [&](int I) -> int32
-                {
-                    if (I == Vertices.Num())
-                        return 0;
-                    return I;
-                };
-                return Edge<InnerValueType>(Vertices[Get(It)], Vertices[Get(NextIt)]);
+                // インデックスが最後ならループさせる処理
+                const auto I0 = Index % Vertices.Num();
+                const auto I1 = (Index + 1) % Vertices.Num();
+                return Edge<InnerValueType>(Vertices[I0], Vertices[I1]);
             }
 
             bool operator==(const Iterator& Other) const {
-                return It == Other.It && NextIt == Other.NextIt;
+                return Index == Other.Index;
             }
 
             bool operator!=(const Iterator& Other) const {
@@ -78,36 +77,59 @@ public:
             }
         private:
             const TArray<T>& Vertices;
-            bool IsLoop;
-            int It;
-            int NextIt;
+            // 0, 1, 2...N-1, N, 0でループする(ループ判定のために最後はNにはなる)
+            int32 Index;
         };
 
     public:
-        EdgeEnumerator(const TArray<T>& vertices, bool isLoop)
-        : IsLoop(isLoop)
-        , Vertices(vertices)
+        EdgeEnumerator(const TArray<T>& InVertices, bool InIsLoop)
+        : IsLoop(InIsLoop)
+        , Vertices(InVertices)
         {}
 
         Iterator begin() const
         {
             // 要素が0の場合空のイテレータを返す
-            if (Vertices.Num() == 0 || Vertices.Num() == 1)
-                return Iterator(Vertices, IsLoop, Vertices.Num(), Vertices.Num());
+            if (IsEmpty())
+                return EmptyIterator();
 
-            return Iterator(Vertices, IsLoop, 0, 1);
+            return Iterator(Vertices, 0);
         }
 
         Iterator end() const
         {
             // 要素が0の場合空のイテレータを返す
-            if (Vertices.Num() == 0 || Vertices.Num() == 1)
-                return Iterator(Vertices, IsLoop, Vertices.Num(), Vertices.Num());
+            if (IsEmpty())
+                return EmptyIterator();
 
             if(IsLoop)
-                return Iterator(Vertices, IsLoop, Vertices.Num(), 0);
+                return Iterator(Vertices, Vertices.Num());
 
-            return Iterator(Vertices, IsLoop, Vertices.Num() - 1, Vertices.Num());
+            return Iterator(Vertices, Vertices.Num() - 1);
+        }
+
+        /*
+         * 配列に変換する
+         */
+        TArray<Edge<T>> ToArray() const {
+            TArray<Edge<T>> Result;
+            for(auto It = begin(); It != end(); ++It)
+            {
+                Result.Add(*It);                
+            }
+            return Result;
+        }
+
+    private:
+        // Edgeが作れない
+        bool IsEmpty() const
+        {
+            return Vertices.Num() <= 1;
+        }
+
+        Iterator EmptyIterator() const
+        {
+            return Iterator(Vertices, Vertices.Num());
         }
 
         const bool IsLoop;
