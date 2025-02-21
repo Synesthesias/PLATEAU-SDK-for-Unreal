@@ -20,6 +20,7 @@
 #include "Util/PLATEAUComponentUtil.h"
 #include "Util/PLATEAUGmlUtil.h"
 #include "PLATEAUModelFiltering.h"
+#include "Math/UnrealMathUtility.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"

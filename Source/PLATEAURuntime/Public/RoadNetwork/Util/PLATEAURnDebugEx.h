@@ -9,10 +9,10 @@ struct PLATEAURUNTIME_API FPLATEAURnDrawOption
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bVisible = true;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor Color = FLinearColor::White;
 };
 

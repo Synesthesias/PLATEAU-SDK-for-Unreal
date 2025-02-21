@@ -307,18 +307,66 @@ TSharedPtr<FSubDividedCityObject> FSubDividedCityObject::DeepCopy()
     return Result;
 }
 
+
 ERRoadTypeMask FSubDividedCityObject::GetRoadTypeFromCityObject(const FPLATEAUCityObject& CityObject)
 {
     auto Ret = ERRoadTypeMask::Empty;
 
     // LOD3からチェックする
     auto& AttrMap = CityObject.Attributes.AttributeMap;
+
+    static const TMap<FString, ERRoadTypeMask> FunctionValue2RoadType = []() -> TMap<FString, ERRoadTypeMask>
+    {
+        TMap<FString, ERRoadTypeMask> Map;
+        Map.Add(TEXT("車道部"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("車道交差部"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("非常駐車帯"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("側帯"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("路肩"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("停車帯"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("乗合自動車停車所"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("分離帯"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("路面電車停車所"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("自動車駐車場"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("島"), ERRoadTypeMask::Median);
+        Map.Add(TEXT("交通島"), ERRoadTypeMask::Median);
+        Map.Add(TEXT("中央帯"), ERRoadTypeMask::Median);
+        Map.Add(TEXT("自転車道"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("歩道"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("歩道部"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("自転車歩行者道"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("植栽"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("植樹帯"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("植樹ます"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("歩道部の段差"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("自転車駐車場"), ERRoadTypeMask::SideWalk);
+        Map.Add(TEXT("車線"), ERRoadTypeMask::Lane);
+        Map.Add(TEXT("すりつけ区間"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("踏切道"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("副道"), ERRoadTypeMask::Road);
+        // 不明なものは一旦Roadに
+        Map.Add(TEXT("軌道敷"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("待避所"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("軌道中心線"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("軌道"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("軌きょう"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("軌間"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("レール"), ERRoadTypeMask::Road);
+        Map.Add(TEXT("道床"), ERRoadTypeMask::Road);
+        return Map;
+    }();
+
+    if ( EnumHasAnyFlags (CityObject.Type, EPLATEAUCityObjectsType::COT_Road))
+    {
+        Ret |= ERRoadTypeMask::Road;
+    }
+
     if(auto TranFunc = AttrMap.Find("tran:function"))
     {
         auto&& Str = TranFunc->StringValue;
-        if(Str == TEXT("車道部") || Str == TEXT("車道交差部"))
-        {
-            Ret |= ERRoadTypeMask::Road;
+
+        if (const auto V = FunctionValue2RoadType.Find(Str)) {
+            Ret |= *V;
         }
 
         if (Str == TEXT("歩道部")) {

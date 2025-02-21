@@ -2,22 +2,6 @@
 
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
 
-FLine::FLine(const FVector& InP0, const FVector& InP1)
-    : P0(InP0), P1(InP1) {
-}
-
-float FLine::GetSqrMag() const {
-    return (P0 - P1).SizeSquared();
-}
-
-float FLine::GetMag() const {
-    return (P0 - P1).Size();
-}
-
-FVector FLine::GetDirectionA2B() const {
-    return (P1 - P0).GetSafeNormal();
-}
-
 bool FRay2D::CalcIntersection(const FRay2D& other, FVector2D& intersection, float& t1, float& t2) const
 {
     auto ret = FLineUtil::LineIntersection(*this, other, intersection,  t1, t2);

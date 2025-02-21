@@ -5,6 +5,7 @@
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAURnEx.h"
 #include "RnModel.generated.h"
+class URnRoadGroup;
 class URnRoad;
 class URnIntersection;
 class URnSideWalk;
@@ -137,7 +138,7 @@ public:
     void MergeRoadGroup();
 
     // roadWidthの道路幅を基準にレーンを分割する
-    void SplitLaneByWidth(float RoadWidth, bool rebuildTrack, TArray<FString>& failedRoads);
+    void SplitLaneByWidth(float RoadWidth, bool rebuildTrack, TArray<FString>& failedRoads, TFunction<bool(URnRoadGroup*)> IsLaneSplitTarget);
 
     // 不正チェック
     bool Check() const;

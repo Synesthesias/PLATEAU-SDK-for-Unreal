@@ -80,6 +80,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     bool bBuildTracks = true;
 
+    // LOD3.1以上のLane情報を見る
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
+    bool bCheckLane = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU")
     FRGraphFactory GraphFactory;
 
@@ -100,6 +104,8 @@ struct FRoadNetworkFactoryEx
 
     static void CreateRnModel(const FRoadNetworkFactory& Self, APLATEAUInstancedCityModel* Actor, APLATEAURnStructureModel* DestActor);
 
+    // Targetが生成対象かどうか
+    static bool IsConvertTarget(UPLATEAUCityObjectGroup* Target);
 private:
 
     static TRnRef_T<URnModel> CreateRoadNetwork(

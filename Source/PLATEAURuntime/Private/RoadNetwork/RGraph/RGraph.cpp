@@ -526,5 +526,11 @@ ERRoadTypeMask URFaceGroup::GetRoadTypes() const {
     return Result;
 }
 
+RGraphRef_t<URFaceGroup> URFaceGroup::CreateFaceGroup(RGraphRef_t<URGraph> Graph,
+    UPLATEAUCityObjectGroup* CityObjectGroup, const TArray<RGraphRef_t<URFace>>& Faces)
+{
+    return RGraphNew<URFaceGroup>(Graph, CityObjectGroup, Faces);
+}
+
 constexpr auto SIZE = sizeof(UObject);
 constexpr auto OFFSET = sizeof(FVector);

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "RoadMarking/LineGeneratorComponent.h"
+#include "Components/SplineComponent.h"
 #include "PLATEAUReproducedRoad.generated.h"
 
 enum class EPLATEAURoadLineType : uint8;

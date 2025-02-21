@@ -36,7 +36,6 @@ void URnLineString::Init(const TArray<TRnRef_T<URnPoint>>& InPoints)
     Points = InPoints;
 }
 
-
 int32 URnLineString::Count() const
 { return Points.Num(); }
 

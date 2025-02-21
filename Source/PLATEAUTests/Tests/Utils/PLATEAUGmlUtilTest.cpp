@@ -1,14 +1,13 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 #include "FileHelpers.h"
-#include "../PLATEAUAutomationTestBase.h"
+#include "PLATEAUTests/Tests/PLATEAUAutomationTestBase.h"
 #include "Util/PLATEAUGmlUtil.h"
 #include "Kismet/GameplayStatics.h"
 #include "Tests/AutomationCommon.h"
 #include <PLATEAURuntime.h>
 #include <Component/PLATEAUSceneComponent.h>
 #include <Component/PLATEAUCityObjectGroup.h>
-#include "../PLATEAUAutomationTestUtil.h"
 #include "CityGML/citymodel.h"
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Util_Gml_Util, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Util.GmlUtil", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

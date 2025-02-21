@@ -9,6 +9,7 @@
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
+#include <algorithm>
 
 void URnRoad::SetNext(TRnRef_T<URnRoadBase> InNext)
 {

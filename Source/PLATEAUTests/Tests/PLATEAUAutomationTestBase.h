@@ -14,6 +14,8 @@
 #include "PLATEAUEditor/Public/ExtentEditor/PLATEAUExtentEditor.h"
 #include <plateau/dataset/dataset_source.h>
 #include <PLATEAURuntime.h>
+#include <FileHelpers.h>
+#include "PLATEAUAutomationTestUtil.h"
 
 class FPLATEAUAutomationTestBase : public FAutomationTestBase {
     FString MyTestName;

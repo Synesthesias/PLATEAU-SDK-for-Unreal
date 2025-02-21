@@ -4,27 +4,6 @@
 #include "LineUtil.generated.h"
 
 USTRUCT(BlueprintType)
-struct PLATEAURUNTIME_API FLine {
-    GENERATED_BODY()
-
-    FLine(){}
-    FLine(const FVector& InP0, const FVector& InP1);
-
-    UPROPERTY()
-    FVector P0;
-
-    UPROPERTY()
-    FVector P1;
-
-    float GetSqrMag() const;
-    float GetMag() const;
-    FVector GetDirectionA2B() const;
-    FVector GetDirectionB2A() const { return (P0 - P1).GetSafeNormal(); }
-    FVector GetVecA2B() const { return (P1 - P0); }
-    FVector GetVecB2A() const { return (P0 - P1); }
-};
-
-USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FRay2D {
     GENERATED_BODY()
 

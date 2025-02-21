@@ -137,6 +137,7 @@ public:
 
     TRnRef_T<URnPoint> GetPoint(int32 Index) const;
     TRnRef_T<URnPoint> SetPoint(int32 Index, const TRnRef_T<URnPoint>& Point);
+    void SetPoints(const TArray<TRnRef_T<URnPoint>>& Points);
 
     FVector GetVertex(int32 Index) const;
     FVector operator[](int32 Index) const;
