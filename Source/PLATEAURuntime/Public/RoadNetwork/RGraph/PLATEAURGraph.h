@@ -56,7 +56,7 @@ struct FRGraphDrawEdgeOption : public FPLATEAURnDrawOption {
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNeighborCount = false;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "/Script/PLATEAURuntime.ERRoadTypeMask"))
     int32 ShowTypeMask = 0;
 };
 
@@ -116,13 +116,13 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bShowNormal;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERRoadTypeMask))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "/Script/PLATEAURuntime.ERRoadTypeMask"))
     int32 ShowFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum= ERRoadTypeMask))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum= "/Script/PLATEAURuntime.ERRoadTypeMask"))
     int32 RemoveFaceType;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERPartsFlag))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "/Script/PLATEAURuntime.ERPartsFlag"))
     ERPartsFlag ShowId;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
