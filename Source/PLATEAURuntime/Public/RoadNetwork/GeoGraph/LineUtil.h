@@ -13,7 +13,7 @@ struct PLATEAURUNTIME_API FRay2D {
     UPROPERTY()
     FVector2D Direction;
 
-    FRay2D() : Origin(), Direction() {}
+    FRay2D() : Origin(FVector::Zero()), Direction(FVector::Zero()) {}
     FRay2D(const FVector2D& InOrigin, const FVector2D& InDirection)
         : Origin(InOrigin), Direction(InDirection.GetSafeNormal()) {
     }
