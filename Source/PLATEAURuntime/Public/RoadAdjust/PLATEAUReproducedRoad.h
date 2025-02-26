@@ -25,6 +25,9 @@ USTRUCT(BlueprintType)
 struct PLATEAURUNTIME_API FPLATEAURoadLineParam {
     GENERATED_BODY()
 
+    FPLATEAURoadLineParam() : Type(), LineMesh(), LineMaterial(), SplinePointType(), FillEnd(), LineGap(), LineXScale(), LineLength(){
+    }
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|RoadAdjust")
     EPLATEAURoadLineType Type;
 

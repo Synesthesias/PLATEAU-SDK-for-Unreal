@@ -81,6 +81,7 @@ public:
     FSubDividedCityObject()
     : CityObject()
     , SelfRoadType()
+    , ParentRoadType()
     {}
 
     FSubDividedCityObject(UPLATEAUCityObjectGroup* Co, const plateau::polygonMesh::Model& PlateauModel, TMap<FString, FPLATEAUCityObject>& CityObj);

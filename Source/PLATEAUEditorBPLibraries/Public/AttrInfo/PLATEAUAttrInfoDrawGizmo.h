@@ -11,7 +11,7 @@ USTRUCT(BlueprintType)
 struct FVertexData {
     GENERATED_BODY()
 
-    FVertexData() {
+    FVertexData() : VertexID(), VertexPos() {
     }
 
     FVertexData(const FVertexID InVertexID, const FVector InVertexPos) : VertexID(InVertexID), VertexPos(InVertexPos) {

@@ -40,7 +40,7 @@ struct FRGraphDrawFaceOption : public FPLATEAURnDrawOption {
     bool bShowOutlineLoop = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bShowOnlyTargets;
+    bool bShowOnlyTargets = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     TArray<FString> ShowTargetNames;
