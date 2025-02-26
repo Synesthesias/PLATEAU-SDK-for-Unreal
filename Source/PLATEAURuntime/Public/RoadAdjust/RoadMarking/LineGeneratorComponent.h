@@ -6,6 +6,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
+#include "RoadAdjust/PLATEAUReproducedRoad.h"
 #include "LineGeneratorComponent.generated.h"
 
 /**
