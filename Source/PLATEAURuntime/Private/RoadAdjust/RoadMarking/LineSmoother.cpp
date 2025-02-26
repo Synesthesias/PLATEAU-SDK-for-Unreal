@@ -117,13 +117,13 @@ namespace PLATEAU::RoadAdjust::RoadMarking {
         // 端点のタンジェントを隣の点を向くように設定
         if (Line.Num() >= 2) {
             // 最初のポイントのタンジェント設定
-            FVector FirstTangent = (Line[1] - Line[0]).GetSafeNormal() * 10.f; // 長さは経験則から
+            FVector FirstTangent = (Line[1] - Line[0]).GetSafeNormal() * 20.f; // 長さは経験則から
             SplineComp->SetTangentAtSplinePoint(0, FirstTangent, ESplineCoordinateSpace::World);
             
             // 最後のポイントのタンジェント設定
             int32 LastIndex = Line.Num() - 1;
             int32 PrevIndex = LastIndex - 1;
-            FVector LastTangent = (Line[LastIndex] - Line[PrevIndex]).GetSafeNormal() * 10.f; // 長さは経験則から
+            FVector LastTangent = (Line[LastIndex] - Line[PrevIndex]).GetSafeNormal() * 20.f; // 長さは経験則から
             SplineComp->SetTangentAtSplinePoint(LastIndex, LastTangent, ESplineCoordinateSpace::World);
         }
 
@@ -139,7 +139,7 @@ namespace PLATEAU::RoadAdjust::RoadMarking {
             float TangentLength = FMath::Min(
                 FVector::Distance(Line[i], Line[i-1]), 
                 FVector::Distance(Line[i], Line[i+1])
-            ) * 0.4f; // この係数は0.3～0.7くらいの範囲で調整の余地がある。小さいほど急カーブになる。経験則でこのくらいのほうが綺麗に見える。
+            ) * 0.5f; // この係数は0.3～0.7くらいの範囲で調整の余地がある。小さいほど急カーブになる。経験則でこのくらいのほうが綺麗に見える。
     
             SplineComp->SetTangentAtSplinePoint(i, AvgTangent * TangentLength, ESplineCoordinateSpace::World);
         }
