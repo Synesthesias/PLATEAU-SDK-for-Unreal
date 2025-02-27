@@ -186,9 +186,9 @@ bool FPLATEAUMeshLoader::ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, F
         const auto GameMaterialID = SubMesh.getGameMaterialID();
         FPolygonGroupID PolygonGroupID = 0;
         FSubMeshMaterialSet MaterialSet(MaterialValue,
-            TexturePath.empty() ? FString() : FString(TexturePath.c_str()),
+            TexturePath.empty() ? FString() : FString(UTF8_TO_TCHAR(TexturePath.c_str())),
             GameMaterialID);
-            
+           
         if (!SubMeshMaterialSets.Contains(MaterialSet)) {
             // マテリアル設定
             PolygonGroupID = OutMeshDescription.CreatePolygonGroup();

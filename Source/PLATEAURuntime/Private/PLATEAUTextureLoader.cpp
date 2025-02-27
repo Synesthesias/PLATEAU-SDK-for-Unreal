@@ -175,7 +175,8 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     if (TexturePath_SlashOrBackSlash.IsEmpty()) return nullptr;
 
     // パスに ".." が含まれる場合は、std::filesystem の機能を使って適用します。
-    fs::path TexturePathCpp = fs::u8path(TCHAR_TO_UTF8(*TexturePath_SlashOrBackSlash)).lexically_normal();
+    fs::path TexturePathCpp = fs::path(*TexturePath_SlashOrBackSlash).lexically_normal();
+
     const FString TexturePath_Normalized = TexturePathCpp.c_str();
     // 引数のパスのセパレーターはOSによって "/" か "¥" なので "/" に統一します。
     const auto TexturePath = TexturePath_Normalized.Replace(*FString("\\"), *FString("/"));
