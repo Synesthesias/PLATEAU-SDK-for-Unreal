@@ -141,12 +141,14 @@ namespace {
         }
 
         FGraphEventRef CompletionEvent;
-        FTexture2DRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
+        FTextureRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
             Width, Height,
             PixelFormat,
             1,
             TexCreate_ShaderResource,
+            ERHIAccess::Unknown,
             MipData.GetData(), 1,
+            TEXT("RHIAsyncCreateTexture2D"),
             CompletionEvent
         );
 
