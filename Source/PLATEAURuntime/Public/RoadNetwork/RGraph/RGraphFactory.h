@@ -5,7 +5,7 @@
 
 #include "RGraph.h"
 #include "RGraphFactory.generated.h"
-class FSubDividedCityObject;
+struct FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
 class URnModel;
 class URGraph;
