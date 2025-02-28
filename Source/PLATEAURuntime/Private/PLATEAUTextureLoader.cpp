@@ -11,6 +11,7 @@
 #include "Misc/FileHelper.h"
 #include "TextureResource.h"
 #include <filesystem>
+#include "Misc/EngineVersionComparison.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
@@ -140,6 +141,7 @@ namespace {
             Texture->UpdateResource();
         }
 
+#if UE_VERSION_NEWER_THAN(5, 5, 0)
         FGraphEventRef CompletionEvent;
         FTextureRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
             Width, Height,
@@ -151,6 +153,17 @@ namespace {
             TEXT("RHIAsyncCreateTexture2D"),
             CompletionEvent
         );
+#else
+        FGraphEventRef CompletionEvent;
+        FTextureRHIRef RHITexture2D = RHIAsyncCreateTexture2D(
+            Width, Height,
+            PixelFormat,
+            1,
+            TexCreate_ShaderResource,
+            MipData.GetData(), 1,
+            CompletionEvent
+        );
+#endif
 
         for (void* NewData : MipData) {
             if (NewData) {
