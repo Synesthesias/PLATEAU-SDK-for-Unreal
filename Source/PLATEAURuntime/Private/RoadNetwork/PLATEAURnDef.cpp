@@ -1,4 +1,5 @@
 #include "RoadNetwork/PLATEAURnDef.h"
+#include "UObject/Package.h"
 
 
 EPLATEAURnLaneBorderType FPLATEAURnLaneBorderTypeEx::GetOpposite(EPLATEAURnLaneBorderType dir)

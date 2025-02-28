@@ -10,6 +10,7 @@
 #include "RoadNetwork/GeoGraph/LineUtil.h"
 #include "Engine/EngineTypes.h"
 #include "Components/SceneComponent.h"
+#include "GameFramework/Actor.h"
 
 class URnRoad;
 class UPLATEAUCityObjectGroup;
