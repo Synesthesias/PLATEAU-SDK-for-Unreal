@@ -351,7 +351,7 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             auto LodComp = Parents[LodCompIndex];
             LodName = FPLATEAUComponentUtil::GetOriginalComponentName(LodComp);
             RootName = LodComp->GetAttachParent()->GetName();
-            Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
+            Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, EAllowShrinking::Yes); //LOD削除
 
             int RootIndex = GetChildIndex(RootName, OutModel.get());
             Root = (RootIndex == -1) ?

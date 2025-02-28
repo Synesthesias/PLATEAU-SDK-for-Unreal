@@ -97,8 +97,8 @@ ALandscape* FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 N
     ALandscape* Landscape = World->SpawnActor<ALandscape>(Param);
     Landscape->bCanHaveLayersContent = false;
     Landscape->SetActorTransform(LandscapeTransform);
-
-    Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1, SizeY - 1, NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
+    const TArrayView<const struct FLandscapeLayer> ImportLayers;
+    Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1, SizeY - 1, NumSubsections, SubsectionSizeQuads, HeightDataPerLayers, nullptr, MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive, ImportLayers);
 
     //Create Package
     FString PackageName = TEXT("/Game/PLATEAU/Materials/");

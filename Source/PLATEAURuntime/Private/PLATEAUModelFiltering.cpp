@@ -27,7 +27,7 @@ void FPLATEAUModelFiltering::ApplyCollisionResponseBlockToChannel(USceneComponen
         TInlineComponentArray<USceneComponent*, NumInlinedActorComponents> ComponentStack;
         ComponentStack.Append(AttachedChildren);
         while (0 < ComponentStack.Num()) {
-            if (const auto& CurrentComp = ComponentStack.Pop(/*bAllowShrinking=*/ false); CurrentComp != nullptr) {
+            if (const auto& CurrentComp = ComponentStack.Pop(/*bAllowShrinking=*/ EAllowShrinking::No); CurrentComp != nullptr) {
                 ComponentStack.Append(CurrentComp->GetAttachChildren());
                 if (const auto& StaticMeshComponent = Cast<UStaticMeshComponent>(CurrentComp); StaticMeshComponent != nullptr) {
                     StaticMeshComponent->SetCollisionResponseToChannel(ECC_Visibility, bCollisionResponseBlock ? ECR_Block : ECR_Ignore);

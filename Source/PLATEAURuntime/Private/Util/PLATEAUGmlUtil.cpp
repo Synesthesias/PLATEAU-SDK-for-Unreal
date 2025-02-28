@@ -54,7 +54,7 @@ FString FPLATEAUGmlUtil::GetNodePathString(const USceneComponent* Component) {
     TArray<USceneComponent*> Parents;
     Component->GetParentComponents(Parents);
     Parents.Remove(Component->GetAttachmentRoot());
-    const auto& Op = Parents.Pop(true);
+    const auto& Op = Parents.Pop(EAllowShrinking::Yes);
     Algo::Reverse(Parents);
 
     Path = Op->GetName() + "/"; //Opはsuffixを処理しない
