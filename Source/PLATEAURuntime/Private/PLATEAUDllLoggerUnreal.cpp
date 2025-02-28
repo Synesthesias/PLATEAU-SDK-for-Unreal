@@ -1,4 +1,5 @@
-﻿#include "PLATEAUDllLoggerUnreal.h"
+#include "PLATEAUDllLoggerUnreal.h"
+#include "Containers/StringConv.h"
 
 PLATEAUDllLoggerUnreal::PLATEAUDllLoggerUnreal(citygml::CityGMLLogger::LOGLEVEL LogLevelArg)
 {

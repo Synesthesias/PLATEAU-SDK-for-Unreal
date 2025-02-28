@@ -9,7 +9,6 @@
 #include <PLATEAUMeshExporter.h>
 #include <ImageUtils.h>
 #include <CityGML/PLATEAUCityGmlProxy.h>
-#include "EngineMinimal.h"
 
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
@@ -70,6 +69,7 @@ namespace PLATEAUAutomationTestUtil {
         /// Mesh用のCityObjectIndexのList生成
         /// </summary>
         inline void CreateCityObjectList(plateau::polygonMesh::CityObjectList& CityObj) {
+
             CityObj.add(plateau::polygonMesh::CityObjectIndex(0, -1), TCHAR_TO_UTF8(*TEST_OBJ_NAME));
             CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 1), TCHAR_TO_UTF8(*TEST_CITYOBJ_WALL_NAME));
             CityObj.add(plateau::polygonMesh::CityObjectIndex(0, 2), TCHAR_TO_UTF8(*TEST_CITYOBJ_ROOF_NAME));

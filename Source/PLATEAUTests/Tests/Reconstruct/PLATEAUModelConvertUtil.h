@@ -9,7 +9,6 @@
 #include <PLATEAUMeshExporter.h>
 #include <CityGML/PLATEAUCityGmlProxy.h>
 #include "Component/PLATEAUSceneComponent.h"
-#include "EngineMinimal.h"
 #include "PLATEAUTests/Tests/PLATEAUAutomationTestBase.h"
 
 class ModelConvert {  

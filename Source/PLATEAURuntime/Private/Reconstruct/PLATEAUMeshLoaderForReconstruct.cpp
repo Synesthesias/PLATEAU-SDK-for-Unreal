@@ -4,6 +4,7 @@
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "Util/PLATEAUComponentUtil.h"
+#include "Materials/MaterialInstance.h"
 
 FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
     bAutomationTest = false;
@@ -133,7 +134,7 @@ UMaterialInterface* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(cons
             FString SourcePath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback/" / FallbackName;
             UMaterialInstance* FallbackMat = Cast<UMaterialInstance>(
                 StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-            return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
+            return Cast<UMaterialInterface>(FallbackMat);
         }
     }
     return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);

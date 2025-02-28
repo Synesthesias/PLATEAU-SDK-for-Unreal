@@ -12,6 +12,9 @@
 #include "TextureResource.h"
 #include <filesystem>
 #include "Misc/EngineVersionComparison.h"
+#include "Misc/Paths.h"
+#include "Components/SceneComponent.h"
+#include "Misc/PackageName.h"
 
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"

@@ -20,7 +20,7 @@ UObject* FPLATEAURnDef::GetNewObjectWorld()
 {
     if (NewObjectWorld)
         return NewObjectWorld;
-    return GetTransientPackage();
+    return Cast<UObject>(GetTransientPackage());
 }
 
 void FPLATEAURnDef::SetNewObjectWorld(UObject* World)
