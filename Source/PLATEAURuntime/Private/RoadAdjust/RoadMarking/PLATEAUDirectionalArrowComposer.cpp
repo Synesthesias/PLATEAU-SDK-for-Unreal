@@ -233,7 +233,7 @@ EPLATEAUDirectionalArrowType FPLATEAUDirectionalArrowComposer::ArrowType(const U
         bContainStraight |= TurnType == ERnTurnType::Straight;
     }
 
-    if (bContainStraight && bContainLeft && bContainRight) return EPLATEAUDirectionalArrowType::None;
+    if (bContainLeft && bContainRight) return EPLATEAUDirectionalArrowType::None;
     if (bContainStraight && bContainLeft) return EPLATEAUDirectionalArrowType::StraightAndLeft;
     if (bContainStraight && bContainRight) return EPLATEAUDirectionalArrowType::StraightAndRight;
     if (bContainStraight) return EPLATEAUDirectionalArrowType::Straight;
