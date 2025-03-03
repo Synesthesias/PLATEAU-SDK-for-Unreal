@@ -1,6 +1,7 @@
 #pragma once
 // ☀
 #include "CoreMinimal.h"
+#include "UObject/UObjectGlobals.h"
 #include "RGraphDef.generated.h"
 
 /**
