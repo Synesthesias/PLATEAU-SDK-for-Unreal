@@ -18,6 +18,9 @@ public class PLATEAUTests : ModuleRules {
 				"Engine",
 				"InputCore",
                 "Landscape",
+                "MeshDescription",
+                "StaticMeshDescription",
+                "MeshDescriptionOperations",
             }
 		);
 
@@ -28,8 +31,6 @@ public class PLATEAUTests : ModuleRules {
 				"PLATEAUEditorBPLibraries",
                 "PLATEAURuntimeBPLibraries",
                 "UnrealEd",
-                "MeshDescription",
-                "StaticMeshDescription",
             });
 
 		DynamicallyLoadedModuleNames.AddRange(
