@@ -11,6 +11,7 @@
 #include "StaticMeshOperations.h"
 #include "StaticMeshAttributes.h"
 #include "plateau/height_map_generator/heightmap_mesh_generator.h"
+#include "MathUtil.h"
 
 FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh() {}
 
@@ -122,7 +123,7 @@ void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription&
     for (FEdgeID EdgeID : MeshDescription.Edges().GetElementIDs()) {
         EdgeHardness.Set(EdgeID, 0, false);
     }
-
+    
     FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
     FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, 
         EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);

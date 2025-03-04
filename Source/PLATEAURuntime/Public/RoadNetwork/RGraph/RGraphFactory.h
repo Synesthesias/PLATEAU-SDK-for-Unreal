@@ -1,3 +1,5 @@
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,7 +7,7 @@
 
 #include "RGraph.h"
 #include "RGraphFactory.generated.h"
-class FSubDividedCityObject;
+struct FSubDividedCityObject;
 class UPLATEAUCityObjectGroup;
 class URnModel;
 class URGraph;
