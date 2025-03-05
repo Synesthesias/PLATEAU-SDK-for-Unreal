@@ -736,7 +736,7 @@ URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road
         auto prevLeftWay = CopyWay(left.prev, lane->GetLeftWay());
         auto prevRightWay = CopyWay(right.prev, lane->GetRightWay());
 
-        auto isReverseLane = lane->GetIsReverse();
+        auto isReverseLane = lane->GetIsReversed();
 
         // 分割個所の境界線
         auto midBorderWay = RnNew<URnWay>(URnLineString::Create(TArray<URnPoint*> { left.midPoint, right.midPoint }));
@@ -749,7 +749,7 @@ URnModel::FSliceRoadHorizontalResult URnModel::SliceRoadHorizontal(URnRoad* Road
         lane->SetBorder(laneMidBorderType, midBorderWay);
 
         auto newLane = RnNew<URnLane>(nextLeftWay, nextRightWay, nullptr, nullptr);
-        newLane->SetIsReverse(isReverseLane);
+        newLane->SetIsReversed(isReverseLane);
         newLane->SetBorder(laneMidBorderType, nextBorder);
         newLane->SetBorder( FPLATEAURnLaneBorderTypeEx::GetOpposite(laneMidBorderType), midBorderWay);
         if (lane->IsMedianLane()) {

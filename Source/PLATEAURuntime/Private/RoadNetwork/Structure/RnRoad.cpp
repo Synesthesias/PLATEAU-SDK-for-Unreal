@@ -83,10 +83,6 @@ void URnRoad::Init(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTarg
     }
 }
 
-const TArray<TRnRef_T<URnLane>>& URnRoad::GetAllLanes() const {
-    return MainLanes;
-}
-
 TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const {
     TArray<TRnRef_T<URnLane>> Lanes = MainLanes;
     if (MedianLane) {
@@ -140,11 +136,11 @@ bool URnRoad::TryGetLanes(TOptional<EPLATEAURnDir> Dir, TArray<TRnRef_T<URnLane>
 
 
 bool URnRoad::IsLeftLane(const TRnRef_T<URnLane>& Lane) const {
-    return Lane && !Lane->GetIsReverse();
+    return Lane && !Lane->GetIsReversed();
 }
 
 bool URnRoad::IsRightLane(const TRnRef_T<URnLane>& Lane) const {
-    return Lane && Lane->GetIsReverse();
+    return Lane && Lane->GetIsReversed();
 }
 
 EPLATEAURnDir URnRoad::GetLaneDir(const TRnRef_T<URnLane>& Lane) const {
@@ -401,7 +397,7 @@ void URnRoad::Reverse(bool KeepOneLaneIsLeft)
     // 各レーンのWayの向きは変えずにIsRevereだけ変える
     // 左車線/右車線の関係が変わるので配列の並びも逆にする
     for (auto& Lane : GetAllLanesWithMedian()) {
-        Lane->SetIsReverse(!Lane->GetIsReverse());
+        Lane->SetIsReversed(!Lane->GetIsReversed());
     }
     Algo::Reverse(MainLanes);
     for (auto& Sw : GetSideWalks())

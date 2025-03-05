@@ -187,7 +187,7 @@ bool URnRoadGroup::IsDeepAligned() const {
             auto NowLane = NowLanes[j];
             auto PrevLane = PrevLanes[j];
 
-            if (!PrevLane->GetIsReverse()) {
+            if (!PrevLane->GetIsReversed()) {
                 if (!NowLane->GetPrevBorder()->IsSameLineReference(PrevLane->GetNextBorder())) {
                     UE_LOG(LogTemp, Error, TEXT("Invalid Direction Lane[%d]"), j);
                     return false;
@@ -473,7 +473,7 @@ void URnRoadGroup::AdjustBorder() {
         DuplicatePoints(RightWay->GetPoint(LastPointIndex), BorderLeft2Right.GetEnd());
 
         auto AdjustWay = [&](TRnRef_T<URnLane> Lane, TRnRef_T<URnWay> Way) {
-            if (Lane->GetIsReverse())
+            if (Lane->GetIsReversed())
                 Way = Way->ReversedWay();
             auto P = Way->GetPoint(LastPointIndex);
             auto N = BorderLeft2Right.GetNearestPoint(P->Vertex);

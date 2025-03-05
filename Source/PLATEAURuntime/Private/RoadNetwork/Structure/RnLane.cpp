@@ -5,12 +5,12 @@
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
 
 URnLane::URnLane()
-    : bIsReverse(false) {
+    : bIsReversed(false) {
 }
 
 URnLane::URnLane(const TRnRef_T<URnWay>& InLeftWay, const TRnRef_T<URnWay>& InRightWay,
     const TRnRef_T<URnWay>& InPrevBorder, const TRnRef_T<URnWay>& InNextBorder)
-    : bIsReverse(false) {
+    : bIsReversed(false) {
     Init(InLeftWay, InRightWay, InPrevBorder, InNextBorder);
 
 }
@@ -186,7 +186,7 @@ float URnLane::CalcMinWidth() const
 }
 
 void URnLane::Reverse() {
-    bIsReverse = !bIsReverse;
+    bIsReversed = !bIsReversed;
     Swap(PrevBorder, NextBorder);
     Swap(LeftWay, RightWay);
     for (auto Way : GetAllWays())
@@ -279,7 +279,7 @@ TRnRef_T<URnLane> URnLane::Clone() const {
     NewLane->RightWay = RightWay ? RightWay->Clone(true) : nullptr;
     NewLane->PrevBorder = PrevBorder ? PrevBorder->Clone(true) : nullptr;
     NewLane->NextBorder = NextBorder ? NextBorder->Clone(true) : nullptr;
-    NewLane->bIsReverse = bIsReverse;
+    NewLane->bIsReversed = bIsReversed;
     if (CenterWay) NewLane->CenterWay = CenterWay->Clone(true);
     return NewLane;
 }

@@ -25,9 +25,6 @@ public:
     // メインレーンすべて取得
     const auto& GetMainLanes() const { return MainLanes; }
 
-    // 全レーン
-    const TArray<TRnRef_T<URnLane>>& GetAllLanes() const;
-
     // 中央分離帯を含めた全てのレーン
     TArray<TRnRef_T<URnLane>> GetAllLanesWithMedian() const;
 

@@ -34,12 +34,12 @@ public:
 
     void SetParent(TRnRef_T<URnRoad> InParent);
 
-    bool GetIsReverse() const {
-        return bIsReverse;
+    bool GetIsReversed() const {
+        return bIsReversed;
     }
 
-    void SetIsReverse(bool bReverse) {
-        bIsReverse = bReverse;
+    void SetIsReversed(bool bReverse) {
+        bIsReversed = bReverse;
     }
 
     TRnRef_T<URnWay> GetLeftWay() const;
@@ -169,7 +169,7 @@ private:
 
     // 親Roadと逆方向(右車線等)
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
-    bool bIsReverse;
+    bool bIsReversed;
 
     // 内部的に持つだけ. 中心線
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
