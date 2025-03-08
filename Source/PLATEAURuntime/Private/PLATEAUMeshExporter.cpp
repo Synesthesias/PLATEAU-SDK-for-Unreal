@@ -288,10 +288,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                             continue;
                         }
 
-                        const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
                         const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
                         const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
                         TextureFilePath = AssetBasePath / TextureFileRelativePath;
+                        TextureFilePath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*TextureFilePath);
 #endif
                     }
                 }
