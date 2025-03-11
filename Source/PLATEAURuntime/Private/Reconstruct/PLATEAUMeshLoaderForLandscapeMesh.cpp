@@ -11,6 +11,9 @@
 #include "StaticMeshOperations.h"
 #include "StaticMeshAttributes.h"
 #include "plateau/height_map_generator/heightmap_mesh_generator.h"
+#include "MathUtil.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh() {}
 
