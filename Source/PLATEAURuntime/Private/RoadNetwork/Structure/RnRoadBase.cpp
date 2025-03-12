@@ -1,3 +1,5 @@
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
+
 #include "RoadNetwork/Structure/RnRoadBase.h"
 #include "RoadNetwork/Structure/RnSideWalk.h"
 #include "RoadNetwork/Structure/RnWay.h"

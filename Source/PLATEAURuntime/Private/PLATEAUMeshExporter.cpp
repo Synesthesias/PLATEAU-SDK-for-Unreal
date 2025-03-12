@@ -18,6 +18,7 @@
 #include "UObject/UObjectBaseUtility.h"
 #include "Util/PLATEAUComponentUtil.h"
 #include "Algo/Reverse.h"
+#include "Misc/EngineVersionComparison.h"
 
 #if WITH_EDITOR
 #include "HAL/FileManager.h"
@@ -351,7 +352,11 @@ std::shared_ptr<plateau::polygonMesh::Model> FPLATEAUMeshExporter::CreateModelFr
             auto LodComp = Parents[LodCompIndex];
             LodName = FPLATEAUComponentUtil::GetOriginalComponentName(LodComp);
             RootName = LodComp->GetAttachParent()->GetName();
+#if UE_VERSION_NEWER_THAN(5, 5, 0)
+            Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, EAllowShrinking::Yes); //LOD削除
+#else
             Parents.RemoveAt(LodCompIndex, Parents.Num() - LodCompIndex, true); //LOD削除
+#endif
 
             int RootIndex = GetChildIndex(RootName, OutModel.get());
             Root = (RootIndex == -1) ?
