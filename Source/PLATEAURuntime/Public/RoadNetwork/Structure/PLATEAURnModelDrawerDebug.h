@@ -1,3 +1,5 @@
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -44,7 +46,7 @@ struct FRnModelDrawOption
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bVisible = true;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERnModelDrawerVisibleType))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "/Script/PLATEAURuntime.ERnModelDrawerVisibleType"))
     ERnModelDrawerVisibleType VisibleType = ERnModelDrawerVisibleType::All;
 
 };
@@ -284,7 +286,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawSideWalkOption SideWalkOption;
 
-    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = ERnPartsTypeMask))
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug", Meta = (Bitmask, BitmaskEnum = "/Script/PLATEAURuntime.ERnPartsTypeMask"))
     int32 ShowPartsType = 0;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")

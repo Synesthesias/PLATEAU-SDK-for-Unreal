@@ -6,6 +6,7 @@
 #include <citygml/material.h>
 #include "MeshTypes.h"
 #include "PLATEAUCachedMaterialArray.h"
+#include "MeshDescription.h"
 #include <plateau/polygon_mesh/mesh.h>
 #include "StaticMeshAttributes.h"
 #include "Materials/MaterialInterface.h"
