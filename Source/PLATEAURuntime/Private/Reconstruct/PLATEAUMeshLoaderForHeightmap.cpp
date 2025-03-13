@@ -117,3 +117,8 @@ void FPLATEAUMeshLoaderForHeightmap::CreateReference(ALandscape* Landscape, AAct
 #endif
     }
 }
+
+bool FPLATEAUMeshLoaderForHeightmap::UseCachedMaterial() {
+    return false;
+}
+
