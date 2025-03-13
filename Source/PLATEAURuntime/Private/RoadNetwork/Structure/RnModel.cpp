@@ -517,24 +517,6 @@ namespace
             else if (IsPointShared(StartEdgeWay, { NextInsideWay, NextOutsideWay })) {
                 Swap(StartEdgeWay, EndEdgeWay);
             }
-           /* else 
-            {
-                if (StartEdgeWay) {
-                    const float PrevSign = LineSegment2D.Sign(GetMid2D(Inside->Prev->GetPoint(0), Inside->Prev->GetPoint(1)));
-                    const float StartSign = LineSegment2D.Sign(As2D(StartEdgeWay->GetPoint(0)));
-                    if (PrevSign != StartSign) {
-                        Swap(StartEdgeWay, EndEdgeWay);
-                    }
-                }
-                if (EndEdgeWay) {
-                    const float PrevSign = LineSegment2D.Sign(GetMid2D(Inside->Next->GetPoint(0), Inside->Next->GetPoint(1)));
-                    const float StartSign = LineSegment2D.Sign(As2D(EndEdgeWay->GetPoint(0)));
-
-                    if (PrevSign != StartSign) {
-                        Swap(StartEdgeWay, EndEdgeWay);
-                    }
-                }
-            }*/
             
             TArray<URnPoint*> points{ Inside->MidPoint, Outside->MidPoint };
             URnWay* MidEdgeWay = URnWay::Create(URnLineString::Create(points));

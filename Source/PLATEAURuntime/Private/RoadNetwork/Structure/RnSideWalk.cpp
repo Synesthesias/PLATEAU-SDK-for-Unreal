@@ -249,7 +249,6 @@ bool URnSideWalk::TryMergeNeighborSideWalk(URnSideWalk* SrcSideWalk) {
 
     // MergeSideWays: src 側の SideWay と dst 側の SideWay を統合するラムダ
     auto MergeSideWays = [](URnSideWalk* SrcSw, URnSideWalk* DstSw) {
-#if true
         // #TODO : 現状の使い方だと問題ないが, 今後OutsideWay同士, InsideWay同士が繋がっているかの保証が無いのでポイント単位でチェックすべき
         if (SrcSw && DstSw) {
             // URnWay::CreateMergedWay は、2 つの URnWay を統合して新たな URnWay を生成する静的メソッドと想定
@@ -260,7 +259,6 @@ bool URnSideWalk::TryMergeNeighborSideWalk(URnSideWalk* SrcSideWalk) {
             // 始点側の Edge は、src 側のものに切り替える
             DstSw->SetStartEdgeWay(SrcSw->GetStartEdgeWay());
         }
-#endif
         };
 
     // 以下、各ケースについて、隣接部分が一致する場合の処理
