@@ -11,6 +11,8 @@
 #include "RoadNetwork/Util/PLATEAUVectorEx.h"
 #include <algorithm>
 
+#include "RoadNetwork/Structure/RnTrackBuilder.h"
+
 void URnRoad::SetNext(TRnRef_T<URnRoadBase> InNext)
 {
     this->Next = InNext;
@@ -471,10 +473,41 @@ void URnRoad::ReplaceNeighbor(const TRnRef_T<URnRoadBase>& From, const TRnRef_T<
     if (Next == From) Next = To;
 }
 
-bool URnRoad::Check() const
+void URnRoad::ReplaceNeighbor(URnWay* BorderWay, URnRoadBase* To)
+{
+    if (BorderWay == nullptr) {
+        return;
+    }
+
+    for(auto Lane : GetAllLanesWithMedian())
+    {
+        auto PrevBorder = GetBorderWay(Lane, EPLATEAURnLaneBorderType::Prev, EPLATEAURnLaneBorderDir::Left2Right);
+        if(PrevBorder && PrevBorder->IsSameLineReference(BorderWay))
+        {
+            SetPrev(To);
+            // BorderのWayにかぶりはないはずなので高速化の為即リターン
+            return;
+        }
+
+        auto NextBorder = GetBorderWay(Lane, EPLATEAURnLaneBorderType::Next, EPLATEAURnLaneBorderDir::Left2Right);
+        if(NextBorder && NextBorder->IsSameLineReference(BorderWay))
+        {
+            SetNext(To);
+            return;
+        }
+    }
+}
+
+bool URnRoad::Check()
 {
     for (auto BorderType : { EPLATEAURnLaneBorderType::Prev, EPLATEAURnLaneBorderType::Next }) {
         if (!FRnRoadEx::IsValidBorderAdjacentNeighbor(this, BorderType, true))
+            return false;
+    }
+
+    for (auto Lane : GetAllLanesWithMedian())
+    {
+        if (Lane->Check() == false)
             return false;
     }
 
@@ -520,19 +553,31 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
     CheckBorderPoints.Add(Border->GetVertex(0));
     CheckBorderPoints.Add(Border->GetVertex(-1));
 
+    auto MaxBorderAdvanceLength = 10 * FPLATEAURnDef::Meter2Unit;
     URnRoadBase* NeighborRoad = GetNeighborRoad(BorderSide);
     if (NeighborRoad) {
         for (URnSideWalk* SideWalk : GetSideWalks()) {
-            for (URnWay* Way : SideWalk->GetAllWays()) {
-                for (URnSideWalk* NeighborSideWalk : NeighborRoad->GetSideWalks()) 
+            for (URnWay* Way : SideWalk->GetEdgeWays()) 
+            {
+                // neighborRoadと繋がっている境界線のみを対象
+                if (NeighborRoad->GetSideWalks().ContainsByPredicate(
+                    [&](URnSideWalk* Sw) {
+                        return Sw->GetAllWays().ContainsByPredicate([&](URnWay* W) {
+                            return W->IsSameLineReference(Way);
+                            }); }
+                        ) == false)
                 {
-                    auto AllWays = NeighborSideWalk->GetAllWays();
-                    if (Algo::AnyOf(AllWays, [Way](URnWay* W){ return W->IsSameLineReference(Way);})) 
-                    {
-                        CheckBorderPoints.Add(Way->GetVertex(0));
-                        CheckBorderPoints.Add(Way->GetVertex(-1));
-                    }
+                    continue;
                 }
+
+                // borderとの距離が一定以上離れている場合, 全然違うところにある歩道の可能性が高いので無視
+                // (交差点に同じ道路をPrev/Next両方でつながっている場合に起こりえる)
+                const auto Distance = Border->GetDistance2D(Way);
+                if (Distance > MaxBorderAdvanceLength)
+                    continue;
+
+                CheckBorderPoints.Add(Way->GetVertex(0));
+                CheckBorderPoints.Add(Way->GetVertex(-1));
             }
         }
     }
@@ -550,6 +595,11 @@ bool URnRoad::TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType BorderSide, fl
         else {
             Length = CenterWay->CalcLength(0, Index);
         }
+
+        // 余りにも長くとりすぎる場合は, 境界線関係ない歩道の可能性が高いので無視する
+        // 交差点に同じ道路かNext/Prev両方でつながっている場合に起こりえる
+        if (Length > BorderOffset + MaxBorderAdvanceLength)
+            continue;
 
         // Add 2.5m margin
         BorderOffset = FMath::Max(BorderOffset, Length + 2.5f * FPLATEAURnDef::Meter2Unit);
@@ -689,146 +739,38 @@ bool URnRoad::TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType)
         return false;
     }
 
-    TSet<URnLineString*> Visited;
-
-    auto Merge = [&Visited](URnWay* Dst, URnWay* Src, TFunction<void(URnWay*, URnWay*)> Merger) {
-        if (!Dst || !Src) {
-            return;
-        }
-        if (Visited.Contains(Dst->GetLineString())) {
-            return;
-        }
-        Visited.Add(Dst->GetLineString());
-        Merger(Dst, Src);
-        };
-    
     TArray<URnWay*> OppositeBorders =  GetBorderWays( FPLATEAURnLaneBorderTypeEx::GetOpposite(BorderType));
     URnRoadBase* OppositeRoadBase = GetNeighborRoad(FPLATEAURnLaneBorderTypeEx::GetOpposite(BorderType));
 
-    if (BorderType == EPLATEAURnLaneBorderType::Prev) {
-        auto RightEdge = EdgeGroup->LeftSide->Edges[0];
-        auto LeftEdge = EdgeGroup->RightSide->Edges.Last();
 
-        Merge(RightEdge ? RightEdge->GetBorder() : nullptr, RightWay ? RightWay->ReversedWay() : nullptr,
-            [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
-
-        Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
-            [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
-    }
-    else if (BorderType == EPLATEAURnLaneBorderType::Next) {
-        auto RightEdge = EdgeGroup->RightSide->Edges.Last();
-        auto LeftEdge = EdgeGroup->LeftSide->Edges[0];
-
-        Merge(RightEdge ? RightEdge->GetBorder() : nullptr, RightWay ? RightWay->ReversedWay() : nullptr,
-            [](URnWay* A, URnWay* B) { A->AppendBack2LineString(B); });
-
-        Merge(LeftEdge ? LeftEdge->GetBorder() : nullptr, LeftWay,
-            [](URnWay* A, URnWay* B) { A->AppendFront2LineString(B); });
-    }
+    // 外形線部分を追加
+    Intersection->AddEdge(nullptr, LeftWay);
+    Intersection->AddEdge(nullptr, RightWay);
 
     // 参照情報からthisを削除して新しいものに差し替え
-    Intersection->ReplaceEdges(this, OppositeBorders);
+    Intersection->ReplaceEdges(this, BorderType, OppositeBorders);
+
+    // Selfの隣接道路に対して, Selfに対する接続情報を置き換える
     Intersection->ReplaceNeighbor(this, OppositeRoadBase);
     OppositeRoadBase->ReplaceNeighbor(this, Intersection);
 
-    TArray<URnSideWalk*> DstSideWalks = Intersection->GetSideWalks();
+    // 外形のEdgeがEdge分かれるので一つにまとめる
+    Intersection->MergeContinuousNonBorderEdge();
+
+
+    // 歩道を一つに統合する
     TArray<URnSideWalk*> SrcSideWalks = GetSideWalks();
+    Intersection->MergeSideWalks(SrcSideWalks);
 
-    TArray<URnSideWalk*> OriginalDstSideWalks = DstSideWalks;
-    TMap<URnWay*, URnWay*> Original;
+    // 全部終わった後, 共通のポイントを持つLineStringは統合する
+    Intersection->MergeSamePointLineStrings();
 
-    for (URnSideWalk* SideWalk : DstSideWalks) {
-        for (URnWay* Way : SideWalk->GetSideWays()) {
-            Original.Add(Way, Way->Clone(false));
-        }
+    // トラックを生成しなおす
+    TArray<URnLineString*> RebuildTargetLineStrings;
+    for (auto B : OppositeBorders) {
+        RebuildTargetLineStrings.Add(B->LineString);
     }
-
-    TSet<URnSideWalk*> MergedDstSideWalks;
-
-    for (URnSideWalk* srcSw : SrcSideWalks) {
-        auto found = false;
-        for (URnSideWalk* dstSw : DstSideWalks) 
-        {
-
-            auto Merge2 = [&](URnWay* dst, URnWay* src, TFunction<void(URnWay*, URnWay*)> merger) {
-                if (!dst || !src)
-                    return;
-                if (Visited.Contains(dst->LineString))
-                    return;
-                Visited.Add(dst->LineString);
-
-                auto tolerance = 0.f;
-                if (FRnWayEx::TryMergePointsToLineString(dst, src, tolerance) == false) {
-                    merger(dst, src);
-                }
-                };
-
-            auto MergeSideWalk = [&](bool reverse, TFunction<void(URnWay*, URnWay*)> merger) mutable
-            {
-                auto insideWay = srcSw->GetInsideWay();
-                if(insideWay && reverse)
-                    insideWay = insideWay->ReversedWay();
-                auto outsideWay = srcSw->GetOutsideWay();
-                if(outsideWay && reverse)
-                    outsideWay = outsideWay->ReversedWay();
-
-                Merge2(dstSw->GetInsideWay(), insideWay, merger);
-                Merge2(dstSw->GetOutsideWay(), outsideWay, merger);
-                // もともとnullだった場合は置き換える
-                dstSw->SetSideWays(
-                    dstSw->GetOutsideWay() ? dstSw->GetOutsideWay() : outsideWay
-                    , dstSw->GetInsideWay() ?  dstSw->GetInsideWay() : insideWay
-                );
-                MergedDstSideWalks.Add(dstSw);
-                found = true;
-            };
-
-            // start - startで重なっている場合
-            if (dstSw->GetStartEdgeWay() && dstSw->GetStartEdgeWay()->IsSameLineReference(srcSw->GetStartEdgeWay())) {
-                MergeSideWalk(true, [](URnWay* self, URnWay* dst) {  self->AppendFront2LineString(dst); });
-                dstSw->SetStartEdgeWay(srcSw->GetEndEdgeWay());
-            }
-            // start - endで重なっている場合
-            else if (dstSw->GetStartEdgeWay() && dstSw->GetStartEdgeWay()->IsSameLineReference(srcSw->GetEndEdgeWay()) ) {
-                MergeSideWalk(false, [](URnWay* self, URnWay* dst) {  self->AppendFront2LineString(dst); });
-                dstSw->SetStartEdgeWay(srcSw->GetStartEdgeWay());
-            }
-            // end - endで重なっている場合
-            else if (dstSw->GetEndEdgeWay() && dstSw->GetEndEdgeWay()->IsSameLineReference(srcSw->GetEndEdgeWay()) ) {
-                MergeSideWalk(true, [](URnWay* self, URnWay* dst) {  self->AppendBack2LineString(dst); });
-                dstSw->SetEndEdgeWay(srcSw->GetStartEdgeWay());
-            }
-            // end - startで重なっている場合
-            else if (dstSw->GetEndEdgeWay() && dstSw->GetEndEdgeWay()->IsSameLineReference(srcSw->GetStartEdgeWay())) {
-                MergeSideWalk(false, [](URnWay* self, URnWay* dst) {  self->AppendBack2LineString(dst); });
-                dstSw->SetEndEdgeWay(srcSw->GetEndEdgeWay());
-            }
-
-            if (found)
-                break;
-        }
-
-        // マージできなかった歩道は直接追加
-        if (found == false) {
-            Intersection->AddSideWalk(srcSw);
-            DstSideWalks.Add(srcSw);
-        }       
-    }
-
-    // dstSideWalksの中でマージされなかった(元の形状から変更されない)ものは
-    // レーンと共通のLineStringを持っている場合に勝手に形状変わっているかもしれないので明示的に元に戻す
-    for (URnSideWalk* DstSideWalk : OriginalDstSideWalks) 
-    {
-        if (MergedDstSideWalks.Contains(DstSideWalk))
-            continue;
-        auto OutWay = DstSideWalk->GetOutsideWay();
-        if(OutWay)
-            OutWay = Original[OutWay];
-        auto InWay = DstSideWalk->GetInsideWay();
-        if(InWay)
-            InWay = Original[InWay];
-        DstSideWalk->SetSideWays(OutWay, InWay);
-    }
+    Intersection->BuildTracks(FBuildTrackOption::WithBorder(RebuildTargetLineStrings));
 
     Intersection->AddTargetTrans(GetTargetTrans());
     DisConnect(true);
@@ -857,7 +799,7 @@ void URnRoad::SeparateContinuousBorder() {
         return false;
         };
 
-    auto Check = [&](URnLane* Lane) {
+    auto SeparateLane = [&](URnLane* Lane) {
         if (!Lane->GetPrevBorder() || !Lane->GetNextBorder()) {
             return;
         }
@@ -895,6 +837,6 @@ void URnRoad::SeparateContinuousBorder() {
         };
 
     for (URnLane* Lane : GetAllLanesWithMedian()) {
-        Check(Lane);
+        SeparateLane(Lane);
     }
 }

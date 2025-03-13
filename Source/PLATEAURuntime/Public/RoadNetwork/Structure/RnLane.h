@@ -129,6 +129,13 @@ public:
     TArray<TRnRef_T<URnRoadBase>> GetPrevRoads();
     TRnRef_T<URnRoadBase> GetNextRoad();
     TRnRef_T<URnRoadBase> GetPrevRoad();
+
+
+    /*
+     * 不正値チェック
+     */
+    bool Check();
+
     static TRnRef_T<URnLane> CreateOneWayLane(TRnRef_T<URnWay> way);
 
     /// <summary>

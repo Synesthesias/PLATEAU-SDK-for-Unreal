@@ -186,6 +186,9 @@ public:
     bool bSliceHorizontal = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bMerge2Intersection = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bCheckSliceHorizontal = false;
 
 };
@@ -229,6 +232,8 @@ USTRUCT()
 struct FRnModelDrawSideWalkOption : public FRnModelDrawOption {
     GENERATED_BODY()
 public:
+
+    FRnModelDrawSideWalkOption();
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawWayOption ShowOutsideWay;
 

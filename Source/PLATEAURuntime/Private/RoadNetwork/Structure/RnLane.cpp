@@ -300,6 +300,37 @@ TRnRef_T<URnRoadBase> URnLane::GetPrevRoad()
     return Ret[0];
 }
 
+bool URnLane::Check()
+{
+    // LeftWay, RightWay, PrevBorder, NextBorder が全て有効な場合のみチェック
+    if (LeftWay && RightWay && PrevBorder && NextBorder) {
+        // 左側 Way の先頭の点が PrevBorder に含まれているかチェック
+        if (!PrevBorder->GetLineString()->GetPoints().Contains(LeftWay->GetPoint(0))) {
+            UE_LOG(LogTemp, Error, TEXT("PrevBorderにLeftWay[0]が含まれていません. %s"), *Parent->GetTargetTransName());
+            return false;
+        }
+        // 右側 Way の先頭の点が PrevBorder に含まれているかチェック
+        if (!PrevBorder->GetLineString()->GetPoints().Contains(RightWay->GetPoint(0))) {
+            UE_LOG(LogTemp, Error, TEXT("PrevBorderにRightWay[0]が含まれていません. %s"), *Parent->GetTargetTransName());
+            return false;
+        }
+
+        // NextBorder には各 Way の末尾の点が含まれているはずです。
+        const int32 LeftLastIndex = LeftWay->Count() - 1;
+        const int32 RightLastIndex = RightWay->Count() - 1;
+        if (!NextBorder->GetLineString()->GetPoints().Contains(LeftWay->GetPoint(LeftLastIndex))) {
+            UE_LOG(LogTemp, Error, TEXT("NextBorderにLeftWay[最後]が含まれていません. %s"), *Parent->GetTargetTransName());
+            return false;
+        }
+        if (!NextBorder->GetLineString()->GetPoints().Contains(RightWay->GetPoint(RightLastIndex))) {
+            UE_LOG(LogTemp, Error, TEXT("NextBorderにRightWay[最後]が含まれていません. %s"), *Parent->GetTargetTransName());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 TRnRef_T<URnLane> URnLane::CreateOneWayLane(TRnRef_T<URnWay> way)
 {
     return RnNew<URnLane>(way, nullptr, nullptr, nullptr);

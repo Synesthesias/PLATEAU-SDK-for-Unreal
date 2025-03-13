@@ -51,6 +51,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
     bool bOptModifySideWalkShape = true;
+
+    // 全く同じ辺を持つFaceを統合する
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PLATEAU|Factory|Optimize")
+    bool bFaceReduction = true;
 };
 
 struct FRGraphFactoryEx

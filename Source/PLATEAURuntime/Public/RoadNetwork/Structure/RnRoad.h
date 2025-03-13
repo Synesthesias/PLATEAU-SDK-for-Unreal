@@ -164,6 +164,8 @@ public:
     // 隣接情報を置き換える
     virtual void ReplaceNeighbor(const TRnRef_T<URnRoadBase>& From, const TRnRef_T<URnRoadBase>& To) override;
 
+    // 隣接情報を置き換える
+    virtual void ReplaceNeighbor(URnWay* BorderWay, URnRoadBase* To) override;
     // 左右のWayを結合したものを取得
     TArray<TRnRef_T<URnWay>> GetMergedSideWays() const;
     bool TryMerge2NeighborIntersection(EPLATEAURnLaneBorderType BorderType);
@@ -182,7 +184,7 @@ public:
     }
 
     // 構造的に正しいかどうかチェック
-    virtual bool Check() const override;
+    virtual bool Check() override;
 
 
     bool TryGetVerticalSliceSegment(
