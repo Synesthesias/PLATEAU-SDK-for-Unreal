@@ -85,11 +85,27 @@ void URnRoad::Init(const TArray<TWeakObjectPtr<UPLATEAUCityObjectGroup>>& InTarg
     }
 }
 
-TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const {
-    TArray<TRnRef_T<URnLane>> Lanes = MainLanes;
-    if (MedianLane) {
-        Lanes.Add(MedianLane);
+TArray<TRnRef_T<URnLane>> URnRoad::GetAllLanesWithMedian() const
+{
+    TArray<TRnRef_T<URnLane>> Lanes;
+
+    for(auto i = 0; i < MainLanes.Num(); ++i)
+    {
+        auto Lane = MainLanes[i];
+        // 右車線になったら切り替え
+        if (IsLeftLane(Lane) == false)
+            break;
+        Lanes.Add(Lane);
     }
+
+    const auto LeftLaneCount = Lanes.Num();
+    // 左/右切り替え時には中央分離帯を入れる
+    if (MedianLane)
+        Lanes.Add(MedianLane);
+
+    for (auto i = LeftLaneCount; i < MainLanes.Num(); ++i)
+        Lanes.Add(MainLanes[i]);
+
     return Lanes;
 }
 
@@ -201,12 +217,33 @@ TArray<TRnRef_T<URnRoadBase>> URnRoad::GetNeighborRoads() const {
     return Roads;
 }
 
-void URnRoad::AddMainLane(TRnRef_T<URnLane> Lane)
+bool URnRoad::AddMainLane(TRnRef_T<URnLane> Lane)
 {
     if (MainLanes.Contains(Lane))
-        return;
+        return false;
     OnAddLane(Lane);
     MainLanes.Add(Lane);
+    return true;
+}
+
+bool URnRoad::AddMainLane(TRnRef_T<URnLane> Lane, int32 Index)
+{
+    if (MainLanes.Contains(Lane))
+        return false;
+    OnAddLane(Lane);
+    MainLanes.Insert(Lane, Index);
+    return true;
+}
+
+bool URnRoad::RemoveMainLane(TRnRef_T<URnLane> Lane)
+{
+    if(MainLanes.Contains(Lane))
+    {
+        MainLanes.Remove(Lane);
+        OnRemoveLane(Lane);
+        return true;
+    }
+    return false;
 }
 
 TRnRef_T<URnWay> URnRoad::GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir) const
@@ -254,13 +291,12 @@ bool URnRoad::TryGetMergedSideWay(TOptional<EPLATEAURnDir>  Dir, TRnRef_T<URnWay
         return false;
 
     auto LeftLane = TargetLanes[0];
-    OutLeftWay = IsLeftLane(LeftLane) ? LeftLane->GetLeftWay() : LeftLane->GetRightWay()->ReversedWay();
     if(LeftLane)
     {
         if (IsLeftLane(LeftLane))
             OutLeftWay = LeftLane->GetLeftWay();
         else if (LeftLane->GetRightWay())
-            OutRightWay = LeftLane->GetRightWay()->ReversedWay();
+            OutLeftWay = LeftLane->GetRightWay()->ReversedWay();
     }
 
     auto RightLane = TargetLanes[TargetLanes.Num() - 1];
@@ -366,15 +402,23 @@ TArray<URnWay*> URnRoad::GetBorderWays(EPLATEAURnLaneBorderType BorderType) cons
 
 void URnRoad::ReplaceLanes(const TArray<TRnRef_T<URnLane>>& NewLanes, EPLATEAURnDir Dir) {
     auto OldLanes = GetLanes(Dir);
-    MainLanes.Reset();
+    for (auto Lane : OldLanes)
+        RemoveMainLane(Lane);
 
-    for (const auto& Lane : GetLanes( FPLATEAURnDirEx::GetOpposite(Dir))) {
-        MainLanes.Add(Lane);
+    // Leftは先頭に追加
+    if(Dir == EPLATEAURnDir::Left)
+    {
+        auto i = 0;
+        for(auto L : NewLanes)
+        {
+            AddMainLane(L, i);
+            i++;
+        }
     }
-
-    for (const auto& Lane : NewLanes) {
-        Lane->SetParent(RnFrom(this));
-        MainLanes.Add(Lane);
+    else
+    {
+        for (auto L : NewLanes)
+            AddMainLane(L);
     }
 }
 
@@ -665,15 +709,23 @@ TRnRef_T<URnRoad> URnRoad::CreateOneLaneRoad(TWeakObjectPtr<UPLATEAUCityObjectGr
     return Ret;
 }
 
-void URnRoad::OnAddLane(TRnRef_T<URnLane> lane)
+void URnRoad::OnAddLane(const TRnRef_T<URnLane> Lane)
 {
-    if (!lane)
+    if (!Lane)
         return;
-    lane->SetParent(RnFrom(this));
+    Lane->SetParent(RnFrom(this));
+}
+
+void URnRoad::OnRemoveLane(const TRnRef_T<URnLane> Lane)
+{
+    if (!Lane)
+        return;
+    if (Lane->GetParent() == this)
+        Lane->SetParent(nullptr);
 }
 
 bool FRnRoadEx::IsValidBorderAdjacentNeighbor(const URnRoad* Self, EPLATEAURnLaneBorderType BorderType,
-    bool NoBorderIsTrue)
+                                              bool NoBorderIsTrue)
 {
     if (!Self)
         return false;

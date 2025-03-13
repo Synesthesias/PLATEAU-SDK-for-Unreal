@@ -518,6 +518,14 @@ namespace
                 });
         }
 
+        if(Option.bMergeRoadGroup)
+        {
+            Work.DelayExecs.Add([Road = &Self, Model = Work.Model]() {
+                auto RoadGroup = URnRoadGroup::CreateRoadGroupOrDefault(Road);
+                RoadGroup->MergeRoads();
+                });
+        }
+
         for (auto BorderType : { EPLATEAURnLaneBorderType::Prev , EPLATEAURnLaneBorderType::Next }) {
             if (FRnRoadEx::IsValidBorderAdjacentNeighbor(RnFrom(&Self), BorderType, true) == false) {
                 FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("Invalid %s"), *Self.GetName()), Self.GetCentralVertex());
@@ -586,24 +594,58 @@ void FPLATEAURnModelDrawerDebug::Draw(URnModel* Model)
     RnModelDrawWork Work(this, Model);
 
 
-    for (auto road : Model->GetRoads()) {
+    auto IsTargetTran = [&](URnRoadBase* RoadBase) -> bool
+        {
+            if (!this->bShowOnlyTargetTrans)
+                return true;
 
+            if (!RoadBase)
+                return false;
+
+            for (auto& Comp : RoadBase->GetTargetTrans()) {
+                if (!Comp.Get())
+                    continue;
+                if (this->ShowTargetTranNames.Contains(Comp->GetName()))
+                    return true;
+            }
+            return false;
+
+        };
+
+    for (auto road : Model->GetRoads()) {
+        if (!road)
+            continue;
         if (bShowOnlyTargets && ShowTargetNames.Contains(road->GetName()) == false)
             continue;
+
+        if (IsTargetTran(road) == false)
+            continue;
+
         RoadDrawer.Draw(Work, road, ERnModelDrawerVisibleType::NonSelected);
     }
     // 実行ボタン代わりなので毎フレームリセット
     RoadOption.bSliceHorizontal = false;
     RoadOption.bMerge2Intersection = false;
+    RoadOption.bMergeRoadGroup = false;
 
     for (auto intersection : Model->GetIntersections()) {
+        if(!intersection)
+            continue;
         if (bShowOnlyTargets && ShowTargetNames.Contains(intersection->GetName()) == false)
+            continue;
+
+        if (IsTargetTran(intersection) == false)
             continue;
         IntersectionDrawer.Draw(Work, intersection, ERnModelDrawerVisibleType::NonSelected);
     }
 
     for (auto sideWalk : Model->GetSideWalks()) {
+        if (!sideWalk)
+            continue;
         if (bShowOnlyTargets && ShowTargetNames.Contains(sideWalk->GetName()) == false)
+            continue;
+
+        if (IsTargetTran(sideWalk->GetParentRoad()) == false)
             continue;
         SideWalkDrawer.Draw(Work, sideWalk, ERnModelDrawerVisibleType::NonSelected);
     }

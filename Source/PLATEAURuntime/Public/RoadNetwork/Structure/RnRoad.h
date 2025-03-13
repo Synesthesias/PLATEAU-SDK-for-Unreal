@@ -102,11 +102,20 @@ public:
 
     /// <summary>
     /// #TODO : 左右の隣接情報がないので要修正
-    /// laneを追加する. ParentRoad情報も更新する
+    /// MainLanesにlaneを追加する. すでに存在する場合には無視される.ParentRoad情報も更新する
     /// </summary>
     /// <param name="Lane"></param>
-    void AddMainLane(TRnRef_T<URnLane> Lane);
+    bool AddMainLane(TRnRef_T<URnLane> Lane);
 
+    /*
+     * MainLanesのIndex位置にlaneを追加する. すでに存在する場合には無視される. ParentRoad情報も更新する
+     */
+    bool AddMainLane(TRnRef_T<URnLane> Lane, int32 Index);
+
+    /*
+     * MainLanesからLaneを削除. ParentRoad情報も更新する
+     */
+    bool RemoveMainLane(TRnRef_T<URnLane> Lane);
 
     // 指定した方向の境界線を取得する(全レーンマージした状態で取得する)
     TRnRef_T<URnWay> GetMergedBorder(EPLATEAURnLaneBorderType BorderType, TOptional<EPLATEAURnDir> Dir = NullOpt) const;
@@ -203,7 +212,8 @@ public:
 
 private:
 
-    void OnAddLane(TRnRef_T<URnLane> lane);
+    void OnAddLane(TRnRef_T<URnLane> Lane);
+    void OnRemoveLane(TRnRef_T<URnLane> Lane);
 
 public:
     // 接続先(nullの場合は接続なし)

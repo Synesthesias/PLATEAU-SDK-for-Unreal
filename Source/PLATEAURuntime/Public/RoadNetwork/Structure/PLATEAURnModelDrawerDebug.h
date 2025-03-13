@@ -189,6 +189,9 @@ public:
     bool bMerge2Intersection = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bMergeRoadGroup = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bCheckSliceHorizontal = false;
 
 };
@@ -297,6 +300,12 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     TArray<FString> ShowTargetNames;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bShowOnlyTargetTrans = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    TArray<FString> ShowTargetTranNames;
 
     void Draw(URnModel* Model);
 };

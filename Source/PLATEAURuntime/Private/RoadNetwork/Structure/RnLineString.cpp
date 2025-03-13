@@ -318,11 +318,18 @@ void URnLineString::GetNearestPoint(const FVector& Pos, FVector& OutNearest, flo
         const FVector End = GetVertex(i+1);
         const FVector ProjectedPoint = FMath::ClosestPointOnSegment(Pos, Start, End);
 
+
+        auto Diff = (End - Start).Size();
+        if (Diff < 1e-8f)
+            continue;
+
         const float Distance = (Pos - ProjectedPoint).Size();
         if (Distance < OutDistance) {
+
             OutDistance = Distance;
             OutNearest = ProjectedPoint;
-            OutPointIndex = i + (ProjectedPoint - Start).Size() / (End - Start).Size();
+            auto Offset = (ProjectedPoint - Start);
+            OutPointIndex = i + Offset.Size() / Diff;
         }
     }
 }
