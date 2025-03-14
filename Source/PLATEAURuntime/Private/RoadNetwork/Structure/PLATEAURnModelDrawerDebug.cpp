@@ -381,8 +381,16 @@ namespace
                 if (Self.MedianLane)
                     Median.Draw(Work, Self.MedianLane, Work.visibleType);
 
-
-
+                if(Self.GetNext() != nullptr &&  Option.bShowNextConnection)
+                {
+                    auto V = Self.GetNext()->GetCentralVertex();
+                    Work.DrawArrow(Self.GetCentralVertex(), V, 0.5f, FVector::UpVector, FLinearColor::Red);
+                }
+                if(Self.GetPrev() != nullptr && Option.bShowPrevConnection)
+                {
+                    auto V = Self.GetPrev()->GetCentralVertex();
+                    Work.DrawArrow(Self.GetCentralVertex(), V, 0.5f, FVector::UpVector, FLinearColor::Red);
+                }
                 return true;
             }
             RoadDrawer& Parent;
@@ -465,6 +473,10 @@ namespace
 
             if ((Work.Self->ShowPartsType & (int32)ERnPartsTypeMask::SideWalk) != 0)
                 FPLATEAURnDebugEx::DrawString(FString::Printf(TEXT("%s"), *Self.GetName()), Self.GetCentralVertex());
+            if(Option.bCheck)
+            {
+                auto CheckRes = Self.Check();
+            }
             return true;
         }
     };
@@ -475,7 +487,7 @@ namespace
 
         if (Option.bCheckSliceHorizontal) {
             FLineSegment3D Segment;
-            if (Self.TryGetVerticalSliceSegment(EPLATEAURnLaneBorderType::Next, 200.f, Segment)) {
+            if (Self.TryGetVerticalSliceSegment(Option.CheckSliceHorizontalDir, Option.CheckSliceHorizontalOffset, Segment)) {
 
                 FPLATEAURnDebugEx::DrawLine(Segment.GetStart(), Segment.GetEnd(), FLinearColor::Red);
                 FPLATEAURnEx::FLineCrossPointResult Res;
@@ -485,10 +497,8 @@ namespace
                         FPLATEAURnDebugEx::DrawSphere(I.Value, 100.f);
                         auto V = Line.LineString->GetVertexByFloatIndex(I.Key);
                         FPLATEAURnDebugEx::DrawSphere(V + FVector::UpVector * 30, 100.f, FLinearColor::Blue);
-
                     }
                 }
-
             }
         }
 
