@@ -174,8 +174,11 @@ public:
     };
 
     struct FSliceRoadHorizontalResult {
+        // 切断結果
         ERoadCutResult Result;
+        // 元のRoadのPrev側(元のRoadはこれになる)
         URnRoad* PrevRoad;
+        // 元のRoadのNext側
         URnRoad* NextRoad;
     };
 
