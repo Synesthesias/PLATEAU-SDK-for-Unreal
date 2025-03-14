@@ -253,32 +253,20 @@ bool URnRoadGroup::MergeRoads() {
 
             // 順方向(左車線)
             if (SrcRoad->IsLeftLane(SrcLane)) {
-                if(DstLane->GetLeftWay())
-                {
-                    DstLane->GetLeftWay()->AppendBack2LineString(SrcLane->GetLeftWay());
-                }
-                // 中間のレーンはつながっているので右車線に追加するのは最後だけで良い
-                if (j == SrcLanes.Num() - 1) {
-                    if (DstLane->GetRightWay()) {
-                        DstLane->GetRightWay()->AppendBack2LineString(SrcLane->GetRightWay());
-                    }
-                }
 
+                auto MergedLeftWay = URnWay::CreateMergedWay(DstLane->GetLeftWay(), SrcLane->GetLeftWay());
+                auto MergedRightWay = URnWay::CreateMergedWay(DstLane->GetRightWay(), SrcLane->GetRightWay());
+                DstLane->SetSideWay(EPLATEAURnDir::Left, MergedLeftWay);
+                DstLane->SetSideWay(EPLATEAURnDir::Right, MergedRightWay);
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Next, SrcLane->GetNextBorder());
             }
             // 逆方向(右車線)
             else {
-                if(DstLane->GetRightWay())
-                {
-                    DstLane->GetRightWay()->AppendFront2LineString(SrcLane->GetRightWay());
-                }
-                // 中間のレーンはつながっているので右車線に追加するのは最後だけで良い
-                if (j == SrcLanes.Num() - 1) {
-                    if (DstLane->GetLeftWay()) {
-                        DstLane->GetLeftWay()->AppendFront2LineString(SrcLane->GetLeftWay());
-                    }
-                }
 
+                auto MergedLeftWay = URnWay::CreateMergedWay(SrcLane->GetLeftWay(), DstLane->GetLeftWay());
+                auto MergedRightWay = URnWay::CreateMergedWay(SrcLane->GetRightWay(),DstLane->GetRightWay());
+                DstLane->SetSideWay(EPLATEAURnDir::Left, MergedLeftWay);
+                DstLane->SetSideWay(EPLATEAURnDir::Right, MergedRightWay);               
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Prev, SrcLane->GetPrevBorder());
             }
         }
