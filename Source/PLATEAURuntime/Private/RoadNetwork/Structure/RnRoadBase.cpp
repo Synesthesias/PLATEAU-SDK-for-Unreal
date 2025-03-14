@@ -184,8 +184,8 @@ void URnRoadBase::MergeSamePointLineStrings() {
 
     // 各 Way に対して処理を行う
     for (URnWay* Way : Ways) {
-        // URnWay が TArray<FVector> 型の Points メンバーを持つとする
-        auto Points = Way->GetPoints().ToArray();
+        // LineStringのキャッシュなのでLineStringのPointsをキーにする
+        auto Points = Way->LineString->GetPoints();
 
         bool bIsCached = false;
         bool bIsReversed = false;
@@ -198,9 +198,19 @@ void URnRoadBase::MergeSamePointLineStrings() {
         // キャッシュが存在する場合、Way の LineString を更新する
         if (bIsCached) {
             Way->LineString = LS;
-            if (Way->IsReversed != bIsReversed) {
+            if (bIsReversed) {
                 Way->Reverse(true);
             }
         }
     }
+}
+
+bool URnRoadBase::Check()
+{
+    for(auto Sw : GetSideWalks())
+    {
+        if ( Sw && Sw->Check() == false)
+            return false;
+    }
+    return true;
 }

@@ -96,10 +96,8 @@ public:
     URnSideWalk* ReversedSideWalk();
     bool TryMergeNeighborSideWalk(URnSideWalk* SrcSideWalk);
 
-    bool Check() const
-    {
-        return true;
-    }
+    bool Check() const;
+
 private:
     UPROPERTY(VisibleAnywhere, Category = "PLATEAU")
     TWeakObjectPtr<URnRoadBase> ParentRoad;

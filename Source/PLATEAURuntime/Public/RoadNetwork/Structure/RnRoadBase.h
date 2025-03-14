@@ -82,10 +82,7 @@ public:
     void MergeSamePointLineStrings();
 
     // 構造的に正しいかどうかチェック
-    virtual bool Check()
-    {
-        return true;
-    }
+    virtual bool Check();
 
     // RnRoadへキャストする
     virtual TRnRef_T<URnRoad> CastToRoad()

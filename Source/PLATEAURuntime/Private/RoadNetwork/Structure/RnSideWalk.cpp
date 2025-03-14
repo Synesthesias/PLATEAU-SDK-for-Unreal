@@ -294,3 +294,36 @@ bool URnSideWalk::TryMergeNeighborSideWalk(URnSideWalk* SrcSideWalk) {
 
     return false;
 }
+
+bool URnSideWalk::Check() const
+{
+    auto IsContinuous = [this](URnWay* A, URnWay* B) {
+        if (A == nullptr || B == nullptr)
+            return true;
+        auto Av0 = A->GetPoint(0);
+        auto Av1 = A->GetPoint(-1);
+
+        auto Bv0 = B->GetPoint(0);
+        auto Bv1 = B->GetPoint(-1);
+        return (Av0 == Bv0 || Av0 == Bv1) || (Av1 == Bv0 || Av1 == Bv1);
+        };
+    if (IsContinuous(GetInsideWay(), GetStartEdgeWay()) == false) {
+        UE_LOG(LogTemp, Error, TEXT("InsideWayとStartEdgeWayが端点で繋がっていません. %s"), *GetName());
+        return false;
+    }
+    if (IsContinuous(GetInsideWay(), GetEndEdgeWay()) == false) {
+        UE_LOG(LogTemp, Error, TEXT("InsideWayとEndEdgeWayが端点で繋がっていません. %s"), *GetName());
+        return false;
+
+    }
+    if (IsContinuous(GetOutsideWay(), GetStartEdgeWay()) == false) {
+        UE_LOG(LogTemp, Error, TEXT("OutsideWayとStartEdgeWayが端点で繋がっていません. %s"), *GetName());
+        return false;
+    }
+    if (IsContinuous(GetOutsideWay(), GetEndEdgeWay()) == false) {
+        UE_LOG(LogTemp, Error, TEXT("OutsideWayとEndEdgeWayが端点で繋がっていません. %s"), *GetName());
+        return false;
+
+    }
+    return true;
+}
