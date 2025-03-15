@@ -45,7 +45,7 @@ TArray<TObjectPtr<UStaticMeshComponent>> FPLATEAUDirectionalArrowComposer::Compo
 
             if (Lane->GetNextBorder())
             {
-                auto* Inter = Lane->GetIsReverse() ? PrevIntersection : NextIntersection;
+                auto* Inter = Lane->GetIsReversed() ? PrevIntersection : NextIntersection;
                 bool bIsSucceedPosition = false;
                 bool bIsSucceedAngle = false;
                 const auto Position = ArrowPosition(Lane, true, bIsSucceedPosition);
@@ -63,7 +63,7 @@ TArray<TObjectPtr<UStaticMeshComponent>> FPLATEAUDirectionalArrowComposer::Compo
 
             if (Lane->GetPrevBorder())
             {
-                auto* Inter = Lane->GetIsReverse() ? NextIntersection : PrevIntersection;
+                auto* Inter = Lane->GetIsReversed() ? NextIntersection : PrevIntersection;
                 bool bIsSucceedPosition = false;
                 bool bIsSucceedAngle = false;
                 const auto Position = ArrowPosition(Lane, false, bIsSucceedPosition);
@@ -233,7 +233,7 @@ EPLATEAUDirectionalArrowType FPLATEAUDirectionalArrowComposer::ArrowType(const U
         bContainStraight |= TurnType == ERnTurnType::Straight;
     }
 
-    if (bContainStraight && bContainLeft && bContainRight) return EPLATEAUDirectionalArrowType::None;
+    if (bContainLeft && bContainRight) return EPLATEAUDirectionalArrowType::None;
     if (bContainStraight && bContainLeft) return EPLATEAUDirectionalArrowType::StraightAndLeft;
     if (bContainStraight && bContainRight) return EPLATEAUDirectionalArrowType::StraightAndRight;
     if (bContainStraight) return EPLATEAUDirectionalArrowType::Straight;

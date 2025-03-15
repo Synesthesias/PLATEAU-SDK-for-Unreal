@@ -6,6 +6,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
+#include "RoadAdjust/PLATEAUReproducedRoad.h"
 #include "LineGeneratorComponent.generated.h"
 
 /**
@@ -77,6 +78,13 @@ public:
     void Init(const TArray<FVector>& InPoints, const FPLATEAURoadLineParam& Param, FVector2D InOffset);
 
     ULineGeneratorComponent();
+
+#if WITH_EDITOR
+	/**
+	 * スプラインを編集したとき、線メッシュに反映させるために必要です
+	 */
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 private:
 

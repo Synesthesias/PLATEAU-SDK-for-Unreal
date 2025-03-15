@@ -78,14 +78,13 @@ void ULineGeneratorComponent::CreateSplineMeshLengthBased(AActor* Actor) {
     //Add Spline Mesh
     for(int index = 0; index < GetNumberOfSplinePoints() - 1; index++)
     {
-
         FVector StartPos, EndPos, StartTangent, EndTangent;
         GetLocalLocationAndTangentAtSplinePoint(index, StartPos, StartTangent);
         GetLocalLocationAndTangentAtSplinePoint(index + 1, EndPos, EndTangent);
 
-        // 端だけタンジェントが変になることがあるので修正
-        if(index == 0) StartTangent = EndPos - StartPos;
-        if(index == GetNumberOfSplinePoints() - 2) EndTangent = EndPos - StartPos; 
+        // タンジェントが変になることがあるので修正
+        StartTangent = (EndPos - StartPos).GetSafeNormal();
+        EndTangent = (EndPos - StartPos).GetSafeNormal();
 
         CreateSplineMeshComponent(FName(TEXT("SplineMesh_") + FString::FromInt(index)), Actor, StartPos, StartTangent, EndPos, EndTangent);
     }
@@ -174,3 +173,10 @@ void ULineGeneratorComponent::Init(const TArray<FVector>& InPoints, const FPLATE
     // オフセット値を設定
     Offset = InOffset;
 }
+
+#if WITH_EDITOR
+void ULineGeneratorComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    CreateSplineMesh(GetOwner());
+}
+#endif
