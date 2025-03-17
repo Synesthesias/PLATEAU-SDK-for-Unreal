@@ -1,3 +1,5 @@
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
+
 #pragma once
 #include <memory>
 #include "../../Component/PLATEAUSceneComponent.h"
@@ -139,6 +141,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor SideWalkColor;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    FLinearColor MedianColor;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor HighWayColor;

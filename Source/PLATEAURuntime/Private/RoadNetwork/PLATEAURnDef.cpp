@@ -1,4 +1,7 @@
+// Copyright 2023 Ministry of Land, Infrastructure and Transport
+
 #include "RoadNetwork/PLATEAURnDef.h"
+#include "UObject/Package.h"
 
 
 EPLATEAURnLaneBorderType FPLATEAURnLaneBorderTypeEx::GetOpposite(EPLATEAURnLaneBorderType dir)

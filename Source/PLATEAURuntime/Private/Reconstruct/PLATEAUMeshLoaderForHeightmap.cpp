@@ -16,10 +16,15 @@
 #include "Util/PLATEAUComponentUtil.h"
 
 
-FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray())
-{}
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap() : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray()) {}
 
-FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest) : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray()){
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest) : FPLATEAUMeshLoader(FPLATEAUCachedMaterialArray()) {
+    bAutomationTest = InbAutomationTest;
+}
+
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray& Mats) : FPLATEAUMeshLoader(Mats) {}
+
+FPLATEAUMeshLoaderForHeightmap::FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray & Mats, const bool InbAutomationTest) : FPLATEAUMeshLoader(Mats) {
     bAutomationTest = InbAutomationTest;
 }
 
@@ -112,3 +117,8 @@ void FPLATEAUMeshLoaderForHeightmap::CreateReference(ALandscape* Landscape, AAct
 #endif
     }
 }
+
+bool FPLATEAUMeshLoaderForHeightmap::UseCachedMaterial() {
+    return false;
+}
+

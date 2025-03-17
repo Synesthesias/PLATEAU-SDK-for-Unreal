@@ -96,7 +96,7 @@ bool FPLATEAUMeshExporter::ExportAsOBJ(const FString& ExportPath, APLATEAUInstan
                 if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i])) {
                     return false;
                 }
-            }catch (const std::exception& e) {
+            } catch (const std::exception& e) {
                 UE_LOG(LogTemp, Error, TEXT("ExportAsOBJ Error : %s"), *FString(e.what()));
                 return false;
             }
@@ -123,7 +123,7 @@ bool FPLATEAUMeshExporter::ExportAsFBX(const FString& ExportPath, APLATEAUInstan
                 if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], FbxOptions)) {
                     return false;
                 }
-            }catch (const std::exception& e) {
+            } catch (const std::exception& e) {
                 UE_LOG(LogTemp, Error, TEXT("ExportAsFBX Error : %s"), *FString(e.what()));
                 return false;
             }
@@ -139,16 +139,19 @@ bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInsta
     GltfOptions.mesh_file_format = Option.bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLTF : plateau::meshWriter::GltfFileFormat::GLB;
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
-            const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
-            const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
 #if WITH_EDITOR
-            std::filesystem::create_directory(TCHAR_TO_UTF8(*ExportPathWithFolder));
+            const FString ExportPathWithFolder = ExportPath + "/" + ModelNames[i];
+            IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+            if (!PlatformFile.DirectoryExists(*ExportPathWithFolder)) {
+                PlatformFile.CreateDirectory(*ExportPathWithFolder);
+            }
 #endif
+            const FString ExportPathWithName = ExportPath + "/" + ModelNames[i] + "/" + ModelNames[i] + ".gltf";
             try {
                 if (!Writer.write(TCHAR_TO_UTF8(*ExportPathWithName), *ModelDataArray[i], GltfOptions)) {
                     return false;
                 }
-            }catch (const std::exception& e) {
+            } catch (const std::exception& e) {
                 UE_LOG(LogTemp, Error, TEXT("ExportAsGLTF Error : %s"), *FString(e.what()));
                 return false;
             }
@@ -286,10 +289,10 @@ void FPLATEAUMeshExporter::CreateMesh(plateau::polygonMesh::Mesh& OutMesh, UScen
                             continue;
                         }
 
-                        const auto BaseDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*(FPaths::ProjectContentDir() + "PLATEAU/"));
                         const auto AssetBasePath = FPaths::GetPath(Texture->GetPackage()->GetLoadedPath().GetLocalFullPath());
                         const auto TextureFileRelativePath = TextureSourceFiles[0].RelativeFilename;
                         TextureFilePath = AssetBasePath / TextureFileRelativePath;
+                        TextureFilePath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*TextureFilePath);
 #endif
                     }
                 }

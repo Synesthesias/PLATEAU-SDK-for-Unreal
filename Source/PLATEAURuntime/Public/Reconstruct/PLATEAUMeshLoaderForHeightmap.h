@@ -101,6 +101,8 @@ class PLATEAURUNTIME_API FPLATEAUMeshLoaderForHeightmap : public FPLATEAUMeshLoa
 public:
     FPLATEAUMeshLoaderForHeightmap();
     FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest);
+    FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray& Mats);
+    FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray& Mats, const bool InbAutomationTest);
 
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,
@@ -121,6 +123,9 @@ protected:
         const plateau::polygonMesh::Mesh& InMesh,
         const FString NodeName,
         AActor& Actor, FPLATEAULandscapeParam Param);
+
+    virtual bool UseCachedMaterial() override;
+
 
 private:
 

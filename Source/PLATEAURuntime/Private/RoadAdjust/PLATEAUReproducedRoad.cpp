@@ -14,6 +14,7 @@
 #include "RoadNetwork/Structure/RnModel.h"
 #include "RoadNetwork/Structure/PLATEAURnStructureModel.h"
 #include "Misc/ScopedSlowTask.h"
+#include "Engine/World.h"
 
 APLATEAUReproducedRoad::APLATEAUReproducedRoad() {
     CreateLineTypeMap();
