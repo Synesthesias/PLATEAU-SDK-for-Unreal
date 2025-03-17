@@ -22,6 +22,7 @@ UPLATEAURGraph::UPLATEAURGraph() {
     RoadColor = FLinearColor::White;
     HighWayColor = FLinearColor::Blue;
     SideWalkColor = FLinearColor::Green;
+    MedianColor = FLinearColor::Yellow;
     UndefinedColor = FLinearColor::Red;
     VertexOption.bVisible = false;
     EdgeOption.ShowTypeMask = (int32)FRRoadTypeMaskEx::All();
@@ -33,6 +34,8 @@ FLinearColor UPLATEAURGraph::GetColor(ERRoadTypeMask RoadType) {
         return HighWayColor;
     if (FRRoadTypeMaskEx::IsSideWalk(RoadType))
         return SideWalkColor;
+    if (FRRoadTypeMaskEx::IsMedian(RoadType))
+        return MedianColor;
     if (FRRoadTypeMaskEx::IsRoad(RoadType))
         return RoadColor;
     return UndefinedColor;

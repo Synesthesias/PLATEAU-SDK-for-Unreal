@@ -174,3 +174,10 @@ void ULineGeneratorComponent::Init(const TArray<FVector>& InPoints, const FPLATE
     // オフセット値を設定
     Offset = InOffset;
 }
+
+#if WITH_EDITOR
+void ULineGeneratorComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    CreateSplineMesh(GetOwner());
+}
+#endif

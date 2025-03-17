@@ -145,7 +145,10 @@ struct FRnModelDrawRoadNormalOption : public FRnModelDrawOption {
     GENERATED_BODY()
 public:
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bShowSpline = true;
+    bool bShowNextConnection = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bShowPrevConnection = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     int ShowLaneIndex = -1;
@@ -188,8 +191,19 @@ public:
     bool bSliceHorizontal = false;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bMerge2Intersection = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bMergeRoadGroup = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     bool bCheckSliceHorizontal = false;
 
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    EPLATEAURnLaneBorderType CheckSliceHorizontalDir = EPLATEAURnLaneBorderType::Next;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    float CheckSliceHorizontalOffset = 200.f;
 };
 
 USTRUCT()
@@ -231,6 +245,8 @@ USTRUCT()
 struct FRnModelDrawSideWalkOption : public FRnModelDrawOption {
     GENERATED_BODY()
 public:
+
+    FRnModelDrawSideWalkOption();
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawWayOption ShowOutsideWay;
 
@@ -242,6 +258,10 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FRnModelDrawWayOption ShowEndEdgeWay;
+
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bCheck;
 };
 
 USTRUCT()
@@ -294,6 +314,12 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     TArray<FString> ShowTargetNames;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    bool bShowOnlyTargetTrans = false;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    TArray<FString> ShowTargetTranNames;
 
     void Draw(URnModel* Model);
 };

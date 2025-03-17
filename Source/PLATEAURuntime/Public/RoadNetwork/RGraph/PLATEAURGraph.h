@@ -143,6 +143,9 @@ public:
     FLinearColor SideWalkColor;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
+    FLinearColor MedianColor;
+
+    UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
     FLinearColor HighWayColor;
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
