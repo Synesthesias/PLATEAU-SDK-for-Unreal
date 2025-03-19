@@ -290,6 +290,20 @@ namespace PLATEAUAutomationTestUtil {
             Comp->SetMaterial(0, Mat);
         }
 
+        /// <summary>
+        /// StaticMeshにTexture付きマテリアルを設定
+        /// </summary>
+        inline void SetMaterialWithTexture(UStaticMesh* mesh, FString TextureName) {
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
+            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
+
+            FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
+            UTexture2D* Texture = FImageUtils::ImportFileAsTexture2D(Path);
+            if (Texture) Mat->SetTextureParameterValue("Texture", Texture);
+            mesh->AddMaterial(Mat);
+        }
+
         //Atomic
         /// <summary>
         /// Actor と Compoenent生成

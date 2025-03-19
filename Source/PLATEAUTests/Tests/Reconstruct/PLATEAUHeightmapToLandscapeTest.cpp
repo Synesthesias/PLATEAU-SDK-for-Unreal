@@ -63,7 +63,8 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
     OriginalItem->SerializeCityObject(CityObj);
     auto StaticMesh = PLATEAUAutomationTestUtil::Fixtures::CreateStaticMesh(Actor, FName(TEXT("TestDemStaticMesh")));
     OriginalItem->SetStaticMesh(StaticMesh);
-    PLATEAUAutomationTestUtil::Fixtures::SetMaterial(StaticMesh, FVector3f(0, 1, 0));
+    //PLATEAUAutomationTestUtil::Fixtures::SetMaterial(StaticMesh, FVector3f(0, 1, 0));
+    PLATEAUAutomationTestUtil::Fixtures::SetMaterialWithTexture(StaticMesh, "Blue.png");
 
     // Load Heightmap Texture
     UTexture2D* Texture = PLATEAUAutomationTestUtil::Texture::LoadImage("HM_dem_test_505_505.png");
@@ -104,7 +105,12 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
 
         TestEqual("Base Material are the same ", Cast<UMaterialInstanceDynamic>(MeshComponent->GetStaticMesh()->GetMaterial(0))->Parent.GetName(), Cast<UMaterialInstanceDynamic>(OriginalItem->GetStaticMesh()->GetMaterial(0))->Parent.GetName());
 
-        //TODO: MaterialにTextureを設定してTextureの比較を行う (Dynamic Material生成時にTextureパラメータのみ設定しているため）
+        //Textureの比較 (Dynamic Material再生成時にTextureパラメータのみ設定しているため）
+        UTexture* Tex1;
+        UTexture* Tex2;
+        Cast<UMaterialInstanceDynamic>(MeshComponent->GetStaticMesh()->GetMaterial(0))->GetTextureParameterValue(TEXT("Texture"), Tex1);
+        Cast<UMaterialInstanceDynamic>(OriginalItem->GetStaticMesh()->GetMaterial(0))->GetTextureParameterValue(TEXT("Texture"), Tex2);
+        TestEqual("Textures are the same ", Tex1 , Tex2);
 
         AddInfo("StaticMesh Test Finish");
 
