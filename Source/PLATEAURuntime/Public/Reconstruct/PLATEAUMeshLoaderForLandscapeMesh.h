@@ -10,8 +10,6 @@ class PLATEAURUNTIME_API FPLATEAUMeshLoaderForLandscapeMesh : public FPLATEAUMes
 public:
     FPLATEAUMeshLoaderForLandscapeMesh();
     FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest);
-    FPLATEAUMeshLoaderForLandscapeMesh(const FPLATEAUCachedMaterialArray& Mats);
-    FPLATEAUMeshLoaderForLandscapeMesh(const FPLATEAUCachedMaterialArray& Mats, const bool InbAutomationTest);
 
     void CreateMeshFromHeightMap(AActor& Actor, const int32 SizeX, const int32 SizeY, 
         const TVec3d Min, const TVec3d Max, 

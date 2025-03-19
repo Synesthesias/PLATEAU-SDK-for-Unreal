@@ -101,8 +101,6 @@ class PLATEAURUNTIME_API FPLATEAUMeshLoaderForHeightmap : public FPLATEAUMeshLoa
 public:
     FPLATEAUMeshLoaderForHeightmap();
     FPLATEAUMeshLoaderForHeightmap(const bool InbAutomationTest);
-    FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray& Mats);
-    FPLATEAUMeshLoaderForHeightmap(const FPLATEAUCachedMaterialArray& Mats, const bool InbAutomationTest);
 
     TArray<HeightmapCreationResult> CreateHeightMap(
         AActor* ModelActor,

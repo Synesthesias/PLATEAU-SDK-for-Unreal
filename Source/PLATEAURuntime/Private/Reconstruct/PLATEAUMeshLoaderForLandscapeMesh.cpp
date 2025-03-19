@@ -15,15 +15,9 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh() : FPLATEAUMeshLoaderForHeightmap(FPLATEAUCachedMaterialArray()) {}
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(){}
 
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest) : FPLATEAUMeshLoaderForHeightmap(FPLATEAUCachedMaterialArray()) {
-    bAutomationTest = InbAutomationTest;
-}
-
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const FPLATEAUCachedMaterialArray& Mats) : FPLATEAUMeshLoaderForHeightmap(Mats) {}
-
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const FPLATEAUCachedMaterialArray & Mats, const bool InbAutomationTest) : FPLATEAUMeshLoaderForHeightmap(Mats) {
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest) {
     bAutomationTest = InbAutomationTest;
 }
 

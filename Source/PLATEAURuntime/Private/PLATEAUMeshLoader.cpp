@@ -435,12 +435,11 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
                         UMaterialInterface* MaterialInterface;
 
                         // 変換前のマテリアルを使う箇所で、変換前のマテリアル情報があればそれを利用
-                        int gameMatID = SubMeshValue.GameMaterialID;  
-                        if (UseCachedMaterial() && 
-                            gameMatID >= 0 && BeforeConvertCachedMaterials.Num() > 0 &&
-                            gameMatID < BeforeConvertCachedMaterials.Num())
+                        int gameMatID = SubMeshValue.GameMaterialID;
+                        const auto PreCachedMaterial = GetPreCachedMaterial(gameMatID);
+                        if (PreCachedMaterial)
                         {
-                            MaterialInterface = BeforeConvertCachedMaterials.Get(gameMatID);
+                            MaterialInterface = PreCachedMaterial;
                         }
                         // 新規マテリアル作成
                         else 
@@ -665,6 +664,10 @@ TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
 
 bool FPLATEAUMeshLoader::UseCachedMaterial() {
     return true;
+}
+
+UMaterialInterface* FPLATEAUMeshLoader::GetPreCachedMaterial(int32 MaterialId) {
+    return nullptr;
 }
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {
