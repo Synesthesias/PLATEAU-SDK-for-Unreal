@@ -259,6 +259,14 @@ namespace PLATEAUAutomationTestUtil {
 
             return mesh;
         }
+        /// <summary>
+        /// マテリアルを生成
+        /// </summary>
+        inline UMaterialInterface* CreateMaterial() {
+            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
+            UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            return Mat;
+        }
 
         /// <summary>
         /// StaticMeshに色付きマテリアルを設定

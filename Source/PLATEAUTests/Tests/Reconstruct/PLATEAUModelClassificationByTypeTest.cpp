@@ -18,7 +18,8 @@ namespace FPLATEAUTest_Reconstruct_ModelClassificationByType_Local {
         FString SourcePath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/Fallback/PlateauDefaultDisasterMaterialInstance");
         UMaterialInstance* Material = Cast<UMaterialInstance>(
             StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-        Materials.Add(EPLATEAUCityObjectsType::COT_Building, Material);
+        //Materials.Add(EPLATEAUCityObjectsType::COT_Building, Material);
+        Materials.Add(EPLATEAUCityObjectsType::COT_WallSurface, Material);
         return Materials;
     }
 }
@@ -90,7 +91,6 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByType::RunTest(const FString& 
     //Model Creation Test
     for (const auto& Target : TargetComponents)
         ModelConvert::TestConvertModel(this, ModelActor, Target, ConvertGranularity::PerPrimaryFeatureObject);
-
     
     FPLATEAUModelClassificationByType ModelClassification(ModelActor, Materials);
     ModelClassification.SetConvertGranularity(ConvertGranularity::PerPrimaryFeatureObject);
@@ -121,7 +121,7 @@ bool FPLATEAUTest_Reconstruct_ModelClassificationByType::RunTest(const FString& 
             TestNotNull("Dynamic Material is not null", DynMat);
 
             //CreateMaterialMapで設定したMaterialがセットされている
-            //TestEqual("Material switched", DynMat->Parent.GetName(), "PlateauDefaultDisasterMaterialInstance");
+            TestEqual("Material switched", DynMat->GetName(), "PlateauDefaultDisasterMaterialInstance");
 
             AddInfo("StaticMeshTest Finish " + CompAsCOG->GetName());
             return true;

@@ -114,12 +114,13 @@ bool FPLATEAUTest_MeshLoader_Classification::RunTest(const FString& Parameters) 
                 for (const auto Mat : Materials) {
                     UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(Mat.MaterialInterface);
                     if (DynMat) {
-                        MaterialNames.Add(DynMat->Parent.GetName());
+                        //MaterialNames.Add(DynMat->Parent.GetName());
+                        MaterialNames.Add(DynMat->GetName());
                     }
                 }
 
                 //CreateMaterialMapで設定したMaterialがセットされている
-                //TestTrue("Material switched", MaterialNames.Contains("PlateauDefaultDisasterMaterialInstance"));
+                TestTrue("Material switched", MaterialNames.Contains("PlateauDefaultDisasterMaterialInstance"));
 
                 AddInfo("StaticMesh Test Finish");
                 return true;

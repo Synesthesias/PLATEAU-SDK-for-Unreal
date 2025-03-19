@@ -102,7 +102,10 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
         if (!MeshComponent->GetStaticMesh())
             return false;
 
-        TestEqual("Material are the same ", MeshComponent->GetStaticMesh()->GetMaterial(0), OriginalItem->GetStaticMesh()->GetMaterial(0));
+        TestEqual("Base Material are the same ", Cast<UMaterialInstanceDynamic>(MeshComponent->GetStaticMesh()->GetMaterial(0))->Parent.GetName(), Cast<UMaterialInstanceDynamic>(OriginalItem->GetStaticMesh()->GetMaterial(0))->Parent.GetName());
+
+        //TODO: MaterialにTextureを設定してTextureの比較を行う (Dynamic Material生成時にTextureパラメータのみ設定しているため）
+
         AddInfo("StaticMesh Test Finish");
 
         return true;

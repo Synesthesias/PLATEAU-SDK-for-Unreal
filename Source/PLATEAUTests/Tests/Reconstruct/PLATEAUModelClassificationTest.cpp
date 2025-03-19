@@ -106,14 +106,15 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Type::RunTest(const FString& P
                 AddInfo("Created: " + CreatedComp->GetName());
                 UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
                 if (DynMat) {
-                    ResultMaterialNames.Add(DynMat->Parent.GetName());
-                    AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
+                    //ResultMaterialNames.Add(DynMat->Parent.GetName());
+                    ResultMaterialNames.Add(DynMat->GetName());
+                    AddInfo("Mat Added: [" + (DynMat->GetName()) + "]");
                 }
             }
 
             AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
-            //TestTrue("Material has Wall", ResultMaterialNames.Contains(WallMatName));
-            //TestTrue("Material has Roof", ResultMaterialNames.Contains(RoofMatName));
+            TestTrue("Material has Wall", ResultMaterialNames.Contains(WallMatName));
+            TestTrue("Material has Roof", ResultMaterialNames.Contains(RoofMatName));
 
             AddInfo("Primary => Atomic  Reconstruct Task Finish");
             return true;
@@ -177,14 +178,18 @@ bool FPLATEAUTest_Reconstruct_ModelClassification_Attr::RunTest(const FString& P
                 AddInfo("Created: " + CreatedComp->GetName());
                 UMaterialInstanceDynamic* DynMat = StaticCast<UMaterialInstanceDynamic*>(CreatedAsCOG->GetStaticMesh()->GetMaterial(0));
                 if (DynMat) {
-                    ResultMaterialNames.Add(DynMat->Parent.GetName());
-                    AddInfo("Mat Added: [" + (DynMat->Parent.GetName()) + "]");
+                    //ResultMaterialNames.Add(DynMat->Parent.GetName());
+                    ResultMaterialNames.Add(DynMat->GetName());
+                    AddInfo("Mat Added: [" + (DynMat->GetName()) + "]");
                 }
             }
 
             AddInfo("ResultMaterialNames: " + FString::FromInt(ResultMaterialNames.Num()));
-            //TestTrue("Material has Attr1", ResultMaterialNames.Contains(AttrMat1Name));
-            //TestTrue("Material has Attr2", ResultMaterialNames.Contains(AttrMat2Name));
+            TestTrue("Material has Attr1", ResultMaterialNames.Contains(AttrMat1Name));
+            TestTrue("Material has Attr2", ResultMaterialNames.Contains(AttrMat2Name));
+            for (auto MatName : ResultMaterialNames) {
+                AddInfo("ResultMaterialName: " + MatName);
+            }
 
             AddInfo("Primary => Atomic  Reconstruct Task Finish");
             return true;
