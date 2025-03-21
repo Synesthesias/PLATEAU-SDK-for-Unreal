@@ -4,7 +4,7 @@
 
 #include <plateau/granularity_convert/granularity_converter.h>
 #include "CityGML/PLATEAUCityObject.h"
-
+#include "PLATEAUCachedMaterialArray.h"
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
 #include "Util/PLATEAUReconstructUtil.h"
