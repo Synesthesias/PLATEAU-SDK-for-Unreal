@@ -15,7 +15,6 @@
 #include "Misc/Paths.h"
 #include "Components/SceneComponent.h"
 #include "Misc/PackageName.h"
-#include "ContentStreaming.h"
 #if WITH_EDITOR
 #include "EditorFramework/AssetImportData.h"
 #endif
@@ -151,7 +150,7 @@ namespace {
             PixelFormat,
             1,
             TexCreate_ShaderResource,
-            ERHIAccess::Unknown,
+            ERHIAccess::CopySrc,
             MipData.GetData(), 1,
             TEXT("RHIAsyncCreateTexture2D"),
             CompletionEvent
@@ -274,16 +273,6 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
     Args.Error = GError;
     UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
-
-    //UE5.5でAsset Streamingが停止してしまうのを回避
-    IRenderAssetStreamingManager* StreamingManager = nullptr;
-    if (IRenderAssetStreamingManager::Get().IsRenderAssetStreamingEnabled(EStreamableRenderAssetType::Texture)) {
-        StreamingManager = StaticCast<IRenderAssetStreamingManager*>(&IRenderAssetStreamingManager::Get().GetRenderAssetStreamingManager());
-        if (StreamingManager) {
-            // アセットのストリーミングを再開
-            StreamingManager->PauseRenderAssetStreaming(false);
-        }
-    }
 
     check(IsValid(NewTexture));
 
