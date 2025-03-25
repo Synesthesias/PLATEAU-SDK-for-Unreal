@@ -436,8 +436,7 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
                         // 変換前のマテリアルを使う箇所で、変換前のマテリアル情報があればそれを利用
                         int gameMatID = SubMeshValue.GameMaterialID;
-                        const auto PreCachedMaterial = GetPreCachedMaterial(gameMatID);
-                        if (PreCachedMaterial)
+                        if (const auto PreCachedMaterial = GetPreCachedMaterial(gameMatID))
                         {
                             MaterialInterface = PreCachedMaterial;
                         }
