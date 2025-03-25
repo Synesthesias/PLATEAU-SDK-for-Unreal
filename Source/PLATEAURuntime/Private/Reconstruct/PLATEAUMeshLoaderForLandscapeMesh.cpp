@@ -113,7 +113,7 @@ UMaterialInterface* FPLATEAUMeshLoaderForLandscapeMesh::GetMaterialForSubMesh(co
     const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) {
     if (ReplaceMaterial != nullptr) {
         //Dynamic Material 再生成・Texture再設定 (レベル保存時に消えてしまうため）
-        auto DynMaterial = UMaterialInstanceDynamic::Create(ReplaceMaterial->GetMaterial(), Component);
+        auto DynMaterial = UMaterialInstanceDynamic::Create(ReplaceMaterial->GetMaterial(), Component->GetOuter());
         UTexture* ReferencedTexture = nullptr;
         ReplaceMaterial->GetTextureParameterValue(TEXT("Texture"), ReferencedTexture);
         DynMaterial->SetTextureParameterValue("Texture", ReferencedTexture);

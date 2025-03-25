@@ -543,7 +543,7 @@ UMaterialInterface* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMate
                 "/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
 
         UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-        DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+        DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component->GetOuter());
 
         DynMaterial->SetVectorParameterValue("BaseColor", SubMeshValue.Diffuse);
         DynMaterial->SetVectorParameterValue("EmissiveColor", SubMeshValue.Emissive);
@@ -569,7 +569,7 @@ UMaterialInterface* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMate
     else {
         //Fallbackマテリアル設定
         if (LoadInputData.FallbackMaterial != nullptr && Texture == nullptr) {
-            DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component);
+            DynMaterial = UMaterialInstanceDynamic::Create(LoadInputData.FallbackMaterial, Component->GetOuter());
 
             // 分割・結合で使用するためにテクスチャ情報を保持
             TArray<UTexture*> UsedTextures;
@@ -594,7 +594,7 @@ UMaterialInterface* FPLATEAUMeshLoader::GetMaterialForSubMesh(const FSubMeshMate
             //デフォルトマテリアル設定
             const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/DefaultMaterial");
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
-            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component);
+            DynMaterial = UMaterialInstanceDynamic::Create(Mat, Component->GetOuter());
         }
     }
     return DynMaterial;
