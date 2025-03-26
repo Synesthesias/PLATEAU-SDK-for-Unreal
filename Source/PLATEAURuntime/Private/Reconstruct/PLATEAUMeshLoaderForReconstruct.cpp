@@ -4,12 +4,13 @@
 #include "PLATEAUCityModelLoader.h"
 #include "Component/PLATEAUCityObjectGroup.h"
 #include "Util/PLATEAUComponentUtil.h"
+#include "Materials/MaterialInstance.h"
 
-FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const FPLATEAUCachedMaterialArray& CachedMaterials) : BeforeConvertCachedMaterials(CachedMaterials) {
     bAutomationTest = false;
 }
 
-FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials) : FPLATEAUMeshLoader(CachedMaterials) {
+FPLATEAUMeshLoaderForReconstruct::FPLATEAUMeshLoaderForReconstruct(const bool InbAutomationTest, const FPLATEAUCachedMaterialArray& CachedMaterials) : BeforeConvertCachedMaterials(CachedMaterials) {
     bAutomationTest = InbAutomationTest;
 }
 
@@ -133,7 +134,7 @@ UMaterialInterface* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(cons
             FString SourcePath = "/PLATEAU-SDK-for-Unreal/Materials/Fallback/" / FallbackName;
             UMaterialInstance* FallbackMat = Cast<UMaterialInstance>(
                 StaticLoadObject(UMaterialInstance::StaticClass(), nullptr, *SourcePath));
-            return StaticCast<UMaterialInstanceDynamic*>(FallbackMat);
+            return Cast<UMaterialInterface>(FallbackMat);
         }
     }
     return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
@@ -149,6 +150,17 @@ UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentFo
     PLATEAUCityObjectGroup->SerializeCityObject(NodeName, InMesh, ConvGranularity, CityObjMap);
     return PLATEAUCityObjectGroup;
 }
+
+UMaterialInterface* FPLATEAUMeshLoaderForReconstruct::GetPreCachedMaterial(int32 MaterialId) {
+    if (UseCachedMaterial() && 
+        MaterialId >= 0 && BeforeConvertCachedMaterials.Num() > 0 &&
+        MaterialId < BeforeConvertCachedMaterials.Num())
+    {
+        return BeforeConvertCachedMaterials.Get(MaterialId);
+    }
+    return nullptr;
+}
+
 
 bool FPLATEAUMeshLoaderForReconstruct::InvertMeshNormal() {
     return true;

@@ -1,3 +1,5 @@
+// Copyright © 2023 Ministry of Land, Infrastructure and Transport
+
 #include "RoadAdjust/RoadMarking/PLATEAUDirectionalArrowComposer.h"
 #include "RoadNetwork/Structure/RnIntersection.h"
 #include "Engine/StaticMesh.h"

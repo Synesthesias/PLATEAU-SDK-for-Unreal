@@ -15,9 +15,9 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh() {}
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(){}
 
-FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest){
+FPLATEAUMeshLoaderForLandscapeMesh::FPLATEAUMeshLoaderForLandscapeMesh(const bool InbAutomationTest) {
     bAutomationTest = InbAutomationTest;
 }
 
@@ -131,7 +131,7 @@ void FPLATEAUMeshLoaderForLandscapeMesh::ModifyMeshDescription(FMeshDescription&
     for (FEdgeID EdgeID : MeshDescription.Edges().GetElementIDs()) {
         EdgeHardness.Set(EdgeID, 0, false);
     }
-
+    
     FStaticMeshOperations::ComputeTriangleTangentsAndNormals(MeshDescription, FMathf::Epsilon);
     FStaticMeshOperations::RecomputeNormalsAndTangentsIfNeeded(MeshDescription, 
         EComputeNTBsFlags::WeightedNTBs | EComputeNTBsFlags::Normals | EComputeNTBsFlags::Tangents | EComputeNTBsFlags::BlendOverlappingNormals);

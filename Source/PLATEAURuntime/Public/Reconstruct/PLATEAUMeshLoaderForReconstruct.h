@@ -4,7 +4,7 @@
 
 #include <plateau/granularity_convert/granularity_converter.h>
 #include "CityGML/PLATEAUCityObject.h"
-
+#include "PLATEAUCachedMaterialArray.h"
 #include "CoreMinimal.h"
 #include "PLATEAUMeshLoader.h"
 #include "Util/PLATEAUReconstructUtil.h"
@@ -48,6 +48,7 @@ protected:
         const plateau::polygonMesh::Mesh& InMesh, const FLoadInputData& LoadInputData, 
         const std::shared_ptr <const citygml::CityModel> CityModel) override;
 
+    UMaterialInterface* GetPreCachedMaterial(int32 MaterialId) override;
     bool InvertMeshNormal() override;
     bool OverwriteTexture() override;
 
@@ -56,5 +57,7 @@ protected:
 
     ConvertGranularity ConvGranularity;
 
-private:
+protected:
+    const FPLATEAUCachedMaterialArray& BeforeConvertCachedMaterials;
+
 };

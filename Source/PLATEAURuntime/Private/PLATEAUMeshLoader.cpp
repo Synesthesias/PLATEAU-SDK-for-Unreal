@@ -186,9 +186,9 @@ bool FPLATEAUMeshLoader::ConvertMesh(const plateau::polygonMesh::Mesh& InMesh, F
         const auto GameMaterialID = SubMesh.getGameMaterialID();
         FPolygonGroupID PolygonGroupID = 0;
         FSubMeshMaterialSet MaterialSet(MaterialValue,
-            TexturePath.empty() ? FString() : FString(TexturePath.c_str()),
+            TexturePath.empty() ? FString() : FString(UTF8_TO_TCHAR(TexturePath.c_str())),
             GameMaterialID);
-            
+           
         if (!SubMeshMaterialSets.Contains(MaterialSet)) {
             // マテリアル設定
             PolygonGroupID = OutMeshDescription.CreatePolygonGroup();
@@ -436,10 +436,9 @@ UStaticMeshComponent* FPLATEAUMeshLoader::CreateStaticMeshComponent(AActor& Acto
 
                         // 変換前のマテリアルを使う箇所で、変換前のマテリアル情報があればそれを利用
                         int gameMatID = SubMeshValue.GameMaterialID;
-                        if (gameMatID >= 0 &&
-                            gameMatID < BeforeConvertCachedMaterials.Num())
+                        if (const auto PreCachedMaterial = GetPreCachedMaterial(gameMatID))
                         {
-                            MaterialInterface = BeforeConvertCachedMaterials.Get(gameMatID);
+                            MaterialInterface = PreCachedMaterial;
                         }
                         // 新規マテリアル作成
                         else 
@@ -664,6 +663,10 @@ TArray<USceneComponent*> FPLATEAUMeshLoader::GetLastCreatedComponents() {
 
 bool FPLATEAUMeshLoader::UseCachedMaterial() {
     return true;
+}
+
+UMaterialInterface* FPLATEAUMeshLoader::GetPreCachedMaterial(int32 MaterialId) {
+    return nullptr;
 }
 
 bool FPLATEAUMeshLoader::InvertMeshNormal() {

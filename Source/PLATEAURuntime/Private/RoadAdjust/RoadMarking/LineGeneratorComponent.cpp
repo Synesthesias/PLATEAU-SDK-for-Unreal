@@ -3,11 +3,12 @@
 #include "RoadAdjust/RoadMarking/LineGeneratorComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "RoadAdjust/PLATEAUReproducedRoad.h"
+#include "Engine/StaticMesh.h"
 
 ULineGeneratorComponent::ULineGeneratorComponent() :
     SplineMeshType(ESplineMeshType::LengthBased), 
     SplinePointType(ESplinePointType::Linear), 
-    CoordinateSpace(ESplineCoordinateSpace::Local), 
+    CoordinateSpace(ESplineCoordinateSpace::Local),  
     FillEnd(false),
     EnableShadow(false) {
     this->SetDrawDebug(false);
