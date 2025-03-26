@@ -138,7 +138,7 @@ bool URnRoadGroup::CreateMedianOrSkip(float MedianWidth, float MaxMedianLaneRate
     }
 
     MedianWidth = FMath::Max(1.0f, MedianWidth);
-    float Width = 0.0f;
+    float Width = FLT_MAX;
     for (const auto& Road : Roads) {
         float RoadWidth = 0.0f;
         for (const auto& Lane : Road->GetAllLanesWithMedian()) {
@@ -272,7 +272,7 @@ bool URnRoadGroup::MergeRoads() {
                 DstLane->SetBorder(EPLATEAURnLaneBorderType::Prev, SrcLane->GetPrevBorder());
             }
         }
-
+        
         auto SrcSideWalks = SrcRoad->GetSideWalks();
         for (const auto& SrcSw : SrcSideWalks) {
             DstRoad->AddSideWalk(SrcSw);
