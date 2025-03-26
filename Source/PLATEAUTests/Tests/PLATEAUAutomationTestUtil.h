@@ -278,6 +278,10 @@ namespace PLATEAUAutomationTestUtil {
         /// </summary>
         inline void SetMaterial(UStaticMesh* mesh, FVector3f Color = FVector3f::Zero()) {
             UMaterial* Base = Cast<UMaterial>(CreateMaterial());
+            if (!Base) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to create material for mesh"));
+                return; 
+            }
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
             if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
             mesh->AddMaterial(Mat);
@@ -288,6 +292,10 @@ namespace PLATEAUAutomationTestUtil {
         /// </summary>
         inline void SetMaterial(UPLATEAUCityObjectGroup* Comp, FVector3f Color = FVector3f::Zero()) {
             UMaterial* Base = Cast<UMaterial>(CreateMaterial());
+            if (!Base) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to create material for mesh"));
+                return;
+            }
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, Comp);
             if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
             Comp->SetMaterial(0, Mat);
@@ -299,7 +307,10 @@ namespace PLATEAUAutomationTestUtil {
         inline void SetMaterialWithTexture(UStaticMesh* mesh, FString TextureName) {
             UMaterial* Base = Cast<UMaterial>(CreateMaterial());
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
-
+            if (!Base) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to create material for mesh with texture"));
+                return;
+            }
             FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
             UTexture2D* Texture = FImageUtils::ImportFileAsTexture2D(Path);
             if (Texture) Mat->SetTextureParameterValue("Texture", Texture);
