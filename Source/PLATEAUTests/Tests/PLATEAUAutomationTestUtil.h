@@ -267,6 +267,9 @@ namespace PLATEAUAutomationTestUtil {
         inline UMaterialInterface* CreateMaterial() {
             const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
             UMaterial* Mat = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            if (!Mat) {
+                UE_LOG(LogTemp, Warning, TEXT("Failed to load material at path: %s"), SourceMaterialPath);
+            }
             return Mat;
         }
 
@@ -274,8 +277,7 @@ namespace PLATEAUAutomationTestUtil {
         /// StaticMeshに色付きマテリアルを設定
         /// </summary>
         inline void SetMaterial(UStaticMesh* mesh, FVector3f Color = FVector3f::Zero()) {
-            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterial* Base = Cast<UMaterial>(CreateMaterial());
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
             if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
             mesh->AddMaterial(Mat);
@@ -285,8 +287,7 @@ namespace PLATEAUAutomationTestUtil {
         /// Componentに色付きマテリアルを設定
         /// </summary>
         inline void SetMaterial(UPLATEAUCityObjectGroup* Comp, FVector3f Color = FVector3f::Zero()) {
-            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterial* Base = Cast<UMaterial>(CreateMaterial());
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, Comp);
             if (Color != FVector3f::Zero()) Mat->SetVectorParameterValue("BaseColor", Color);
             Comp->SetMaterial(0, Mat);
@@ -296,8 +297,7 @@ namespace PLATEAUAutomationTestUtil {
         /// StaticMeshにTexture付きマテリアルを設定
         /// </summary>
         inline void SetMaterialWithTexture(UStaticMesh* mesh, FString TextureName) {
-            const auto SourceMaterialPath = TEXT("/PLATEAU-SDK-for-Unreal/Materials/PLATEAUX3DMaterial");
-            UMaterial* Base = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, SourceMaterialPath));
+            UMaterial* Base = Cast<UMaterial>(CreateMaterial());
             UMaterialInstanceDynamic* Mat = UMaterialInstanceDynamic::Create(Base, mesh);
 
             FString Path = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/texture/").Append(TextureName);
