@@ -9,6 +9,7 @@
 #include <Component/PLATEAUSceneComponent.h>
 #include <Component/PLATEAUCityObjectGroup.h>
 #include "CityGML/citymodel.h"
+#include "PLATEAUTests/Tests/PLATEAUAutomationTestUtil.h"
 
 IMPLEMENT_CUSTOM_SIMPLE_AUTOMATION_TEST(FPLATEAUTest_Util_Gml_Util, FPLATEAUAutomationTestBase, "PLATEAUTest.FPLATEAUTest.Util.GmlUtil", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -80,13 +81,20 @@ bool FPLATEAUTest_Util_Gml_Util::RunTest(const FString& Parameters) {
     TestTrue("Children contains item2_2", ChildrenIds.Contains("item2_2"));
 
     //Convert CityModel
-    auto CityModel = PLATEAUAutomationTestUtil::CityModel::LoadCityModel();
+    const FString SrcDir = FPLATEAURuntimeModule::GetContentDir().Append("/TestData/data");
+    const FString DistDir = FPaths::ProjectContentDir().Append("/PLATEAU/Datasets/data");
+    PLATEAUAutomationTestUtil::CityModel::CopyDirectory(SrcDir, DistDir);
 
-    const auto& CityModelCityObject = CityModel->getRootCityObject(0);
-    FPLATEAUCityObject OutCityObject;
-    FPLATEAUGmlUtil::ConvertCityObject(&CityModelCityObject, OutCityObject);
-    TestEqual("CityModel Gml ID", OutCityObject.GmlID, FString(CityModelCityObject.getId().c_str()));
-    TestEqual("CityModel Attr size", OutCityObject.Attributes.AttributeMap.Num(), CityModelCityObject.getAttributes().size());
+    if (auto CityModel = PLATEAUAutomationTestUtil::CityModel::LoadCityModel()) {
+        const auto& CityModelCityObject = CityModel->getRootCityObject(0);
+        FPLATEAUCityObject OutCityObject;
+        FPLATEAUGmlUtil::ConvertCityObject(&CityModelCityObject, OutCityObject);
+        TestEqual("CityModel Gml ID", OutCityObject.GmlID, FString(CityModelCityObject.getId().c_str()));
+        TestEqual("CityModel Attr size", OutCityObject.Attributes.AttributeMap.Num(), CityModelCityObject.getAttributes().size());
+    }
+    else {
+        AddError("Failed to LoadCityModel");
+    }
 
     return true;
 }

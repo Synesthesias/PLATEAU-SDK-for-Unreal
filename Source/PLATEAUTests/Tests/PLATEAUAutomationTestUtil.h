@@ -9,6 +9,8 @@
 #include <PLATEAUMeshExporter.h>
 #include <ImageUtils.h>
 #include <CityGML/PLATEAUCityGmlProxy.h>
+#include "Misc/Paths.h"
+#include "HAL/PlatformFilemanager.h"
 
 //ダイナミック生成等のテスト用共通処理
 namespace PLATEAUAutomationTestUtil {
@@ -571,6 +573,27 @@ namespace PLATEAUAutomationTestUtil {
     }
 
     namespace CityModel {
+
+        inline void CopyDirectory(const FString& SourceDirectory, const FString& DestinationDirectory) {
+            // IPlatformFileのインスタンスを取得
+            IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+            // ディレクトリが存在するか確認
+            if (PlatformFile.DirectoryExists(*SourceDirectory)) {
+                // コピー処理を実行
+                bool bCopySuccess = PlatformFile.CopyDirectoryTree(*DestinationDirectory, *SourceDirectory, true);
+
+                if (bCopySuccess) {
+                    UE_LOG(LogTemp, Log, TEXT("Directory successfully copied from %s to %s"), *SourceDirectory, *DestinationDirectory);
+                }
+                else {
+                    UE_LOG(LogTemp, Error, TEXT("Failed to copy directory from %s to %s"), *SourceDirectory, *DestinationDirectory);
+                }
+            }
+            else {
+                UE_LOG(LogTemp, Warning, TEXT("Source directory does not exist: %s"), *SourceDirectory);
+            }
+        }
 
         inline std::shared_ptr<const citygml::CityModel> LoadCityModel() {
             FPLATEAUCityObjectInfo GmlInfo;
