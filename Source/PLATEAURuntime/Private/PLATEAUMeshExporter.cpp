@@ -137,6 +137,7 @@ bool FPLATEAUMeshExporter::ExportAsGLTF(const FString& ExportPath, APLATEAUInsta
     const auto ModelDataArray = CreateModelFromActor(ModelActor, Option);
     plateau::meshWriter::GltfWriteOptions GltfOptions;
     GltfOptions.mesh_file_format = Option.bExportAsBinary ? plateau::meshWriter::GltfFileFormat::GLTF : plateau::meshWriter::GltfFileFormat::GLB;
+    GltfOptions.texture_directory_path = "./textures";
     for (int i = 0; i < ModelDataArray.Num(); i++) {
         if (ModelDataArray[i]->getRootNodeCount() != 0) {
 #if WITH_EDITOR
