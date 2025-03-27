@@ -6,7 +6,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/MessageDialog.h"
 #include "Misc/Paths.h"
-#include "Misc/MessageDialog.h"
 #define LOCTEXT_NAMESPACE "PLATEAUExportModelAPI"
 
 /**
