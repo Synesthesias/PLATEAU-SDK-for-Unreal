@@ -122,7 +122,7 @@ USceneComponent* FPLATEAUMeshLoaderForReconstruct::ReloadNode(USceneComponent* P
 }
 
 UMaterialInterface* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(const FSubMeshMaterialSet& SubMeshValue, UStaticMeshComponent* Component,
-    const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier) {
+    const FLoadInputData& LoadInputData, UTexture2D* Texture, FNodeHierarchy NodeHier, UObject* Outer) {
 
     FString TexturePath = SubMeshValue.TexturePath;
     //分割・結合時のFallback Material取得
@@ -137,7 +137,7 @@ UMaterialInterface* FPLATEAUMeshLoaderForReconstruct::GetMaterialForSubMesh(cons
             return Cast<UMaterialInterface>(FallbackMat);
         }
     }
-    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier);
+    return FPLATEAUMeshLoader::GetMaterialForSubMesh(SubMeshValue, Component, LoadInputData, Texture, NodeHier, Outer);
 }
 
 UStaticMeshComponent* FPLATEAUMeshLoaderForReconstruct::GetStaticMeshComponentForCondition(AActor& Actor, EName Name, FNodeHierarchy NodeHier,
