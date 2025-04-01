@@ -132,7 +132,7 @@ namespace {
 
     void UpdateTextureGPUResourceAsync(
         const TArray64<uint8>& UncompressedImageData, UTexture2D* const Texture,
-        const int32 Mip0Size, const int32 Width, const int32 Height, const EPixelFormat PixelFormat) {
+        const int32 Mip0Size, const int32 Width, const int32 Height, const EPixelFormat PixelFormat, ERHIAccess InResourceState) {
 
         TArray<void*, TInlineAllocator<MAX_TEXTURE_MIP_COUNT>> MipData;
         MipData.Add(FMemory::Malloc(Mip0Size));
@@ -150,7 +150,7 @@ namespace {
             PixelFormat,
             1,
             TexCreate_ShaderResource,
-            ERHIAccess::CopySrc,
+            InResourceState,
             MipData.GetData(), 1,
             TEXT("RHIAsyncCreateTexture2D"),
             CompletionEvent
@@ -181,7 +181,52 @@ namespace {
                 Texture->RefreshSamplerStates();
             }
         );
+    }
 
+    void SaveTexturePackage(UTexture2D* Texture, const FString TexturePath, TArray64<uint8> UncompressedData, 
+        int32 Width, int32 Height, EPixelFormat PixelFormat, const int32 Mip0Size, UPackage* Package, FString PackageName) {
+#if WITH_EDITOR
+        // テクスチャ上書き開始
+        Texture->PreEditChange(nullptr);
+
+        // ソースパス設定
+        const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
+            *(FPaths::ProjectContentDir() + FString("PLATEAU/")));
+        // アセットからテクスチャファイルへの相対パス
+        auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
+        Texture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
+
+        if (GRHISupportsAsyncTextureCreation)
+            UpdateTextureGPUResourceWithDummy(Texture, PixelFormat);
+
+        // アセットとして保存するデータで上書き
+        SetTexturePlatformData(Texture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
+
+        // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
+        if (!GRHISupportsAsyncTextureCreation)
+            Texture->UpdateResource();
+
+        Texture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
+
+        // テクスチャ上書き終了
+        Texture->PostEditChange();
+#endif
+        Package->MarkPackageDirty();
+
+        // 3Dファイルエクスポート用にテクスチャファイルのパスを保持
+        const auto ContentPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
+            *(FPaths::ProjectContentDir()));
+        auto TextureFilePath = TexturePath.Replace(*ContentPath, TEXT("")).Replace(*FString("\\"), *FString("/"));
+        Package->SetLoadedPath(FPackagePath::FromLocalPath(TexturePath));
+
+        FAssetRegistryModule::AssetCreated(Texture);
+        const FString PackageFileName = FPackageName::LongPackageNameToFilename(
+            PackageName, FPackageName::GetAssetPackageExtension());
+        FSavePackageArgs Args;
+        Args.SaveFlags = SAVE_NoError;
+        Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
+        Args.Error = GError;
+        UPackage::SavePackage(Package, Texture, *PackageFileName, Args);
     }
 }
 
@@ -212,7 +257,9 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     UPackage* Package = CreatePackage(*PackageName);
     Package->FullyLoad();
     NewTexture = Cast<UTexture2D>(Package->FindAssetInPackage());
-    if (NewTexture == nullptr) {
+
+    //if(NewTexture == nullptr){
+    if (!IsValid(NewTexture)) {
         NewTexture = NewObject<UTexture2D>(Package, NAME_None, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 
         // テクスチャのアセット名設定
@@ -230,54 +277,13 @@ UTexture2D* FPLATEAUTextureLoader::Load(const FString& TexturePath_SlashOrBackSl
     else if (!OverwriteTextre) {
         return NewTexture;
     }
-#if WITH_EDITOR
-    // テクスチャ上書き開始
-    NewTexture->PreEditChange(nullptr);
 
-    // ソースパス設定
-    const auto PLATEAURootDir = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
-        *(FPaths::ProjectContentDir() + FString("PLATEAU/")));
-    // アセットからテクスチャファイルへの相対パス
-    auto RelativeTextureFilePath = TexturePath.Replace(*PLATEAURootDir, *FString("../"));
-    NewTexture->AssetImportData->SetSourceFiles({ RelativeTextureFilePath });
-
-    if (GRHISupportsAsyncTextureCreation)
-        UpdateTextureGPUResourceWithDummy(NewTexture, PixelFormat);
-
-    // アセットとして保存するデータで上書き
-    SetTexturePlatformData(NewTexture, UncompressedData, Mip0Size, Width, Height, PixelFormat);
-
-    // GPUがRHIに対応している場合描画自体はRHIで行うため、NewTexture->UpdateResourceは実行しない。
-    if (!GRHISupportsAsyncTextureCreation)
-        NewTexture->UpdateResource();
-
-    NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedData.GetData());
-
-    // テクスチャ上書き終了
-    NewTexture->PostEditChange();
-#endif
-    // TODO: 関数化(SaveTexturePackage)
-    Package->MarkPackageDirty();
-
-    // 3Dファイルエクスポート用にテクスチャファイルのパスを保持
-    const auto ContentPath = IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(
-        *(FPaths::ProjectContentDir()));
-    auto TextureFilePath = TexturePath.Replace(*ContentPath, TEXT("")).Replace(*FString("\\"), *FString("/"));
-    Package->SetLoadedPath(FPackagePath::FromLocalPath(TexturePath));
-
-    FAssetRegistryModule::AssetCreated(NewTexture);
-    const FString PackageFileName = FPackageName::LongPackageNameToFilename(
-        PackageName, FPackageName::GetAssetPackageExtension());
-    FSavePackageArgs Args;
-    Args.SaveFlags = SAVE_NoError;
-    Args.TopLevelFlags = EObjectFlags::RF_Public | EObjectFlags::RF_Standalone;
-    Args.Error = GError;
-    UPackage::SavePackage(Package, NewTexture, *PackageFileName, Args);
+    SaveTexturePackage(NewTexture, TexturePath, UncompressedData, Width, Height, PixelFormat, Mip0Size, Package, PackageName);
 
     check(IsValid(NewTexture));
 
     if (GRHISupportsAsyncTextureCreation)
-        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
+        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat, ERHIAccess::WritableMask | ERHIAccess::SRVMask);
 
     return NewTexture;
 }
@@ -320,7 +326,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
     check(IsValid(NewTexture));
 
     if (GRHISupportsAsyncTextureCreation)
-        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat);
+        UpdateTextureGPUResourceAsync(UncompressedData, NewTexture, Mip0Size, Width, Height, PixelFormat, ERHIAccess::SRVMask);
 
     return NewTexture;
 }
