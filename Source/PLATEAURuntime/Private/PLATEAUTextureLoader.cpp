@@ -328,7 +328,7 @@ UTexture2D* FPLATEAUTextureLoader::LoadTransient(const FString& TexturePath) {
 }
 
 // Texture保存(5.5のクラッシュ回避のためパッケージ保存はロード後に行う
-bool FPLATEAUTextureLoader::SaveTexture(UTexture2D* Texture, const FString TexturePath) {
+bool FPLATEAUTextureLoader::SaveTexture(UTexture2D* Texture, const FString& TexturePath) {
     FString PackageName = TEXT("/Game/PLATEAU/Textures/");
     PackageName += FPaths::GetBaseFilename(TexturePath).Replace(TEXT("."), TEXT("_"));
     UPackage* Package = CreatePackage(*PackageName);
