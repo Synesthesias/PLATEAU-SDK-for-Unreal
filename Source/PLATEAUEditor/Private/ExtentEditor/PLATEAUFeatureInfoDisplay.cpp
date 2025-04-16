@@ -72,11 +72,11 @@ namespace {
 
     std::shared_ptr<std::vector<GmlFile>> FindGmlFiles(
         const IDatasetAccessor& InDatasetAccessor,
-        const MeshCode& InMeshCode,
+        const std::shared_ptr<GridCode>& InGridCode,
         const PredefinedCityModelPackage InPackage) {
 
         return InDatasetAccessor
-            .filterByMeshCodes({ InMeshCode })
+            .filterByGridCodes({ InGridCode })
             ->getGmlFiles(InPackage);
     }
 }
@@ -108,10 +108,10 @@ bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUMeshCodeGizmo& M
     FPLATEAUFeatureInfoPanelInput Input;
     const auto Packages = GetDisplayedPackages();
     for (const auto& Package : GetDisplayedPackages()) {
-        Input.Add(Package, FindGmlFiles(InDatasetAccessor, MeshCodeGizmo.GetMeshCode(), Package));
+        Input.Add(Package, FindGmlFiles(InDatasetAccessor, MeshCodeGizmo.GetGridCode(), Package));
     }
 
-    const auto TileExtent = MeshCodeGizmo.GetMeshCode().getExtent();
+    const auto TileExtent = MeshCodeGizmo.GetGridCode()->getExtent();
     const auto RawTileMax = GeoReference.GetData().project(TileExtent.max);
     const auto RawTileMin = GeoReference.GetData().project(TileExtent.min);
     const FBox Box{FVector(RawTileMin.x, RawTileMin.y, RawTileMin.z), FVector(RawTileMax.x, RawTileMax.y, RawTileMax.z)};

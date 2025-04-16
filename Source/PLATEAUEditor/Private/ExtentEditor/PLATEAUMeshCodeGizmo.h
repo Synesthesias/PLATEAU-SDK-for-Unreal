@@ -41,9 +41,9 @@ public:
     FVector2D GetSize() const;
 
     /**
-     * @brief メッシュコード取得
+     * @brief グリッドコード取得
      */
-    plateau::dataset::MeshCode GetMeshCode() const;
+    std::shared_ptr<plateau::dataset::GridCode> GetGridCode() const;
     
     /**
      * @brief メッシュID取得
@@ -68,7 +68,7 @@ public:
     /**
      * @brief インスタンスを初期化します。
      */
-    void Init(const plateau::dataset::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference);
+    void Init(const std::shared_ptr<plateau::dataset::GridCode>& InGridCode, const plateau::geometry::GeoReference& InGeoReference);
 
     /**
      * @brief マウス座標がエリア内であれば選択状態をトグル
@@ -107,7 +107,7 @@ public:
 private:
     inline static bool bShowLevel5Mesh = false;
 
-    plateau::dataset::MeshCode MeshCode;
+    std::shared_ptr<plateau::dataset::GridCode> GridCode;
     FString MeshCodeString;
     double Width;
     double Height;

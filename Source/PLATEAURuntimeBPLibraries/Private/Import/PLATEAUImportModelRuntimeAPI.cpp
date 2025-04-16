@@ -8,20 +8,20 @@
 
 namespace {
 
-    APLATEAUCityModelLoader* GetCityModelLoader(UWorld* World, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
+    APLATEAUCityModelLoader* GetCityModelLoader(UWorld* World, const TArray<FString> StrGridCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
         FActorSpawnParameters SpawnParam;
         const auto Actor = World->SpawnActor<APLATEAUCityModelLoader>(SpawnParam);
         const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
-        Loader->MeshCodes = MeshCodes;
+        Loader->GridCodes = StrGridCodes;
         Loader->GeoReference.ZoneID = ZoneID;
         Loader->GeoReference.ReferencePoint = ReferencePoint;
         Loader->GeoReference.UpdateNativeData();
 
-        std::vector<plateau::dataset::MeshCode> NativeSelectedMeshCodes;
-        for (const auto& Code : MeshCodes) {
-            NativeSelectedMeshCodes.emplace_back(TCHAR_TO_UTF8(*Code));
+        std::vector<std::shared_ptr<plateau::dataset::GridCode>> NativeSelectedGridCodes;
+        for (const auto& Code : StrGridCodes) {
+            NativeSelectedGridCodes.push_back(plateau::dataset::GridCode::create(TCHAR_TO_UTF8(*Code)));
         }
-        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
+        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByGridCodes(NativeSelectedGridCodes);
         const auto PackageMask = FilteredDatasetAccessor->getPackages();
         const auto ImportSettings = DuplicateObject(GetMutableDefault<UPLATEAUImportSettings>(), Loader);
         for (const auto& Package : UPLATEAUImportSettings::GetAllPackages()) {

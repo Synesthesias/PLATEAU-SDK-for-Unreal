@@ -78,7 +78,7 @@ void SPLATEAUExtentEditorViewport::Construct(const FArguments& InArgs) {
         if (DatasetAccessor == nullptr)
             return;
 
-        if (DatasetAccessor->getMeshCodes().size() == 0)
+        if (DatasetAccessor->getGridCodes().size() == 0)
             return;
 
         auto GeoReference = ExtentEditorPtr.Pin()->GetGeoReference();
@@ -215,7 +215,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                         if (MeshCodeErrorText.IsValid())
                                             MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
                                     }
-                                    else if (!ViewportClient->SetViewLocationByMeshCode(meshcode)) {
+                                    else if (!ViewportClient->SetViewLocationByGridCode(meshcode)) {
                                         if (MeshCodeErrorText.IsValid())
                                             MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
                                     }
@@ -437,23 +437,23 @@ TSharedPtr<SDockTab> SPLATEAUExtentEditorViewport::GetOwnerTab() const {
 }
 
 int64 SPLATEAUExtentEditorViewport::GetPackageMask(const bool bImportFromServer) const {
-    const auto& SelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes(bImportFromServer);
-    std::vector<plateau::dataset::MeshCode> NativeSelectedMeshCodes;
-    for (const auto& Code : SelectedMeshCodes) {
-        NativeSelectedMeshCodes.emplace_back(TCHAR_TO_UTF8(*Code));
+    const auto& StrSelectedMeshCodes = ExtentEditorPtr.Pin()->GetSelectedCodes(bImportFromServer);
+    std::vector<std::shared_ptr<plateau::dataset::GridCode>> NativeSelectedGridCodes;
+    for (const auto& Code : StrSelectedMeshCodes) {
+        NativeSelectedGridCodes.push_back(plateau::dataset::GridCode::create(TCHAR_TO_UTF8(*Code)));
     }
 
     if (ExtentEditorPtr.Pin()->IsImportFromServer()) {
         const auto ClientRef = ExtentEditorPtr.Pin()->GetClientPtr();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(ExtentEditorPtr.Pin()->GetServerDatasetID(), *ClientRef);
-        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
+        const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByGridCodes(NativeSelectedGridCodes);
         const auto PackageMask = FilteredDatasetAccessor->getPackages();
         ExtentEditorPtr.Pin()->SetServerPackageMask(PackageMask);
         return static_cast<int64>(PackageMask);
     }
 
     const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*ExtentEditorPtr.Pin()->GetSourcePath()));
-    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByMeshCodes(NativeSelectedMeshCodes);
+    const auto FilteredDatasetAccessor = InDatasetSource.getAccessor()->filterByGridCodes(NativeSelectedGridCodes);
     const auto PackageMask = FilteredDatasetAccessor->getPackages();
     ExtentEditorPtr.Pin()->SetLocalPackageMask(PackageMask);
     return static_cast<int64>(PackageMask);
