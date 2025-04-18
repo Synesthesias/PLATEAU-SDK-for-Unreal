@@ -33,6 +33,7 @@
 #  define CITYGML_DEPRECATED_NO_EXPORT CITYGML_NO_EXPORT CITYGML_DEPRECATED
 #endif
 
+/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef CITYGML_NO_DEPRECATED
 #    define CITYGML_NO_DEPRECATED

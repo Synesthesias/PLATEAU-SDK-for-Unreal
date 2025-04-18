@@ -22,7 +22,6 @@ namespace plateau::dataset {
         std::shared_ptr<GridCode> getGridCode() const;
         GridCode* getGridCodeRaw() const; // 寿命管理をDLL利用者に任せる用です
         double getEpsg() const;
-        bool isPolarCoordinateSystem() const;
         const std::string& getFeatureType() const;
         PredefinedCityModelPackage getPackage() const;
         std::string getAppearanceDirectoryPath() const;
