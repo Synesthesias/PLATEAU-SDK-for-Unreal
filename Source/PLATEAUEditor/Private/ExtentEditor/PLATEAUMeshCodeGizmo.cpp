@@ -64,7 +64,7 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : GridCode(), Width(0), Height(0)
 }
 
 bool FPLATEAUMeshCodeGizmo::IsSelectable() const {
-    return GridCode->isNormalGmlLevel() && GridCode->isSmallerThanNormalGml();
+    return GridCode->isNormalGmlLevel() || GridCode->isSmallerThanNormalGml();
 }
 
 void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
