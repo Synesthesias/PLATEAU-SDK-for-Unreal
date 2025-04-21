@@ -73,7 +73,7 @@ namespace plateau::dataset {
         static std::shared_ptr<GridCode> create(const std::string& code);
 
         /**
-         * \brief 与えられたコードから適切なGridCodeの派生クラスのインスタンスを作成します。
+         * \brief create()をUnityのP/Invokeから呼び出す版です。newして返すので、利用者が適切に廃棄する必要があります。
          * \param code コード文字列
          * \return コードの形式に応じてMeshCodeまたはStandardMapGridのインスタンスを返します。生ポインタで返されます。
          * \throw std::invalid_argument コードの形式が不正な場合

@@ -174,7 +174,7 @@ plateau::geometry::GeoCoordinate FPLATEAUExtentEditor::GetSelectedCenterLatLon(c
         plateau::geometry::GeoCoordinate(-180.0, -180.0, 0.0));
 
     for (const auto& Code : SelectedCodes) {
-        const auto NativePartialExtent = plateau::dataset::MeshCode(TCHAR_TO_UTF8(*Code)).getExtent();
+        const auto NativePartialExtent = plateau::dataset::GridCode::create(TCHAR_TO_UTF8(*Code))->getExtent();
         NativeExtent.min.latitude = std::min(NativeExtent.min.latitude, NativePartialExtent.min.latitude);
         NativeExtent.min.longitude = std::min(NativeExtent.min.longitude, NativePartialExtent.min.longitude);
         NativeExtent.max.latitude = std::max(NativeExtent.max.latitude, NativePartialExtent.max.latitude);

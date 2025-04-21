@@ -5,6 +5,7 @@
 #include <optional>
 #include "plateau/network/client.h"
 #include "city_model_package.h"
+#include "plateau/dataset/grid_code.h"
 
 namespace plateau::dataset {
 
@@ -20,7 +21,11 @@ namespace plateau::dataset {
         const std::string& getPath() const;
         void setPath(const std::string& path);
         std::shared_ptr<GridCode> getGridCode() const;
-        GridCode* getGridCodeRaw() const; // 寿命管理をDLL利用者に任せる用です
+        /**
+         * getGridCode関数をP/Invokeで利用するための生ポインタ版です。
+         * 新しいGridCodeインスタンスを生成して返すので、DLL利用者が廃棄する必要があります。
+         */
+        GridCode* getGridCodeRaw() const;
         double getEpsg() const;
         bool isPolarCoordinateSystem() const;
         const std::string& getFeatureType() const;

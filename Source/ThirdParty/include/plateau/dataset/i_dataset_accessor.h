@@ -27,10 +27,6 @@ namespace plateau::dataset {
             return name_;
         }
 
-        explicit operator std::string& () {
-            return name_;
-        }
-
         explicit operator std::string() const {
             return name_;
         }
@@ -114,12 +110,6 @@ namespace plateau::dataset {
          */
         virtual std::shared_ptr<IDatasetAccessor> filter(const geometry::Extent& extent) const = 0;
 
-        /**
-         * \brief メッシュコードで都市モデルデータをフィルタリングします。
-         * \param grid_codes 欲しい地域IDのvector
-         * \param collection フィルタリングされた都市モデルデータの格納先
-         */
-        virtual void filterByGridCodes(const std::vector<GridCode*>& grid_codes, IDatasetAccessor& collection) const = 0;
 
         /**
          * \brief メッシュコードで都市モデルデータをフィルタリングします。
@@ -128,6 +118,11 @@ namespace plateau::dataset {
          */
         virtual std::shared_ptr<IDatasetAccessor> filterByGridCodes(
                 const std::vector<std::shared_ptr<GridCode>>& grid_codes) const = 0;
+
+        /**
+         * \brief filterByGridCodes関数の、UnityでP/Invokeから呼び出す版です。引数のvector内のポインタの廃棄はDLL側で責任を持ってください。
+         */
+        virtual void filterByGridCodes(const std::vector<GridCode*>& grid_codes, IDatasetAccessor& collection) const = 0;
 
         /**
          * \brief 都市モデルデータが存在する地域メッシュのリストを取得します。

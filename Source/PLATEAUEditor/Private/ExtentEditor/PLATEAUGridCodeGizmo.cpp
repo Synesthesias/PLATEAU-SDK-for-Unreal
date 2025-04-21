@@ -64,6 +64,10 @@ FPLATEAUGridCodeGizmo::FPLATEAUGridCodeGizmo() : GridCode(), Width(0), Height(0)
 }
 
 bool FPLATEAUGridCodeGizmo::IsSelectable() const {
+    if (!ensure(GridCode))
+    {
+        return false;
+    }
     return GridCode->isNormalGmlLevel() || GridCode->isSmallerThanNormalGml();
 }
 
@@ -201,12 +205,12 @@ void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCod
     const auto RawMax = InGeoReference.project(Extent.max);
     GridCode = InGridCode;
     GridCodeString = UTF8_TO_TCHAR(InGridCode->get().c_str());
-    Width = MaxX - MinX;
-    Height = MaxY - MinY;
     MinX = FGenericPlatformMath::Min(RawMin.x, RawMax.x);
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
     MaxY = FGenericPlatformMath::Max(RawMin.y, RawMax.y);
+    Width = MaxX - MinX;
+    Height = MaxY - MinY;
     LineThickness = 2.0f;
 
     const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
