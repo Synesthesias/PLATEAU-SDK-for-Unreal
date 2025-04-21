@@ -66,7 +66,7 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
                 bSelectedArray.Emplace(true);
             }
             MeshCodeGizmos.Last().SetbSelectedArray(bSelectedArray);
-            IPLATEAUEditorModule::Get().GetExtentEditor()->SetAreaMeshCodeMap(TCHAR_TO_UTF8(GridCode->get().c_str()), MeshCodeGizmos.Last());
+            IPLATEAUEditorModule::Get().GetExtentEditor()->SetGridCodeMap(TCHAR_TO_UTF8(GridCode->get().c_str()), MeshCodeGizmos.Last());
         }
         
         return UPLATEAUImportModelBtn::GetCityModelLoader(ZoneId, ReferencePoint, PackageInfoSettingsData, false);

@@ -94,12 +94,12 @@ public:
      */  
     static TArray<FString> GetIconFileNameList();
 
-    bool MeshCodeGizmoContains(const FPLATEAUGridCodeGizmo& MeshCodeGizmo) const {
+    bool GridCodeGizmoContains(const FPLATEAUGridCodeGizmo& MeshCodeGizmo) const {
         return AsyncLoadedPanels.Contains(MeshCodeGizmo.GetRegionGridCodeID());
     }
     
     int GetItemCount(const FPLATEAUGridCodeGizmo& MeshCodeGizmo) {
-        if (MeshCodeGizmoContains(MeshCodeGizmo)) {
+        if (GridCodeGizmoContains(MeshCodeGizmo)) {
             return AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->GetIconCount();
         }
         return 0;

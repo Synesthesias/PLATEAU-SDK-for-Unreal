@@ -99,7 +99,7 @@ FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
 bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUGridCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
     // 生成済みの場合はスキップ
-    if (MeshCodeGizmoContains(MeshCodeGizmo))
+    if (GridCodeGizmoContains(MeshCodeGizmo))
         return false;
 
     const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
@@ -131,7 +131,7 @@ int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
 }
 
 bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUGridCodeGizmo& MeshCodeGizmo) {
-    if (MeshCodeGizmoContains(MeshCodeGizmo)) {
+    if (GridCodeGizmoContains(MeshCodeGizmo)) {
         return AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->AddIconComponent();
     }
 
@@ -156,7 +156,7 @@ EPLATEAUFeatureInfoVisibility FPLATEAUFeatureInfoDisplay::GetVisibility() const 
 
 void FPLATEAUFeatureInfoDisplay::SetVisibility(const FPLATEAUGridCodeGizmo& MeshCodeGizmo, const EPLATEAUFeatureInfoVisibility Value) {
     Visibility = Value;
-    if (MeshCodeGizmoContains(MeshCodeGizmo)) {
+    if (GridCodeGizmoContains(MeshCodeGizmo)) {
         AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->RecalculateIconTransform(ShowLods);
         AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility);
     }
@@ -231,7 +231,7 @@ void FPLATEAUFeatureInfoDisplay::SwitchFeatureInfoDisplay(const TArray<FPLATEAUG
     }
 
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
-        if (MeshCodeGizmoContains(MeshCodeGizmo)) {
+        if (GridCodeGizmoContains(MeshCodeGizmo)) {
             AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->RecalculateIconTransform(ShowLods);
             AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility, true);
         }

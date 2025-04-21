@@ -73,7 +73,7 @@ void FPLATEAUExtentEditor::SetAreaSourcePath(const FString& InAreaSourcePath) {
 }
 
 bool FPLATEAUExtentEditor::IsSelectedArea() const {
-    return Algo::AnyOf(GetAreaMeshCodeMap(), [](const TTuple<FString, FPLATEAUGridCodeGizmo>& MeshCodeGizmoTuple) {
+    return Algo::AnyOf(GetGridCodeMap(), [](const TTuple<FString, FPLATEAUGridCodeGizmo>& MeshCodeGizmoTuple) {
         return MeshCodeGizmoTuple.Value.bSelectedArea();
     });
 }
@@ -98,11 +98,11 @@ TArray<FString> FPLATEAUExtentEditor::GetSelectedCodes(const bool InbImportFromS
     return Codes;
 }
 
-TMap<FString, FPLATEAUGridCodeGizmo> FPLATEAUExtentEditor::GetAreaMeshCodeMap() const {
+TMap<FString, FPLATEAUGridCodeGizmo> FPLATEAUExtentEditor::GetGridCodeMap() const {
     return IsImportFromServer() ? ServerAreaMeshCodeMap : LocalAreaMeshCodeMap;
 }
 
-void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUGridCodeGizmo& MeshCodeGizmo) {
+void FPLATEAUExtentEditor::SetGridCodeMap(const FString& MeshCode, const FPLATEAUGridCodeGizmo& MeshCodeGizmo) {
     if (IsImportFromServer()) {
         ServerAreaMeshCodeMap.Emplace(MeshCode, MeshCodeGizmo);
     } else {
@@ -110,7 +110,7 @@ void FPLATEAUExtentEditor::SetAreaMeshCodeMap(const FString& MeshCode, const FPL
     }
 }
 
-void FPLATEAUExtentEditor::ResetAreaMeshCodeMap() {
+void FPLATEAUExtentEditor::ResetGridCodeMap() {
     if (IsImportFromServer()) {
         ServerAreaMeshCodeMap.Reset();
     } else {

@@ -39,9 +39,9 @@ public:
 
     bool IsSelectedArea() const;
     TArray<FString> GetSelectedCodes(const bool InbImportFromServer) const;
-    TMap<FString, FPLATEAUGridCodeGizmo> GetAreaMeshCodeMap() const;
-    void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUGridCodeGizmo& MeshCodeGizmo);
-    void ResetAreaMeshCodeMap();
+    TMap<FString, FPLATEAUGridCodeGizmo> GetGridCodeMap() const;
+    void SetGridCodeMap(const FString& MeshCode, const FPLATEAUGridCodeGizmo& MeshCodeGizmo);
+    void ResetGridCodeMap();
 
     FPLATEAUGeoReference GetGeoReference() const;
     void SetGeoReference(const FPLATEAUGeoReference& InGeoReference);
