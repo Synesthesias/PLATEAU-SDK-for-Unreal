@@ -132,7 +132,7 @@ namespace plateau::dataset {
         /**
          * \brief 都市モデルデータが存在する地域メッシュのリストを取得します。
          */
-        virtual std::set<std::shared_ptr<GridCode>, GridCodeComparator>& getGridCodes() = 0;
+        virtual const std::set<std::shared_ptr<GridCode>, GridCodeComparator>& getGridCodes() = 0;
 
         virtual TVec3d calculateCenterPoint(const plateau::geometry::GeoReference& geo_reference) = 0;
 
