@@ -52,13 +52,13 @@ class FPLATEAUAutomationTestBase : public FAutomationTestBase {
 
         const auto& GridCodes = DatasetAccessor->getGridCodes();
         auto GeoReference = ExtentEditor->GetGeoReference();
-        TArray<FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
+        TArray<FPLATEAUGridCodeGizmo> MeshCodeGizmos;
         TArray<bool> bSelectedArray;
         MeshCodeGizmos.Reset();
         for (const auto& GridCode : GridCodes) {
             MeshCodeGizmos.AddDefaulted();
             MeshCodeGizmos.Last().Init(GridCode, GeoReference.GetData());
-            if ("53392642" != MeshCodeGizmos.Last().GetRegionMeshID())
+            if ("53392642" != MeshCodeGizmos.Last().GetRegionGridCodeID())
                 continue;
             
             bSelectedArray.Reset();

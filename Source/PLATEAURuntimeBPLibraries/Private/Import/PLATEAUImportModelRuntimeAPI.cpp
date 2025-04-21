@@ -8,7 +8,7 @@
 
 namespace {
 
-    APLATEAUCityModelLoader* GetCityModelLoader(UWorld* World, const TArray<FString> StrGridCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
+    APLATEAUCityModelLoader* GetCityModelLoader(UWorld* World, const TArray<FString>& StrGridCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData, plateau::dataset::DatasetSource InDatasetSource) {
         FActorSpawnParameters SpawnParam;
         const auto Actor = World->SpawnActor<APLATEAUCityModelLoader>(SpawnParam);
         const auto Loader = Cast<APLATEAUCityModelLoader>(Actor);
@@ -54,7 +54,7 @@ namespace {
     }
 }
 
-APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(const UObject* Context, const FString& SourcePath, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
+APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(const UObject* Context, const FString& SourcePath, const TArray<FString> GridCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
 
 #if !WITH_EDITOR
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
@@ -64,7 +64,7 @@ APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(
     try {
         const auto World = Context->GetWorld();
         const auto InDatasetSource = plateau::dataset::DatasetSource::createLocal(TCHAR_TO_UTF8(*SourcePath));
-        const auto Loader = GetCityModelLoader(World, MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
+        const auto Loader = GetCityModelLoader(World, GridCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
 
         // ClientPtrは何か設定しないとクラッシュします
         Loader->ClientPtr = std::make_shared<plateau::network::Client>("", "");
@@ -78,7 +78,7 @@ APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderLocal(
     }       
 }
 
-APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer(const UObject* Context, const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> MeshCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
+APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer(const UObject* Context, const FString& InServerURL, const FString& InToken, const FString& DatasetID, const TArray<FString> GridCodes, const int ZoneID, const FVector& ReferencePoint, const TMap<EPLATEAUCityModelPackage, FPackageInfoSettings>& PackageInfoSettingsData) {
  
 #if !WITH_EDITOR
     FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("この機能は、エディタのみでご利用いただけます。")));
@@ -89,7 +89,7 @@ APLATEAUCityModelLoader* UPLATEAUImportModelRuntimeAPI::GetCityModelLoaderServer
         const auto World = Context->GetWorld();
         const auto ClientPtr = std::make_shared<plateau::network::Client>(TCHAR_TO_UTF8(*InServerURL), TCHAR_TO_UTF8(*InToken));
         const auto InDatasetSource = plateau::dataset::DatasetSource::createServer(TCHAR_TO_UTF8(*DatasetID), *ClientPtr);
-        const auto Loader = GetCityModelLoader(World, MeshCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
+        const auto Loader = GetCityModelLoader(World, GridCodes, ZoneID, ReferencePoint, PackageInfoSettingsData, InDatasetSource);
   
         Loader->ClientPtr = ClientPtr;
         Loader->Source = DatasetID;

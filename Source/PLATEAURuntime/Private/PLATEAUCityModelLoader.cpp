@@ -48,10 +48,9 @@ public:
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
 
-                // メッシュコードからインポート範囲に変換
-                for (const auto& StrGridCode : StrGridCodes) {
-                    const auto RawExtent = plateau::dataset::GridCode::create(TCHAR_TO_UTF8(*StrGridCode))->getExtent();
-                    LoadInputData.Extents.push_back(RawExtent);
+                // グリッドコードからインポート範囲に変換
+                for (const auto& GridCode : NativeGridCodes) {
+                    LoadInputData.Extents.push_back(GridCode->getExtent());
                 }
 
                 LoadInputData.bIncludeAttrInfo = Settings.bIncludeAttrInfo;

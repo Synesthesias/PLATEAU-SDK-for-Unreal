@@ -38,9 +38,9 @@ SPLATEAUExtentEditorViewport::~SPLATEAUExtentEditorViewport() {
         ViewportClient->Viewport = nullptr;
     }
 
-    if (MeshCodeInputWindow.IsValid()) {
-        MeshCodeInputWindow.Pin()->RequestDestroyWindow();
-        MeshCodeInputWindow.Reset();
+    if (GridCodeInputWindow.IsValid()) {
+        GridCodeInputWindow.Pin()->RequestDestroyWindow();
+        GridCodeInputWindow.Reset();
     }
 }
 
@@ -144,7 +144,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                 SNew(SButton).VAlign(VAlign_Center).ForegroundColor(FColor::White).ButtonStyle(Style.ToSharedRef(), "PLATEAUEditor.FlatButton.Gray").
                 OnClicked_Lambda([this] {
 
-                if (MeshCodeInputWindow.IsValid()) 
+                if (GridCodeInputWindow.IsValid()) 
                     return FReply::Handled();
 
                 //入力Window表示
@@ -157,7 +157,7 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     .FocusWhenFirstShown(true)
                     .IsTopmostWindow(true)
                     .HasCloseButton(false);
-                MeshCodeInputWindow = InputWindow;
+                GridCodeInputWindow = InputWindow;
                 
                 InputWindow->SetContent(
                     SNew(SVerticalBox)
@@ -170,13 +170,13 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                     + SVerticalBox::Slot()
                     .AutoHeight().Padding(FMargin(5.f, 8.f, 5.f, 8.f))
                     [
-                        SAssignNew(MeshCodeTextBox, SEditableTextBox)
+                        SAssignNew(GridCodeTextBox, SEditableTextBox)
                         .HintText(FText::FromString(TEXT("メッシュコード")))
                     ]
                     + SVerticalBox::Slot()
                     .AutoHeight().Padding(FMargin(5.f, 2.f, 5.f, 2.f))
                     [
-                        SAssignNew(MeshCodeErrorText, STextBlock)
+                        SAssignNew(GridCodeErrorText, STextBlock)
                         .ColorAndOpacity(FLinearColor::Red)
                         .Text(FText())
                     ]
@@ -191,9 +191,9 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                             .Text(FText::FromString(TEXT("キャンセル"))).
                             OnClicked_Lambda([this] {
                                 //Windowを閉じる
-                                if (MeshCodeInputWindow.IsValid()) {
-                                    MeshCodeInputWindow.Pin()->RequestDestroyWindow();
-                                    MeshCodeInputWindow.Reset();
+                                if (GridCodeInputWindow.IsValid()) {
+                                    GridCodeInputWindow.Pin()->RequestDestroyWindow();
+                                    GridCodeInputWindow.Reset();
                                 }
                                 return FReply::Handled();
                             })
@@ -205,24 +205,24 @@ void SPLATEAUExtentEditorViewport::PopulateViewportOverlays(TSharedRef<class SOv
                                 .Text(FText::FromString(TEXT("OK"))).
                                 OnClicked_Lambda([this] {
                                     //メッシュコードの位置を表示
-                                    FText Value = MeshCodeTextBox.Pin()->GetText();
+                                    FText Value = GridCodeTextBox.Pin()->GetText();
                                     FString meshcode = Value.ToString();
                                     if (!meshcode.IsNumeric()) {
-                                        if(MeshCodeErrorText.IsValid())
-                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
+                                        if(GridCodeErrorText.IsValid())
+                                            GridCodeErrorText.Pin()->SetText(FText::FromString(TEXT("数字を入力してください")));
                                     }
                                     else if (meshcode.Len() != 6 && meshcode.Len() != 8) {
-                                        if (MeshCodeErrorText.IsValid())
-                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
+                                        if (GridCodeErrorText.IsValid())
+                                            GridCodeErrorText.Pin()->SetText(FText::FromString(TEXT("6桁または８桁の数字を入力してください")));
                                     }
                                     else if (!ViewportClient->SetViewLocationByGridCode(meshcode)) {
-                                        if (MeshCodeErrorText.IsValid())
-                                            MeshCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
+                                        if (GridCodeErrorText.IsValid())
+                                            GridCodeErrorText.Pin()->SetText(FText::FromString(TEXT("メッシュコードが範囲外です")));
                                     }
                                     else {
-                                        if (MeshCodeInputWindow.IsValid()) {
-                                            MeshCodeInputWindow.Pin()->RequestDestroyWindow();
-                                            MeshCodeInputWindow.Reset();
+                                        if (GridCodeInputWindow.IsValid()) {
+                                            GridCodeInputWindow.Pin()->RequestDestroyWindow();
+                                            GridCodeInputWindow.Reset();
                                         }
                                     }     
                                     return FReply::Handled();

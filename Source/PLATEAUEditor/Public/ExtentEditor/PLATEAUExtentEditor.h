@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AdvancedPreviewSceneModule.h"
 #include "PLATEAUGeometry.h"
-#include "PLATEAUEditor/Private/ExtentEditor/PLATEAUMeshCodeGizmo.h"
+#include "PLATEAUEditor/Private/ExtentEditor/PLATEAUGridCodeGizmo.h"
 #include <plateau/network/client.h>
 
 class SDockTab;
@@ -39,8 +39,8 @@ public:
 
     bool IsSelectedArea() const;
     TArray<FString> GetSelectedCodes(const bool InbImportFromServer) const;
-    TMap<FString, FPLATEAUMeshCodeGizmo> GetAreaMeshCodeMap() const;
-    void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUMeshCodeGizmo& MeshCodeGizmo);
+    TMap<FString, FPLATEAUGridCodeGizmo> GetAreaMeshCodeMap() const;
+    void SetAreaMeshCodeMap(const FString& MeshCode, const FPLATEAUGridCodeGizmo& MeshCodeGizmo);
     void ResetAreaMeshCodeMap();
 
     FPLATEAUGeoReference GetGeoReference() const;
@@ -69,8 +69,8 @@ public:
 private:
     FString SourcePath;
     FString AreaSourcePath;
-    TMap<FString, FPLATEAUMeshCodeGizmo> LocalAreaMeshCodeMap;
-    TMap<FString, FPLATEAUMeshCodeGizmo> ServerAreaMeshCodeMap;
+    TMap<FString, FPLATEAUGridCodeGizmo> LocalAreaMeshCodeMap;
+    TMap<FString, FPLATEAUGridCodeGizmo> ServerAreaMeshCodeMap;
     FPLATEAUGeoReference GeoReference;
 
     bool bImportFromServer = false;
