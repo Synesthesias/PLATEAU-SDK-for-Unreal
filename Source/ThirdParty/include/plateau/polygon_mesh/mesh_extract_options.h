@@ -38,7 +38,7 @@ namespace plateau::polygonMesh {
                 attach_map_tile(true),
                 map_tile_zoom_level(15),
                 map_tile_url("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"),
-                epsg_code(6697)
+                epsg_code(plateau::geometry::CoordinateReferenceFactory::default_epsg_)
                 {}
 
     public:
@@ -116,6 +116,6 @@ namespace plateau::polygonMesh {
         /**
          * 平面直角座標系は、EPSGコードに応じて基準点を取得します。
          */
-        double epsg_code;
+        int epsg_code;
     };
 }

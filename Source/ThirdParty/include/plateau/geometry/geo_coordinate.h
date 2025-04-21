@@ -82,8 +82,8 @@ namespace plateau::geometry {
          * 平面直角座標系の判定を含む処理です
          * 平面直角座標の場合はunprojectして緯度経度に変換してから判定します。
          */
-        bool containsInPolar(TVec3d point,const double epsg, bool ignore_height = true) const;
-        bool containsInPolar(const citygml::CityObject& city_obj,const double epsg, bool ignore_height = true) const;
+        bool containsInPolar(TVec3d point,const int epsg, bool ignore_height = true) const;
+        bool containsInPolar(const citygml::CityObject& city_obj,const int epsg, bool ignore_height = true) const;
 
         /**
          * other と交わる箇所があるかどうかを返します。
@@ -111,8 +111,11 @@ namespace plateau::geometry {
     * 平面直角座標判定、平面直角座標の基準点取得
     */
     struct CoordinateReferenceFactory {
+
+        static constexpr int default_epsg_ = 6697;
+
         // EPSGごとのzone取得
-        static int GetZoneId(double epsg) {
+        static int GetZoneId(int epsg) {
             // 日本測地系2011（JGD2011）に基づく平面直角座標系
             if (epsg == 10162) {
                 return 1; // 1系
@@ -157,7 +160,7 @@ namespace plateau::geometry {
         }
 
         // EPSGごとの基準点取得
-        static GeoCoordinate GetReferencePoint(double epsg) {
+        static GeoCoordinate GetReferencePoint(int epsg) {
             const int zone = GetZoneId(epsg);
             if (zone != 0)
                 return GetReferencePointByZone(zone);
@@ -212,7 +215,7 @@ namespace plateau::geometry {
         }
 
         // 極座標系・平面直角座標系判定
-        static bool IsPolarCoordinateSystem(double epsg) {
+        static bool IsPolarCoordinateSystem(int epsg) {
             // 平面直角座標系の区分についてはこちらを参照してください :
             // https://www.mlit.go.jp/plateaudocument/toc9/toc9_08/toc9_08_04/
             if (epsg >= 10162 && epsg <= 10174) {
