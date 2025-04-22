@@ -16,8 +16,7 @@ namespace plateau::geometry {
      * EPSGコードが 6697 のとき、それは
      * 「日本測地系2011における経緯度座標系と東京湾平均海面を基準とする標高の複合座標参照系」
      * になります。
-     * TODO
-     * EPSGコードの判別と、それによって処理を変える機能は未実装です。
+     * EPSGコードが 10162 ～ 10174　の場合は平面直角座標系となります。
      */
     struct GeoCoordinate {
         double latitude;
@@ -95,8 +94,8 @@ namespace plateau::geometry {
 
         static Extent all() {
             return {
-                    GeoCoordinate(-90, -180, -9999),
-                    GeoCoordinate(90, 180, 9999)
+                    GeoCoordinate(-9999999, -9999999, -9999),
+                    GeoCoordinate(9999999, 9999999, 9999)
             };
         }
     };

@@ -1,7 +1,7 @@
 // Copyright © 2023 Ministry of Land, Infrastructure and Transport
 
 
-#include "PLATEAUMeshCodeGizmo.h"
+#include "PLATEAUGridCodeGizmo.h"
 
 #include "SceneManagement.h"
 
@@ -14,16 +14,13 @@
 #include "Materials/MaterialInstanceDynamic.h"
 
 namespace {
-    bool IsLevel4OrAbove(const plateau::dataset::MeshCode& MeshCode) {
-        return MeshCode.getLevel() >= 4;
+
+    int GetNumAreaColumnByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode) {
+        return GridCode->isSmallerThanNormalGml() ? 2 : 4;
     }
 
-    int GetNumAreaColumnByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
-        return IsLevel4OrAbove(MeshCode) ? 2 : 4;
-    }
-
-    int GetNumAreaRowByMeshCode(const plateau::dataset::MeshCode& MeshCode) {
-        return IsLevel4OrAbove(MeshCode) ? 2 : 4;
+    int GetNumAreaRowByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode) {
+        return GridCode->isSmallerThanNormalGml() ? 2 : 4;
     }
 
     const TArray<FString> SuffixMeshIds = {
@@ -57,7 +54,7 @@ namespace {
     }
 }
 
-FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCode(), Width(0), Height(0), MinX(-500), MinY(-500), MaxX(500), MaxY(500), LineThickness(1.0f) {
+FPLATEAUGridCodeGizmo::FPLATEAUGridCodeGizmo() : GridCode(), Width(0), Height(0), MinX(-500), MinY(-500), MaxX(500), MaxY(500), LineThickness(1.0f) {
     AreaSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
     AreaSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), SelectedColor);
@@ -66,22 +63,25 @@ FPLATEAUMeshCodeGizmo::FPLATEAUMeshCodeGizmo() : MeshCode(), Width(0), Height(0)
     AreaUnSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), UnselectedColor);
 }
 
-bool FPLATEAUMeshCodeGizmo::IsSelectable() const {
-    if (MeshCode.getLevel() <= 2) return false;
-    return true;
+bool FPLATEAUGridCodeGizmo::IsSelectable() const {
+    if (!ensure(GridCode))
+    {
+        return false;
+    }
+    return GridCode->isNormalGmlLevel() || GridCode->isSmallerThanNormalGml();
 }
 
-void FPLATEAUMeshCodeGizmo::ResetSelectedArea() {
+void FPLATEAUGridCodeGizmo::ResetSelectedArea() {
     for (int i = 0; i < bSelectedArray.Num(); i++) {
         bSelectedArray[i] = false;
     }
 }
 
-void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
+void FPLATEAUGridCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
     const auto Color = FColor(10, 10, 130);
-    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
 
     // エリア枠線
     DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
@@ -124,8 +124,8 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
                 ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
 
                 //Level4は1Gridずらす
-                int AdjustedRow = IsLevel4OrAbove(MeshCode) ? Row + 1 : Row;
-                int AdjustedCol = IsLevel4OrAbove(MeshCode) ? Col + 1 : Col;
+                int AdjustedRow = GridCode->isSmallerThanNormalGml() ? Row + 1 : Row;
+                int AdjustedCol = GridCode->isSmallerThanNormalGml() ? Col + 1 : Col;
                 ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
                                                 (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
                 DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
@@ -134,9 +134,9 @@ void FPLATEAUMeshCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     }
 }
 
-void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& RegionMeshID,
+void FPLATEAUGridCodeGizmo::DrawRegionGridCodeID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& GridCodeID,
                                              double CameraDistance, int IconCount) const {
-    if (IsLevel4OrAbove(MeshCode)) return;
+    if (GridCode->isSmallerThanNormalGml()) return;
     
     const auto CenterX = MinX + (MaxX - MinX) / 2;
     const auto Coef = 4 < IconCount ? 1.52 : 1.28;
@@ -153,75 +153,75 @@ void FPLATEAUMeshCodeGizmo::DrawRegionMeshID(const FViewport& InViewport, const 
 
     const UFont* ViewFont = GEngine->GetLargeFont();
 
-    const auto HalfWidth = ViewFont->GetStringSize(*RegionMeshID) / 2;
-    const auto HalfHeight = ViewFont->GetStringHeightSize(*RegionMeshID) / 2;
+    const auto HalfWidth = ViewFont->GetStringSize(*GridCodeID) / 2;
+    const auto HalfHeight = ViewFont->GetStringHeightSize(*GridCodeID) / 2;
 
     const auto Color = FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
-        if (CameraDistance < plateau::geometry::ShowRegionMeshIdCameraDistance) {
-            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(RegionMeshID), ViewFont, Color);
+        if (CameraDistance < plateau::geometry::ShowGridCodeIdCameraDistance) {
+            Canvas.DrawShadowedText(XPos - HalfWidth, YPos - HalfHeight, FText::FromString(GridCodeID), ViewFont, Color);
         }
     }
 }
 
-FVector2D FPLATEAUMeshCodeGizmo::GetMin() const {
+FVector2D FPLATEAUGridCodeGizmo::GetMin() const {
     return FVector2D(MinX, MinY);
 }
 
-FVector2D FPLATEAUMeshCodeGizmo::GetMax() const {
+FVector2D FPLATEAUGridCodeGizmo::GetMax() const {
     return FVector2D(MaxX, MaxY);
 }
 
-FVector2D FPLATEAUMeshCodeGizmo::GetSize() const {
+FVector2D FPLATEAUGridCodeGizmo::GetSize() const {
     return FVector2D(Width, Height);
 }
 
-plateau::dataset::MeshCode FPLATEAUMeshCodeGizmo::GetMeshCode() const {
-    return MeshCode;
+std::shared_ptr<plateau::dataset::GridCode> FPLATEAUGridCodeGizmo::GetGridCode() const {
+    return GridCode;
 }
 
-FString FPLATEAUMeshCodeGizmo::GetRegionMeshID() const {
-    return MeshCodeString;
+FString FPLATEAUGridCodeGizmo::GetRegionGridCodeID() const {
+    return GridCodeString;
 }
 
-TArray<bool> FPLATEAUMeshCodeGizmo::GetbSelectedArray() const {
+TArray<bool> FPLATEAUGridCodeGizmo::GetbSelectedArray() const {
     return bSelectedArray;
 }
 
-bool FPLATEAUMeshCodeGizmo::bSelectedArea() const {
+bool FPLATEAUGridCodeGizmo::bSelectedArea() const {
     return Algo::AnyOf(bSelectedArray, [](const bool bSelected) {
         return bSelected;
     });
 }
 
-void FPLATEAUMeshCodeGizmo::SetbSelectedArray(const TArray<bool>& InbSelectedArray) {
+void FPLATEAUGridCodeGizmo::SetbSelectedArray(const TArray<bool>& InbSelectedArray) {
     bSelectedArray = InbSelectedArray;
 }
 
-void FPLATEAUMeshCodeGizmo::Init(const plateau::dataset::MeshCode& InMeshCode, const plateau::geometry::GeoReference& InGeoReference) {
-    const auto Extent = InMeshCode.getExtent();
+void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCode>& InGridCode, const plateau::geometry::GeoReference& InGeoReference) {
+    const auto Extent = InGridCode->getExtent();
     const auto RawMin = InGeoReference.project(Extent.min);
     const auto RawMax = InGeoReference.project(Extent.max);
-    MeshCode = InMeshCode;
-    MeshCodeString = UTF8_TO_TCHAR(InMeshCode.get().c_str());
-    Width = MaxX - MinX;
-    Height = MaxY - MinY;
+    GridCode = InGridCode;
+    GridCodeString = UTF8_TO_TCHAR(InGridCode->get().c_str());
     MinX = FGenericPlatformMath::Min(RawMin.x, RawMax.x);
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
     MaxY = FGenericPlatformMath::Max(RawMin.y, RawMax.y);
+    Width = MaxX - MinX;
+    Height = MaxY - MinY;
     LineThickness = 2.0f;
 
-    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
     bSelectedArray.Reset();
     for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
         bSelectedArray.Emplace(false);
     }
 }
 
-void FPLATEAUMeshCodeGizmo::ToggleSelectArea(const double X, const double Y) {
+void FPLATEAUGridCodeGizmo::ToggleSelectArea(const double X, const double Y) {
 
     if (!IsSelectable()) 
         return;
@@ -230,20 +230,20 @@ void FPLATEAUMeshCodeGizmo::ToggleSelectArea(const double X, const double Y) {
         return;
     }
 
-    int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+    int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
 }
 
-void FPLATEAUMeshCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d InMax, const bool bSelect) {
+void FPLATEAUGridCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d InMax, const bool bSelect) {
 
     if (!IsSelectable()) 
         return;
 
-    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);   
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);   
     const auto CellWidth = (MaxX - MinX) / NumAreaRow;
     const auto CellHeight = (MaxY - MinY) / NumAreaColumn;
     for (int Col = 0; Col < NumAreaColumn; Col++) {
@@ -260,7 +260,7 @@ void FPLATEAUMeshCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d
     }
 }
 
-void FPLATEAUMeshCodeGizmo::SetSelectArea(const double X, const double Y, const bool bSelect) {
+void FPLATEAUGridCodeGizmo::SetSelectArea(const double X, const double Y, const bool bSelect) {
 
     if (!IsSelectable()) 
         return;
@@ -269,23 +269,23 @@ void FPLATEAUMeshCodeGizmo::SetSelectArea(const double X, const double Y, const 
         return;
     }
 
-    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = bSelect;
 }
 
-TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
+TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
 
-    const int NumAreaColumn = GetNumAreaColumnByMeshCode(MeshCode);
-    const int NumAreaRow = GetNumAreaRowByMeshCode(MeshCode);
-    TArray<FString> MeshIdArray;
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    TArray<FString> GridCodeIDArray;
 
     if (bSelectedArray.Num() < SuffixMeshIds.Num()) { //Level4
         for (int i = 0; i < bSelectedArray.Num(); i++) {
             if (bSelectedArray[i]){
-                MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, i + 1 }));
+                GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, i + 1 }));
             }
         }
     } 
@@ -293,14 +293,14 @@ TArray<FString> FPLATEAUMeshCodeGizmo::GetSelectedMeshIds() {
         for (int Col = 0; Col < NumAreaColumn; Col++) {
             for (int Row = 0; Row < NumAreaRow; Row++) {
                 if (bSelectedArray[Row + Col * NumAreaColumn]) {
-                    MeshIdArray.Emplace(FString::Format(TEXT("{0}{1}"), { MeshCodeString, SuffixMeshIds[Row + Col * NumAreaColumn] }));
+                    GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, SuffixMeshIds[Row + Col * NumAreaColumn] }));
                 }
             }
         }
     }
-    return MeshIdArray;
+    return GridCodeIDArray;
 }
 
-void FPLATEAUMeshCodeGizmo::SetShowLevel5Mesh(const bool bValue) {
+void FPLATEAUGridCodeGizmo::SetShowLevel5Mesh(const bool bValue) {
     bShowLevel5Mesh = bValue;
 }
