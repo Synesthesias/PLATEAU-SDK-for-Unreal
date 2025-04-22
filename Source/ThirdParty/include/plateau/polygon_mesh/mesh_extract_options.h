@@ -38,7 +38,7 @@ namespace plateau::polygonMesh {
                 attach_map_tile(true),
                 map_tile_zoom_level(15),
                 map_tile_url("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"),
-                epsg_code(plateau::geometry::CoordinateReferenceFactory::default_epsg_)
+                epsg_code(plateau::geometry::CoordinateReferenceFactory::default_epsg)
                 {}
 
     public:
