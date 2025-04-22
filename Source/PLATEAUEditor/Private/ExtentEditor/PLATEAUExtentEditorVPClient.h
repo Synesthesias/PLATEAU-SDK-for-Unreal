@@ -65,11 +65,11 @@ private:
     FVector CachedWorldMousePos; 
     FVector TrackingStartedPosition;
     FVector TrackingStartedCameraPosition;
-    TArray<class FPLATEAUMeshCodeGizmo> MeshCodeGizmos;
+    TArray<class FPLATEAUGridCodeGizmo> GridCodeGizmos;
     
-    bool GizmoContains(const FPLATEAUMeshCodeGizmo& Gizmo) const;
+    bool GizmoContains(const FPLATEAUGridCodeGizmo& Gizmo) const;
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
     void InitCamera();
-    FPLATEAUMeshCodeGizmo GetNearestMeshCodeGizmo();
+    FPLATEAUGridCodeGizmo GetNearestGridCodeGizmo();
 };

@@ -97,13 +97,13 @@ FPLATEAUFeatureInfoDisplay::FPLATEAUFeatureInfoDisplay(
 
 FPLATEAUFeatureInfoDisplay::~FPLATEAUFeatureInfoDisplay() {}
 
-bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
+bool FPLATEAUFeatureInfoDisplay::CreatePanelAsync(const FPLATEAUGridCodeGizmo& MeshCodeGizmo, const IDatasetAccessor& InDatasetAccessor) {
     // 生成済みの場合はスキップ
-    if (MeshCodeGizmoContains(MeshCodeGizmo))
+    if (GridCodeGizmoContains(MeshCodeGizmo))
         return false;
 
     const auto AsyncLoadedTile = MakeShared<FPLATEAUAsyncLoadedFeatureInfoPanel>(SharedThis(this), ViewportClient);
-    AsyncLoadedPanels.Add(MeshCodeGizmo.GetRegionMeshID(), AsyncLoadedTile);
+    AsyncLoadedPanels.Add(MeshCodeGizmo.GetRegionGridCodeID(), AsyncLoadedTile);
 
     FPLATEAUFeatureInfoPanelInput Input;
     const auto Packages = GetDisplayedPackages();
@@ -130,9 +130,9 @@ int FPLATEAUFeatureInfoDisplay::CountLoadingPanels() {
     return Count;
 }
 
-bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo) {
-    if (MeshCodeGizmoContains(MeshCodeGizmo)) {
-        return AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->AddIconComponent();
+bool FPLATEAUFeatureInfoDisplay::AddComponent(const FPLATEAUGridCodeGizmo& MeshCodeGizmo) {
+    if (GridCodeGizmoContains(MeshCodeGizmo)) {
+        return AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->AddIconComponent();
     }
 
     return false;
@@ -154,11 +154,11 @@ EPLATEAUFeatureInfoVisibility FPLATEAUFeatureInfoDisplay::GetVisibility() const 
     return Visibility;
 }
 
-void FPLATEAUFeatureInfoDisplay::SetVisibility(const FPLATEAUMeshCodeGizmo& MeshCodeGizmo, const EPLATEAUFeatureInfoVisibility Value) {
+void FPLATEAUFeatureInfoDisplay::SetVisibility(const FPLATEAUGridCodeGizmo& MeshCodeGizmo, const EPLATEAUFeatureInfoVisibility Value) {
     Visibility = Value;
-    if (MeshCodeGizmoContains(MeshCodeGizmo)) {
-        AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->RecalculateIconTransform(ShowLods);
-        AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility);
+    if (GridCodeGizmoContains(MeshCodeGizmo)) {
+        AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->RecalculateIconTransform(ShowLods);
+        AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility);
     }
 }
 
@@ -223,7 +223,7 @@ TArray<FString> FPLATEAUFeatureInfoDisplay::GetIconFileNameList() {
     return TArray<FString> {BuildingIcon, TrafficIcon, PropsIcon, BridgeIcon, PlantsIcon, UndergroundIcon, TerrainIcon, OtherIcon};
 }
 
-void FPLATEAUFeatureInfoDisplay::SwitchFeatureInfoDisplay(const TArray<FPLATEAUMeshCodeGizmo>& MeshCodeGizmos, const int Lod, const bool bCheck) {
+void FPLATEAUFeatureInfoDisplay::SwitchFeatureInfoDisplay(const TArray<FPLATEAUGridCodeGizmo>& MeshCodeGizmos, const int Lod, const bool bCheck) {
     if (bCheck) {
         ShowLods.AddUnique(Lod);
     } else {
@@ -231,9 +231,9 @@ void FPLATEAUFeatureInfoDisplay::SwitchFeatureInfoDisplay(const TArray<FPLATEAUM
     }
 
     for (const auto& MeshCodeGizmo : MeshCodeGizmos) {
-        if (MeshCodeGizmoContains(MeshCodeGizmo)) {
-            AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->RecalculateIconTransform(ShowLods);
-            AsyncLoadedPanels[MeshCodeGizmo.GetRegionMeshID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility, true);
+        if (GridCodeGizmoContains(MeshCodeGizmo)) {
+            AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->RecalculateIconTransform(ShowLods);
+            AsyncLoadedPanels[MeshCodeGizmo.GetRegionGridCodeID()].Get()->SetFeatureInfoVisibility(ShowLods, Visibility, true);
         }
     }
 }

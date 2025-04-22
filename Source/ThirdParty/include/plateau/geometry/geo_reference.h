@@ -26,12 +26,9 @@ namespace plateau::geometry {
         /// project の座標軸変換をしない版です。座標軸は ENU → ENU であるとします。 reference_point_ は ENUに変換されます。
         TVec3d projectWithoutAxisConvert(const TVec3d& lat_lon) const;
         TVec3d convertAxisToENU(const TVec3d& vertex) const;
-        TVec3d convert(const TVec3d& lat_lon, const bool convert_axis = true, const int epsg = CoordinateReferenceFactory::default_epsg) const;
+        TVec3d convert(const TVec3d& lat_lon, const bool convert_axis = true, const bool project = true) const;
         static TVec3d convertAxisFromENUTo(CoordinateSystem axis, const TVec3d& vertex);
         static TVec3d convertAxisToENU(CoordinateSystem axis, const TVec3d& vertex); 
-
-        static TVec3d reverseXY(const TVec3d& vertex);
-        static GeoCoordinate planeToPolar(const TVec3d& vertex, const int coordinate_zone_id);
 
         GeoCoordinate unproject(const TVec3d& point) const;
 

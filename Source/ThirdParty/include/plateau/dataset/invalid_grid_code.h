@@ -46,6 +46,9 @@ namespace plateau::dataset {
             return std::make_shared<InvalidGridCode>(); 
         }
 
+        /**
+         * InvalidGridCodeをnewして返します。DLLの利用者が廃棄に責任を持つ必要があります。
+         */
         GridCode* upperRaw() const override {
             return new InvalidGridCode();
         }

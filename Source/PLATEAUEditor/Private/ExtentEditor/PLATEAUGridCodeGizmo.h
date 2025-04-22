@@ -3,27 +3,27 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <plateau/dataset/mesh_code.h>
+#include <plateau/dataset/grid_code.h>
 
 namespace plateau {
     namespace geometry {
         class GeoReference;
         constexpr auto ShowFeatureDetailIconCameraDistance = 4000;
         constexpr auto ShowFeatureIconCameraDistance = 9000;
-        constexpr auto ShowRegionMeshIdCameraDistance = 9000;
+        constexpr auto ShowGridCodeIdCameraDistance = 9000;
     }
 }
 
 /**
- * @brief 各地域メッシュのメッシュコードのギズモを表します。
+ * @brief 各グリッドコードのギズモを表します。
  */
-class PLATEAUEDITOR_API FPLATEAUMeshCodeGizmo {
+class PLATEAUEDITOR_API FPLATEAUGridCodeGizmo {
 public:
-    FPLATEAUMeshCodeGizmo();
+    FPLATEAUGridCodeGizmo();
 
     void ResetSelectedArea();
     void DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const;
-    void DrawRegionMeshID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& RegionMeshID, double CameraDistance, int IconCount) const;
+    void DrawRegionGridCodeID(const FViewport& InViewport, const FSceneView& View, FCanvas& Canvas, const FString& GridCodeID, double CameraDistance, int IconCount) const;
 
     /**
      * @brief 内部状態から範囲の最小値を取得します。
@@ -46,9 +46,9 @@ public:
     std::shared_ptr<plateau::dataset::GridCode> GetGridCode() const;
     
     /**
-     * @brief メッシュID取得
+     * @brief グリッドコードを文字列で取得
      */
-    FString GetRegionMeshID() const;
+    FString GetRegionGridCodeID() const;
 
     /**
      * @brief 選択状態取得 
@@ -94,9 +94,9 @@ public:
     void SetSelectArea(const double X, const double Y, const bool bSelect);
 
     /**
-     * @brief 選択されているメッシュID配列を取得
+     * @brief 選択されているグリッドコードの文字列の配列を取得
      */
-    TArray<FString> GetSelectedMeshIds();
+    TArray<FString> GetSelectedGridCodeIDs();
     
     /**
      * @brief エリア内の描画有効化状態を設定
@@ -108,7 +108,7 @@ private:
     inline static bool bShowLevel5Mesh = false;
 
     std::shared_ptr<plateau::dataset::GridCode> GridCode;
-    FString MeshCodeString;
+    FString GridCodeString;
     double Width;
     double Height;
     double MinX;

@@ -48,10 +48,9 @@ public:
                 auto& LoadInputData = LoadInputDataArray.AddDefaulted_GetRef();
                 LoadInputData.GmlPath = UTF8_TO_TCHAR(GmlFile.getPath().c_str());
 
-                // メッシュコードからインポート範囲に変換
-                for (const auto& StrGridCode : StrGridCodes) {
-                    const auto RawExtent = plateau::dataset::GridCode::create(TCHAR_TO_UTF8(*StrGridCode))->getExtent();
-                    LoadInputData.Extents.push_back(RawExtent);
+                // グリッドコードからインポート範囲に変換
+                for (const auto& GridCode : NativeGridCodes) {
+                    LoadInputData.Extents.push_back(GridCode->getExtent());
                 }
 
                 LoadInputData.bIncludeAttrInfo = Settings.bIncludeAttrInfo;
@@ -66,7 +65,6 @@ public:
                 ExtractOptions.export_appearance = Settings.bImportTexture;
                 ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
                 ExtractOptions.attach_map_tile = Settings.bAttachMapTile;
-                ExtractOptions.epsg_code = GmlFile.getEpsg();
 
                 // strcpyは非推奨という警告が出ますが、共通ライブラリを利用するために必要と思われるので警告を抑制します。
                 // なお抑制しないとマーケットプレイスの審査で弾かれる可能性が高いです。
