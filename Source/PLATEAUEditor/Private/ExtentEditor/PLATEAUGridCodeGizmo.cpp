@@ -205,6 +205,7 @@ void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCod
     const auto RawMax = InGeoReference.project(Extent.max);
     GridCode = InGridCode;
     GridCodeString = UTF8_TO_TCHAR(InGridCode->get().c_str());
+    IsStandardMapGrid = !GridCodeString.IsNumeric();
     MinX = FGenericPlatformMath::Min(RawMin.x, RawMax.x);
     MinY = FGenericPlatformMath::Min(RawMin.y, RawMax.y);
     MaxX = FGenericPlatformMath::Max(RawMin.x, RawMax.x);
@@ -285,7 +286,12 @@ TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
     if (bSelectedArray.Num() < SuffixMeshIds.Num()) { //Level4
         for (int i = 0; i < bSelectedArray.Num(); i++) {
             if (bSelectedArray[i]){
-                GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, i + 1 }));
+                if (IsStandardMapGrid) {
+                    GridCodeIDArray.Emplace(GridCodeString);
+                }
+                else {
+                    GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, i + 1 }));
+                }
             }
         }
     } 
@@ -293,7 +299,12 @@ TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
         for (int Col = 0; Col < NumAreaColumn; Col++) {
             for (int Row = 0; Row < NumAreaRow; Row++) {
                 if (bSelectedArray[Row + Col * NumAreaColumn]) {
-                    GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, SuffixMeshIds[Row + Col * NumAreaColumn] }));
+                    if (IsStandardMapGrid) {
+                        GridCodeIDArray.Emplace(GridCodeString);
+                    }
+                    else {
+                        GridCodeIDArray.Emplace(FString::Format(TEXT("{0}{1}"), { GridCodeString, SuffixMeshIds[Row + Col * NumAreaColumn] }));
+                    }
                 }
             }
         }

@@ -116,6 +116,8 @@ private:
     double MaxX;
     double MaxY;
     float LineThickness;
+    // 国土基本図郭フラグ
+    bool IsStandardMapGrid;
     TArray<bool> bSelectedArray;
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
