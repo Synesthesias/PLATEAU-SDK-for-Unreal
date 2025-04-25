@@ -36,6 +36,7 @@ namespace {
     // 選択色
     constexpr FColor SelectedColor = FColor(255, 204, 153);
     constexpr FColor UnselectedColor = FColor(0, 0, 0, 0);
+    constexpr FColor SelectedStandardMapColor = FColor(255, 250, 203);
 
     int GetRowIndex(const double InMinX, const double InMaxX, const int InNumGrid, const double InValue) {
         const double GridSize = (InMaxX - InMinX) / InNumGrid;
@@ -225,6 +226,9 @@ void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCod
     for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
         bSelectedArray.Emplace(false);
     }
+
+    if(IsStandardMapGrid)
+        AreaSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), SelectedStandardMapColor);
 }
 
 void FPLATEAUGridCodeGizmo::ToggleSelectArea(const double X, const double Y) {
@@ -240,7 +244,7 @@ void FPLATEAUGridCodeGizmo::ToggleSelectArea(const double X, const double Y) {
     int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
-    bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
+    bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = IsStandardMapGrid ? true : !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
 }
 
 void FPLATEAUGridCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d InMax, const bool bSelect) {
