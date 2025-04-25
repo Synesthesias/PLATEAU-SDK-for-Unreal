@@ -15,11 +15,15 @@
 
 namespace {
 
-    int GetNumAreaColumnByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode) {
+    int GetNumAreaColumnByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode, const bool IsStandardMapGrid) {
+        if (IsStandardMapGrid)
+            return 1;
         return GridCode->isSmallerThanNormalGml() ? 2 : 4;
     }
 
-    int GetNumAreaRowByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode) {
+    int GetNumAreaRowByGridCode(const std::shared_ptr<plateau::dataset::GridCode>& GridCode, const bool IsStandardMapGrid) {
+        if (IsStandardMapGrid)
+            return 1;
         return GridCode->isSmallerThanNormalGml() ? 2 : 4;
     }
 
@@ -79,9 +83,9 @@ void FPLATEAUGridCodeGizmo::ResetSelectedArea() {
 
 void FPLATEAUGridCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInterface* PDI) const {
     const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
-    const auto Color = FColor(10, 10, 130);
-    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    const auto Color = IsStandardMapGrid ? FColor(10, 130, 10) : FColor(10, 10, 130);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
 
     // エリア枠線
     DrawWireBox(PDI, Box, Color, SDPG_World, LineThickness, 0, true);
@@ -123,11 +127,12 @@ void FPLATEAUGridCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
                 ObjectToWorld.SetAxis(0, FVector(CellHalfWidth, 0, 0));
                 ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
 
-                //Level4は1Gridずらす
-                int AdjustedRow = GridCode->isSmallerThanNormalGml() ? Row + 1 : Row;
-                int AdjustedCol = GridCode->isSmallerThanNormalGml() ? Col + 1 : Col;
+                //Level4は1Gridずらす / 国土基本図郭は1.5Gridずらす
+                float AdjustedRow = IsStandardMapGrid ? Row + 1.5 : GridCode->isSmallerThanNormalGml() ? Row + 1 : Row;
+                float AdjustedCol = IsStandardMapGrid ? Col + 1.5 : GridCode->isSmallerThanNormalGml() ? Col + 1 : Col;
                 ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
-                                                (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
+                    (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
+
                 DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
             }
         }
@@ -156,7 +161,7 @@ void FPLATEAUGridCodeGizmo::DrawRegionGridCodeID(const FViewport& InViewport, co
     const auto HalfWidth = ViewFont->GetStringSize(*GridCodeID) / 2;
     const auto HalfHeight = ViewFont->GetStringHeightSize(*GridCodeID) / 2;
 
-    const auto Color = FColor::Blue;
+    const auto Color = IsStandardMapGrid ? FColor::Green : FColor::Blue;
 
     if (ViewPlane.W > 0.f) {
         if (CameraDistance < plateau::geometry::ShowGridCodeIdCameraDistance) {
@@ -214,8 +219,8 @@ void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCod
     Height = MaxY - MinY;
     LineThickness = 2.0f;
 
-    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     bSelectedArray.Reset();
     for (int i = 0; i < NumAreaRow * NumAreaColumn; i++) {
         bSelectedArray.Emplace(false);
@@ -231,8 +236,8 @@ void FPLATEAUGridCodeGizmo::ToggleSelectArea(const double X, const double Y) {
         return;
     }
 
-    int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = !bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn];
@@ -243,8 +248,8 @@ void FPLATEAUGridCodeGizmo::SetSelectArea(const FVector2d InMin, const FVector2d
     if (!IsSelectable()) 
         return;
 
-    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);   
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     const auto CellWidth = (MaxX - MinX) / NumAreaRow;
     const auto CellHeight = (MaxY - MinY) / NumAreaColumn;
     for (int Col = 0; Col < NumAreaColumn; Col++) {
@@ -270,8 +275,8 @@ void FPLATEAUGridCodeGizmo::SetSelectArea(const double X, const double Y, const 
         return;
     }
 
-    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = bSelect;
@@ -279,8 +284,8 @@ void FPLATEAUGridCodeGizmo::SetSelectArea(const double X, const double Y, const 
 
 TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
 
-    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode);
-    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode);
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
     TArray<FString> GridCodeIDArray;
 
     if (bSelectedArray.Num() < SuffixMeshIds.Num()) { //Level4
