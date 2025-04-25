@@ -65,6 +65,7 @@ public:
                 ExtractOptions.export_appearance = Settings.bImportTexture;
                 ExtractOptions.enable_texture_packing = Settings.bEnableTexturePacking;
                 ExtractOptions.attach_map_tile = Settings.bAttachMapTile;
+                ExtractOptions.epsg_code = GmlFile.getEpsg();
 
                 // strcpyは非推奨という警告が出ますが、共通ライブラリを利用するために必要と思われるので警告を抑制します。
                 // なお抑制しないとマーケットプレイスの審査で弾かれる可能性が高いです。

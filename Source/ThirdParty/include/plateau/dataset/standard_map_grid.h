@@ -7,6 +7,17 @@
 #include "plateau/dataset/grid_code.h"
 
 namespace plateau::dataset {
+
+    enum class StandardMapGridLevel
+    {
+        Invalid = -1,
+        Level50000 = 0,
+        Level5000 = 1,
+        Level2500 = 2,
+        Level1000 = 3,
+        Level500 = 4,
+    };
+
     /**
      * \brief 国土基本図図郭を表します。
      * 
@@ -14,7 +25,7 @@ namespace plateau::dataset {
      */
     class LIBPLATEAU_EXPORT StandardMapGrid : public GridCode {
     public:
-        explicit StandardMapGrid(std::string  code);
+        explicit StandardMapGrid(std::string code);
         StandardMapGrid() = default;
 
         /**
@@ -53,8 +64,23 @@ namespace plateau::dataset {
         bool operator==(const StandardMapGrid& other) const;
         bool operator<(const StandardMapGrid& other) const;
 
+        /**
+         * \brief 図郭コードから平面直角座標系での範囲を計算します。
+         * \return 平面直角座標系での範囲（min, max）
+         */
+        std::pair<TVec3d, TVec3d> calculateGridExtent() const;
+
     private:
         std::string code_;  // 図郭コード
         bool is_valid_ = false;     // コードが有効かどうか
+        StandardMapGridLevel level_;
+
+        int coordinate_origin_; // 原点
+        char first_row_;       // 1文字目はrow座標（東西, A-H）
+        char first_column_;    // 2文字目はcolumn座標（南北, A-T）
+        int second_row_;
+        int second_column_;
+        int third_row_;
+        int third_column_;
     };
-} 
+}
