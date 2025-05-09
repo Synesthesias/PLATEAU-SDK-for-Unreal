@@ -95,7 +95,7 @@ void FPLATEAUExtentEditorViewportClient::Initialize(const std::shared_ptr<platea
             GridCodeGizmos.Last().SetbSelectedArray(ExtentEditor->GetGridCodeMap()[CodeStr].GetbSelectedArray());
         }
     }
-    CreateExclusiveGridCodeGizmos();
+    CreateExclusiveGridCodeGizmoIndices();
 }
 
 void FPLATEAUExtentEditorViewportClient::ResetSelectedArea() {
@@ -304,7 +304,7 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
 
     // MeshCode選択
     if (IsLeftMouseButtonPressed) {
-        for (const auto GizmoIdx : MeshCodeIndices) {
+        for (const auto GizmoIdx : MeshCodeGizmoIndices) {
             auto& Gizmo = GridCodeGizmos[GizmoIdx];
             CachedWorldMousePos = GetWorldPosition(CachedMouseX, CachedMouseY);
             Gizmo.ToggleSelectArea(CachedWorldMousePos.X, CachedWorldMousePos.Y);
@@ -325,7 +325,7 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
         const auto ExtentMin = FVector2d(MinX, MinY);
         const auto ExtentMax = FVector2d(MaxX, MaxY);
         
-        for (const auto GizmoIdx : MeshCodeIndices) {
+        for (const auto GizmoIdx : MeshCodeGizmoIndices) {
             auto& Gizmo = GridCodeGizmos[GizmoIdx];
             Gizmo.SetSelectArea(ExtentMin, ExtentMax, IsLeftMouseButtonMoved);
             ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo.GetRegionGridCodeID(), Gizmo);
@@ -336,9 +336,9 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
     }
 
     // 国土基本図郭が存在する場合は、MeshCodeでの選択範囲のBoxから国土基本図郭(StandardMap)選択
-    if (!StandardMapCodeIndices.IsEmpty()) {
+    if (!StandardMapCodeGizmoIndices.IsEmpty()) {
         if (IsLeftMouseButtonPressed || IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
-            for (const auto& GizmoIdx : StandardMapCodeIndices) {
+            for (const auto& GizmoIdx : StandardMapCodeGizmoIndices) {
                 auto& StandardMapCodeGizmo = GridCodeGizmos[GizmoIdx];
                 // MeshCodeの選択範囲のBoxとオーバーラップする範囲を選択範囲として描画
                 StandardMapCodeGizmo.SetOverlapSelection(SelectedBoxes);
@@ -424,18 +424,18 @@ bool FPLATEAUExtentEditorViewportClient::SetViewLocationByGridCode(FString StrGr
     return true;
 }
 
-void FPLATEAUExtentEditorViewportClient::CreateExclusiveGridCodeGizmos() {
-    MeshCodeIndices.Reset();
-    StandardMapCodeIndices.Reset();
+void FPLATEAUExtentEditorViewportClient::CreateExclusiveGridCodeGizmoIndices() {
+    MeshCodeGizmoIndices.Reset();
+    StandardMapCodeGizmoIndices.Reset();
 
     for (int32 i = 0; i < GridCodeGizmos.Num(); i++) {
         const auto& Gizmo = GridCodeGizmos[i];
         switch (Gizmo.GetGridCodeType()) {
             case EGridCodeGizmoType::MeshCode:
-                MeshCodeIndices.Add(i);
+                MeshCodeGizmoIndices.Add(i);
                 break;
             case EGridCodeGizmoType::StandardMapCode:
-                StandardMapCodeIndices.Add(i);
+                StandardMapCodeGizmoIndices.Add(i);
                 break;
             default:
                 break;
