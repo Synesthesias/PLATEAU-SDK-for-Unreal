@@ -116,27 +116,9 @@ void FPLATEAUGridCodeGizmo::DrawExtent(const FSceneView* View, FPrimitiveDrawInt
     }
 
     // エリア塗りつぶし
-    const auto CellWidth = (Box.Max.X - Box.Min.X) / NumAreaRow;
-    const auto CellHalfWidth = (Box.Max.X - Box.Min.X) / (NumAreaRow * 2);
-    const auto CellHeight = (Box.Max.Y - Box.Min.Y) / NumAreaColumn;
-    const auto CellHalfHeight = (Box.Max.Y - Box.Min.Y) / (NumAreaColumn * 2);
-
-    for (int Col = 0; Col < NumAreaColumn; Col++) {
-        for (int Row = 0; Row < NumAreaRow; Row++) {
-            if (bSelectedArray[Row + Col * NumAreaColumn]) {
-                FMatrix ObjectToWorld = FMatrix::Identity;
-                ObjectToWorld.SetAxis(0, FVector(CellHalfWidth, 0, 0));
-                ObjectToWorld.SetAxis(1, FVector(0, CellHalfHeight, 0));
-
-                //Level4は1Gridずらす / 国土基本図郭は1.5Gridずらす
-                float AdjustedRow = IsStandardMapGrid ? Row + 1.5 : GridCode->isSmallerThanNormalGml() ? Row + 1 : Row;
-                float AdjustedCol = IsStandardMapGrid ? Col + 1.5 : GridCode->isSmallerThanNormalGml() ? Col + 1 : Col;
-                ObjectToWorld.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
-                    (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
-
-                DrawPlane10x10(PDI, ObjectToWorld, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
-            }
-        }
+    const auto& CellMatrices = GetCellMatrices(true);
+    for (const auto& CellMatrix : CellMatrices) {
+        DrawPlane10x10(PDI, CellMatrix, 1.0f, FVector2D::Zero(), FVector2D::One(), AreaSelectedMaterial->GetRenderProxy(), SDPG_Foreground);
     }
 }
 
@@ -203,6 +185,12 @@ bool FPLATEAUGridCodeGizmo::bSelectedArea() const {
 
 void FPLATEAUGridCodeGizmo::SetbSelectedArray(const TArray<bool>& InbSelectedArray) {
     bSelectedArray = InbSelectedArray;
+}
+
+EGridCodeGizmoType FPLATEAUGridCodeGizmo::GetType() const {
+    if (IsStandardMapGrid) 
+        return EGridCodeGizmoType::StandardMapCode;
+    return EGridCodeGizmoType::MeshCode;
 }
 
 void FPLATEAUGridCodeGizmo::Init(const std::shared_ptr<plateau::dataset::GridCode>& InGridCode, const plateau::geometry::GeoReference& InGeoReference) {
@@ -284,6 +272,78 @@ void FPLATEAUGridCodeGizmo::SetSelectArea(const double X, const double Y, const 
     const auto RowIndex = GetRowIndex(MinX, MaxX, NumAreaRow, X);
     const auto ColumnIndex = GetColumnIndex(MinY, MaxY, NumAreaColumn, Y);
     bSelectedArray[RowIndex + ColumnIndex * NumAreaColumn] = bSelect;
+}
+
+TArray<FMatrix> FPLATEAUGridCodeGizmo::GetCellMatrices(const bool bSelectedOnly) const {
+    const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
+    const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+    const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
+
+    const auto CellWidth = (Box.Max.X - Box.Min.X) / NumAreaRow;
+    const auto CellHalfWidth = (Box.Max.X - Box.Min.X) / (NumAreaRow * 2);
+    const auto CellHeight = (Box.Max.Y - Box.Min.Y) / NumAreaColumn;
+    const auto CellHalfHeight = (Box.Max.Y - Box.Min.Y) / (NumAreaColumn * 2);
+
+    TArray<FMatrix> CellMatrices;
+    for (int Col = 0; Col < NumAreaColumn; Col++) {
+        for (int Row = 0; Row < NumAreaRow; Row++) {
+            if (!bSelectedOnly || bSelectedArray[Row + Col * NumAreaColumn]) {
+                FMatrix CellMatrix = FMatrix::Identity;
+                CellMatrix.SetAxis(0, FVector(CellHalfWidth, 0, 0));
+                CellMatrix.SetAxis(1, FVector(0, CellHalfHeight, 0));
+
+                //Level4は1Gridずらす / 国土基本図郭は1.5Gridずらす
+                float AdjustedRow = IsStandardMapGrid ? Row + 1.5 : GridCode->isSmallerThanNormalGml() ? Row + 1 : Row;
+                float AdjustedCol = IsStandardMapGrid ? Col + 1.5 : GridCode->isSmallerThanNormalGml() ? Col + 1 : Col;
+                CellMatrix.SetOrigin(FVector((Box.Min.X + Box.Max.X) / 2 - CellHalfWidth - CellWidth + CellWidth * AdjustedRow,
+                    (Box.Min.Y + Box.Max.Y) / 2 + CellHalfHeight + CellHeight - CellHeight * AdjustedCol, 0));
+
+                CellMatrices.Add(CellMatrix);
+            }
+        }
+    }
+    return CellMatrices;
+}
+
+TArray<FBox> FPLATEAUGridCodeGizmo::GetCellBoxes(const bool bSelectedOnly) const {
+    TArray<FBox> CellBoxes;
+    const auto& CellMatrices = GetCellMatrices(bSelectedOnly);
+    for (const auto& CellMatrix : CellMatrices) {
+        // MatrixをBoxに変換
+        auto OriginalBox = FBox(FVector(-1, -1, 0), FVector(1, 1, 0));
+        FBox CellBox = OriginalBox.TransformBy(CellMatrix);
+        CellBoxes.Add(CellBox);
+    }
+    return CellBoxes;
+}
+
+TArray<FBox> FPLATEAUGridCodeGizmo::GetSelectedBoxes() const {
+    return GetCellBoxes(true);
+}
+
+void FPLATEAUGridCodeGizmo::SetOverlappingSelectionFromBoxes(const TArray<FBox>& InBoxes) {
+    if (!IsSelectable())
+        return;
+
+    ResetSelectedArea();
+    const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
+
+    for (const auto& InBox : InBoxes) {
+        const auto BoxMin = InBox.Min;
+        const auto BoxMax = InBox.Max;
+
+        const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
+        const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
+        const auto& CellBoxes = GetCellBoxes(false);
+        for (int Col = 0; Col < NumAreaColumn; Col++) {
+            for (int Row = 0; Row < NumAreaRow; Row++) {
+                const int Index = Row + Col * NumAreaColumn;
+                if(CellBoxes[Index].IntersectXY(InBox) == false)
+                    continue;
+                bSelectedArray[Index] = true;
+            }
+        }
+    }
 }
 
 TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {

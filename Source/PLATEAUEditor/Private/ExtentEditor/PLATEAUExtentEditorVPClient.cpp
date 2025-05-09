@@ -95,6 +95,7 @@ void FPLATEAUExtentEditorViewportClient::Initialize(const std::shared_ptr<platea
             GridCodeGizmos.Last().SetbSelectedArray(ExtentEditor->GetGridCodeMap()[CodeStr].GetbSelectedArray());
         }
     }
+    CreateExclusiveGridCodeGizmos();
 }
 
 void FPLATEAUExtentEditorViewportClient::ResetSelectedArea() {
@@ -298,11 +299,14 @@ void FPLATEAUExtentEditorViewportClient::CapturedMouseMove(FViewport* InViewport
 }
 
 void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
+    // MeshCodeでの選択範囲のBoxを保持
+    TArray<FBox> SelectedBoxes;
     if (IsLeftMouseButtonPressed) {
-        for (auto& Gizmo : GridCodeGizmos) {
+        for (auto& Gizmo : MeshCodeGizmos) {
             CachedWorldMousePos = GetWorldPosition(CachedMouseX, CachedMouseY);
-            Gizmo.ToggleSelectArea(CachedWorldMousePos.X, CachedWorldMousePos.Y);
-            ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo.GetRegionGridCodeID(), Gizmo);
+            Gizmo->ToggleSelectArea(CachedWorldMousePos.X, CachedWorldMousePos.Y);
+            ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo->GetRegionGridCodeID(), *Gizmo);
+            SelectedBoxes.Append(Gizmo->GetSelectedBoxes());
         }
     } else if (IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
         const auto bRightSideMousePosition = TrackingStartedPosition.X < CachedWorldMousePos.X;
@@ -316,9 +320,21 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
         const auto ExtentMin = FVector2d(MinX, MinY);
         const auto ExtentMax = FVector2d(MaxX, MaxY);
         
-        for (auto& Gizmo : GridCodeGizmos) {
-            Gizmo.SetSelectArea(ExtentMin, ExtentMax, IsLeftMouseButtonMoved);
-            ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo.GetRegionGridCodeID(), Gizmo);
+        for (auto& Gizmo : MeshCodeGizmos) {
+            Gizmo->SetSelectArea(ExtentMin, ExtentMax, IsLeftMouseButtonMoved);
+            ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo->GetRegionGridCodeID(), *Gizmo);
+            SelectedBoxes.Append(Gizmo->GetSelectedBoxes());
+        }
+    }
+
+    // 国土基本図郭が存在する場合は、MeshCodeでの選択範囲のBoxから国土基本図郭選択
+    if (StandardMapCodeGizmos.Num() > 0) {
+        if (IsLeftMouseButtonPressed || IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
+            for (const auto& StandardMapCodeGizmo : StandardMapCodeGizmos) {
+                // MeshCodeの選択範囲のBoxとオーバーラップする範囲を選択範囲として描画
+                StandardMapCodeGizmo->SetOverlappingSelectionFromBoxes(SelectedBoxes);
+                ExtentEditorPtr.Pin()->SetGridCodeMap(StandardMapCodeGizmo->GetRegionGridCodeID(), *StandardMapCodeGizmo);
+            }
         }
     }
 
@@ -399,5 +415,13 @@ bool FPLATEAUExtentEditorViewportClient::SetViewLocationByGridCode(FString StrGr
     return true;
 }
 
+void FPLATEAUExtentEditorViewportClient::CreateExclusiveGridCodeGizmos() {
+    for (FPLATEAUGridCodeGizmo& Gizmo : GridCodeGizmos) {
+        if (Gizmo.GetType() == EGridCodeGizmoType::MeshCode)
+            MeshCodeGizmos.Add(&Gizmo);
+        else if (Gizmo.GetType() == EGridCodeGizmoType::StandardMapCode)
+            StandardMapCodeGizmos.Add(&Gizmo);
+    }
+}
 
 #undef LOCTEXT_NAMESPACE

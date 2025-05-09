@@ -14,6 +14,12 @@ namespace plateau {
     }
 }
 
+UENUM()
+enum EGridCodeGizmoType : int {
+    MeshCode = 0,
+    StandardMapCode = 1,
+};
+
 /**
  * @brief 各グリッドコードのギズモを表します。
  */
@@ -64,7 +70,12 @@ public:
     * @brief 選択状態設定 
     */
     void SetbSelectedArray(const TArray<bool>& InbSelectedArray);
-    
+
+    /**
+     * @brief 選択範囲をBoxとして取得
+     */
+    TArray<FBox> GetSelectedBoxes() const;
+
     /**
      * @brief インスタンスを初期化します。
      */
@@ -94,9 +105,20 @@ public:
     void SetSelectArea(const double X, const double Y, const bool bSelect);
 
     /**
+     * @brief Boxと重なった範囲を選択状態に設定・重なりがなければ選択解除（国土基本図郭選択用）
+     * @param InBoxes 重なり判定用のBox
+     */
+    void SetOverlappingSelectionFromBoxes(const TArray<FBox>& InBoxes);
+
+    /**
      * @brief 選択されているグリッドコードの文字列の配列を取得
      */
     TArray<FString> GetSelectedGridCodeIDs();
+
+    /**
+     * @brief 選択されているグリッドコードのタイプを取得(MeshCode/StandardMapCode)
+     */
+    EGridCodeGizmoType GetType() const;
     
     /**
      * @brief エリア内の描画有効化状態を設定
@@ -116,10 +138,23 @@ private:
     double MaxX;
     double MaxY;
     float LineThickness;
+
     // 国土基本図郭フラグ
     bool IsStandardMapGrid;
+
+    TArray<FString> SelectedMeshCodes;
     TArray<bool> bSelectedArray;
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
     bool IsSelectable() const;
+
+    /**
+     * @brief 各セルのMatrixを取得
+     */
+    TArray<FMatrix> GetCellMatrices(const bool bSelectedOnly) const;
+
+    /**
+     * @brief 各セルのBoxを取得
+     */
+    TArray<FBox> GetCellBoxes(const bool bSelectedOnly) const;
 };
