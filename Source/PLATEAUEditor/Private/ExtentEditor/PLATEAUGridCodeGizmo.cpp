@@ -307,11 +307,11 @@ TArray<FMatrix> FPLATEAUGridCodeGizmo::GetCellMatrices(const bool bSelectedOnly)
 
 TArray<FBox> FPLATEAUGridCodeGizmo::GetCellBoxes(const bool bSelectedOnly) const {
     TArray<FBox> CellBoxes;
+    const auto DefaultBox = FBox(FVector(-1, -1, 0), FVector(1, 1, 0));
     const auto& CellMatrices = GetCellMatrices(bSelectedOnly);
     for (const auto& CellMatrix : CellMatrices) {
-        // MatrixをBoxに変換
-        auto OriginalBox = FBox(FVector(-1, -1, 0), FVector(1, 1, 0));
-        FBox CellBox = OriginalBox.TransformBy(CellMatrix);
+        // MatrixをBoxに変換    
+        FBox CellBox = DefaultBox.TransformBy(CellMatrix);
         CellBoxes.Add(CellBox);
     }
     return CellBoxes;
@@ -325,22 +325,14 @@ void FPLATEAUGridCodeGizmo::SetOverlappingSelectionFromBoxes(const TArray<FBox>&
     if (!IsSelectable())
         return;
 
+    // 一旦選択を解除
     ResetSelectedArea();
-    const FBox Box(FVector(MinX, MinY, 0), FVector(MaxX, MaxY, 0));
-
-    for (const auto& InBox : InBoxes) {
-        const auto BoxMin = InBox.Min;
-        const auto BoxMax = InBox.Max;
-
-        const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, IsStandardMapGrid);
-        const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, IsStandardMapGrid);
-        const auto& CellBoxes = GetCellBoxes(false);
-        for (int Col = 0; Col < NumAreaColumn; Col++) {
-            for (int Row = 0; Row < NumAreaRow; Row++) {
-                const int Index = Row + Col * NumAreaColumn;
-                if(CellBoxes[Index].IntersectXY(InBox) == false)
-                    continue;
-                bSelectedArray[Index] = true;
+    const auto& CellBoxes = GetCellBoxes(false);
+    // Box同志の重なりを調べて選択状態にする
+    for (const auto& InBox : InBoxes) {    
+        for (int i = 0; i < CellBoxes.Num(); i++) {
+            if (CellBoxes[i].IntersectXY(InBox)) {
+                bSelectedArray[i] = true;
             }
         }
     }
