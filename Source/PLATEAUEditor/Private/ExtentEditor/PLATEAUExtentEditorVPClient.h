@@ -66,10 +66,15 @@ private:
     FVector TrackingStartedPosition;
     FVector TrackingStartedCameraPosition;
     TArray<class FPLATEAUGridCodeGizmo> GridCodeGizmos;
+
+    // GridCodeGizmosをMeshCodeとStandardMapに分けてindexを保持
+    TArray<int32> MeshCodeGizmoIndices;
+    TArray<int32> StandardMapCodeGizmoIndices;
     
     bool GizmoContains(const FPLATEAUGridCodeGizmo& Gizmo) const;
     FVector GetWorldPosition(uint32 X, uint32 Y);
     bool TryGetWorldPositionOfCursor(FVector& Position);
     void InitCamera();
     FPLATEAUGridCodeGizmo GetNearestGridCodeGizmo();
+    void CreateExclusiveGridCodeGizmoIndices();
 };
