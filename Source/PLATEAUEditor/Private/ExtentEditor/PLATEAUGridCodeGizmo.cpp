@@ -66,6 +66,7 @@ FPLATEAUGridCodeGizmo::FPLATEAUGridCodeGizmo() : GridCode(), Width(0), Height(0)
     AreaUnSelectedMaterial = DuplicateObject(GEngine->ConstraintLimitMaterialPrismatic, nullptr);
     AreaUnSelectedMaterial.Get()->SetScalarParameterValue(FName("Desaturation"), 1.0f);
     AreaUnSelectedMaterial.Get()->SetVectorParameterValue(FName("Color"), UnselectedColor);
+    GridCodeType = EGridCodeGizmoType::MeshCode;
 }
 
 bool FPLATEAUGridCodeGizmo::IsSelectable() const {
@@ -350,7 +351,7 @@ TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
 
     const int NumAreaColumn = GetNumAreaColumnByGridCode(GridCode, GridCodeType);
     const int NumAreaRow = GetNumAreaRowByGridCode(GridCode, GridCodeType);
-    TArray<FString> GridCodeIDArray;
+    TSet<FString> GridCodeIDArray;
 
     if (bSelectedArray.Num() < SuffixMeshIds.Num()) { //Level4
         for (int i = 0; i < bSelectedArray.Num(); i++) {
@@ -378,7 +379,7 @@ TArray<FString> FPLATEAUGridCodeGizmo::GetSelectedGridCodeIDs() {
             }
         }
     }
-    return GridCodeIDArray;
+    return GridCodeIDArray.Array();
 }
 
 void FPLATEAUGridCodeGizmo::SetShowLevel5Mesh(const bool bValue) {

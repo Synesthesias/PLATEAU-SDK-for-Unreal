@@ -14,8 +14,8 @@ namespace plateau {
     }
 }
 
-UENUM()
-enum class EGridCodeGizmoType : int {
+UENUM(BlueprintType)
+enum class EGridCodeGizmoType : uint8 {
     MeshCode = 0,
     StandardMapCode = 1,
 };
