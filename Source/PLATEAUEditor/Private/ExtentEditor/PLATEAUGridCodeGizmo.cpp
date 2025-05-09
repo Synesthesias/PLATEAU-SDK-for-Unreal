@@ -328,7 +328,7 @@ void FPLATEAUGridCodeGizmo::SetOverlappingSelectionFromBoxes(const TArray<FBox>&
     // 一旦選択を解除
     ResetSelectedArea();
     const auto& CellBoxes = GetCellBoxes(false);
-    // Box同志の重なりを調べて選択状態にする
+    // Box同志の重なりを調べて重なっているCellを選択状態にする
     for (const auto& InBox : InBoxes) {    
         for (int i = 0; i < CellBoxes.Num(); i++) {
             if (CellBoxes[i].IntersectXY(InBox)) {

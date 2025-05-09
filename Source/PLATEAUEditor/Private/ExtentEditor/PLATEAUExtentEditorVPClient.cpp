@@ -301,6 +301,8 @@ void FPLATEAUExtentEditorViewportClient::CapturedMouseMove(FViewport* InViewport
 void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
     // MeshCodeでの選択範囲のBoxを保持
     TArray<FBox> SelectedBoxes;
+
+    // MeshCode選択
     if (IsLeftMouseButtonPressed) {
         for (auto& Gizmo : MeshCodeGizmos) {
             CachedWorldMousePos = GetWorldPosition(CachedMouseX, CachedMouseY);
@@ -327,7 +329,7 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
         }
     }
 
-    // 国土基本図郭が存在する場合は、MeshCodeでの選択範囲のBoxから国土基本図郭選択
+    // 国土基本図郭が存在する場合は、MeshCodeでの選択範囲のBoxから国土基本図郭(StandardMap)選択
     if (StandardMapCodeGizmos.Num() > 0) {
         if (IsLeftMouseButtonPressed || IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
             for (const auto& StandardMapCodeGizmo : StandardMapCodeGizmos) {
