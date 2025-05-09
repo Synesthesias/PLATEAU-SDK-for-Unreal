@@ -15,7 +15,7 @@ namespace plateau {
 }
 
 UENUM()
-enum EGridCodeGizmoType : int {
+enum class EGridCodeGizmoType : int {
     MeshCode = 0,
     StandardMapCode = 1,
 };
@@ -73,8 +73,9 @@ public:
 
     /**
      * @brief 選択範囲をBoxとして取得
+     * @param OutBoxes 選択範囲となるBoxリスト
      */
-    TArray<FBox> GetSelectedBoxes() const;
+    void GetSelectedBoxes(TArray<FBox>& OutBoxes) const;
 
     /**
      * @brief インスタンスを初期化します。
@@ -108,7 +109,7 @@ public:
      * @brief Boxと重なった範囲を選択状態に設定・重なりがなければ選択解除（国土基本図郭選択用）
      * @param InBoxes 重なり判定用のBox
      */
-    void SetOverlappingSelectionFromBoxes(const TArray<FBox>& InBoxes);
+    void SetOverlapSelection(const TArray<FBox>& InBoxes);
 
     /**
      * @brief 選択されているグリッドコードの文字列の配列を取得
@@ -118,7 +119,7 @@ public:
     /**
      * @brief 選択されているグリッドコードのタイプを取得(MeshCode/StandardMapCode)
      */
-    EGridCodeGizmoType GetType() const;
+    EGridCodeGizmoType GetGridCodeType() const;
     
     /**
      * @brief エリア内の描画有効化状態を設定
@@ -138,23 +139,31 @@ private:
     double MaxX;
     double MaxY;
     float LineThickness;
+    // メッシュコード・国土基本図郭
+    EGridCodeGizmoType GridCodeType;
 
-    // 国土基本図郭フラグ
-    bool IsStandardMapGrid;
-
-    TArray<FString> SelectedMeshCodes;
     TArray<bool> bSelectedArray;
     TObjectPtr<UMaterialInstanceDynamic> AreaSelectedMaterial;
     TObjectPtr<UMaterialInstanceDynamic> AreaUnSelectedMaterial;
     bool IsSelectable() const;
+    bool IsStandardMapGrid() const;
+
+    /**
+     * @brief メッシュコード・国土基本図郭判定
+     */
+    EGridCodeGizmoType GetGridCodeTypeByGridCodeString(const FString& GridCodeStr) const;
 
     /**
      * @brief 各セルのMatrixを取得
+     * @param OutBoxes 選択範囲となるMatrixリスト
+     * @param bSelectedOnly 選択状態のセルのみ取得するか
      */
-    TArray<FMatrix> GetCellMatrices(const bool bSelectedOnly) const;
+    void GetCellMatrices(TArray<FMatrix>& OutMatrices, const bool bSelectedOnly) const;
 
     /**
      * @brief 各セルのBoxを取得
+     * @param OutBoxes 選択範囲となるBoxリスト
+     * @param bSelectedOnly 選択状態のセルのみ取得するか
      */
-    TArray<FBox> GetCellBoxes(const bool bSelectedOnly) const;
+    void GetCellBoxes(TArray<FBox>& OutBoxes, const bool bSelectedOnly) const;
 };

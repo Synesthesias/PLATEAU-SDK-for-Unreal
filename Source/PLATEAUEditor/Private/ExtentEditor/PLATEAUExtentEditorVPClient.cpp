@@ -308,7 +308,9 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
             CachedWorldMousePos = GetWorldPosition(CachedMouseX, CachedMouseY);
             Gizmo->ToggleSelectArea(CachedWorldMousePos.X, CachedWorldMousePos.Y);
             ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo->GetRegionGridCodeID(), *Gizmo);
-            SelectedBoxes.Append(Gizmo->GetSelectedBoxes());
+            TArray<FBox> Selected;
+            Gizmo->GetSelectedBoxes(Selected);
+            SelectedBoxes.Append(Selected);
         }
     } else if (IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
         const auto bRightSideMousePosition = TrackingStartedPosition.X < CachedWorldMousePos.X;
@@ -325,7 +327,9 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
         for (auto& Gizmo : MeshCodeGizmos) {
             Gizmo->SetSelectArea(ExtentMin, ExtentMax, IsLeftMouseButtonMoved);
             ExtentEditorPtr.Pin()->SetGridCodeMap(Gizmo->GetRegionGridCodeID(), *Gizmo);
-            SelectedBoxes.Append(Gizmo->GetSelectedBoxes());
+            TArray<FBox> Selected;
+            Gizmo->GetSelectedBoxes(Selected);
+            SelectedBoxes.Append(Selected);
         }
     }
 
@@ -334,7 +338,7 @@ void FPLATEAUExtentEditorViewportClient::TrackingStopped() {
         if (IsLeftMouseButtonPressed || IsLeftMouseButtonMoved || IsLeftMouseAndShiftButtonMoved) {
             for (const auto& StandardMapCodeGizmo : StandardMapCodeGizmos) {
                 // MeshCodeの選択範囲のBoxとオーバーラップする範囲を選択範囲として描画
-                StandardMapCodeGizmo->SetOverlappingSelectionFromBoxes(SelectedBoxes);
+                StandardMapCodeGizmo->SetOverlapSelection(SelectedBoxes);
                 ExtentEditorPtr.Pin()->SetGridCodeMap(StandardMapCodeGizmo->GetRegionGridCodeID(), *StandardMapCodeGizmo);
             }
         }
@@ -418,11 +422,19 @@ bool FPLATEAUExtentEditorViewportClient::SetViewLocationByGridCode(FString StrGr
 }
 
 void FPLATEAUExtentEditorViewportClient::CreateExclusiveGridCodeGizmos() {
+    MeshCodeGizmos.Reset();
+    StandardMapCodeGizmos.Reset();
     for (FPLATEAUGridCodeGizmo& Gizmo : GridCodeGizmos) {
-        if (Gizmo.GetType() == EGridCodeGizmoType::MeshCode)
+        switch (Gizmo.GetGridCodeType()) {
+        case EGridCodeGizmoType::MeshCode:
             MeshCodeGizmos.Add(&Gizmo);
-        else if (Gizmo.GetType() == EGridCodeGizmoType::StandardMapCode)
+            break;
+        case EGridCodeGizmoType::StandardMapCode:
             StandardMapCodeGizmos.Add(&Gizmo);
+            break;
+        default:
+            break;
+        }
     }
 }
 
