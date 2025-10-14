@@ -3,6 +3,46 @@
 このパッケージには、[PLATEAU](https://www.mlit.go.jp/plateau/)の3D都市モデルデータを利用するためのAPI、サンプルが含まれます。PLATEAU SDK for Unrealを利用することで、実世界を舞台にしたアプリケーションの開発や、PLATEAUの豊富なデータを活用したシミュレーションを簡単に行うことができます。
 ![](resources/index/citymodel.png)  
 
+## SDKでできることを知る  
+
+都市データを使ったアプリやシミュレーションの例を下に示します。
+
+- **[PLATEAU SDKを使ったGISサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_1)**
+![](resources/index/gissample.jpg)  
+
+- **[PLATEAU SDKを使ったゲームサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_3)**
+![](resources/index/gamesample.png) 
+
+## SDK活用の実践編
+
+PLATEAU SDK for Unreal を用いて実際にコンテンツを構築するチュートリアルをいくつかご紹介します。
+
+#### サンプルをカスタマイズして自分のデータに合わせてみよう
+
+まずは用意されたサンプルを少し変更して、自分の都市データに合わせてみましょう。  
+簡単な操作で建物に色を付けたり、クリックで情報を表示できるようになります。
+
+![](resources/index/editor.png) 
+
+- **[属性情報によって色分けする | PLATEAU SDK for Unity](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ChangeColorByAttrs.html)**
+- **[属性情報を表示する | PLATEAU SDK for Unity](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/AccessCityObject.html)**
+
+#### 3D都市モデル内を動くプロジェクトを作ってみよう
+
+次のステップとして、実際に都市空間を利用したゲームを実際に構築してみましょう。  
+キャラクターの移動や基本的な操作要素を追加することで、3D都市モデル内を歩き回るプロジェクトを実装できます。
+
+![](resources/index/walking.png) 
+
+- **[Unreal Engineで活用する[1/2]｜Unreal Engineで3D都市モデルを表示する](https://www.mlit.go.jp/plateau/learning/tpc10-1/)**
+- **[Unreal Engineで活用する[2/2]｜3D都市モデル内を歩き回るプロジェクトの作成](https://www.mlit.go.jp/plateau/learning/tpc10-2/)**
+
+#### ゼロから好きなゲームやシミュレーションを構築しよう
+
+基礎的な実装を習得したら、ゼロから自由にプロジェクトを設計しましょう。  
+PLATEAU SDK には都市データを活用するための多様な機能が備わっており、独自のゲームやシミュレーション開発に応用可能です。  
+本マニュアルを参照しながら、目的に応じた設計と実装を進めてください。  
+
 > [!NOTE]
 > PLATEAU SDK for Unrealは利用者アンケートを実施しています。  
 > 今後の開発の参考にするため、ユーザーの皆様の忌憚ないご意見をお聞かせください。  
