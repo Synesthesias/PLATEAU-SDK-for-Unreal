@@ -10,7 +10,7 @@
 - **[PLATEAU SDKを使ったGISサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_1)**
 ![](resources/index/gissample.jpg)  
 
-- **[PLATEAU SDKを使ったゲームサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_3)**
+- **[PLATEAU SDKを使ったゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GameSample)**
 ![](resources/index/gamesample.png) 
 
 ## SDK活用の実践編
@@ -24,8 +24,8 @@ PLATEAU SDK for Unreal を用いて実際にコンテンツを構築するチュ
 
 ![](resources/index/editor.png) 
 
-- **[属性情報によって色分けする | PLATEAU SDK for Unity](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ChangeColorByAttrs.html)**
-- **[属性情報を表示する | PLATEAU SDK for Unity](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/AccessCityObject.html)**
+- **[属性情報によって色分けする | PLATEAU SDK for Unreal](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/ChangeColorByAttrs.html)**
+- **[属性情報を表示する | PLATEAU SDK for Unreal](https://project-plateau.github.io/PLATEAU-SDK-for-Unreal/manual/AccessCityObject.html)**
 
 #### 3D都市モデル内を動くプロジェクトを作ってみよう
 
