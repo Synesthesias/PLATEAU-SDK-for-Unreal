@@ -10,7 +10,7 @@
 - **[PLATEAU SDKを使ったGISサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_1)**
 ![GISサンプルのスクリーンショット](resources/index/gissample.jpg)  
 
-- **[PLATEAU SDKを使ったゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GameSample)**
+- **[PLATEAU SDKを使ったゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GISSample)**
 ![ゲームサンプルのスクリーンショット](resources/index/gamesample.png) 
 
 ## SDK活用の実践編
@@ -35,13 +35,7 @@ PLATEAU SDK for Unreal を用いて実際にコンテンツを構築するチュ
 ![3D都市モデル内の歩行シーンのスクリーンショット](resources/index/walking.png) 
 
 - **[Unreal Engineで活用する[1/2]｜Unreal Engineで3D都市モデルを表示する](https://www.mlit.go.jp/plateau/learning/tpc10-1/)**
-- **[Unreal Engineで活用する[2/2]｜3D都市モデル内を歩き回るプロジェクトの作成](https://www.mlit.go.jp/plateau/learning/tpc10-2/)**
-
-### ゼロから好きなゲームやシミュレーションを構築しよう
-
-基礎的な実装を習得したら、ゼロから自由にプロジェクトを設計しましょう。  
-PLATEAU SDK には都市データを活用するための多様な機能が備わっており、独自のゲームやシミュレーション開発に応用可能です。  
-本マニュアルを参照しながら、目的に応じた設計と実装を進めてください。  
+- **[Unreal Engineで活用する[2/2]｜3D都市モデル内を歩き回るプロジェクトの作成](https://www.mlit.go.jp/plateau/learning/tpc10-2/)**  
 
 > [!NOTE]
 > PLATEAU SDK for Unrealは利用者アンケートを実施しています。  
