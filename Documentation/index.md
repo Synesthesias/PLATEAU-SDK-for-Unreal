@@ -7,10 +7,10 @@
 
 都市データを使ったアプリやシミュレーションの例を下に示します。
 
-- **[PLATEAU SDKを使ったGISサンプル](https://www.mlit.go.jp/plateau/learning/tpc17-2/#p17_6_1)**
+- **[PLATEAU SDKを使ったGISサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GISSample)**
 ![GISサンプルのスクリーンショット](resources/index/gissample.jpg)  
 
-- **[PLATEAU SDKを使ったゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GISSample)**
+- **[PLATEAU SDKを使ったゲームサンプル](https://github.com/Project-PLATEAU/PLATEAU-SDK-for-Unreal-GameSample)**
 ![ゲームサンプルのスクリーンショット](resources/index/gamesample.png) 
 
 ## SDK活用の実践編
