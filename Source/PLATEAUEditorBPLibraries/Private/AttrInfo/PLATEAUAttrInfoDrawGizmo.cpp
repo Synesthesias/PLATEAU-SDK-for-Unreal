@@ -7,6 +7,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "PhysicsEngine/PhysicsSettings.h"
+#include "Misc/EngineVersionComparison.h"
 
 
 namespace {
@@ -162,6 +163,7 @@ namespace {
      * @return ULineBatchComponent
      */
     ULineBatchComponent* GetDebugLineBatch(const UWorld* InWorld, const bool bPersistentLines, const float LifeTime, const bool bDepthIsForeground) {
+#if UE_VERSION_OLDER_THAN(5, 8, 0)
         return InWorld
                    ? (bDepthIsForeground
                           ? InWorld->ForegroundLineBatcher
@@ -169,6 +171,17 @@ namespace {
                           ? InWorld->PersistentLineBatcher
                           : InWorld->LineBatcher)
                    : nullptr;
+#else
+        // 少なくとも UE 5.8 では ForegroundLineBatcher / PersistentLineBatcher / LineBatcher が
+        // *_DEPRECATED に改名されており、この名前では参照できない
+        return InWorld
+                   ? InWorld->GetLineBatcher(bDepthIsForeground
+                          ? UWorld::ELineBatcherType::Foreground
+                          : (bPersistentLines || LifeTime > 0.f
+                                 ? UWorld::ELineBatcherType::WorldPersistent
+                                 : UWorld::ELineBatcherType::World))
+                   : nullptr;
+#endif
     }
 
     /**
