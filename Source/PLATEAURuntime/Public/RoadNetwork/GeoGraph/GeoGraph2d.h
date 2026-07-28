@@ -7,6 +7,7 @@
 #include "Math/Vector2D.h"
 #include "Math/Vector.h"
 #include "Containers/Array.h"
+#include "Algo/Sort.h"
 
 #include "RoadNetwork/PLATEAURnDef.h"
 #include "RoadNetwork/Util/PLATEAUVector2DEx.h"
@@ -330,7 +331,11 @@ FGeoGraph2D::FComputeOutlineResult<T> FGeoGraph2D::ComputeOutline(
     {
         return FAxisPlaneEx::GetTangent(ToVec3(A), Plane);
     };
-    Keys.Sort([&](const T& A, const T& B) {
+    // TArray::Sort は要素が生ポインタの場合、述語に渡す前にデリファレンスする (Array.h の Sort() のコメント)。
+    // 少なくとも UE 5.8 では TObjectPtr も同様 (ObjectPtr.h の TDereferenceWrapper 特殊化)。
+    // 本ラムダは要素をそのまま受け取るため、要素型に依らず成立する Algo::Sort を使う。
+    // (RGraphEx.cpp の生ポインタ側は、ラムダを URVertex& 受けにする形で同じ現象を回避している)
+    Algo::Sort(Keys, [&](const T& A, const T& B) {
         const FVector2D A2 = ToVec2(A);
         const FVector2D B2 = ToVec2(B);
         if (A2.X < B2.X)
