@@ -261,7 +261,7 @@ public:
 
 
     UPROPERTY(EditAnywhere, Category = "PLATEAU|Debug")
-    bool bCheck;
+    bool bCheck = false;
 };
 
 USTRUCT()
