@@ -92,6 +92,10 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
         return Comp->GetName() == "Mesh_" + OriginalItem->GetName();
         });
     TestNotNull("Has Mesh Component ", MeshComponentPtr);
+    // TestNotNull は失敗を記録するだけで処理を止めないため、早期 return しないと
+    // 以降でヌル逆参照が起きてエディタごとクラッシュする
+    if (!MeshComponentPtr)
+        return false;
 
     //Created Terrain Mesh
     auto MeshComponent = (UPLATEAUCityObjectGroup*)*MeshComponentPtr; 
