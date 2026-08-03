@@ -105,7 +105,6 @@ public class PLATEAURuntime : ModuleRules
         }
 
 
-        //using c++17
         CppStandard = CppStandardVersion.Default;
     }
 }

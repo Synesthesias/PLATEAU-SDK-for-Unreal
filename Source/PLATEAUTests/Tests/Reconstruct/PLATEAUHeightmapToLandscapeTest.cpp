@@ -85,16 +85,18 @@ bool FPLATEAUTest_Heightmap_LandscapeMesh::RunTest(const FString& Parameters) {
     const auto& Parent = OriginalItem->GetAttachParent();
     TestEqual("New Component Created ", Parent->GetNumChildrenComponents(), 2);
 
-    TArray<USceneComponent*> Children;
-    Parent->GetChildrenComponents(false, Children);
-
-    auto MeshComponentPtr = Children.FindByPredicate([OriginalItem](USceneComponent* Comp) {
-        return Comp->GetName() == "Mesh_" + OriginalItem->GetName();
-        });
-    TestNotNull("Has Mesh Component ", MeshComponentPtr);
-
     //Created Terrain Mesh
-    auto MeshComponent = (UPLATEAUCityObjectGroup*)*MeshComponentPtr; 
+    // 生成されたコンポーネント名の末尾には、ユニーク化のためエンジンが採番した "__{数値}" が付く。
+    // 採番値は決め打ちできないため、ユニーク化前の名前で比較する。
+    // (OriginalItem 側の "__1" は fixture が固定で与えている名前)
+    const FString ExpectedName = "Mesh_" + FPLATEAUComponentUtil::GetOriginalComponentName(OriginalItem);
+    const auto MeshComponent = Cast<UPLATEAUCityObjectGroup>(
+        FPLATEAUComponentUtil::FindChildComponentWithOriginalName(Parent, ExpectedName));
+    TestNotNull("Has Mesh Component ", MeshComponent);
+    // TestNotNull は失敗を記録するだけで処理を止めないため、早期 return しないと
+    // 以降でヌル逆参照が起きてエディタごとクラッシュする
+    if (!MeshComponent)
+        return false;
 
     TestEqual("Attr are the same ", MeshComponent->SerializedCityObjects, OriginalItem->SerializedCityObjects);
 

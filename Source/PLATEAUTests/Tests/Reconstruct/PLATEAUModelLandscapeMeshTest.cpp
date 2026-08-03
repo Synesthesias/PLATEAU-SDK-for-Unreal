@@ -41,7 +41,10 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeMesh::RunTest(const FString& Paramet
     Listener->AddToRoot();
     Listener->TestBase = this;
 
-    ADD_LATENT_AUTOMATION_COMMAND(FThreadedAutomationLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
+    // Landscape 生成はゲームスレッドを前提とするコードを含むため、この latent コマンドは
+    // ゲームスレッドで実行する。FThreadedAutomationLatentCommand に戻すとワーカースレッドで
+    // 走り、実 RHI のときだけ ensure を踏む (-NullRHI では検出できない)。
+    ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([&, this, ModelActor, DemComponent, Param, Listener] {
 
         ModelActor->CreateLandscape({ DemComponent }, Param, false);
 
@@ -66,6 +69,7 @@ bool FPLATEAUTest_Reconstruct_ModelLandscapeMesh::RunTest(const FString& Paramet
             return true;
             }));
 
+        return true;
     }));
 
     return true;

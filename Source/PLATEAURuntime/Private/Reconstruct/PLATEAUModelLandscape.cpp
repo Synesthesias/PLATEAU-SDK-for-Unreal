@@ -96,7 +96,11 @@ ALandscape* FPLATEAUModelLandscape::CreateLandScape(UWorld* World, const int32 N
 #if WITH_EDITOR
     FActorSpawnParameters Param;
     ALandscape* Landscape = World->SpawnActor<ALandscape>(Param);
+    // 少なくとも UE 5.8 では bCanHaveLayersContent_DEPRECATED に改名されており、この名前では参照できない。
+    // 全 Landscape が編集レイヤー方式に統一され false を設定する概念自体が無くなったため、5.8 以降は代入しない。
+#if UE_VERSION_OLDER_THAN(5, 8, 0)
     Landscape->bCanHaveLayersContent = false;
+#endif
     Landscape->SetActorTransform(LandscapeTransform);
 #if UE_VERSION_NEWER_THAN(5, 5, 0)
     const TArrayView<const struct FLandscapeLayer> ImportLayers;
