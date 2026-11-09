@@ -3,3 +3,4 @@ Intermediate/
 
 /Documentation/obj
 /.docs
+**/.claude/settings.local.json
